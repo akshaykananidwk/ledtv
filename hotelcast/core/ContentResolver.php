@@ -44,6 +44,7 @@ final class ContentResolver
             'items' => [],
             'overlay' => self::overlay(),
             'emergency' => null,
+            'power_off_mode' => Settings::get('power_off_mode', 'standby') === 'black' ? 'black' : 'standby',
         ];
 
         // 1. Emergency

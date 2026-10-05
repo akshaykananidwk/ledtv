@@ -326,10 +326,21 @@ object SyncManager : CommandActions {
         pollNow()
     }
 
-    override fun setScreenOn(on: Boolean) {
+    override suspend fun setScreenOn(on: Boolean): String {
         Prefs.forcedScreenOff = !on
-        PowerController.evaluate(_content.value)
         _events.tryEmit(SyncEvent.ScreenStateChanged)
+        val result = PowerController.force(on, _content.value)
+        heartbeatSoon()
+        return result
+    }
+
+    /** Send a heartbeat right away (e.g. after the screen turned on/off) so the admin panel is current. */
+    fun heartbeatSoon() {
+        if (!::app.isInitialized || !Prefs.isRegistered) return
+        scope.launch {
+            delay(1_500)
+            runCatching { heartbeatOnce() }
+        }
     }
 
     override fun reload() {

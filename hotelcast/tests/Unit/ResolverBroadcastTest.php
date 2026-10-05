@@ -230,4 +230,12 @@ final class ResolverBroadcastTest extends TestCase
         $this->assertNull($id);
         $this->assertCount(3, $errors);
     }
+
+    public function testPowerOffModeIsSentToTv(): void
+    {
+        $this->assertSame('standby', ContentResolver::build($this->room($this->room101))['power_off_mode']);
+        Settings::set('power_off_mode', 'black');
+        $this->assertSame('black', ContentResolver::build($this->room($this->room101))['power_off_mode']);
+        Settings::set('power_off_mode', 'standby');
+    }
 }

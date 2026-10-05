@@ -13,7 +13,7 @@ class CommandHandlerTest {
         val calls = mutableListOf<String>()
         override suspend fun refetchContent() { calls += "refetch" }
         override suspend fun clearCache() { calls += "clear" }
-        override fun setScreenOn(on: Boolean) { calls += if (on) "on" else "off" }
+        override suspend fun setScreenOn(on: Boolean): String { calls += if (on) "on" else "off"; return "ok" }
         override fun reload() { calls += "reload" }
         override fun reboot() { calls += "reboot" }
         override suspend fun updateApp(

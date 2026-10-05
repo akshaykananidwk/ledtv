@@ -280,7 +280,8 @@ class MainActivity : AppCompatActivity(), ContentPlayer.Listener {
                     welcomeLayer.visibility = View.GONE
                     emergencyLayer.visibility = View.GONE
                     blackLayer.visibility = View.VISIBLE
-                    setScreenAwake(false)
+                    // Black-screen mode keeps the TV awake so it can always be switched on remotely.
+                    setScreenAwake(PowerController.blackMode(c))
                 }
                 c == null -> {
                     resetLayers()

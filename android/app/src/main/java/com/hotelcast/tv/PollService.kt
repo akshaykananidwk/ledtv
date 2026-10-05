@@ -3,8 +3,10 @@ package com.hotelcast.tv
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.ServiceInfo
 import android.os.Build
 import android.util.Log
@@ -28,9 +30,25 @@ class PollService : LifecycleService() {
         }
         SyncManager.start(this)
         PowerController.holdBackgroundLocks(this)
+        try {
+            registerReceiver(screenReceiver, IntentFilter().apply {
+                addAction(Intent.ACTION_SCREEN_ON)
+                addAction(Intent.ACTION_SCREEN_OFF)
+            })
+        } catch (e: Exception) {
+            Log.w(TAG, "screen receiver failed", e)
+        }
+    }
+
+    /** Report screen on/off to the server immediately (admin panel shows "Standby"). */
+    private val screenReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            SyncManager.heartbeatSoon()
+        }
     }
 
     override fun onDestroy() {
+        try { unregisterReceiver(screenReceiver) } catch (_: Exception) {}
         PowerController.releaseBackgroundLocks()
         super.onDestroy()
     }

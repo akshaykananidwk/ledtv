@@ -20,6 +20,7 @@ final class Settings
         'tv_settings_pin' => '1234',
         'registration_key' => '',
         'auto_create_rooms' => '1',
+        'power_off_mode' => 'standby',
         'overlay_clock' => '1',
         'overlay_clock_format' => 'hh:mm a',
         'overlay_logo' => '1',

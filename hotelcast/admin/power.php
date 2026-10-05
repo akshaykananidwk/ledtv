@@ -26,6 +26,15 @@ if (is_post()) {
                     : __('Turning off :n TVs (within one poll interval).', ['n' => $count]));
                 break;
 
+            case 'mode':
+                $mode = ($_POST['power_off_mode'] ?? '') === 'black' ? 'black' : 'standby';
+                Settings::set('power_off_mode', $mode);
+                Settings::bumpContentVersion();
+                Broadcaster::queueForRooms(Broadcaster::targetRooms('all', []), 'SHOW_CONTENT');
+                ActivityLog::add('power_off_mode', 'settings', null, $mode);
+                flash('success', __('Saved.'));
+                break;
+
             case 'add':
                 [$id, $errors] = Broadcaster::schedulePower($_POST, Auth::id());
                 if ($errors) {
@@ -74,6 +83,11 @@ $schedules = DB::all(
 $roomsOff = (int) DB::value('SELECT COUNT(*) FROM rooms WHERE is_enabled = 0');
 $activeNow = array_values(array_filter($schedules, fn ($b) => $b['status'] !== 'cancelled' && ContentResolver::windowActive($b)));
 $days = day_names();
+$powerLog = DB::all(
+    "SELECT dc.command, dc.status, dc.message, dc.created_at, dc.acked_at, r.room_number
+     FROM device_commands dc JOIN devices d ON d.id = dc.device_id LEFT JOIN rooms r ON r.id = d.room_id
+     WHERE dc.command IN ('SCREEN_ON','SCREEN_OFF') ORDER BY dc.id DESC LIMIT 15"
+);
 
 $pageTitle = __('TV Power');
 $activeNav = 'power';
@@ -115,6 +129,27 @@ require __DIR__ . '/partials/header.php';
             <button class="btn btn-dark" name="state" value="off" data-confirm="<?= e(__('Turn the selected TVs off? They stay off until you turn them on again.')) ?>"><i class="bi bi-power"></i> <?= e(__('Turn OFF')) ?></button>
           </div>
           <div class="form-text"><?= e(__('Turning off here keeps the room off (even after a TV restart) until you turn it on again.')) ?></div>
+        </form>
+      </div>
+    </div>
+
+    <div class="card mb-3">
+      <div class="card-header"><i class="bi bi-gear"></i> <?= e(__('How should "OFF" work?')) ?></div>
+      <div class="card-body">
+        <form method="post">
+          <?= Csrf::field() ?><input type="hidden" name="op" value="mode">
+          <?php $pm = Settings::get('power_off_mode', 'standby'); ?>
+          <div class="form-check mb-2">
+            <input class="form-check-input" type="radio" name="power_off_mode" value="standby" id="pm_s" <?= $pm !== 'black' ? 'checked' : '' ?>>
+            <label class="form-check-label" for="pm_s"><strong><?= e(__('Real standby (saves electricity)')) ?></strong><br>
+              <span class="small text-muted"><?= e(__('TV really switches off. Switching on from here works only if the TV keeps Wi-Fi on in standby (Energy mode: Increased / Always connected). Otherwise use the TV\'s own power-on timer.')) ?></span></label>
+          </div>
+          <div class="form-check mb-3">
+            <input class="form-check-input" type="radio" name="power_off_mode" value="black" id="pm_b" <?= $pm === 'black' ? 'checked' : '' ?>>
+            <label class="form-check-label" for="pm_b"><strong><?= e(__('Black screen (always controllable)')) ?></strong><br>
+              <span class="small text-muted"><?= e(__('TV only shows a black screen and stays connected, so "Turn ON" always works instantly. Uses more electricity.')) ?></span></label>
+          </div>
+          <button class="btn btn-outline-primary btn-sm"><i class="bi bi-save"></i> <?= e(__('Save')) ?></button>
         </form>
       </div>
     </div>
@@ -202,6 +237,26 @@ require __DIR__ . '/partials/header.php';
         </table>
       </div>
     </div>
+  </div>
+</div>
+<div class="card mt-3">
+  <div class="card-header"><i class="bi bi-clipboard-check"></i> <?= e(__('Last ON/OFF results from TVs')) ?></div>
+  <div class="table-responsive">
+    <table class="table table-sm align-middle mb-0">
+      <thead class="table-light"><tr><th><?= e(__('Time')) ?></th><th><?= e(__('Room')) ?></th><th><?= e(__('Command')) ?></th><th><?= e(__('Status')) ?></th><th><?= e(__('TV reply')) ?></th></tr></thead>
+      <tbody>
+      <?php if (!$powerLog): ?><tr><td colspan="5" class="text-center text-muted py-3"><?= e(__('No commands yet.')) ?></td></tr><?php endif; ?>
+      <?php foreach ($powerLog as $l): ?>
+        <tr class="<?= str_contains((string) $l['message'], 'FAILED') ? 'table-danger' : '' ?>">
+          <td class="small text-nowrap"><?= e(date('d M H:i:s', (int) strtotime((string) $l['created_at']))) ?></td>
+          <td><?= e($l['room_number'] ?? '-') ?></td>
+          <td><?= e($l['command'] === 'SCREEN_ON' ? __('Turn ON') : __('Turn OFF')) ?></td>
+          <td><?= cmd_status_badge($l['status']) ?></td>
+          <td class="small"><?= e($l['message'] ?? '') ?></td>
+        </tr>
+      <?php endforeach; ?>
+      </tbody>
+    </table>
   </div>
 </div>
 <?php require __DIR__ . '/partials/footer.php'; ?>

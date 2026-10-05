@@ -7,7 +7,8 @@ import kotlinx.coroutines.delay
 interface CommandActions {
     suspend fun refetchContent()
     suspend fun clearCache()
-    fun setScreenOn(on: Boolean)
+    /** Switch the TV to standby (false) or wake it (true). Returns a short result for the ack. */
+    suspend fun setScreenOn(on: Boolean): String
     fun reload()
     fun reboot()
     suspend fun updateApp(
@@ -56,12 +57,10 @@ class CommandHandler(
                     safeAck(id, STATUS_ACKED, "Cache cleared")
                 }
                 "SCREEN_OFF" -> {
-                    actions.setScreenOn(false)
-                    safeAck(id, STATUS_ACKED, "Screen off")
+                    safeAck(id, STATUS_ACKED, actions.setScreenOn(false))
                 }
                 "SCREEN_ON" -> {
-                    actions.setScreenOn(true)
-                    safeAck(id, STATUS_ACKED, "Screen on")
+                    safeAck(id, STATUS_ACKED, actions.setScreenOn(true))
                 }
                 "RELOAD" -> {
                     safeAck(id, STATUS_ACKED, "Reloading")

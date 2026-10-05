@@ -829,4 +829,13 @@ return [
     'Give a TV-off time and a TV-on time (different values).' => 'TV બંધ અને ચાલુ થવાનો સમય આપો (બંને અલગ હોવા જોઈએ).',
     'Choose at least one day.' => 'ઓછામાં ઓછો એક દિવસ પસંદ કરો.',
     'TV off :a – on :b' => 'TV બંધ :a – ચાલુ :b',
+    'TV in standby (screen off)' => 'TV standby માં (સ્ક્રીન બંધ)',
+    'How should "OFF" work?' => '"બંધ" કેવી રીતે કરવું?',
+    'Real standby (saves electricity)' => 'સાચું standby (વીજળી બચે)',
+    'TV really switches off. Switching on from here works only if the TV keeps Wi-Fi on in standby (Energy mode: Increased / Always connected). Otherwise use the TV\'s own power-on timer.' => 'TV ખરેખર બંધ થાય છે. અહીંથી ફરી ચાલુ ત્યારે જ થાય જ્યારે TV standby માં Wi-Fi ચાલુ રાખે (Energy mode: Increased / Always connected). નહીં તો TV નો પોતાનો power-on timer વાપરો.',
+    'Black screen (always controllable)' => 'કાળી સ્ક્રીન (હંમેશા કંટ્રોલ થાય)',
+    'TV only shows a black screen and stays connected, so "Turn ON" always works instantly. Uses more electricity.' => 'TV પર ફક્ત કાળી સ્ક્રીન દેખાય અને TV જોડાયેલું રહે, એટલે "ચાલુ કરો" હંમેશા તરત ચાલે. વીજળી વધુ વપરાય.',
+    'Last ON/OFF results from TVs' => 'TV તરફથી છેલ્લા ચાલુ/બંધ પરિણામ',
+    'TV reply' => 'TV નો જવાબ',
+    'No commands yet.' => 'હજુ કોઈ command નથી.',
 ];

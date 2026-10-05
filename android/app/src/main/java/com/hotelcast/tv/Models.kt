@@ -138,6 +138,8 @@ data class Content(
     @SerializedName("items") val items: List<ContentItem>? = null,
     @SerializedName("overlay") val overlay: Overlay? = null,
     @SerializedName("emergency") val emergency: Emergency? = null,
+    /** "standby" (real TV standby) or "black" (black screen, TV stays awake and always reachable). */
+    @SerializedName("power_off_mode") val powerOffMode: String? = null,
 ) {
     val isOff: Boolean get() = mode == MODE_OFF || screenOn == false
     val isEmergency: Boolean get() = emergency != null || mode == MODE_EMERGENCY

@@ -158,7 +158,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const previewBase = <?= json_embed(admin_url('preview.php')) ?>;
   const roomsBase = <?= json_embed(admin_url('rooms.php')) ?>;
   const fmt = (r) => {
-    const cls = 'room-tile st-' + r.status + (r.mode === 'off' ? ' mode-off' : '') + (r.mode === 'emergency' ? ' mode-emergency' : '');
+    const cls = 'room-tile st-' + r.status + (r.mode === 'off' || r.standby ? ' mode-off' : '') + (r.mode === 'emergency' ? ' mode-emergency' : '');
     const icon = r.status === 'online' ? 'bi-wifi' : (r.status === 'offline' ? 'bi-wifi-off' : 'bi-dash-circle');
     return '<a class="' + cls + '" href="' + previewBase + '?room_id=' + r.id + '" target="_blank" rel="noopener" title="' + HC.esc(r.status_label + ' · ' + r.mode_label + ' · ' + r.last_seen) + '">'
       + '<i class="bi ' + icon + ' rt-badge"></i>'

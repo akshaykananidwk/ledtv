@@ -304,8 +304,14 @@ function hc_room_status_list(): array
             $showing = '-';
             $mode = 'error';
         }
+        // TV polls but reports its screen off → standby (switched off with the remote or by schedule).
+        $standby = $status === 'online' && isset($list[0]['screen_on']) && !(int) $list[0]['screen_on'];
+        if ($standby && $mode !== 'emergency') {
+            $showing = __('TV in standby (screen off)');
+        }
         $out[] = [
             'id' => (int) $room['id'],
+            'standby' => $standby,
             'number' => (string) $room['room_number'],
             'name' => (string) ($room['name'] ?? ''),
             'floor' => (string) ($room['floor'] ?? ''),
