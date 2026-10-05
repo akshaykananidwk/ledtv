@@ -278,7 +278,7 @@ final class Guests
         }
         DB::update('guest_stays', $data, 'id = :id', ['id' => $stayId]);
         if ($stay['checked_out_at'] === null && $stay['room_id'] && ($room = Tenant::find('rooms', (int) $stay['room_id']))) {
-            self::refreshRoom($room, false);
+            self::refreshRoom($room);
         }
         ActivityLog::add('guest_update', 'guest_stay', $stayId, implode(', ', array_keys($data)));
     }
@@ -320,11 +320,10 @@ final class Guests
     }
 
     /** Content changed for a room: invalidate the hotel's content cache and tell the room's TVs to refresh. */
-    public static function refreshRoom(array $room, bool $wake = true): void
+    public static function refreshRoom(array $room): void
     {
         Settings::bumpContentVersion();
         Broadcaster::queueForRooms([$room], 'SHOW_CONTENT');
-        unset($wake);
     }
 
     /** Sum of the stay's room-service charges (orders not cancelled). */
@@ -615,8 +614,8 @@ final class Guests
 
     /**
      * Anonymise guest PII of stays checked out more than $days days ago (current hotel): name, phone,
-     * notes, Wi-Fi password, balance text, external ref; free-text notes on their orders / requests and
-     * feedback comments are cleared too. Returns the number of stays anonymised.
+     * notes, Wi-Fi password, balance text, external ref; free-text notes / IPs on their orders and
+     * requests are cleared and feedback is unlinked from the guest token. Returns the number of stays anonymised.
      */
     public static function purgePii(int $days): int
     {
@@ -635,7 +634,8 @@ final class Guests
                    balance_text = NULL, external_ref = NULL, pii_deleted_at = :n WHERE hotel_id = :hid AND id IN $in", $p + $hid + ['n' => now()]);
         DB::query("UPDATE guest_orders SET notes = NULL, ip_address = NULL, token_hash = NULL WHERE hotel_id = :hid AND stay_id IN $in", $p + $hid);
         DB::query("UPDATE guest_requests SET notes = NULL, ip_address = NULL, token_hash = NULL WHERE hotel_id = :hid AND stay_id IN $in", $p + $hid);
-        DB::query("UPDATE guest_feedback SET comment = NULL, token_hash = NULL WHERE hotel_id = :hid AND stay_id IN $in", $p + $hid);
+        // Feedback stays (rating + comment for the report) but is no longer linked to the guest's token.
+        DB::query("UPDATE guest_feedback SET token_hash = NULL WHERE hotel_id = :hid AND stay_id IN $in", $p + $hid);
         return count($ids);
     }
 }

@@ -225,14 +225,19 @@ final class DeviceManager
                 continue;
             }
             $ts = isset($p['started_at']) ? strtotime((string) $p['started_at']) : time();
-            DB::insert('broadcast_logs', [
+            $row = [
                 'device_id' => $device['id'],
                 'room_id' => $device['room_id'],
                 'content_id' => (int) $p['content_id'],
                 'event' => 'played',
                 'duration_sec' => isset($p['duration_sec']) ? max(0, (int) $p['duration_sec']) : null,
                 'created_at' => date('Y-m-d H:i:s', $ts ?: time()),
-            ]);
+            ];
+            // Sponsor ad impression (ads module, migration 004): only ids of this hotel's campaigns are kept.
+            if (isset($p['ad_campaign_id']) && ($adId = Ads::impressionCampaign($p['ad_campaign_id'])) !== null) {
+                $row['ad_campaign_id'] = $adId;
+            }
+            DB::insert('broadcast_logs', $row);
             $count++;
         }
         return ['saved' => $count];

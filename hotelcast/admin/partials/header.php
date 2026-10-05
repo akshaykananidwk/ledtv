@@ -59,6 +59,8 @@ $hdrLicense = $user ? License::banner() : null;
 <script src="<?= e(asset($s)) ?>" defer></script>
 <?php endforeach; ?>
 <script src="<?= e(asset('js/admin.js')) ?>" defer></script>
+<?php // Module hook: admin/partials/head.d/*.php print extra <head> tags (name order; $user may be null).
+foreach (glob(__DIR__ . '/head.d/*.php') ?: [] as $__hd) { include $__hd; } unset($__hd); ?>
 <script>window.HC_I18N = <?= json_embed([
     'ok' => __('OK'), 'cancel' => __('Cancel'), 'confirm' => __('Please confirm'), 'error' => __('Something went wrong'),
     'saved' => __('Saved.'), 'uploading' => __('Uploading…'), 'processing' => __('Processing on server…'),

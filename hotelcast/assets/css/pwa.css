@@ -1,0 +1,12 @@
+/* PWA install bar + notification settings (admin panel). */
+.hc-install-bar{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);z-index:1080;width:min(560px,calc(100% - 32px));
+  background:#fff;border:1px solid rgba(0,0,0,.08);border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.15);padding:12px 14px;
+  display:flex;align-items:center;gap:12px}
+.hc-install-bar[hidden]{display:none}
+.hc-install-bar img{width:40px;height:40px;border-radius:10px;flex:0 0 auto}
+.hc-install-bar .hc-install-text{flex:1 1 auto;min-width:0;font-size:.9rem;line-height:1.3}
+.hc-install-bar .hc-install-text strong{display:block}
+.hc-push-device{word-break:break-all}
+.hc-shot{max-width:100%;height:auto;border-radius:8px;border:1px solid rgba(0,0,0,.1);background:#000}
+.hc-log-view{max-height:60vh;overflow:auto;white-space:pre-wrap;word-break:break-word;font-size:.78rem;background:#111;color:#e6e6e6;border-radius:8px;padding:12px}
+@media (max-width:575.98px){.hc-install-bar{bottom:8px;padding:10px}}

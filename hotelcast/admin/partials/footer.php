@@ -34,5 +34,7 @@ $user = $user ?? Auth::user();
     </div>
   </div>
 </div>
+<?php // Module hook: admin/partials/footer.d/*.php print scripts / UI before </body> (name order; $user may be null).
+foreach (glob(__DIR__ . '/footer.d/*.php') ?: [] as $__fd) { include $__fd; } unset($__fd); ?>
 </body>
 </html>
