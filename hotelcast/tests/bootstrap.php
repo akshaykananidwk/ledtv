@@ -19,6 +19,7 @@ $appSrc = dirname(__DIR__);
 $sandbox = sys_get_temp_dir() . '/hotelcast_sandbox_' . getmypid();
 
 require __DIR__ . '/TestEnv.php';
+require __DIR__ . '/AdminSession.php';
 TestEnv::$appSrc = $appSrc;
 TestEnv::$sandbox = $sandbox;
 TestEnv::$db = [
