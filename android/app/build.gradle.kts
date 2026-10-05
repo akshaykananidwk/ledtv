@@ -25,8 +25,8 @@ android {
         applicationId = "com.hotelcast.tv"
         minSdk = 21
         targetSdk = 34
-        versionCode = 3
-        versionName = "1.2.0"
+        versionCode = 4
+        versionName = "2.0.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
     }
@@ -90,6 +90,8 @@ dependencies {
     implementation("com.google.code.gson:gson:2.10.1")
     implementation("com.github.bumptech.glide:glide:4.16.0")
     implementation("androidx.work:work-runtime-ktx:2.9.1")
+    // On-device QR codes (Wi-Fi join, room services) — Apache 2.0, pure Java, no Android deps.
+    implementation("com.google.zxing:core:3.5.3")
 
     implementation("androidx.core:core-ktx:1.13.1")
     implementation("androidx.appcompat:appcompat:1.7.0")

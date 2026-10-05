@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">HotelCast TV</string>
+    <string name="device_admin_description">HotelCast को टीवी को कियोस्क मोड में लॉक करने, अपडेट अपने आप इंस्टॉल करने और टीवी को दूर से रीबूट करने की अनुमति देता है।</string>
+
+    <string name="connecting">सर्वर से जुड़ रहा है…</string>
+    <string name="waiting_for_content">सामग्री की प्रतीक्षा है…</string>
+    <string name="welcome">स्वागत है</string>
+    <string name="welcome_to">%1$s में आपका स्वागत है</string>
+    <string name="room_label">कमरा %1$s</string>
+    <string name="offline">ऑफ़लाइन</string>
+    <string name="emergency_default_title">आपातकाल</string>
+    <string name="weather_format">%1$s %2$d°C %3$s</string>
+
+    <string name="pin_title">सेटिंग्स पिन दर्ज करें</string>
+    <string name="pin_hint">4 अंकों का पिन</string>
+    <string name="pin_wrong">गलत पिन</string>
+    <string name="ok">ठीक है</string>
+    <string name="cancel">रद्द करें</string>
+
+    <string name="settings_title">HotelCast TV – सेटिंग्स</string>
+    <string name="setup_title">HotelCast TV – पहली बार सेटअप</string>
+    <string name="setup_hint">सर्वर का पता, कमरा नंबर और होटल की पंजीकरण कुंजी (Admin → Settings → Devices) दर्ज करें, फिर “सहेजें और पंजीकरण करें” चुनें।</string>
+    <string name="server_url">सर्वर URL</string>
+    <string name="server_url_hint">जैसे https://hotel.com/hotelcast या http://192.168.1.10/hotelcast</string>
+    <string name="room_number">कमरा नंबर</string>
+    <string name="room_number_hint">जैसे 101</string>
+    <string name="registration_key">पंजीकरण कुंजी</string>
+    <string name="registration_key_hint">होटल पंजीकरण कुंजी</string>
+    <string name="save_register">सहेजें और पंजीकरण करें</string>
+    <string name="test_connection">कनेक्शन जाँचें</string>
+    <string name="clear_cache">कैश साफ़ करें</string>
+    <string name="exit_kiosk">कियोस्क से बाहर / Android सेटिंग्स</string>
+    <string name="back_to_player">प्लेयर पर वापस जाएँ</string>
+    <string name="device_info">डिवाइस जानकारी</string>
+    <string name="registering">पंजीकरण हो रहा है…</string>
+    <string name="testing">कनेक्शन जाँचा जा रहा है…</string>
+    <string name="register_ok">कमरा %1$s के रूप में पंजीकृत</string>
+    <string name="register_failed">पंजीकरण विफल: %1$s</string>
+    <string name="test_ok">सर्वर ठीक है (संस्करण %1$s, डेटाबेस %2$s)</string>
+    <string name="test_failed">कनेक्शन विफल: %1$s</string>
+    <string name="cache_cleared">कैश साफ़ हो गया</string>
+    <string name="invalid_url">अमान्य सर्वर URL</string>
+    <string name="field_required">यह फ़ील्ड आवश्यक है</string>
+    <string name="kiosk_suspended">कियोस्क 10 मिनट के लिए रोका गया। प्लेयर अपने आप वापस आएगा।</string>
+    <string name="status_online">ऑनलाइन</string>
+    <string name="status_offline">ऑफ़लाइन</string>
+    <string name="status_not_registered">पंजीकृत नहीं</string>
+    <string name="never">कभी नहीं</string>
+    <string name="yes">हाँ</string>
+    <string name="no">नहीं</string>
+    <string name="info_device_id">डिवाइस ID</string>
+    <string name="info_ip">IP पता</string>
+    <string name="info_app_version">ऐप संस्करण</string>
+    <string name="info_android">Android संस्करण</string>
+    <string name="info_model">मॉडल</string>
+    <string name="info_status">कनेक्शन</string>
+    <string name="info_last_poll">अंतिम पोल</string>
+    <string name="info_room">पंजीकृत कमरा</string>
+    <string name="info_device_owner">डिवाइस ओनर (पूर्ण कियोस्क)</string>
+    <string name="info_network">नेटवर्क</string>
+
+    <string name="service_channel">बैकग्राउंड सिंक</string>
+    <string name="service_running">HotelCast होटल सर्वर से जुड़ा है</string>
+    <string name="update_installing">अपडेट %1$s इंस्टॉल हो रहा है…</string>
+
+    <string name="guest_welcome_title">%1$s, आपका स्वागत है</string>
+    <string name="guest_press_any_key">आगे बढ़ने के लिए रिमोट का कोई भी बटन दबाएँ</string>
+    <string name="guest_scan_wifi">Wi-Fi से जुड़ने के लिए स्कैन करें</string>
+    <string name="guest_scan_services">रूम सर्विस के लिए स्कैन करें</string>
+    <string name="guest_wifi_network">Wi-Fi: %1$s</string>
+    <string name="guest_wifi_password">पासवर्ड: %1$s</string>
+    <string name="guest_reminder_hint">बंद करने के लिए OK दबाएँ</string>
+    <string name="guest_message_hint">बंद करने के लिए OK दबाएँ</string>
+    <string name="guest_menu_title">अतिथि मेनू</string>
+    <string name="guest_menu_hint">OK = खोलें · BACK = बंद करें</string>
+    <string name="guest_qr_hint">अपने फ़ोन के कैमरे से स्कैन करें</string>
+    <string name="guest_back_hint">वापस जाने के लिए BACK दबाएँ</string>
+    <string name="guest_cast_title">फ़ोन से कास्ट करें</string>
+    <string name="guest_cast_default">अपने फ़ोन को होटल के Wi-Fi से जोड़ें, YouTube, Netflix या फ़ोटो खोलें, कास्ट आइकन दबाएँ और यह टीवी चुनें।</string>
+    <string name="live_tv">लाइव टीवी</string>
+    <string name="input_unavailable">यह सुविधा इस टीवी पर उपलब्ध नहीं है। कृपया रिसेप्शन से संपर्क करें।</string>
+    <string name="suspended_default_title">सेवा अभी बंद है</string>
+    <string name="suspended_default_message">कृपया रिसेप्शन से संपर्क करें।</string>
+    <string name="suspended_support">सहायता: %1$s</string>
+
+    <string name="settings_title_brand">%1$s – सेटिंग्स</string>
+    <string name="setup_title_brand">%1$s – पहली बार सेटअप</string>
+    <string name="register_error_hotel_suspended">पंजीकरण अस्वीकृत: इस होटल की सेवा अभी बंद है (HOTEL_SUSPENDED)। कृपया अपने सेवा प्रदाता से संपर्क करें।</string>
+    <string name="register_error_license_limit">पंजीकरण अस्वीकृत: इस होटल के लाइसेंस की टीवी सीमा पूरी हो गई है (LICENSE_LIMIT)। एडमिन पैनल में पुराना टीवी हटाएँ या प्लान अपग्रेड करें।</string>
+    <string name="register_error_invalid_key">पंजीकरण अस्वीकृत: पंजीकरण कुंजी गलत है (INVALID_REGISTRATION_KEY)। Admin → Settings → Devices से फिर से कॉपी करें।</string>
+    <string name="register_error_room_not_found">पंजीकरण अस्वीकृत: कमरा नहीं मिला (ROOM_NOT_FOUND)। पहले एडमिन पैनल में कमरा बनाएँ।</string>
+    <string name="provision_invalid">सेटअप टूल के मान अमान्य हैं: %1$s</string>
+    <string name="provision_rejected">सेटअप टूल के मान अनदेखे किए गए: %1$s</string>
+    <string name="provision_filled">सेटअप टूल के मान भर दिए गए। “सहेजें और पंजीकरण करें” चुनें।</string>
+    <string name="info_hotel">होटल</string>
+</resources>
