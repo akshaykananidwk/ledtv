@@ -150,7 +150,7 @@ if ($action === 'new' || $action === 'edit') {
           </div>
           <div class="card-body" style="max-height:60vh;overflow:auto">
             <?php if (!$byFloor): ?><div class="text-muted"><?= e(__('No rooms yet.')) ?></div><?php endif; ?>
-            <?php foreach ($byFloor as $floor => $list): ?>
+            <?php foreach ($byFloor as $floor => $list): $floor = (string) $floor; ?>
               <div class="mb-2">
                 <div class="small fw-semibold text-muted mb-1">
                   <?= e($floor !== '' ? __('Floor') . ' ' . $floor : __('No floor')) ?>

@@ -43,7 +43,7 @@ $cards = [
 
 <div class="row g-3 mb-3">
   <?php foreach ($cards as [$key, $icon, $cls, $label, $value, $href]): ?>
-  <div class="col-6 col-md-4 col-xl-2">
+  <div class="col-6 col-md-4 col-xxl-2">
     <a href="<?= e($href) ?>" class="card text-decoration-none text-body h-100">
       <div class="stat-card">
         <div class="stat-icon <?= e($cls) ?>"><i class="bi <?= e($icon) ?>"></i></div>

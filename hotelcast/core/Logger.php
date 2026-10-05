@@ -50,7 +50,11 @@ final class Logger
         if (!$fh) {
             return [];
         }
-        $size = filesize($file);
+        $size = (int) filesize($file);
+        if ($size === 0) {
+            fclose($fh);
+            return [];
+        }
         $chunk = min($size, 256 * 1024);
         fseek($fh, -$chunk, SEEK_END);
         $data = fread($fh, $chunk) ?: '';

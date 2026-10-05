@@ -19,7 +19,7 @@ hotelcast/storage/cache/*
 !hotelcast/storage/cache/.gitkeep
 hotelcast/tests/.phpunit.cache/
 *.phar
-/dist/
+
 .DS_Store
 .idea/
 .vscode/

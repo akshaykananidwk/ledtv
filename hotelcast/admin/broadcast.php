@@ -282,7 +282,7 @@ require __DIR__ . '/partials/header.php';
           <td class="small text-nowrap"><?= e(date('d M H:i', (int) strtotime($b['created_at']))) ?></td>
           <td>
             <?php if ((int) $b['is_emergency']): ?><span class="badge text-bg-danger"><?= e(__('Emergency')) ?></span><?php endif; ?>
-            <?= e($b['command'] === 'SHOW_CONTENT' || $b['command'] === 'EMERGENCY' ? $b['title'] : command_label($b['command'])) ?>
+            <?= e(in_array($b['command'], ['SHOW_CONTENT', 'EMERGENCY'], true) && $b['title'] !== $b['command'] ? $b['title'] : command_label($b['command'])) ?>
             <?php if ($b['mode'] !== 'now'): ?><div class="small text-muted"><?= e(schedule_summary($b)) ?></div><?php endif; ?>
           </td>
           <td class="d-none d-md-table-cell small"><?= e(Broadcaster::describeTarget($b['target_type'], $b['target_ids'])) ?></td>

@@ -77,8 +77,8 @@ if (is_post()) {
                 }
                 $data = [
                     'room_number' => $number,
-                    'name' => req_str('name', $_POST, 120) ?: null,
-                    'floor' => req_str('floor', $_POST, 20) ?: guess_floor($number),
+                    'name' => req_str('name', $_POST, 120) !== '' ? req_str('name', $_POST, 120) : null,
+                    'floor' => req_str('floor', $_POST, 20) !== '' ? req_str('floor', $_POST, 20) : guess_floor($number),
                     'is_enabled' => !empty($_POST['is_enabled']) ? 1 : 0,
                     'settings_pin' => $pin ?: null,
                     'notes' => req_str('notes', $_POST, 500) ?: null,
