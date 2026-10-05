@@ -369,6 +369,20 @@ final class Auth
         return isset(self::PLATFORM_PERMISSIONS[$permission]) || is_array(self::$extraPermissions[$permission] ?? null);
     }
 
+    /**
+     * Would a user with $role have $permission inside a hotel (no session needed)? Used to pick the
+     * recipients of staff alerts. Platform roles act as super_admin inside a hotel.
+     */
+    public static function roleCan(string $role, string $permission): bool
+    {
+        $rule = self::PLATFORM_PERMISSIONS[$permission] ?? self::$extraPermissions[$permission] ?? self::PERMISSIONS[$permission] ?? 'super_admin';
+        if (is_array($rule)) {
+            return in_array($role, $rule, true);
+        }
+        $level = in_array($role, self::PLATFORM_ROLES, true) ? self::ROLE_LEVEL['super_admin'] : (self::ROLE_LEVEL[$role] ?? 0);
+        return $level > 0 && $level >= (self::ROLE_LEVEL[$rule] ?? 99);
+    }
+
     public static function can(string $permission): bool
     {
         $rule = self::PLATFORM_PERMISSIONS[$permission] ?? self::$extraPermissions[$permission] ?? self::PERMISSIONS[$permission] ?? 'super_admin';
