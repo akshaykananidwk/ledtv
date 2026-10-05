@@ -393,4 +393,9 @@ final class TenancyTest extends TestCase
         $this->expectException(TenantException::class);
         ContentResolver::build(DB::one('SELECT * FROM rooms WHERE id = :id', ['id' => self::$b['room']]));
     }
+
+    public function testNoPhpWarningsLogged(): void
+    {
+        $this->assertSame('', TestEnv::phpErrors(), 'PHP warnings in logs/php_error.log');
+    }
 }

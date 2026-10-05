@@ -493,4 +493,9 @@ final class PlatformTest extends TestCase
         [, , $html] = self::$root->get('platform_hotels.php');
         $this->assertStringContainsString('StayCast', $html);
     }
+
+    public function testNoPhpWarningsLogged(): void
+    {
+        $this->assertSame('', TestEnv::phpErrors(), 'PHP warnings in logs/php_error.log');
+    }
 }

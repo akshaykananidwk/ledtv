@@ -1,6 +1,7 @@
 <?php
 declare(strict_types=1);
 
+use PHPUnit\Framework\Attributes\Depends;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -19,7 +20,7 @@ final class MigrationUpgradeTest extends TestCase
 
     public static function setUpBeforeClass(): void
     {
-        self::$dbName = 'hotelcast_mig_' . getmypid();
+        self::$dbName = 'hotelcast_inst_mig_' . getmypid(); // hotelcast_inst* = test grant pattern
         $db = TestEnv::$db;
         $server = new PDO(sprintf('mysql:host=%s;port=%d;charset=utf8mb4', $db['host'], $db['port']), $db['user'], $db['pass'], [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
         $server->exec('DROP DATABASE IF EXISTS `' . self::$dbName . '`');
@@ -136,7 +137,7 @@ final class MigrationUpgradeTest extends TestCase
         Tenant::run(1, fn () => DB::insert('rooms', ['room_number' => '101']));
     }
 
-    /** @depends testUpgradePreservesDataInHotelOne */
+    #[Depends('testUpgradePreservesDataInHotelOne')]
     public function testAppLogicWorksOnUpgradedData(): void
     {
         self::useMigDb();
@@ -155,7 +156,7 @@ final class MigrationUpgradeTest extends TestCase
         $this->assertSame([], Migrator::migrate(), 'idempotent');
     }
 
-    /** @depends testAppLogicWorksOnUpgradedData */
+    #[Depends('testAppLogicWorksOnUpgradedData')]
     public function testUpgradedInstallationWorksOverHttp(): void
     {
         $dir = sys_get_temp_dir() . '/hotelcast_mig_app_' . getmypid();
@@ -194,7 +195,8 @@ final class MigrationUpgradeTest extends TestCase
             $partner = new AdminSession($url, 'partner', 'Owner123!');
             $this->assertSame(200, $partner->get('users.php')[0]);
             $this->assertSame(403, $partner->get('update.php')[0]);
-            $this->assertSame([], glob($dir . '/logs/php_error.log') ? array_filter(file($dir . '/logs/php_error.log') ?: []) : []);
+            $log = $dir . '/logs/php_error.log';
+            $this->assertFalse(is_file($log) && trim((string) file_get_contents($log)) !== '', 'no PHP warnings: ' . (is_file($log) ? file_get_contents($log) : ''));
         } finally {
             TestEnv::rmTree($dir);
         }

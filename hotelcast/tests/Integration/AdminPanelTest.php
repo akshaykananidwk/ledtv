@@ -118,6 +118,7 @@ final class AdminPanelTest extends TestCase
         [$s, , $html] = TestEnv::http('GET', self::$url . 'admin/' . $page, null, [], self::jar($user));
         $this->assertSame($allowed ? 200 : 403, $s, "$page as $user");
         if ($allowed) {
+            $this->assertFalse(TestEnv::hasPhpError($html), "$page as $user shows a PHP error");
             $this->assertStringNotContainsString('Fatal error', $html);
             $this->assertStringNotContainsString('Warning:', $html);
             $this->assertStringNotContainsString('Notice:', $html);
@@ -201,5 +202,10 @@ final class AdminPanelTest extends TestCase
         [$s] = TestEnv::http('GET', self::$url . 'admin/index.php', null, [], self::jar('mgr'));
         $this->assertSame(302, $s);
         unset(self::$jars['mgr']);
+    }
+
+    public function testNoPhpWarningsLogged(): void
+    {
+        $this->assertSame('', TestEnv::phpErrors(), 'PHP warnings in logs/php_error.log');
     }
 }

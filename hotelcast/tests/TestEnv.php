@@ -140,6 +140,19 @@ final class TestEnv
         return [$status, json_decode($body, true), $body, $head];
     }
 
+    /** PHP warnings / errors logged by the sandbox app (logs/php_error.log), '' when none. */
+    public static function phpErrors(?string $root = null): string
+    {
+        $f = ($root ?? HC_ROOT) . '/logs/php_error.log';
+        return is_file($f) ? trim((string) file_get_contents($f)) : '';
+    }
+
+    /** True if an HTML response contains a displayed PHP error (plain or html_errors format). */
+    public static function hasPhpError(string $html): bool
+    {
+        return (bool) preg_match('#(<b>)?(Warning|Notice|Deprecated|Fatal error|Parse error)(</b>)?:\s#', $html);
+    }
+
     public static function rmTree(string $dir): void
     {
         if (!is_dir($dir)) {

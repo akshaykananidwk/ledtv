@@ -5,7 +5,7 @@
  *   php -S 127.0.0.1:8080 -t hotelcast hotelcast/tests/router.php
  */
 $path = rawurldecode(parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/');
-if (preg_match('#^/(core|backups|logs|storage|migrations|lang|tests)(/|$)#', $path) || preg_match('#/\.#', $path)
+if (preg_match('#^/(core|backups|logs|storage|migrations|lang|tests|admin/partials|admin/ajax\.d|api/routes)(/|$)#', $path) || preg_match('#/\.#', $path)
     || preg_match('#^/(config\.php|installed\.lock|cron\.php)$#', $path)) {
     http_response_code(403);
     echo 'Forbidden';

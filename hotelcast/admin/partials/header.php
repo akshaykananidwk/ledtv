@@ -12,11 +12,11 @@ $pageTitle = $pageTitle ?? 'HotelCast';
 $activeNav = $activeNav ?? '';
 $extraScripts = $extraScripts ?? [];
 $extraStyles = $extraStyles ?? [];
-$brand = Branding::get();
+$hdrBrand = Branding::get();
 $inHotel = Tenant::has();
-$hotelName = $inHotel ? (string) Settings::get('hotel_name', $brand['product']) : $brand['product'];
+$hotelName = $inHotel ? (string) Settings::get('hotel_name', $hdrBrand['product']) : $hdrBrand['product'];
 $hotelLogo = $inHotel ? media_url((string) Settings::get('hotel_logo', '')) : null;
-$hotelLogo = $hotelLogo ?: $brand['logo_url'];
+$hotelLogo = $hotelLogo ?: $hdrBrand['logo_url'];
 $lang = I18n::lang();
 
 // Sidebar from the navigation registry (admin/partials/nav.d/*.php).
@@ -53,7 +53,7 @@ $hdrLicense = $user ? License::banner() : null;
 <link rel="stylesheet" href="<?= e(asset($s)) ?>">
 <?php endforeach; ?>
 <link rel="stylesheet" href="<?= e(asset('css/admin.css')) ?>">
-<style>:root{--hc-accent:<?= e($brand['color']) ?>;--hc-accent-dark:<?= e(Branding::shade($brand['color'])) ?>}</style>
+<style>:root{--hc-accent:<?= e($hdrBrand['color']) ?>;--hc-accent-dark:<?= e(Branding::shade($hdrBrand['color'])) ?>}</style>
 <script src="<?= e(asset('vendor/bootstrap/js/bootstrap.bundle.min.js')) ?>" defer></script>
 <?php foreach ($extraScripts as $s): ?>
 <script src="<?= e(asset($s)) ?>" defer></script>
@@ -74,15 +74,15 @@ $hdrLicense = $user ? License::banner() : null;
     <div class="offcanvas-header hc-brand">
       <a class="d-flex align-items-center gap-2 text-decoration-none text-white" href="<?= e(admin_url('index.php')) ?>" id="hcSidebarLabel">
         <?php if ($hotelLogo): ?><img src="<?= e($hotelLogo) ?>" alt="" class="hc-brand-logo"><?php else: ?><span class="hc-brand-icon"><i class="bi bi-tv"></i></span><?php endif; ?>
-        <span class="hc-brand-text"><strong><?= e($brand['product']) ?></strong><small><?= e($hotelName) ?></small></span>
+        <span class="hc-brand-text"><strong><?= e($hdrBrand['product']) ?></strong><small><?= e($hotelName) ?></small></span>
       </a>
       <button type="button" class="btn-close btn-close-white d-lg-none" data-bs-dismiss="offcanvas" data-bs-target="#hcSidebar" aria-label="<?= e(__('Close')) ?>"></button>
     </div>
     <div class="offcanvas-body p-0">
       <nav class="hc-nav nav flex-column w-100">
-        <?php foreach ($navSections as $section => $items): ?>
-          <?php if (count($navSections) > 1): ?><div class="hc-nav-section"><?= e($sectionTitles[$section] ?? ucfirst($section)) ?></div><?php endif; ?>
-          <?php foreach ($items as [$key, $href, $perm, $icon, $label]): ?>
+        <?php foreach ($navSections as $hdrSection => $hdrNavItems): ?>
+          <?php if (count($navSections) > 1): ?><div class="hc-nav-section"><?= e($sectionTitles[$hdrSection] ?? ucfirst($hdrSection)) ?></div><?php endif; ?>
+          <?php foreach ($hdrNavItems as [$key, $href, $perm, $icon, $label]): ?>
           <a class="nav-link<?= $activeNav === $key ? ' active' : '' ?>" href="<?= e(admin_url($href)) ?>"<?= $activeNav === $key ? ' aria-current="page"' : '' ?>>
             <i class="bi <?= e($icon) ?>"></i><span><?= e($label) ?></span>
           </a>
@@ -90,7 +90,7 @@ $hdrLicense = $user ? License::banner() : null;
         <?php endforeach; ?>
       </nav>
       <div class="hc-sidebar-foot small">
-        <?= e($brand['product']) ?> v<?= e(Version::current()['version']) ?>
+        <?= e($hdrBrand['product']) ?> v<?= e(Version::current()['version']) ?>
       </div>
     </div>
   </aside>

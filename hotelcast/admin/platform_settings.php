@@ -16,6 +16,7 @@ if ($saas) {
     $tabs['billing'] = [__('Billing'), 'bi-receipt'];
 }
 $tabs['notify'] = [__('Notifications'), 'bi-bell'];
+$tabs['admins'] = [__('Platform admins'), 'bi-shield-lock'];
 $tabs['license'] = [__('License'), 'bi-key'];
 $tab = isset($tabs[$_GET['tab'] ?? $_POST['tab'] ?? '']) ? (string) ($_GET['tab'] ?? $_POST['tab']) : 'branding';
 
@@ -107,6 +108,31 @@ if (is_post()) {
             }
             break;
 
+        case 'add_admin':
+            [$acc, $errs] = Hotels::validateAdmin($_POST, true);
+            $errors = array_merge($errors, $errs);
+            if (!$errors) {
+                $uid = DB::insert('users', [
+                    'hotel_id' => null, 'role' => 'platform_admin', 'username' => $acc['username'], 'email' => $acc['email'],
+                    'full_name' => $acc['full_name'], 'password_hash' => Auth::hash($acc['password']), 'language' => 'en', 'is_active' => 1, 'created_at' => now(),
+                ]);
+                ActivityLog::add('user_create', 'user', $uid, $acc['username'] . ' (platform_admin)');
+            }
+            break;
+
+        case 'toggle_admin':
+            $uid = req_int('user_id', $_POST);
+            $u = DB::one("SELECT * FROM users WHERE id = :id AND role = 'platform_admin'", ['id' => $uid]);
+            $active = (int) DB::value("SELECT COUNT(*) FROM users WHERE role = 'platform_admin' AND is_active = 1");
+            if (!$u || $uid === Auth::id() || ((int) $u['is_active'] && $active <= 1)) {
+                $errors[] = __('You cannot disable your own account or the last platform admin.');
+            } else {
+                DB::update('users', ['is_active' => (int) $u['is_active'] ? 0 : 1], 'id = :id', ['id' => $uid]);
+                Auth::revokeUserSessions($uid);
+                ActivityLog::add('user_update', 'user', $uid, $u['username'] . ((int) $u['is_active'] ? ' disabled' : ' enabled'));
+            }
+            break;
+
         case 'license_check':
             $s = License::check(true);
             flash($s['status'] === 'invalid' ? 'danger' : 'success', __('License status: :s', ['s' => $s['status']]) . ' — ' . $s['message']);
@@ -179,6 +205,32 @@ require __DIR__ . '/partials/header.php';
   <div class="col-12"><label class="form-label" for="n_from"><?= e(__('Sender address for invoices and reminders')) ?></label><input class="form-control" type="email" id="n_from" name="platform_from_email" value="<?= $val('platform_from_email') ?>" placeholder="billing@example.com"></div>
   <div class="col-12"><button class="btn btn-primary"><i class="bi bi-check-lg"></i> <?= e(__('Save settings')) ?></button></div>
 </div></form>
+
+<?php elseif ($tab === 'admins'): $admins = DB::all("SELECT u.*, h.name AS hotel_name FROM users u LEFT JOIN hotels h ON h.id = u.hotel_id WHERE u.role = 'platform_admin' ORDER BY u.username"); ?>
+<div class="row g-3" style="max-width:1000px">
+  <div class="col-lg-7"><div class="card"><div class="card-header"><?= e(__('Platform admins')) ?></div><ul class="list-group list-group-flush">
+    <?php foreach ($admins as $a): ?>
+      <li class="list-group-item d-flex justify-content-between align-items-center gap-2 small">
+        <span><strong><?= e($a['full_name'] ?: $a['username']) ?></strong> · <?= e($a['username']) ?> · <?= e($a['email']) ?>
+          <?= $a['hotel_name'] ? '<span class="badge text-bg-light border">' . e(__('Hotel')) . ': ' . e($a['hotel_name']) . '</span>' : '' ?>
+          <?= (int) $a['is_active'] ? '' : '<span class="text-danger">' . e(__('Disabled')) . '</span>' ?></span>
+        <?php if ((int) $a['id'] !== Auth::id()): ?>
+        <form method="post" class="m-0"><?= Csrf::field() ?><input type="hidden" name="op" value="toggle_admin"><input type="hidden" name="tab" value="admins"><input type="hidden" name="user_id" value="<?= (int) $a['id'] ?>">
+          <button class="btn btn-sm btn-light border"><?= e((int) $a['is_active'] ? __('Disable') : __('Enable')) ?></button></form>
+        <?php endif; ?>
+      </li>
+    <?php endforeach; ?>
+  </ul></div></div>
+  <div class="col-lg-5"><div class="card"><div class="card-header"><?= e(__('Add platform admin')) ?></div><div class="card-body">
+    <p class="small text-muted"><?= e(__('Platform admins manage all hotels, plans, invoices, licenses and updates.')) ?></p>
+    <form method="post" class="row g-2" autocomplete="off"><?= Csrf::field() ?><input type="hidden" name="op" value="add_admin"><input type="hidden" name="tab" value="admins">
+      <div class="col-sm-6"><input class="form-control" name="admin_username" placeholder="<?= e(__('Username')) ?>" required></div>
+      <div class="col-sm-6"><input class="form-control" name="admin_name" placeholder="<?= e(__('Full name')) ?>"></div>
+      <div class="col-12"><input class="form-control" type="email" name="admin_email" placeholder="<?= e(__('Email')) ?>" required></div>
+      <div class="col-12"><input class="form-control" type="password" name="admin_password" placeholder="<?= e(__('Password')) ?>" required autocomplete="new-password"></div>
+      <div class="col-12"><button class="btn btn-primary"><i class="bi bi-person-plus"></i> <?= e(__('Create')) ?></button></div>
+    </form></div></div></div>
+</div>
 
 <?php else: $ls = License::state(); ?>
 <div class="card" style="max-width:760px"><div class="card-body">
