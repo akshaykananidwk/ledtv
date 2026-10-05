@@ -8,6 +8,9 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/common.php';
 
+// Actions on platform / reseller pages are platform-level (never in a hotel's activity log).
+ActivityLog::$platformScope = true;
+
 /**
  * Save a hotel from $_POST (create or update). $resellerId forces the reseller (reseller panel,
  * limited fields). Redirects back to $backUrl with errors. Returns the hotel id.

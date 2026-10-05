@@ -289,7 +289,8 @@ final class Auth
         }
         $_SESSION['hc_hotel'] = $hotelId;
         Tenant::set($hotelId);
-        ActivityLog::add('hotel_enter', 'hotel', $hotelId, 'Entered hotel #' . $hotelId);
+        // Logged in the entered hotel: its staff can see when the platform / reseller worked in it.
+        ActivityLog::add('hotel_enter', 'hotel', $hotelId, 'Entered hotel #' . $hotelId, $hotelId);
         return true;
     }
 

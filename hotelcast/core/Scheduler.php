@@ -59,7 +59,8 @@ final class Scheduler
             if ($force || (int) date('i') === 0 || mt_rand(1, 180) === 1) {
                 self::housekeeping();
             }
-            $result['tasks'] = self::runTasks($force);
+            // Tasks keep their own interval even on a forced (cron) tick.
+            $result['tasks'] = self::runTasks();
         } catch (Throwable $e) {
             Logger::error('Scheduler tick failed: ' . $e->getMessage());
             $result['error'] = $e->getMessage();

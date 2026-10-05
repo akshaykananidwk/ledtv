@@ -23,7 +23,7 @@ schedule karo, emergency message moklo, TV reboot/update karo.*
 |------|--------|------|
 | Server: admin panel + REST API + installer + auto-updater | [`hotelcast/`](hotelcast) | PHP 8.1+, MySQL 8 / MariaDB 10.6, Apache, Bootstrap 5, vanilla JS — no Composer, no Node |
 | Android TV app | [`android/`](android) | Kotlin, ExoPlayer 2.19, Retrofit, OkHttp, Glide, WorkManager — min SDK 21, target 34 |
-| Documentation | [`docs/`](docs) | Install guide, TV setup, admin guide, API, security, test report |
+| Documentation | [`docs/`](docs) | Install guide, TV setup, admin guide, API, developer guide (tenancy + extension points), security, test report |
 
 ## Features
 
@@ -38,6 +38,13 @@ content library (uploads with resize/compression, streams, URLs, announcements, 
 drag-and-drop playlists · push now / schedule / daily time windows / repeat days · emergency broadcast ·
 calendar · users with Super Admin / Manager / Staff roles · APK manager · logs & reports with CSV export ·
 settings · GitHub auto-update with backup + auto-rollback · TV-simulator preview of any content or room.
+
+**Multi-hotel platform (2.0)** — one server hosts many hotels, each with its own login and fully
+isolated data · platform admin: hotels (create / suspend / enter), plans with TV limits, monthly
+invoices with tax (manual payments, overdue reminders, auto-suspend & reactivation), resellers with
+commission reports, license keys for self-hosted installs · white-label branding (platform → reseller →
+hotel) on login, admin panel, invoices and TVs · roles Platform Admin / Reseller / Super Admin /
+Manager / Staff / Reception · extension points for modules ([docs/DEVELOPER.md](docs/DEVELOPER.md)).
 
 ## Quick start
 

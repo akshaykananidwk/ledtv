@@ -1,15 +1,25 @@
 <?php
 declare(strict_types=1);
 
-/** Per-user audit trail (per hotel; hotel_id NULL = platform-level action). */
+/**
+ * Per-user audit trail, per hotel (activity_logs.hotel_id). Platform-level actions (platform /
+ * reseller pages, set ActivityLog::$platformScope = true) are stored with hotel_id NULL so they never
+ * show up in a hotel's log.
+ */
 final class ActivityLog
 {
-    public static function add(string $action, ?string $entityType = null, ?int $entityId = null, string $details = ''): void
+    public static bool $platformScope = false;
+
+    /** $hotelId: false = automatic (current hotel, or NULL in platform scope), null = platform, int = that hotel. */
+    public static function add(string $action, ?string $entityType = null, ?int $entityId = null, string $details = '', int|false|null $hotelId = false): void
     {
         $user = Auth::user();
+        if ($hotelId === false) {
+            $hotelId = self::$platformScope ? null : Tenant::current();
+        }
         try {
             DB::insert('activity_logs', [
-                'hotel_id' => Tenant::current(),
+                'hotel_id' => $hotelId,
                 'user_id' => $user['id'] ?? null,
                 'username' => $user['username'] ?? (PHP_SAPI === 'cli' ? 'system' : null),
                 'action' => substr($action, 0, 60),

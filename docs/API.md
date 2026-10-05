@@ -25,7 +25,9 @@ If Apache `mod_rewrite` is unavailable, every endpoint can also be called as
 ### Authentication
 
 1. A TV calls `POST /api/device/register` once with the hotel **registration key**
-   (shown in *Admin → Settings → Devices*). The server returns a `token`.
+   (shown in *Admin → Settings → Devices*). **The key identifies the hotel** (each hotel on a
+   multi-hotel platform has its own unique key), so the TV is registered into that hotel.
+   The server returns a `token`; the token (and therefore every later call) is bound to that hotel.
 2. Every subsequent call sends the headers:
 
 ```
@@ -62,6 +64,7 @@ Response `data`:
 {
   "token": "f3a9...64 hex chars",
   "device_id": "2b1c5d9e-...",
+  "hotel": { "id": 1, "name": "Hotel Dwarka Palace" },
   "room": { "id": 12, "number": "101", "name": "Deluxe 101", "floor": "1" },
   "poll_interval": 8,
   "heartbeat_interval": 60,
@@ -69,7 +72,18 @@ Response `data`:
 }
 ```
 
-Errors: `INVALID_REGISTRATION_KEY` (401), `ROOM_NOT_FOUND` (404), `VALIDATION_ERROR` (400).
+Errors:
+
+| code | HTTP | when |
+|------|------|------|
+| `INVALID_REGISTRATION_KEY` | 401 | the key does not belong to any hotel |
+| `HOTEL_SUSPENDED` | 403 | the key's hotel is suspended / expired, or a self-hosted license is invalid; `message` is human readable |
+| `LICENSE_LIMIT` | 403 | the hotel already has its maximum number of active TVs (plan / hotel limit / license; unlicensed self-hosted installs: 2). Re-registering an already counted TV is always allowed. |
+| `ROOM_NOT_FOUND` | 404 | room does not exist and auto-create is off |
+| `VALIDATION_ERROR` | 400 | missing / malformed fields |
+
+The same physical TV (`device_id`) registered into two different hotels gets two independent device
+records — re-registering into hotel B never takes over hotel A's record.
 
 ---
 
@@ -177,7 +191,9 @@ Returns the Content object currently scheduled for a room. A device may only rea
   "mode": "assigned",
   "screen_on": true,
   "room": { "id": 12, "number": "101", "name": "Deluxe 101", "floor": "1" },
-  "hotel": { "name": "Hotel Dwarka Palace", "logo_url": "https://.../uploads/branding/logo.png" },
+  "hotel": { "id": 1, "name": "Hotel Dwarka Palace", "logo_url": "https://.../uploads/h1/branding/2026/10/logo.png" },
+  "branding": { "product": "HotelCast", "logo_url": null, "color": "#7B1FA2", "support": "+91 98765 43210" },
+  "suspended": null,
   "playlist": { "id": 3, "name": "Morning loop", "transition": "fade", "loop": true },
   "items": [ ContentItem, ... ],
   "overlay": {
@@ -201,9 +217,21 @@ Returns the Content object currently scheduled for a room. A device may only rea
 | `group`     | content assigned to one of the room's groups |
 | `default`   | hotel default content |
 | `off`       | the room is switched off — show a black screen (`screen_on` = false) |
+| `suspended` | the hotel's service is paused (suspended / expired account or invalid license). `items` is empty; show `suspended.title` + `suspended.message` (e.g. "Service paused — please contact reception") with the `branding`. Emergencies still override it. |
 | `empty`     | nothing to show — show the hotel logo / welcome screen |
 
 When `emergency` is not null it is: `{ "id": 9, "title": "...", "message": "...", "bg_color": "#B00020", "text_color": "#FFFFFF" }`.
+
+`branding` (always present) is the white-label branding of the hotel: platform settings, overridden by
+the hotel's reseller and then by the hotel itself — `product` (name), `logo_url` (or null), `color`
+(`#RRGGBB`) and `support` (phone or email, or null). The TV uses it for its welcome / idle / paused
+screens; no app rebuild is needed for a rebrand.
+
+`suspended` is `{ "title": "...", "message": "..." }` when `mode` is `suspended` (texts in the hotel's
+default language), otherwise absent / null.
+
+Modules may add more fields through content extensions (see docs/DEVELOPER.md); the TV must ignore
+unknown fields.
 
 ### ContentItem
 
@@ -222,7 +250,8 @@ Common fields: `id`, `type`, `title`, `duration` (seconds the item stays on scre
 | `youtube`      | `url` (original), `embed_url` (open in WebView, autoplay) |
 | `clock`        | `style` (`digital` \| `analog`), `bg_color`, `text_color` |
 
-Media URLs (`image`, `video`) point to `/uploads/media/YYYY/MM/<random>.ext` (or the configured CDN base
+Media URLs (`image`, `video`) point to `/uploads/h<hotel_id>/media/YYYY/MM/<random>.ext` (files uploaded
+before 2.0 keep their old `/uploads/media/YYYY/MM/…` address) (or the configured CDN base
 URL + the same path). File names are random 96-bit tokens; `uploads/.htaccess` disables script execution,
 directory listing and HTML/SVG/JS files. The TV should cache media files locally keyed by URL
 and keep the last Content object on disk to show while offline.
@@ -230,6 +259,27 @@ and keep the last Content object on disk to show while offline.
 ### GET /api/device/apk/{apk_id}
 
 Downloads an APK (device auth required). Response is `application/vnd.android.package-archive`.
+
+### POST /api/license/check (license server)
+
+Answered by the SaaS platform (`mode` = `saas`) for self-hosted installations. No authentication;
+rate limited per IP (`license_rate_per_min`, default 30 / minute → `429 RATE_LIMITED`).
+
+Request: `{ "key": "HC-XXXXX-XXXXX-XXXXX-XXXXX", "domain": "hotel.example.com", "version": "2.0.0", "tv_count": 12 }`
+
+Response `data` (always HTTP 200 — an invalid key is an answer, not an error):
+
+```json
+{ "valid": true, "hotel": "Hilltop Resort", "max_tvs": 25, "expires_at": "2027-10-05T23:59:59+05:30",
+  "features": [], "message": "License valid" }
+```
+
+`valid` is false (with a `message`) for an unknown or revoked key, an expired license, a linked hotel
+that is suspended, or a different domain: the key is **bound to the domain of its first check**; the
+platform admin can reset the binding (Platform → Licenses). `domain` may be a host name or a URL.
+Clients check once a day and keep working for 14 days when the server cannot be reached.
+
+A standalone (self-hosted) installation answers this route with `404 NOT_FOUND`.
 
 ### GET /api/health
 
@@ -251,16 +301,26 @@ request. Base: `/admin/ajax.php?action=<name>`.
 | `emergency_start`     | POST   | staff+          | `{title, message, target_type, target_ids[]}` |
 | `emergency_stop`      | POST   | staff+          | clears all active emergencies |
 | `preview_content`     | GET    | any             | `content_id` or `playlist_id` → Content object preview |
-| `update_check`        | POST   | super_admin     | checks GitHub (latest commit, version, changed files, commits) |
-| `update_run`          | POST   | super_admin     | runs the full update; returns step log |
-| `update_status`       | GET    | super_admin     | live log of the running update (polled every 1.5 s) |
-| `update_health`       | POST   | super_admin     | full health check + system report |
-| `rollback`            | POST   | super_admin     | `{history_id}` or `{backup, restore_db}` |
-| `update_backup_create`| POST   | super_admin     | `{include_uploads}` |
-| `update_backup_delete`| POST   | super_admin     | `{name}` |
-| `update_backup_upload`| POST   | super_admin     | multipart `backup` (.zip) |
-| `update_backup_download` | GET | super_admin     | `name`, `token` (CSRF token) |
+| `update_check`        | POST   | platform_admin  | checks GitHub (latest commit, version, changed files, commits) |
+| `update_run`          | POST   | platform_admin  | runs the full update; returns step log |
+| `update_status`       | GET    | platform_admin  | live log of the running update (polled every 1.5 s) |
+| `update_health`       | POST   | platform_admin  | full health check + system report |
+| `rollback`            | POST   | platform_admin  | `{history_id}` or `{backup, restore_db}` |
+| `update_backup_create`| POST   | platform_admin  | `{include_uploads}` |
+| `update_backup_delete`| POST   | platform_admin  | `{name}` |
+| `update_backup_upload`| POST   | platform_admin  | multipart `backup` (.zip) |
+| `update_backup_download` | GET | platform_admin  | `name`, `token` (CSRF token) |
+| `platform_stats`      | GET    | platform_admin  | hotels, active hotels, TVs, TVs online, unpaid total (example module action, `admin/ajax.d/platform.php`) |
 
 The update/backup actions live in `admin/ajax_update.php` (also reachable through `admin/ajax.php`).
+Unknown actions `<prefix>_<name>` are delegated to `admin/ajax.d/<prefix>.php` (module actions).
 
-Roles: `super_admin` > `manager` > `staff`.
+Every action works on the **current hotel** of the session (the user's hotel, or the hotel a platform
+admin / reseller has entered). Ids of another hotel's rooms, groups, content, playlists, broadcasts
+or devices are refused with `404 NOT_FOUND` (and logged in `logs/security.log`).
+
+Additional error codes: `NO_HOTEL` (409 — a platform user called a hotel action without entering a
+hotel), `HOTEL_SUSPENDED` (403 — the hotel is suspended: the admin panel is read-only except billing).
+
+Roles inside a hotel: `super_admin` > `manager` > `staff` > `reception`. Platform roles:
+`platform_admin` (whole platform; acts as super admin inside any hotel) and `reseller` (own hotels).
