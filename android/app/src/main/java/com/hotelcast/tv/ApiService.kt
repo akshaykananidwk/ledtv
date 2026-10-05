@@ -1,9 +1,12 @@
 package com.hotelcast.tv
 
+import okhttp3.MultipartBody
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
+import retrofit2.http.Multipart
 import retrofit2.http.POST
+import retrofit2.http.Part
 import retrofit2.http.Path
 import retrofit2.http.Query
 
@@ -35,6 +38,21 @@ interface ApiService {
 
     @GET("content/{room_id}")
     suspend fun content(@Path("room_id") roomId: Long): Response<ApiEnvelope<Content>>
+
+    // ---- V2 support endpoints ----
+
+    @Multipart
+    @POST("device/screenshot")
+    suspend fun screenshot(@Part image: MultipartBody.Part): Response<ApiEnvelope<Any>>
+
+    @POST("device/logs")
+    suspend fun logs(@Body body: LogsRequest): Response<ApiEnvelope<Any>>
+
+    @POST("device/crash")
+    suspend fun crash(@Body body: CrashRequest): Response<ApiEnvelope<Any>>
+
+    @POST("device/event")
+    suspend fun event(@Body body: EventRequest): Response<ApiEnvelope<Any>>
 
     @GET("health")
     suspend fun health(): Response<ApiEnvelope<HealthResponse>>
