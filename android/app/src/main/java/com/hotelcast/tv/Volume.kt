@@ -80,8 +80,7 @@ object VolumeController {
         context.applicationContext.getSystemService(Context.AUDIO_SERVICE) as? AudioManager
 
     fun currentPercent(context: Context): Int? = try {
-        val am = am(context) ?: return null
-        VolumePolicy.indexToPercent(am.getStreamVolume(STREAM), am.getStreamMaxVolume(STREAM))
+        am(context)?.let { VolumePolicy.indexToPercent(it.getStreamVolume(STREAM), it.getStreamMaxVolume(STREAM)) }
     } catch (e: Exception) {
         null
     }
@@ -122,9 +121,9 @@ object VolumeController {
     /** Clamps the current volume to the allowed max (night limit). Returns true if it was lowered. */
     fun enforce(context: Context, cfg: VolumeConfig?): Boolean {
         if (cfg == null) return false
+        val am = am(context) ?: return false
+        if (isFixed(am)) return false
         return try {
-            val am = am(context) ?: return false
-            if (isFixed(am)) return false
             val max = am.getStreamMaxVolume(STREAM)
             val allowed = VolumePolicy.maxIndexFor(VolumePolicy.effectiveMax(cfg, VolumePolicy.minutesOfDay()), max)
             val cur = am.getStreamVolume(STREAM)

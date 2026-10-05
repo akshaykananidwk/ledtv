@@ -166,11 +166,18 @@ final class Installer
             $log[] = $m;
         });
         $log[] = $ran ? 'Created tables (' . implode(', ', $ran) . ')' : 'Tables already exist';
+        // A single install is hotel #1 (created by migration 002).
+        Tenant::set(1);
         $defaults = Settings::DEFAULTS;
-        $defaults['registration_key'] = strtoupper(substr(random_token(8), 0, 16));
+        $existingKey = (string) DB::value("SELECT setting_value FROM system_settings WHERE hotel_id = 1 AND setting_key = 'registration_key'");
+        $defaults['registration_key'] = $existingKey !== '' ? $existingKey : Hotels::newRegistrationKey();
         foreach ($defaults as $k => $v) {
-            DB::query('INSERT IGNORE INTO system_settings (setting_key, setting_value) VALUES (:k, :v)', ['k' => $k, 'v' => $v]);
+            DB::query('INSERT IGNORE INTO system_settings (hotel_id, setting_key, setting_value) VALUES (1, :k, :v)', ['k' => $k, 'v' => $v]);
         }
+        foreach (Settings::PLATFORM_DEFAULTS as $k => $v) {
+            DB::query('INSERT IGNORE INTO system_settings (hotel_id, setting_key, setting_value) VALUES (0, :k, :v)', ['k' => $k, 'v' => $v]);
+        }
+        DB::query('UPDATE hotels SET registration_key = :k WHERE id = 1', ['k' => $defaults['registration_key']]);
         Settings::flush();
         $log[] = 'Default settings saved';
         if ($demo) {
@@ -182,7 +189,8 @@ final class Installer
     /** Demo rooms, groups, content and playlist (English + Gujarati). */
     public static function demoData(): array
     {
-        if ((int) DB::value('SELECT COUNT(*) FROM rooms') > 0) {
+        Tenant::set(Tenant::current() ?? 1);
+        if ((int) DB::value('SELECT COUNT(*) FROM rooms WHERE hotel_id = :h', ['h' => Tenant::id()]) > 0) {
             return ['Demo data skipped (rooms already exist)'];
         }
         $log = [];
@@ -273,6 +281,10 @@ final class Installer
         return $log;
     }
 
+    /**
+     * The installing user becomes platform admin (manages the platform / auto-update) and works
+     * inside hotel #1 as its super admin.
+     */
     public static function createAdmin(string $username, string $email, string $password, string $name): int
     {
         $existing = DB::one('SELECT id FROM users WHERE username = :u OR email = :e', ['u' => $username, 'e' => $email]);
@@ -281,7 +293,8 @@ final class Installer
             'email' => $email,
             'full_name' => $name,
             'password_hash' => Auth::hash($password),
-            'role' => 'super_admin',
+            'role' => 'platform_admin',
+            'hotel_id' => 1,
             'is_active' => 1,
         ];
         if ($existing) {

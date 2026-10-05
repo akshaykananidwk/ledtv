@@ -36,7 +36,7 @@ final class HealthCheck
         try {
             DB::setPdo(null); // force a fresh connection
             $tables = DB::column('SHOW TABLES');
-            $required = ['users', 'rooms', 'devices', 'content_items', 'broadcast_commands', 'system_settings', 'schema_migrations'];
+            $required = ['users', 'hotels', 'rooms', 'devices', 'content_items', 'broadcast_commands', 'system_settings', 'schema_migrations'];
             $missing = array_diff($required, $tables);
             $checks['database'] = ['ok' => !$missing, 'message' => $missing ? 'Missing tables: ' . implode(', ', $missing) : 'Connected, ' . count($tables) . ' tables'];
         } catch (Throwable $e) {

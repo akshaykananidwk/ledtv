@@ -104,8 +104,8 @@ switch (true) {
 
     case ($parts[0] ?? '') === 'device' && ($parts[1] ?? '') === 'apk' && isset($parts[2]):
         Api::method('GET');
-        DeviceManager::authenticate();
-        $apk = DB::one('SELECT * FROM apk_releases WHERE id = :id', ['id' => (int) $parts[2]]);
+        $device = DeviceManager::authenticate();
+        $apk = DB::one('SELECT * FROM apk_releases WHERE id = :id AND hotel_id = :h', ['id' => (int) $parts[2], 'h' => (int) $device['hotel_id']]);
         $file = $apk ? HC_ROOT . '/storage/' . $apk['file_path'] : null;
         if (!$apk || !is_file($file) || str_contains($apk['file_path'], '..')) {
             Api::error('NOT_FOUND', 'APK not found', 404);
@@ -127,6 +127,19 @@ switch (true) {
             Api::error('FORBIDDEN', 'A device may only read its own room', 403);
         }
         Api::ok(ContentResolver::forRoom(DeviceManager::room($device)));
+}
+
+// ---------------------------------------------------------------- module routes
+// Every api/routes/*.php returns callable(string $route, array $parts, string $method): bool.
+// A route handler responds itself (Api::ok / Api::error exit) or returns false when the route is
+// not its own. Files run in name order; built-in routes above always win.
+$routeFiles = glob(__DIR__ . '/routes/*.php') ?: [];
+sort($routeFiles);
+foreach ($routeFiles as $routeFile) {
+    $handler = require $routeFile;
+    if (is_callable($handler) && $handler($route, $parts, $method) === true) {
+        exit;
+    }
 }
 
 Api::error('NOT_FOUND', 'Unknown endpoint: ' . $route, 404);
