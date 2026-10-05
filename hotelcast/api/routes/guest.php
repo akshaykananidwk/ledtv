@@ -76,30 +76,5 @@ return static function (string $route, array $parts, string $method): bool {
     }
 
     // Full bootstrap for the app.
-    $room = $ctx['room'];
-    $stay = $ctx['stay'];
-    $brand = Branding::get();
-    $logo = media_url((string) Settings::get('hotel_logo', '')) ?: $brand['logo_url'];
-    $wifi = Guests::wifi($stay);
-    $out = $stay && $stay['expected_checkout_at'] ? (string) $stay['expected_checkout_at'] : null;
-    Api::ok([
-        'hotel' => ['name' => (string) Settings::get('hotel_name', ''), 'logo_url' => $logo, 'color' => $brand['color']],
-        'room' => ['number' => (string) $room['room_number'], 'name' => (string) ($room['name'] ?? '')],
-        'guest' => $stay ? [
-            'name' => [
-                'en' => Guests::displayName($stay, 'en'), 'gu' => Guests::displayName($stay, 'gu'), 'hi' => Guests::displayName($stay, 'hi'),
-            ],
-            'language' => Guests::lang((string) $stay['language']),
-        ] : null,
-        'language' => $ctx['lang'],
-        'wifi' => $wifi,
-        'checkout_at' => $out ? iso_time($out) : null,
-        'checkout_time' => $out ? date('h:i A', (int) strtotime($out)) : date('h:i A', (int) strtotime('2000-01-01 ' . (Broadcaster::parseTime(Guests::setting('guest_checkout_time')) ?? '10:00:00'))),
-        'reception_phone' => Guests::setting('guest_reception_phone'),
-        'currency' => '₹',
-        'features' => ['services' => GuestServices::servicesOn(), 'requests' => GuestServices::requestsOn(), 'feedback' => GuestServices::feedbackOn()],
-        'menu' => GuestServices::servicesOn() ? GuestServices::menuForGuest() : [],
-        'request_types' => GuestServices::requestsOn() ? GuestServices::requestTypesForGuest() : [],
-        'status' => GuestServices::statusForGuest($ctx),
-    ]);
+    Api::ok(GuestServices::appData($ctx));
 };

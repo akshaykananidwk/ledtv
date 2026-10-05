@@ -579,6 +579,7 @@ require __DIR__ . '/partials/header.php';
     <a href="<?= e(admin_url('rooms.php', ['action' => 'new'])) ?>" class="btn btn-primary"><i class="bi bi-plus-lg"></i> <?= e(__('Add room')) ?></a>
     <a href="<?= e(admin_url('rooms.php', ['action' => 'bulk_add'])) ?>" class="btn btn-outline-primary"><i class="bi bi-plus-square-dotted"></i> <?= e(__('Add many rooms')) ?></a>
     <?php if ($revokedCount): ?><a href="<?= e(admin_url('rooms.php', ['action' => 'devices'])) ?>" class="btn btn-light border"><i class="bi bi-slash-circle"></i> <?= e(__('Revoked TVs')) ?> (<?= $revokedCount ?>)</a><?php endif; ?>
+    <?php if (Auth::can('devices.setup')): ?><a href="<?= e(admin_url('setup_file.php')) ?>" class="btn btn-light border"><i class="bi bi-filetype-csv"></i> <?= e(__('Download setup file')) ?></a><?php endif; ?>
   </div>
   <?php endif; ?>
 </div>

@@ -301,6 +301,36 @@ final class GuestServices
         return [DB::insert('guest_request_types', $data + ['code' => 'custom', 'created_at' => now()]), []];
     }
 
+    /** Everything the guest web app needs (GET /api/guest/{token} and the page itself). */
+    public static function appData(array $ctx): array
+    {
+        $room = $ctx['room'];
+        $stay = $ctx['stay'];
+        $brand = Branding::get();
+        $logo = media_url((string) Settings::get('hotel_logo', '')) ?: $brand['logo_url'];
+        $out = $stay && $stay['expected_checkout_at'] ? (string) $stay['expected_checkout_at'] : null;
+        $std = Broadcaster::parseTime(Guests::setting('guest_checkout_time')) ?? '10:00:00';
+        return [
+            'hotel' => ['name' => (string) Settings::get('hotel_name', ''), 'logo_url' => $logo, 'color' => $brand['color']],
+            'room' => ['number' => (string) $room['room_number'], 'name' => (string) ($room['name'] ?? '')],
+            'guest' => $stay ? [
+                'name' => ['en' => Guests::displayName($stay, 'en'), 'gu' => Guests::displayName($stay, 'gu'), 'hi' => Guests::displayName($stay, 'hi')],
+                'language' => Guests::lang((string) $stay['language']),
+            ] : null,
+            'language' => $ctx['lang'],
+            'wifi' => Guests::wifi($stay),
+            'checkout_at' => $out ? iso_time($out) : null,
+            'checkout_time' => date('h:i A', (int) strtotime($out ?? ('2000-01-01 ' . $std))),
+            'checkout_date' => $out ? date('d M Y', (int) strtotime($out)) : null,
+            'reception_phone' => Guests::setting('guest_reception_phone'),
+            'currency' => '₹',
+            'features' => ['services' => self::servicesOn(), 'requests' => self::requestsOn(), 'feedback' => self::feedbackOn()],
+            'menu' => self::servicesOn() ? self::menuForGuest() : [],
+            'request_types' => self::requestsOn() ? self::requestTypesForGuest() : [],
+            'status' => self::statusForGuest($ctx),
+        ];
+    }
+
     // ------------------------------------------------------------------ guest actions
 
     /**

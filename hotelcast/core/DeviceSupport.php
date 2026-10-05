@@ -252,6 +252,92 @@ final class DeviceSupport
         return count($rows);
     }
 
+    // ------------------------------------------------------------------ platform (all hotels, read only)
+
+    /**
+     * Numbers for the platform support dashboard: totals, per-hotel rows (TVs, offline TVs, crashes
+     * 24 h / 7 d, outdated app, failed commands 24 h), app version distribution against the newest
+     * APK release (highest version_code uploaded by any hotel), recent crashes.
+     */
+    public static function platformStats(?int $now = null): array
+    {
+        $now ??= time();
+        $d1 = date('Y-m-d H:i:s', $now - 86400);
+        $d7 = date('Y-m-d H:i:s', $now - 7 * 86400);
+        $newest = DB::one('SELECT version_code, version_name FROM apk_releases ORDER BY version_code DESC, id DESC LIMIT 1');
+        $newestCode = $newest ? (int) $newest['version_code'] : null;
+        $hotels = [];
+        foreach (DB::all('SELECT id, name, status FROM hotels ORDER BY name') as $h) {
+            $hotels[(int) $h['id']] = ['id' => (int) $h['id'], 'name' => $h['name'], 'status' => $h['status'],
+                'tvs' => 0, 'offline' => 0, 'outdated' => 0, 'crashes_24h' => 0, 'crashes_7d' => 0, 'failed_24h' => 0];
+        }
+        $tv = DB::all(
+            "SELECT hotel_id, COUNT(*) AS tvs, SUM(status = 'offline') AS offline,
+                    SUM(app_version_code IS NOT NULL AND app_version_code < :nc) AS outdated
+             FROM devices WHERE is_revoked = 0 AND room_id IS NOT NULL GROUP BY hotel_id",
+            ['nc' => $newestCode ?? 0]
+        );
+        foreach ($tv as $r) {
+            if (isset($hotels[(int) $r['hotel_id']])) {
+                $hotels[(int) $r['hotel_id']]['tvs'] = (int) $r['tvs'];
+                $hotels[(int) $r['hotel_id']]['offline'] = (int) $r['offline'];
+                $hotels[(int) $r['hotel_id']]['outdated'] = (int) $r['outdated'];
+            }
+        }
+        foreach (DB::all(
+            "SELECT hotel_id, SUM(created_at >= :d1) AS c1, COUNT(*) AS c7 FROM device_support_files
+             WHERE kind = 'crash' AND created_at >= :d7 GROUP BY hotel_id",
+            ['d1' => $d1, 'd7' => $d7]
+        ) as $r) {
+            if (isset($hotels[(int) $r['hotel_id']])) {
+                $hotels[(int) $r['hotel_id']]['crashes_24h'] = (int) $r['c1'];
+                $hotels[(int) $r['hotel_id']]['crashes_7d'] = (int) $r['c7'];
+            }
+        }
+        foreach (DB::all(
+            "SELECT d.hotel_id, COUNT(*) AS n FROM device_commands c JOIN devices d ON d.id = c.device_id
+             WHERE c.status = 'failed' AND c.created_at >= :d1 GROUP BY d.hotel_id",
+            ['d1' => $d1]
+        ) as $r) {
+            if (isset($hotels[(int) $r['hotel_id']])) {
+                $hotels[(int) $r['hotel_id']]['failed_24h'] = (int) $r['n'];
+            }
+        }
+        $withErrors = array_values(array_filter($hotels, static fn ($h) => $h['crashes_24h'] > 0 || $h['failed_24h'] > 0 || $h['offline'] > 0));
+        usort($withErrors, static fn ($a, $b) => [$b['crashes_24h'], $b['offline'], $b['failed_24h']] <=> [$a['crashes_24h'], $a['offline'], $a['failed_24h']]);
+        $versions = array_map(static fn ($r) => [
+            'version' => $r['app_version'] !== null ? (string) $r['app_version'] : '?',
+            'code' => $r['app_version_code'] !== null ? (int) $r['app_version_code'] : null,
+            'tvs' => (int) $r['n'],
+            'outdated' => $newestCode !== null && $r['app_version_code'] !== null && (int) $r['app_version_code'] < $newestCode,
+        ], DB::all(
+            'SELECT app_version_code, MAX(app_version) AS app_version, COUNT(*) AS n FROM devices
+             WHERE is_revoked = 0 AND room_id IS NOT NULL GROUP BY app_version_code ORDER BY app_version_code DESC'
+        ));
+        $recent = DB::all(
+            "SELECT f.id, f.hotel_id, h.name AS hotel, r.room_number, f.app_version, f.happened_at, f.created_at, f.meta
+             FROM device_support_files f JOIN hotels h ON h.id = f.hotel_id LEFT JOIN rooms r ON r.id = f.room_id AND r.hotel_id = f.hotel_id
+             WHERE f.kind = 'crash' ORDER BY f.id DESC LIMIT 20"
+        );
+        $sum = static fn (string $k) => array_sum(array_column($hotels, $k));
+        return [
+            'newest' => $newest ? ['code' => $newestCode, 'name' => (string) $newest['version_name']] : null,
+            'totals' => [
+                'hotels' => count($hotels), 'tvs' => $sum('tvs'), 'offline' => $sum('offline'), 'outdated' => $sum('outdated'),
+                'crashes_24h' => $sum('crashes_24h'), 'crashes_7d' => $sum('crashes_7d'), 'failed_24h' => $sum('failed_24h'),
+                'hotels_with_errors' => count($withErrors),
+            ],
+            'hotels' => array_values($hotels),
+            'hotels_with_errors' => $withErrors,
+            'versions' => $versions,
+            'recent_crashes' => array_map(static function ($r) {
+                $m = json_decode((string) $r['meta'], true) ?: [];
+                unset($r['meta']);
+                return $r + ['summary' => (string) ($m['summary'] ?? '')];
+            }, $recent),
+        ];
+    }
+
     private static function str(mixed $v, int $max): ?string
     {
         if ($v === null || $v === '') {

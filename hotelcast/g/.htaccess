@@ -1,0 +1,11 @@
+# Guest web app: /g/<token> → index.php?t=<token>
+DirectoryIndex index.php
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^([A-Za-z0-9]{16,40})/?$ index.php?t=$1 [QSA,L]
+</IfModule>
+<IfModule mod_headers.c>
+    Header always set Referrer-Policy "no-referrer"
+</IfModule>
