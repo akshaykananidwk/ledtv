@@ -1,0 +1,207 @@
+<?php
+/**
+ * TV Power: switch TVs to standby / wake them now, and daily automatic off/on schedules.
+ */
+declare(strict_types=1);
+require __DIR__ . '/../core/bootstrap.php';
+require_once __DIR__ . '/partials/common.php';
+
+$user = Auth::require('schedule.manage');
+Csrf::check();
+
+if (is_post()) {
+    $op = req_str('op', $_POST, 30);
+    try {
+        switch ($op) {
+            case 'now':
+                $command = ($_POST['state'] ?? '') === 'on' ? 'SCREEN_ON' : 'SCREEN_OFF';
+                [$type, $ids] = Broadcaster::parseTarget($_POST);
+                if ($type !== 'all' && !$ids) {
+                    throw new InvalidArgumentException(__('Select at least one target.'));
+                }
+                [$bid, $count] = Broadcaster::sendCommand($command, $type, $ids, [], Auth::id());
+                ActivityLog::add('power_now', 'broadcast', $bid, $command . ' → ' . Broadcaster::describeTarget($type, $ids) . " ($count TVs)");
+                flash('success', $command === 'SCREEN_ON'
+                    ? __('Turning on :n TVs (within one poll interval).', ['n' => $count])
+                    : __('Turning off :n TVs (within one poll interval).', ['n' => $count]));
+                break;
+
+            case 'add':
+                [$id, $errors] = Broadcaster::schedulePower($_POST, Auth::id());
+                if ($errors) {
+                    flash_errors($errors);
+                } else {
+                    $b = DB::one('SELECT * FROM broadcast_commands WHERE id = :id', ['id' => $id]);
+                    ActivityLog::add('power_schedule_add', 'broadcast', $id, $b['title'] . ' · ' . Broadcaster::describeTarget($b['target_type'], $b['target_ids']));
+                    flash('success', __('Power schedule saved.'));
+                }
+                break;
+
+            case 'toggle':
+                $id = req_int('id', $_POST);
+                $enable = ($_POST['enable'] ?? '') === '1';
+                Broadcaster::setPowerScheduleEnabled($id, $enable);
+                ActivityLog::add($enable ? 'power_schedule_resume' : 'power_schedule_pause', 'broadcast', $id);
+                flash('success', $enable ? __('Schedule resumed.') : __('Schedule paused.'));
+                break;
+
+            case 'delete':
+                $id = req_int('id', $_POST);
+                $b = DB::one("SELECT * FROM broadcast_commands WHERE id = :id AND command = 'SCREEN_OFF' AND mode = 'window'", ['id' => $id]);
+                if ($b) {
+                    DB::delete('broadcast_commands', 'id = :id', ['id' => $id]);
+                    Settings::bumpContentVersion();
+                    Broadcaster::queueForRooms(Broadcaster::targetRooms($b['target_type'], json_decode((string) $b['target_ids'], true) ?: []), 'SHOW_CONTENT');
+                    ActivityLog::add('power_schedule_delete', 'broadcast', $id, (string) $b['title']);
+                    flash('success', __('Schedule deleted.'));
+                }
+                break;
+
+            default:
+                flash('warning', __('Unknown action.'));
+        }
+    } catch (InvalidArgumentException $e) {
+        flash('danger', $e->getMessage());
+    }
+    redirect(admin_url('power.php'));
+}
+
+Scheduler::tick();
+$schedules = DB::all(
+    "SELECT b.*, u.username FROM broadcast_commands b LEFT JOIN users u ON u.id = b.created_by
+     WHERE b.command = 'SCREEN_OFF' AND b.mode = 'window' ORDER BY b.status = 'cancelled', b.id DESC"
+);
+$roomsOff = (int) DB::value('SELECT COUNT(*) FROM rooms WHERE is_enabled = 0');
+$activeNow = array_values(array_filter($schedules, fn ($b) => $b['status'] !== 'cancelled' && ContentResolver::windowActive($b)));
+$days = day_names();
+
+$pageTitle = __('TV Power');
+$activeNav = 'power';
+require __DIR__ . '/partials/header.php';
+?>
+<div class="page-head">
+  <div>
+    <h1><i class="bi bi-power"></i> <?= e(__('TV Power')) ?></h1>
+    <p class="lead-sm"><?= e(__('Switch TVs off (standby) and on from here, or let them switch off and on automatically every day.')) ?></p>
+  </div>
+</div>
+<?= flash_show() ?>
+
+<div class="row g-3 mb-3">
+  <div class="col-sm-6 col-lg-3"><div class="card h-100"><div class="card-body">
+    <div class="text-muted small"><?= e(__('Rooms switched off by admin')) ?></div>
+    <div class="fs-3 fw-bold"><?= $roomsOff ?></div>
+  </div></div></div>
+  <div class="col-sm-6 col-lg-3"><div class="card h-100"><div class="card-body">
+    <div class="text-muted small"><?= e(__('Off schedules active right now')) ?></div>
+    <div class="fs-3 fw-bold"><?= count($activeNow) ?></div>
+  </div></div></div>
+  <div class="col-lg-6"><div class="card h-100 border-info"><div class="card-body small">
+    <i class="bi bi-info-circle text-info"></i>
+    <?= e(__('Real standby needs the TV app set as device owner (one-time adb command, see the TV setup guide). Without it the TV only shows a black screen. A guest can always switch the TV on with the remote. Emergency messages wake TVs automatically.')) ?>
+  </div></div></div>
+</div>
+
+<div class="row g-3">
+  <div class="col-xl-5">
+    <div class="card mb-3">
+      <div class="card-header"><i class="bi bi-lightning-charge"></i> <?= e(__('Turn TVs off / on now')) ?></div>
+      <div class="card-body">
+        <form method="post">
+          <?= Csrf::field() ?><input type="hidden" name="op" value="now">
+          <div class="mb-3"><?= target_picker('pnow') ?></div>
+          <div class="d-flex flex-wrap gap-2">
+            <button class="btn btn-success" name="state" value="on"><i class="bi bi-power"></i> <?= e(__('Turn ON')) ?></button>
+            <button class="btn btn-dark" name="state" value="off" data-confirm="<?= e(__('Turn the selected TVs off? They stay off until you turn them on again.')) ?>"><i class="bi bi-power"></i> <?= e(__('Turn OFF')) ?></button>
+          </div>
+          <div class="form-text"><?= e(__('Turning off here keeps the room off (even after a TV restart) until you turn it on again.')) ?></div>
+        </form>
+      </div>
+    </div>
+
+    <div class="card mb-3">
+      <div class="card-header"><i class="bi bi-alarm"></i> <?= e(__('New daily schedule')) ?></div>
+      <div class="card-body">
+        <form method="post">
+          <?= Csrf::field() ?><input type="hidden" name="op" value="add">
+          <div class="mb-3">
+            <label class="form-label" for="ptitle"><?= e(__('Name (optional)')) ?></label>
+            <input class="form-control" name="title" id="ptitle" maxlength="190" placeholder="<?= e(__('e.g. Night off')) ?>">
+          </div>
+          <div class="row g-2 mb-3">
+            <div class="col-6">
+              <label class="form-label" for="poff"><?= e(__('TV OFF at')) ?></label>
+              <input type="time" class="form-control" name="off_time" id="poff" value="23:00" required>
+            </div>
+            <div class="col-6">
+              <label class="form-label" for="pon"><?= e(__('TV ON at')) ?></label>
+              <input type="time" class="form-control" name="on_time" id="pon" value="06:00" required>
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label d-block"><?= e(__('Days')) ?></label>
+            <?php foreach ($days as $n => $label): ?>
+              <div class="form-check form-check-inline">
+                <input class="form-check-input" type="checkbox" name="days[]" value="<?= $n ?>" id="pd<?= $n ?>" checked>
+                <label class="form-check-label" for="pd<?= $n ?>"><?= e($label) ?></label>
+              </div>
+            <?php endforeach; ?>
+            <div class="form-text"><?= e(__('Overnight works: OFF 23:00, ON 06:00 switches off at night and on next morning.')) ?></div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label"><?= e(__('On which TVs')) ?></label>
+            <?= target_picker('psched') ?>
+          </div>
+          <button class="btn btn-primary"><i class="bi bi-save"></i> <?= e(__('Save schedule')) ?></button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-7">
+    <div class="card">
+      <div class="card-header"><i class="bi bi-list-check"></i> <?= e(__('Daily power schedules')) ?></div>
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light"><tr>
+            <th><?= e(__('Name')) ?></th><th><?= e(__('Off → On')) ?></th><th><?= e(__('Days')) ?></th><th><?= e(__('TVs')) ?></th><th><?= e(__('Status')) ?></th><th class="text-end"></th>
+          </tr></thead>
+          <tbody>
+          <?php if (!$schedules): ?>
+            <tr><td colspan="6" class="text-center text-muted py-4"><?= e(__('No power schedules yet. Create one on the left, e.g. OFF 23:00 – ON 06:00 every day.')) ?></td></tr>
+          <?php endif; ?>
+          <?php foreach ($schedules as $b):
+              $paused = $b['status'] === 'cancelled';
+              $isOffNow = !$paused && ContentResolver::windowActive($b);
+              $dayList = array_map(fn ($d) => $days[(int) $d] ?? $d, explode(',', (string) $b['repeat_days']));
+          ?>
+            <tr class="<?= $paused ? 'text-muted' : '' ?>">
+              <td><strong><?= e($b['title']) ?></strong><div class="small text-muted"><?= e($b['username'] ?? '') ?></div></td>
+              <td class="text-nowrap"><?= e(date('h:i A', (int) strtotime((string) $b['daily_start']))) ?> → <?= e(date('h:i A', (int) strtotime((string) $b['daily_end']))) ?></td>
+              <td class="small"><?= e(count($dayList) === 7 ? __('every day') : implode(', ', $dayList)) ?></td>
+              <td class="small"><?= e(Broadcaster::describeTarget($b['target_type'], $b['target_ids'])) ?></td>
+              <td>
+                <?php if ($paused): ?><span class="badge text-bg-secondary"><?= e(__('Paused')) ?></span>
+                <?php elseif ($isOffNow): ?><span class="badge text-bg-dark"><i class="bi bi-moon"></i> <?= e(__('TVs off now')) ?></span>
+                <?php else: ?><span class="badge text-bg-success"><?= e(__('Waiting')) ?></span><?php endif; ?>
+              </td>
+              <td class="text-end text-nowrap">
+                <form method="post" class="d-inline">
+                  <?= Csrf::field() ?><input type="hidden" name="op" value="toggle"><input type="hidden" name="id" value="<?= (int) $b['id'] ?>">
+                  <input type="hidden" name="enable" value="<?= $paused ? '1' : '0' ?>">
+                  <button class="btn btn-sm btn-outline-secondary" title="<?= e($paused ? __('Resume') : __('Pause')) ?>"><i class="bi <?= $paused ? 'bi-play' : 'bi-pause' ?>"></i></button>
+                </form>
+                <form method="post" class="d-inline">
+                  <?= Csrf::field() ?><input type="hidden" name="op" value="delete"><input type="hidden" name="id" value="<?= (int) $b['id'] ?>">
+                  <button class="btn btn-sm btn-outline-danger" data-confirm="<?= e(__('Delete this schedule?')) ?>"><i class="bi bi-trash"></i></button>
+                </form>
+              </td>
+            </tr>
+          <?php endforeach; ?>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+<?php require __DIR__ . '/partials/footer.php'; ?>

@@ -16,7 +16,7 @@ final class AdminPanelTest extends TestCase
     public const PAGES = [
         'index.php' => 'staff', 'rooms.php' => 'staff', 'content.php' => 'staff', 'broadcast.php' => 'staff',
         'groups.php' => 'manager', 'playlists.php' => 'manager', 'schedule.php' => 'manager', 'apk.php' => 'manager',
-        'logs.php' => 'manager', 'users.php' => 'super_admin', 'settings.php' => 'super_admin', 'update.php' => 'super_admin',
+        'logs.php' => 'manager', 'power.php' => 'manager', 'users.php' => 'super_admin', 'settings.php' => 'super_admin', 'update.php' => 'super_admin',
         'profile.php' => 'staff',
     ];
 

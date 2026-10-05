@@ -41,9 +41,9 @@ settings · GitHub auto-update with backup + auto-rollback · TV-simulator previ
 
 ## Quick start
 
-1. **Server** — upload `dist/hotelcast-1.0.0.zip` to your hosting, extract, open
+1. **Server** — upload `dist/hotelcast-1.1.0.zip` to your hosting, extract, open
    `https://your-domain/hotelcast/install/` and follow the 7-step wizard → [docs/INSTALL.md](docs/INSTALL.md)
-2. **TVs** — install `android/release/HotelCast-TV-1.0.0.apk` on each TV (USB pen-drive or `adb`), open it,
+2. **TVs** — install `android/release/HotelCast-TV-1.1.0.apk` on each TV (USB pen-drive or `adb`), open it,
    enter server address + room number + registration key → [android/README.md](android/README.md)
 3. **Use it** — Admin → Content → add content → Broadcast → choose rooms → *Push now* → [docs/ADMIN_GUIDE.md](docs/ADMIN_GUIDE.md)
 
@@ -78,7 +78,7 @@ hotelcast/            Server application (this is what you upload)
   uploads/ backups/ logs/ storage/   runtime data (protected, never overwritten)
   tests/              PHPUnit unit + integration tests, load test
   version.json        {"version":"1.0.0","commit":"…","date":"…"}
-android/              Android Studio project (Kotlin) + release/HotelCast-TV-1.0.0.apk
+android/              Android Studio project (Kotlin) + release/HotelCast-TV-1.1.0.apk
 docs/                 INSTALL, ADMIN_GUIDE, API, SECURITY, TEST_REPORT
 tools/build-release.sh  builds dist/hotelcast-<version>.zip
 ```

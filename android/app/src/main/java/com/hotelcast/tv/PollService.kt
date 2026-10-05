@@ -27,6 +27,12 @@ class PollService : LifecycleService() {
             Log.w(TAG, "startForeground failed", e)
         }
         SyncManager.start(this)
+        PowerController.holdBackgroundLocks(this)
+    }
+
+    override fun onDestroy() {
+        PowerController.releaseBackgroundLocks()
+        super.onDestroy()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {

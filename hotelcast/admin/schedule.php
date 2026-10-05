@@ -9,7 +9,7 @@ Csrf::check();
 if (is_post()) {
     $op = req_str('op', $_POST, 20);
     $id = req_int('id', $_POST);
-    $b = $id ? DB::one("SELECT * FROM broadcast_commands WHERE id = :id AND mode IN ('once','window') AND is_emergency = 0", ['id' => $id]) : null;
+    $b = $id ? DB::one("SELECT * FROM broadcast_commands WHERE id = :id AND mode IN ('once','window') AND is_emergency = 0 AND command = 'SHOW_CONTENT'", ['id' => $id]) : null;
     if (!$b) {
         flash('warning', __('Schedule not found.'));
         redirect(admin_url('schedule.php'));
@@ -84,7 +84,7 @@ $dtLocal = fn (?string $d) => $d ? date('Y-m-d\TH:i', (int) strtotime($d)) : '';
 
 if ($action === 'edit') {
     $id = req_int('id', $_GET);
-    $b = DB::one("SELECT * FROM broadcast_commands WHERE id = :id AND mode IN ('once','window') AND is_emergency = 0", ['id' => $id]);
+    $b = DB::one("SELECT * FROM broadcast_commands WHERE id = :id AND mode IN ('once','window') AND is_emergency = 0 AND command = 'SHOW_CONTENT'", ['id' => $id]);
     if (!$b) {
         flash('warning', __('Schedule not found.'));
         redirect(admin_url('schedule.php'));
@@ -177,7 +177,7 @@ $statusSql = match ($filter) {
     default => '',
 };
 $rows = DB::all("SELECT b.*, u.username FROM broadcast_commands b LEFT JOIN users u ON u.id = b.created_by
-                 WHERE mode IN ('once','window') AND is_emergency = 0 $statusSql ORDER BY (status = 'active') DESC, start_at IS NULL, start_at DESC, id DESC LIMIT 200");
+                 WHERE mode IN ('once','window') AND is_emergency = 0 AND command = 'SHOW_CONTENT' $statusSql ORDER BY (status = 'active') DESC, start_at IS NULL, start_at DESC, id DESC LIMIT 200");
 
 $extraScripts = ['vendor/fullcalendar/index.global.min.js'];
 require __DIR__ . '/partials/header.php';

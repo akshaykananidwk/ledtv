@@ -78,6 +78,7 @@ object SyncManager : CommandActions {
         if (::app.isInitialized) return
         app = context.applicationContext
         Prefs.init(app)
+        PowerController.init(app)
         cache = ContentCache(app)
         commandHandler = CommandHandler(
             deduper = CommandDeduper.deserialize(Prefs.handledCommands),
@@ -204,7 +205,8 @@ object SyncManager : CommandActions {
     suspend fun heartbeatOnce() {
         val service = api() ?: return
         val c = _content.value
-        val screenOn = !(Prefs.forcedScreenOff || (c?.isOff == true && c.isEmergency != true))
+        val screenOn = PowerController.isScreenInteractive() &&
+            (!PowerController.desiredOff(c) || PowerController.isLocallyOverridden())
         val body = HeartbeatRequest(
             appVersion = DeviceInfo.appVersion,
             appVersionCode = DeviceInfo.appVersionCode,
@@ -233,6 +235,7 @@ object SyncManager : CommandActions {
         cache.saveContent(normalized)
         Prefs.currentHash = hash
         _content.value = normalized
+        PowerController.evaluate(normalized)
         Log.i(TAG, "New content hash=$hash mode=${normalized.mode} items=${normalized.items?.size ?: 0}")
         prefetch(normalized)
     }
@@ -325,6 +328,7 @@ object SyncManager : CommandActions {
 
     override fun setScreenOn(on: Boolean) {
         Prefs.forcedScreenOff = !on
+        PowerController.evaluate(_content.value)
         _events.tryEmit(SyncEvent.ScreenStateChanged)
     }
 

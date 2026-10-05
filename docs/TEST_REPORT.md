@@ -9,13 +9,13 @@ JDK 21, Android Gradle Plugin 8.5.2. Apache itself was not available in the test
 | Area | Result |
 |------|--------|
 | PHP lint (`php -l`, every file) | ✅ 0 errors |
-| PHPUnit (unit + integration) | ✅ **103 tests, 2,829 assertions, 0 failures** (1 skipped — the time-window test skips itself when the ±1 h window crosses midnight) |
+| PHPUnit (unit + integration) | ✅ **109 tests, 2,962 assertions, 0 failures** (time-window tests skip themselves only when the ±1 h window crosses midnight) |
 | Integration: admin push → TV receives | ✅ received on the next poll (0.01 s after the push in the test; on real TVs at most one poll interval, 8 s by default) |
 | Load test, 80 TVs polling every 8 s for 60 s | ✅ 599 requests, 100 % success, p50 6 ms · p95 10 ms · p99 17 ms |
 | Stress test, 200 TVs polling every 3 s for 45 s | ✅ 2,999 requests (66.6 req/s), 100 % success, p50 5 ms · p95 11 ms · max 316 ms |
 | Update system: backup → update → health check → rollback | ✅ (mock GitHub API, see below) |
 | Installer: fresh copy → 7 steps → working system | ✅ |
-| Android unit tests (`testReleaseUnitTest`) | ✅ 29 tests, 0 failures |
+| Android unit tests (`testReleaseUnitTest`) | ✅ 29 tests, 0 failures (re-run for 1.1.0) |
 | Android instrumentation tests | ⚠ compile (`assembleAndroidTest`) but need a TV or emulator to run — not run |
 | Android lint | ✅ 0 errors |
 | Signed release APK | ✅ `apksigner verify`: v1 + v2 signatures valid, RSA 2048 |
@@ -32,7 +32,8 @@ JDK 21, Android Gradle Plugin 8.5.2. Apache itself was not available in the test
   a PHP file disguised as a `.jpg` is rejected, `.php` extension is rejected.
 * **ResolverBroadcastTest** — priority order: default → group → room → time window → emergency → off;
   the content hash is stable; push-now assigns content and queues commands (duplicates collapsed);
-  emergency start/stop; one-off schedule processed exactly once; time windows incl. overnight windows and repeat
+  emergency start/stop; one-off schedule processed exactly once; daily TV power-off schedules (inside/outside
+  window, overnight, pause/resume, emergency wakes TVs that are scheduled off, validation); time windows incl. overnight windows and repeat
   days; screen on/off persists; offline detection.
 * **AuthBackupTest** — bcrypt cost 12, password policy, role map, backup→restore round trip (Gujarati text,
   newlines, quotes, files added after the backup are removed, `.env` untouched), protected paths, unsafe backup

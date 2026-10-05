@@ -1,6 +1,7 @@
 package com.hotelcast.tv
 
 import android.content.Intent
+import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -113,6 +114,7 @@ class MainActivity : AppCompatActivity(), ContentPlayer.Listener {
         Prefs.init(this)
         SyncManager.init(this)
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        allowWakeFromStandby()
         setContentView(R.layout.activity_main)
         bindViews()
         hideSystemUi()
@@ -144,6 +146,21 @@ class MainActivity : AppCompatActivity(), ContentPlayer.Listener {
         super.onNewIntent(intent)
         setIntent(intent)
         handleIntent(intent)
+    }
+
+    /** Let this activity switch the screen on when the server wakes the TV (see [PowerController]). */
+    @Suppress("DEPRECATION")
+    private fun allowWakeFromStandby() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
+            setTurnScreenOn(true)
+            setShowWhenLocked(true)
+        } else {
+            window.addFlags(
+                WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON or
+                    WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED or
+                    WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD
+            )
+        }
     }
 
     private fun handleIntent(intent: Intent?) {
@@ -187,6 +204,8 @@ class MainActivity : AppCompatActivity(), ContentPlayer.Listener {
             return
         }
         setupLaunched = false
+        // The guest switched the TV on with the remote while it is scheduled off → show content.
+        if (PowerController.wasSleptBySchedule()) PowerController.guestOverride()
         PollService.start(this)
         SyncManager.pollNow()
         render()
@@ -255,7 +274,7 @@ class MainActivity : AppCompatActivity(), ContentPlayer.Listener {
                     setScreenAwake(true)
                     showEmergency(c)
                 }
-                Prefs.forcedScreenOff || (c != null && c.isOff) -> {
+                PowerController.desiredOff(c) && !PowerController.isLocallyOverridden() -> {
                     player?.stop()
                     hideOverlay()
                     welcomeLayer.visibility = View.GONE
@@ -453,6 +472,14 @@ class MainActivity : AppCompatActivity(), ContentPlayer.Listener {
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
         if (pinDialogShowing) return super.dispatchKeyEvent(event)
         val code = event.keyCode
+        // Guest turned the TV on with the remote while it is scheduled "off": show content again.
+        if (event.action == KeyEvent.ACTION_UP && code != KeyEvent.KEYCODE_MENU &&
+            blackLayer.visibility == View.VISIBLE && PowerController.desiredOff(SyncManager.content.value)
+        ) {
+            PowerController.guestOverride()
+            render()
+            return true
+        }
         when (code) {
             KeyEvent.KEYCODE_MENU -> {
                 if (event.action == KeyEvent.ACTION_UP) requestSettings()
@@ -542,6 +569,7 @@ class MainActivity : AppCompatActivity(), ContentPlayer.Listener {
     companion object {
         private const val TAG = "MainActivity"
         const val EXTRA_OPEN_ANDROID_SETTINGS = "open_android_settings"
+        const val EXTRA_WAKE = "wake_from_standby"
         private const val GESTURE_WINDOW_MS = 3000L
         private const val LONG_PRESS_MS = 3000L
         private val SECRET_SEQUENCE = listOf(

@@ -24,6 +24,7 @@ $navItems = [
     ['playlists', 'playlists.php', 'playlists.manage', 'bi-collection-play', __('Playlists')],
     ['broadcast', 'broadcast.php', 'broadcast.send', 'bi-broadcast-pin', __('Broadcast')],
     ['schedule', 'schedule.php', 'schedule.manage', 'bi-calendar-week', __('Schedule')],
+    ['power', 'power.php', 'schedule.manage', 'bi-power', __('TV Power')],
     ['apk', 'apk.php', 'apk.manage', 'bi-android2', __('APK Manager')],
     ['logs', 'logs.php', 'logs.view', 'bi-journal-text', __('Logs & History')],
     ['users', 'users.php', 'users.manage', 'bi-people', __('Users')],

@@ -11,7 +11,7 @@ in [`../docs/API.md`](../docs/API.md).
 | Package / applicationId | `com.hotelcast.tv` |
 | Version | 1.0.0 (versionCode 1) |
 | Android | 5.0 (API 21) and newer, targetSdk 34 |
-| Signed release APK | `release/HotelCast-TV-1.0.0.apk` |
+| Signed release APK | `release/HotelCast-TV-1.1.0.apk` |
 
 ---
 
@@ -56,7 +56,7 @@ If that file does not exist, it falls back to environment variables (useful on C
 Check a signature with:
 
 ```bash
-$ANDROID_HOME/build-tools/34.0.0/apksigner verify --print-certs release/HotelCast-TV-1.0.0.apk
+$ANDROID_HOME/build-tools/34.0.0/apksigner verify --print-certs release/HotelCast-TV-1.1.0.apk
 ```
 
 ---
@@ -72,12 +72,12 @@ $ANDROID_HOME/build-tools/34.0.0/apksigner verify --print-certs release/HotelCas
 3. From a PC on the same network:
    ```bash
    adb connect 192.168.1.45:5555          # the TV's IP address
-   adb install -r HotelCast-TV-1.0.0.apk
+   adb install -r HotelCast-TV-1.1.0.apk
    ```
 
 ### b) With a USB pen drive and a file manager
 
-1. Copy `HotelCast-TV-1.0.0.apk` to a FAT32/exFAT pen drive and plug it into the TV.
+1. Copy `HotelCast-TV-1.1.0.apk` to a FAT32/exFAT pen drive and plug it into the TV.
 2. Install a file manager on the TV, such as *File Commander*, *X-plore* or *FX File Explorer*.
 3. Allow unknown sources:
    * Android 8 and newer: *Settings → Apps → Security & restrictions → Unknown sources* (or *Install
@@ -141,7 +141,7 @@ Device-owner mode enables these features:
 Setup: the TV must have **no Google or other accounts** (factory reset it if needed). Then run:
 
 ```bash
-adb install -r HotelCast-TV-1.0.0.apk
+adb install -r HotelCast-TV-1.1.0.apk
 adb shell dpm set-device-owner com.hotelcast.tv/.AdminReceiver
 adb shell am start -n com.hotelcast.tv/.MainActivity
 ```
@@ -267,7 +267,7 @@ after 60 s.
 | Content | Display |
 |---|---|
 | `emergency` / `emergency != null` | Full-screen message above everything, in the server's colours |
-| `off`, `screen_on:false`, or `SCREEN_OFF` command | Black screen; the screen may sleep |
+| `off`, `screen_on:false`, or `SCREEN_OFF` command | TV goes to standby (see *TV power* below); black screen as fallback |
 | `empty` (or no playable items) | Hotel logo, "Welcome to …" and the room number |
 | anything else | Playlist plus overlay (logo top-left, clock and weather top-right, ticker bottom) |
 
@@ -306,3 +306,29 @@ host, never to a media CDN.
 | YouTube item is black | The TV's Android System WebView is too old. Update it from the Play Store, or use a `video` or `stream` item |
 | Forgot PIN | Change it in the admin panel; it reaches the TV with the next heartbeat (60 s by default). Or clear the app data with `adb shell pm clear com.hotelcast.tv` (this also clears the registration) |
 | Logs | `adb logcat -s SyncManager ContentPlayer CommandHandler AppUpdater Kiosk BootReceiver` |
+
+
+## TV power (automatic off / on)
+
+Admin → **TV Power** switches TVs off/on now or on a daily schedule (e.g. OFF 23:00 → ON 06:00).
+The app follows the server's desired state (`mode: off` / `screen_on: false`):
+
+| What | How the app does it |
+|------|---------------------|
+| Switch off | `DevicePolicyManager.lockNow()` when device owner → standby. Rooted boxes: `input keyevent 223` (SLEEP). Otherwise only a black screen. |
+| Switch on | Wake lock with `ACQUIRE_CAUSES_WAKEUP` + player brought to front (`setTurnScreenOn`). Rooted boxes: `input keyevent 224` (WAKEUP). |
+| Keep listening while off | The foreground poll service holds a partial wake lock + Wi-Fi lock, so the TV keeps polling in standby. |
+| Guest uses the remote while "off" | The TV shows content again (local override) until the next server change. |
+| Emergency | Always wakes the TV. |
+
+Requirements for real remote **power-on**:
+
+1. App is **device owner** (`adb shell dpm set-device-owner com.hotelcast.tv/.AdminReceiver`).
+2. The TV must keep Android running in standby. Enable the TV setting called **Quick start**,
+   **Instant on**, **Fast start** or **Network standby** (name depends on the brand). With a real "deep"
+   standby, or when the TV is switched off at the wall, nothing can switch it on remotely — then use
+   the TV's own **On timer / Power-on timer** (Settings → Device preferences / System → Timer) and keep
+   the app as HOME app so it starts after boot.
+3. Some TVs ignore the wake lock; on those, remote power-on works only with root or HDMI-CEC from a box.
+
+Test each TV model once: Admin → TV Power → *Turn OFF* → wait 15 s → *Turn ON*.

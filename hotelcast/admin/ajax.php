@@ -147,7 +147,7 @@ function schedule_events(string $start, string $end): array
     }
     $rows = DB::all(
         "SELECT * FROM broadcast_commands
-         WHERE mode IN ('once','window') AND is_emergency = 0 AND status <> 'cancelled'
+         WHERE mode IN ('once','window') AND is_emergency = 0 AND command = 'SHOW_CONTENT' AND status <> 'cancelled'
            AND (start_at IS NULL OR start_at < :re) AND (end_at IS NULL OR end_at >= :rs)
          ORDER BY id DESC LIMIT 500",
         ['re' => date('Y-m-d H:i:s', $re), 'rs' => date('Y-m-d H:i:s', $rs)]

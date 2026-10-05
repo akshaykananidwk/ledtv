@@ -169,4 +169,65 @@ final class ResolverBroadcastTest extends TestCase
         $this->assertSame('offline', DB::value('SELECT status FROM devices WHERE id = :id', ['id' => $dev]));
         $this->assertSame(1, (int) DB::value("SELECT COUNT(*) FROM device_status_logs WHERE device_id = :d AND status='offline'", ['d' => $dev]));
     }
+
+    public function testPowerScheduleTurnsTvsOffInsideWindowOnly(): void
+    {
+        $now = time();
+        if (date('H', $now - 3600) > date('H', $now + 3600)) {
+            $this->markTestSkipped('Window crosses midnight at this time of day');
+        }
+        [$id, $errors] = Broadcaster::schedulePower([
+            'target_type' => 'floors', 'floors' => ['1'],
+            'off_time' => date('H:i', $now - 3600), 'on_time' => date('H:i', $now + 3600),
+            'days' => [1, 2, 3, 4, 5, 6, 7],
+        ]);
+        $this->assertSame([], $errors);
+        $c = ContentResolver::build($this->room($this->room101));
+        $this->assertSame('off', $c['mode']);
+        $this->assertFalse($c['screen_on']);
+        $this->assertSame('default', ContentResolver::build($this->room($this->room201))['mode'], 'Other floor stays on');
+        $this->assertSame('active', DB::value('SELECT status FROM broadcast_commands WHERE id = :id', ['id' => $id]));
+
+        // Emergency wakes TVs that are scheduled off.
+        $em = Broadcaster::emergencyStart('Fire', 'Leave now', 'all', []);
+        $this->assertSame('emergency', ContentResolver::build($this->room($this->room101))['mode']);
+        Broadcaster::emergencyStop($em);
+
+        // Paused schedule → TV back on.
+        Broadcaster::setPowerScheduleEnabled($id, false);
+        $this->assertSame('default', ContentResolver::build($this->room($this->room101))['mode']);
+        Broadcaster::setPowerScheduleEnabled($id, true);
+        $this->assertSame('off', ContentResolver::build($this->room($this->room101))['mode']);
+    }
+
+    public function testPowerScheduleOutsideWindowAndOvernight(): void
+    {
+        $now = time();
+        [$id, $errors] = Broadcaster::schedulePower([
+            'target_type' => 'all',
+            'off_time' => date('H:i', $now + 3600), 'on_time' => date('H:i', $now + 7200),
+            'days' => [(int) date('N')],
+        ]);
+        $this->assertSame([], $errors);
+        if (date('H', $now + 3600) < date('H', $now)) {
+            $this->markTestSkipped('Window crosses midnight at this time of day');
+        }
+        $this->assertNotSame('off', ContentResolver::build($this->room($this->room101))['mode']);
+
+        $b = DB::one('SELECT * FROM broadcast_commands WHERE id = :id', ['id' => $id]);
+        $b['daily_start'] = '23:00:00';
+        $b['daily_end'] = '06:00:00';
+        $b['repeat_days'] = '1,2,3,4,5,6,7';
+        $this->assertTrue(ContentResolver::windowActive($b, strtotime('2026-10-05 23:30:00')));
+        $this->assertTrue(ContentResolver::windowActive($b, strtotime('2026-10-06 05:59:00')));
+        $this->assertFalse(ContentResolver::windowActive($b, strtotime('2026-10-06 06:00:00')));
+        $this->assertFalse(ContentResolver::windowActive($b, strtotime('2026-10-06 12:00:00')));
+    }
+
+    public function testPowerScheduleValidation(): void
+    {
+        [$id, $errors] = Broadcaster::schedulePower(['target_type' => 'rooms', 'off_time' => '23:00', 'on_time' => '23:00', 'days' => []]);
+        $this->assertNull($id);
+        $this->assertCount(3, $errors);
+    }
 }

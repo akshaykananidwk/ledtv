@@ -4,7 +4,7 @@ declare(strict_types=1);
 /**
  * Decides what a room's TV should show right now and builds the Content object.
  *
- * Priority: room off → emergency → active time-window broadcast → room assignment
+ * Priority: emergency → room off / scheduled power-off window → active time-window broadcast → room assignment
  *           → group assignment → hotel default → empty (welcome screen).
  */
 final class ContentResolver
@@ -46,12 +46,6 @@ final class ContentResolver
             'emergency' => null,
         ];
 
-        if (!(int) $room['is_enabled']) {
-            $content['mode'] = 'off';
-            $content['screen_on'] = false;
-            return self::finish($content);
-        }
-
         // 1. Emergency
         $emergencies = DB::all("SELECT * FROM broadcast_commands WHERE is_emergency = 1 AND status = 'active' ORDER BY id DESC");
         foreach ($emergencies as $b) {
@@ -76,7 +70,22 @@ final class ContentResolver
             }
         }
 
-        // 2. Time-window broadcasts
+        // 2. Room switched off (admin) or inside a scheduled "TV off" window. Emergencies above still wake it.
+        if (!(int) $room['is_enabled']) {
+            $content['mode'] = 'off';
+            $content['screen_on'] = false;
+            return self::finish($content);
+        }
+        foreach (self::powerWindows() as $b) {
+            if (self::windowActive($b) && self::targets($b, $room, $groupIds)) {
+                $content['mode'] = 'off';
+                $content['screen_on'] = false;
+                $content['power_schedule_id'] = (int) $b['id'];
+                return self::finish($content);
+            }
+        }
+
+        // 3. Time-window broadcasts
         $windows = DB::all(
             "SELECT * FROM broadcast_commands
              WHERE mode = 'window' AND is_emergency = 0 AND command = 'SHOW_CONTENT' AND status IN ('scheduled','active')
@@ -93,13 +102,13 @@ final class ContentResolver
             }
         }
 
-        // 3. Room assignment
+        // 4. Room assignment
         if (self::fill($content, $room['content_id'] ? (int) $room['content_id'] : null, $room['playlist_id'] ? (int) $room['playlist_id'] : null)) {
             $content['mode'] = 'assigned';
             return self::finish($content);
         }
 
-        // 4. Group assignment (lowest group id first for determinism)
+        // 5. Group assignment (lowest group id first for determinism)
         if ($groupIds) {
             [$in, $params] = DB::in($groupIds, 'g');
             $groups = DB::all("SELECT content_id, playlist_id FROM room_groups WHERE id IN $in AND (content_id IS NOT NULL OR playlist_id IS NOT NULL) ORDER BY id", $params);
@@ -111,13 +120,25 @@ final class ContentResolver
             }
         }
 
-        // 5. Default
+        // 6. Default
         $defC = Settings::int('default_content_id', 0) ?: null;
         $defP = Settings::int('default_playlist_id', 0) ?: null;
         if (self::fill($content, $defC, $defP)) {
             $content['mode'] = 'default';
         }
         return self::finish($content);
+    }
+
+    /** Enabled "TV off" schedules (SCREEN_OFF windows). */
+    public static function powerWindows(): array
+    {
+        return DB::all(
+            "SELECT * FROM broadcast_commands
+             WHERE mode = 'window' AND command = 'SCREEN_OFF' AND status IN ('scheduled','active')
+               AND (start_at IS NULL OR start_at <= :now) AND (end_at IS NULL OR end_at > :now2)
+             ORDER BY id",
+            ['now' => now(), 'now2' => now()]
+        );
     }
 
     /** Fill items from a playlist (preferred) or single content item. */

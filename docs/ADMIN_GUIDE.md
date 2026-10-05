@@ -76,6 +76,18 @@ Priority on a TV: *room off* → *emergency* → *active time window* → *room 
 
 Calendar of all scheduled broadcasts (month/week/day), with a list to edit, cancel or delete them.
 
+## 7a. TV Power (automatic off / on)
+
+**TV Power** (Manager+):
+
+* **Turn TVs off / on now** — all, selected rooms, groups or floors. A room switched off stays off,
+  even after a TV restart, until you turn it on.
+* **Daily schedules** — e.g. *OFF 23:00 → ON 06:00, every day, all rooms* or *OFF 01:00 → ON 05:30 on
+  floor 2*. Overnight times are supported. Pause/resume or delete any schedule.
+* A guest can always switch on the TV with the remote; an emergency message wakes all TVs.
+* Real standby / wake needs the TV app as *device owner* and the TV's *Quick start / Network standby*
+  setting on — see `android/README.md` → *TV power*. Without it the TV only shows a black screen.
+
 ## 8. APK Manager (TV app updates)
 
 Upload a new signed APK with its version name and version code, then **Push App Update** to all or

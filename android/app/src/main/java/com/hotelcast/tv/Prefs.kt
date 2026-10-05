@@ -84,6 +84,16 @@ object Prefs {
         get() = sp.getBoolean(K_SCREEN_OFF, false)
         set(v) = sp.edit().putBoolean(K_SCREEN_OFF, v).apply()
 
+    /** Last power state the app applied (true = standby). Avoids re-sleeping on every poll. */
+    var lastPowerOff: Boolean
+        get() = sp.getBoolean(K_LAST_POWER_OFF, false)
+        set(v) = sp.edit().putBoolean(K_LAST_POWER_OFF, v).apply()
+
+    /** Guest turned the TV on with the remote while it was scheduled off; cleared on next state change. */
+    var powerOverride: Boolean
+        get() = sp.getBoolean(K_POWER_OVERRIDE, false)
+        set(v) = sp.edit().putBoolean(K_POWER_OVERRIDE, v).apply()
+
     var kioskSuspendedUntil: Long
         get() = sp.getLong(K_KIOSK_SUSPENDED, 0L)
         set(v) = sp.edit().putLong(K_KIOSK_SUSPENDED, v).apply()
@@ -131,6 +141,8 @@ object Prefs {
     private const val K_PIN_HASH = "settings_pin_hash"
     private const val K_CURRENT_HASH = "current_hash"
     private const val K_SCREEN_OFF = "forced_screen_off"
+    private const val K_LAST_POWER_OFF = "last_power_off"
+    private const val K_POWER_OVERRIDE = "power_override"
     private const val K_KIOSK_SUSPENDED = "kiosk_suspended_until"
     private const val K_HANDLED_CMDS = "handled_commands"
     private const val K_LAST_POLL = "last_poll_time"

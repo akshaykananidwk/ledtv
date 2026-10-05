@@ -269,6 +269,65 @@ final class Broadcaster
         return preg_match('/^([01]\d|2[0-3]):([0-5]\d)(:[0-5]\d)?$/', $v) ? substr($v . ':00', 0, 8) : null;
     }
 
+    /**
+     * Daily "TV off" schedule: TVs go to standby at $offTime and wake at $onTime (overnight allowed,
+     * e.g. 23:00 → 06:00) on the given weekdays (1 = Mon … 7 = Sun). Stored as a SCREEN_OFF window.
+     * Returns [id|null, errors].
+     */
+    public static function schedulePower(array $in, ?int $userId = null): array
+    {
+        [$type, $ids] = self::parseTarget($in);
+        $off = self::parseTime($in['off_time'] ?? '');
+        $on = self::parseTime($in['on_time'] ?? '');
+        $days = array_values(array_unique(array_filter(array_map('intval', (array) ($in['days'] ?? [])), fn ($d) => $d >= 1 && $d <= 7)));
+        sort($days);
+        $errors = [];
+        if (!$off || !$on || $off === $on) {
+            $errors[] = __('Give a TV-off time and a TV-on time (different values).');
+        }
+        if ($type !== 'all' && !$ids) {
+            $errors[] = __('Select at least one target.');
+        }
+        if (!$days) {
+            $errors[] = __('Choose at least one day.');
+        }
+        if ($errors) {
+            return [null, $errors];
+        }
+        $title = trim((string) ($in['title'] ?? '')) ?: __('TV off :a – on :b', ['a' => substr($off, 0, 5), 'b' => substr($on, 0, 5)]);
+        $id = DB::insert('broadcast_commands', [
+            'title' => mb_substr($title, 0, 190),
+            'command' => 'SCREEN_OFF',
+            'target_type' => $type,
+            'target_ids' => json_out($ids),
+            'mode' => 'window',
+            'status' => 'scheduled',
+            'daily_start' => $off,
+            'daily_end' => $on,
+            'repeat_days' => implode(',', $days),
+            'created_by' => $userId,
+            'created_at' => now(),
+        ]);
+        Settings::bumpContentVersion();
+        self::processSchedules();
+        return [$id, []];
+    }
+
+    /** Pause / resume a power schedule. */
+    public static function setPowerScheduleEnabled(int $id, bool $enabled): void
+    {
+        $b = DB::one("SELECT * FROM broadcast_commands WHERE id = :id AND command = 'SCREEN_OFF' AND mode = 'window'", ['id' => $id]);
+        if (!$b) {
+            return;
+        }
+        DB::update('broadcast_commands', ['status' => $enabled ? 'scheduled' : 'cancelled'], 'id = :id', ['id' => $id]);
+        Settings::bumpContentVersion();
+        self::queueForRooms(self::targetRooms($b['target_type'], json_decode((string) $b['target_ids'], true) ?: []), 'SHOW_CONTENT', [], $id);
+        if ($enabled) {
+            self::processSchedules();
+        }
+    }
+
     /** Start an emergency broadcast that overrides all content on targeted TVs. */
     public static function emergencyStart(string $title, string $message, string $targetType, array $ids, ?int $userId = null, string $bg = '#B00020', string $fg = '#FFFFFF'): int
     {
