@@ -11,7 +11,7 @@ in [`../docs/API.md`](../docs/API.md).
 | Package / applicationId | `com.hotelcast.tv` |
 | Version | 1.0.0 (versionCode 1) |
 | Android | 5.0 (API 21) and newer, targetSdk 34 |
-| Signed release APK | `release/HotelCast-TV-1.1.0.apk` |
+| Signed release APK | `release/HotelCast-TV-1.2.0.apk` |
 
 ---
 
@@ -56,7 +56,7 @@ If that file does not exist, it falls back to environment variables (useful on C
 Check a signature with:
 
 ```bash
-$ANDROID_HOME/build-tools/34.0.0/apksigner verify --print-certs release/HotelCast-TV-1.1.0.apk
+$ANDROID_HOME/build-tools/34.0.0/apksigner verify --print-certs release/HotelCast-TV-1.2.0.apk
 ```
 
 ---
@@ -72,12 +72,12 @@ $ANDROID_HOME/build-tools/34.0.0/apksigner verify --print-certs release/HotelCas
 3. From a PC on the same network:
    ```bash
    adb connect 192.168.1.45:5555          # the TV's IP address
-   adb install -r HotelCast-TV-1.1.0.apk
+   adb install -r HotelCast-TV-1.2.0.apk
    ```
 
 ### b) With a USB pen drive and a file manager
 
-1. Copy `HotelCast-TV-1.1.0.apk` to a FAT32/exFAT pen drive and plug it into the TV.
+1. Copy `HotelCast-TV-1.2.0.apk` to a FAT32/exFAT pen drive and plug it into the TV.
 2. Install a file manager on the TV, such as *File Commander*, *X-plore* or *FX File Explorer*.
 3. Allow unknown sources:
    * Android 8 and newer: *Settings → Apps → Security & restrictions → Unknown sources* (or *Install
@@ -141,7 +141,7 @@ Device-owner mode enables these features:
 Setup: the TV must have **no Google or other accounts** (factory reset it if needed). Then run:
 
 ```bash
-adb install -r HotelCast-TV-1.1.0.apk
+adb install -r HotelCast-TV-1.2.0.apk
 adb shell dpm set-device-owner com.hotelcast.tv/.AdminReceiver
 adb shell am start -n com.hotelcast.tv/.MainActivity
 ```
@@ -331,4 +331,13 @@ Requirements for real remote **power-on**:
    the app as HOME app so it starts after boot.
 3. Some TVs ignore the wake lock; on those, remote power-on works only with root or HDMI-CEC from a box.
 
-Test each TV model once: Admin → TV Power → *Turn OFF* → wait 15 s → *Turn ON*.
+Test each TV model once: Admin → TV Power → *Turn OFF* → wait 15 s → *Turn ON*. The table
+*Last ON/OFF results from TVs* shows each TV's reply, e.g. `Screen on (wake lock)` or
+`Wake FAILED: TV did not switch on` — then that model cannot be woken from standby.
+
+**Black-screen mode** (Admin → TV Power → *How should "OFF" work?*): the TV only shows a black screen and
+stays awake and connected, so *Turn ON* always works. Use it for TV models that cannot be woken.
+
+Google TV example (Nextview): Settings → System → Power and energy → **Energy modes: Increased (Always
+connected)**, **Shut-off timer → When inactive: Never**, **Power-on behaviour: Google TV home screen**, and as a
+backup **Scheduled power on/off → Power On Time Type: Daily, Auto Power On Time 06:00**.

@@ -25,7 +25,7 @@ Write down the database name, user and password.
 
 ## 3. Upload the files
 
-1. Download `hotelcast-1.1.0.zip` (from `dist/`, or build it with `tools/build-release.sh`).
+1. Download `hotelcast-1.2.0.zip` (from `dist/`, or build it with `tools/build-release.sh`).
 2. cPanel → **File Manager** → open `public_html` → **Upload** the zip → right-click → **Extract**.
    You now have `public_html/hotelcast/`.
    *(To run HotelCast on its own sub-domain, e.g. `tv.myhotel.com`, point the sub-domain's
