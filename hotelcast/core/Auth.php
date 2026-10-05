@@ -12,12 +12,30 @@ final class Auth
     public const IDLE_TIMEOUT = 7200;      // 2 hours
     public const ABSOLUTE_TIMEOUT = 43200; // 12 hours
 
-    public const ROLE_LEVEL = ['staff' => 1, 'manager' => 2, 'super_admin' => 3];
+    /** Roles inside one hotel, by level (higher includes lower). */
+    public const ROLE_LEVEL = ['reception' => 1, 'staff' => 2, 'manager' => 3, 'super_admin' => 4];
+    /** Roles that are not bound to one hotel. */
+    public const PLATFORM_ROLES = ['platform_admin', 'reseller'];
+    public const HOTEL_ROLES = ['super_admin', 'manager', 'staff', 'reception'];
+    public const ALL_ROLES = ['platform_admin', 'reseller', 'super_admin', 'manager', 'staff', 'reception'];
 
-    /** Minimum role per permission. */
+    /**
+     * Platform permissions: allowed roles (checked against the real role, no hotel needed).
+     * Modules can add entries with Auth::registerPermission().
+     */
+    public const PLATFORM_PERMISSIONS = [
+        'platform.manage' => ['platform_admin'],          // hotels, plans, invoices, licenses, platform settings
+        'platform.hotels' => ['platform_admin', 'reseller'], // hotel list / create / enter
+        'reseller.panel' => ['reseller'],
+        'update.manage' => ['platform_admin'],
+    ];
+
+    /** Minimum hotel role per permission (platform admins / resellers inside a hotel act as super_admin). */
     public const PERMISSIONS = [
-        'dashboard.view' => 'staff',
-        'rooms.view' => 'staff',
+        'dashboard.view' => 'reception',
+        'rooms.view' => 'reception',
+        'guests.manage' => 'reception',
+        'services.manage' => 'reception',
         'rooms.manage' => 'manager',
         'groups.manage' => 'manager',
         'content.view' => 'staff',
@@ -31,8 +49,10 @@ final class Auth
         'logs.view' => 'manager',
         'users.manage' => 'super_admin',
         'settings.manage' => 'super_admin',
-        'update.manage' => 'super_admin',
+        'billing.view' => 'super_admin',
     ];
+
+    private static array $extraPermissions = [];
 
     private static ?array $user = null;
     private static bool $resolved = false;
@@ -108,6 +128,15 @@ final class Auth
             self::recordAttempt($username, $ip, false);
             return [false, __('This account is disabled.')];
         }
+        if ($user['role'] === 'reseller' && (!$user['reseller_id']
+            || DB::value("SELECT status FROM resellers WHERE id = :id", ['id' => $user['reseller_id']]) !== 'active')) {
+            self::recordAttempt($username, $ip, false);
+            return [false, __('This reseller account is suspended.')];
+        }
+        if (in_array($user['role'], self::HOTEL_ROLES, true) && (!$user['hotel_id'] || !DB::value('SELECT id FROM hotels WHERE id = :id', ['id' => $user['hotel_id']]))) {
+            self::recordAttempt($username, $ip, false);
+            return [false, __('This account is not linked to a hotel.')];
+        }
 
         if (password_needs_rehash($user['password_hash'], PASSWORD_BCRYPT, ['cost' => 12])) {
             DB::update('users', ['password_hash' => self::hash($password)], 'id = :id', ['id' => $user['id']]);
@@ -156,8 +185,10 @@ final class Auth
         $_SESSION['hc_token'] = $token;
         $_SESSION['hc_uid'] = (int) $user['id'];
         $_SESSION['lang'] = $user['language'] ?: 'en';
+        unset($_SESSION['hc_hotel']);
         self::$user = $user;
         self::$resolved = true;
+        self::resolveTenant();
         ActivityLog::add('login', 'user', (int) $user['id'], 'Logged in');
     }
 
@@ -212,7 +243,89 @@ final class Auth
         }
         unset($row['password_hash']);
         self::$user = $row;
+        self::resolveTenant();
         return self::$user;
+    }
+
+    /**
+     * Select the hotel context for the logged-in user:
+     *  - hotel roles: always their own hotel (users.hotel_id), never from the session;
+     *  - platform_admin: the hotel "entered" (session) or their own hotel_id (may be none);
+     *  - reseller: an entered hotel only if it belongs to the reseller.
+     */
+    private static function resolveTenant(): void
+    {
+        $u = self::$user;
+        if (!$u) {
+            return;
+        }
+        $hid = null;
+        $entered = isset($_SESSION['hc_hotel']) ? (int) $_SESSION['hc_hotel'] : 0;
+        if (in_array($u['role'], self::HOTEL_ROLES, true)) {
+            $hid = $u['hotel_id'] ? (int) $u['hotel_id'] : null;
+        } elseif ($u['role'] === 'platform_admin') {
+            if ($entered && DB::value('SELECT id FROM hotels WHERE id = :id', ['id' => $entered])) {
+                $hid = $entered;
+            } else {
+                $hid = $u['hotel_id'] ? (int) $u['hotel_id'] : null;
+            }
+        } elseif ($u['role'] === 'reseller') {
+            if ($entered && $u['reseller_id'] && (int) DB::value('SELECT reseller_id FROM hotels WHERE id = :id', ['id' => $entered]) === (int) $u['reseller_id']) {
+                $hid = $entered;
+            }
+        }
+        if ($entered && $hid !== $entered) {
+            unset($_SESSION['hc_hotel']);
+        }
+        Tenant::set($hid);
+    }
+
+    /** Platform admin / reseller switches into a hotel (session). Returns false if not allowed. */
+    public static function enterHotel(int $hotelId): bool
+    {
+        $u = self::user();
+        if (!$u || !self::canAccessHotel($hotelId)) {
+            return false;
+        }
+        $_SESSION['hc_hotel'] = $hotelId;
+        Tenant::set($hotelId);
+        ActivityLog::add('hotel_enter', 'hotel', $hotelId, 'Entered hotel #' . $hotelId);
+        return true;
+    }
+
+    public static function leaveHotel(): void
+    {
+        self::startSession();
+        unset($_SESSION['hc_hotel']);
+        $u = self::user();
+        Tenant::set($u && $u['role'] === 'platform_admin' && $u['hotel_id'] ? (int) $u['hotel_id'] : null);
+    }
+
+    /** True when a platform admin / reseller is currently inside a hotel they "entered". */
+    public static function inEnteredHotel(): bool
+    {
+        return !empty($_SESSION['hc_hotel']) && self::isPlatformUser();
+    }
+
+    public static function isPlatformUser(): bool
+    {
+        return in_array(self::role(), self::PLATFORM_ROLES, true);
+    }
+
+    /** May the current user manage / enter this hotel? */
+    public static function canAccessHotel(int $hotelId): bool
+    {
+        $u = self::user();
+        if (!$u) {
+            return false;
+        }
+        if ($u['role'] === 'platform_admin') {
+            return (bool) DB::value('SELECT id FROM hotels WHERE id = :id', ['id' => $hotelId]);
+        }
+        if ($u['role'] === 'reseller') {
+            return $u['reseller_id'] && (int) DB::value('SELECT reseller_id FROM hotels WHERE id = :id', ['id' => $hotelId]) === (int) $u['reseller_id'];
+        }
+        return (int) $u['hotel_id'] === $hotelId;
     }
 
     public static function id(): ?int
@@ -225,16 +338,52 @@ final class Auth
         return self::user()['role'] ?? '';
     }
 
-    public static function hasRole(string $minRole): bool
+    /**
+     * Role used for hotel permissions: platform admins / resellers act as super_admin inside a hotel
+     * they may access; without a hotel context they have no hotel role.
+     */
+    public static function hotelRole(): string
     {
         $role = self::role();
+        if (in_array($role, self::PLATFORM_ROLES, true)) {
+            return Tenant::has() ? 'super_admin' : '';
+        }
+        return Tenant::has() ? $role : '';
+    }
+
+    public static function hasRole(string $minRole): bool
+    {
+        $role = self::hotelRole();
         return $role !== '' && (self::ROLE_LEVEL[$role] ?? 0) >= (self::ROLE_LEVEL[$minRole] ?? 99);
+    }
+
+    /** Module hook: add a permission ('x.manage' => min hotel role, or list of platform roles). */
+    public static function registerPermission(string $permission, string|array $rule): void
+    {
+        self::$extraPermissions[$permission] = $rule;
+    }
+
+    public static function isPlatformPermission(string $permission): bool
+    {
+        return isset(self::PLATFORM_PERMISSIONS[$permission]) || is_array(self::$extraPermissions[$permission] ?? null);
     }
 
     public static function can(string $permission): bool
     {
-        $min = self::PERMISSIONS[$permission] ?? 'super_admin';
-        return self::hasRole($min);
+        $rule = self::PLATFORM_PERMISSIONS[$permission] ?? self::$extraPermissions[$permission] ?? self::PERMISSIONS[$permission] ?? 'super_admin';
+        if (is_array($rule)) {
+            return in_array(self::role(), $rule, true);
+        }
+        return self::hasRole($rule);
+    }
+
+    /** Admin pages / actions still allowed while the hotel is suspended (read-only mode). */
+    public const SUSPENDED_ALLOWED_SCRIPTS = ['billing.php', 'invoice.php', 'logout.php', 'profile.php', 'login.php'];
+
+    /** Read-only mode: hotel users of a suspended / expired hotel may not change anything. */
+    public static function readOnly(): bool
+    {
+        return Tenant::has() && !self::isPlatformUser() && !Tenant::isActive();
     }
 
     /** Guard for admin pages. */
@@ -251,6 +400,33 @@ final class Auth
             $back = $_SERVER['REQUEST_URI'] ?? '';
             redirect(admin_url('login.php', $back ? ['next' => $back] : []));
         }
+        // Hotel pages need a hotel context; platform users without one go to their home page.
+        if ($permission !== null && !self::isPlatformPermission($permission) && !Tenant::has() && self::isPlatformUser()) {
+            if (self::isAjax()) {
+                http_response_code(409);
+                header('Content-Type: application/json; charset=utf-8');
+                echo json_out(['ok' => false, 'error' => ['code' => 'NO_HOTEL', 'message' => 'Select a hotel first']]);
+                exit;
+            }
+            redirect(admin_url(self::homePage()));
+        }
+        // Suspended / expired hotel: read-only except billing.
+        if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST' && self::readOnly()) {
+            $script = basename((string) ($_SERVER['SCRIPT_NAME'] ?? ''));
+            $action = (string) ($_GET['action'] ?? '');
+            if (!in_array($script, self::SUSPENDED_ALLOWED_SCRIPTS, true) && !($script === 'ajax.php' && $action === 'set_language')) {
+                http_response_code(403);
+                if (self::isAjax()) {
+                    header('Content-Type: application/json; charset=utf-8');
+                    echo json_out(['ok' => false, 'error' => ['code' => 'HOTEL_SUSPENDED', 'message' => __('This hotel account is suspended. Changes are disabled until it is reactivated.')]]);
+                    exit;
+                }
+                if (function_exists('flash')) {
+                    flash('danger', __('This hotel account is suspended. Changes are disabled until it is reactivated.'));
+                }
+                redirect(admin_url(in_array($script, ['', 'index.php'], true) ? 'billing.php' : $script));
+            }
+        }
         if ($permission !== null && !self::can($permission)) {
             http_response_code(403);
             if (self::isAjax()) {
@@ -263,6 +439,20 @@ final class Auth
             exit;
         }
         return $user;
+    }
+
+    /** Landing page for the current user. */
+    public static function homePage(): string
+    {
+        $role = self::role();
+        if (!Tenant::has()) {
+            return match ($role) {
+                'platform_admin' => 'platform_hotels.php',
+                'reseller' => 'reseller.php',
+                default => 'profile.php',
+            };
+        }
+        return $role === 'reception' && is_file(HC_ROOT . '/admin/guests.php') ? 'guests.php' : 'index.php';
     }
 
     public static function isAjax(): bool

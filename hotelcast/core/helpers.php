@@ -211,8 +211,29 @@ function clean_color(?string $color, string $default = '#000000'): string
 function role_label(string $role): string
 {
     return match ($role) {
+        'platform_admin' => __('Platform Admin'),
+        'reseller' => __('Reseller'),
         'super_admin' => __('Super Admin'),
         'manager' => __('Manager'),
+        'reception' => __('Reception'),
         default => __('Staff'),
     };
+}
+
+/** Format an amount with the platform currency, e.g. "₹ 1,234.00". */
+function money(float|int|string|null $amount, ?string $currency = null): string
+{
+    $currency ??= (string) Settings::platform('billing_currency', 'INR');
+    $symbol = match (strtoupper($currency)) {
+        'INR' => '₹', 'USD' => '$', 'EUR' => '€', 'GBP' => '£', 'AED' => 'AED ',
+        default => strtoupper($currency) . ' ',
+    };
+    return $symbol . number_format((float) $amount, 2);
+}
+
+/** URL-safe slug (ASCII), e.g. "Hotel Dwarka Palace" → "hotel-dwarka-palace". */
+function slugify(string $text, string $fallback = 'hotel'): string
+{
+    $s = strtolower(trim((string) preg_replace('/[^A-Za-z0-9]+/', '-', $text), '-'));
+    return substr($s !== '' ? $s : $fallback, 0, 60);
 }

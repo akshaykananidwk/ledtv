@@ -18,6 +18,19 @@ interface CommandActions {
         versionName: String?,
         beforeInstall: suspend (String) -> Unit,
     ): AppUpdater.Result
+
+    // ---- V2 commands. Each returns the ack message; throwing (e.g. CommandFailedException) acks
+    // the command as failed with the exception message. Defaults keep older implementations compiling.
+
+    /** SET_VOLUME: [level] 0–100, clamped to volume.max / night max by the implementation. */
+    suspend fun setVolume(level: Int): String = throw CommandFailedException("SET_VOLUME not supported")
+    suspend fun setMuted(muted: Boolean): String = throw CommandFailedException("MUTE not supported")
+    suspend fun takeScreenshot(): String = throw CommandFailedException("SCREENSHOT not supported")
+    suspend fun uploadLogs(): String = throw CommandFailedException("UPLOAD_LOGS not supported")
+    suspend fun openInput(input: String): String = throw CommandFailedException("OPEN_INPUT not supported")
+    suspend fun showWelcome(): String = throw CommandFailedException("SHOW_WELCOME not supported")
+    suspend fun showMessage(title: String?, message: String?, durationSec: Int): String =
+        throw CommandFailedException("SHOW_MESSAGE not supported")
 }
 
 /**
@@ -91,10 +104,44 @@ class CommandHandler(
                     if (!result.ok) safeAck(id, STATUS_FAILED, result.message)
                     else if (!acked) safeAck(id, STATUS_ACKED, result.message)
                 }
+                "SET_VOLUME" -> {
+                    val level = cmd.payloadInt("level")
+                    if (level == null) {
+                        safeAck(id, STATUS_FAILED, "Missing level (0-100)")
+                        return
+                    }
+                    safeAck(id, STATUS_ACKED, actions.setVolume(level.coerceIn(0, 100)))
+                }
+                "MUTE" -> safeAck(id, STATUS_ACKED, actions.setMuted(true))
+                "UNMUTE" -> safeAck(id, STATUS_ACKED, actions.setMuted(false))
+                "SCREENSHOT" -> safeAck(id, STATUS_ACKED, actions.takeScreenshot())
+                "UPLOAD_LOGS" -> safeAck(id, STATUS_ACKED, actions.uploadLogs())
+                "OPEN_INPUT" -> {
+                    val input = cmd.payloadString("input")?.trim()
+                    if (input.isNullOrEmpty() || InputSwitcher.parse(input) == null) {
+                        safeAck(id, STATUS_FAILED, "Invalid input '${input.orEmpty()}' (use live_tv or hdmi1..hdmi4)")
+                        return
+                    }
+                    safeAck(id, STATUS_ACKED, actions.openInput(input))
+                }
+                "SHOW_WELCOME" -> safeAck(id, STATUS_ACKED, actions.showWelcome())
+                "SHOW_MESSAGE" -> {
+                    val title = cmd.payloadString("title")?.trim()
+                    val message = cmd.payloadString("message")?.trim()
+                    if (title.isNullOrEmpty() && message.isNullOrEmpty()) {
+                        safeAck(id, STATUS_FAILED, "Missing title/message")
+                        return
+                    }
+                    val dur = (cmd.payloadInt("duration_sec") ?: DEFAULT_MESSAGE_SEC).let { if (it <= 0) DEFAULT_MESSAGE_SEC else it }.coerceIn(3, 3600)
+                    safeAck(id, STATUS_ACKED, actions.showMessage(title, message, dur))
+                }
                 else -> safeAck(id, STATUS_FAILED, "Unknown command: $name")
             }
         } catch (e: kotlinx.coroutines.CancellationException) {
             throw e
+        } catch (e: CommandFailedException) {
+            Log.w(TAG, "Command $id $name failed: ${e.message}")
+            safeAck(id, STATUS_FAILED, e.message ?: "failed")
         } catch (e: Exception) {
             Log.e(TAG, "Command $id $name failed", e)
             safeAck(id, STATUS_FAILED, e.message ?: e.javaClass.simpleName)
@@ -117,5 +164,6 @@ class CommandHandler(
         const val STATUS_DELIVERED = "delivered"
         const val STATUS_ACKED = "acked"
         const val STATUS_FAILED = "failed"
+        const val DEFAULT_MESSAGE_SEC = 15
     }
 }

@@ -18,6 +18,12 @@ final class Cache
         return self::dir($ns) . '/' . sha1($key) . '.json';
     }
 
+    /** Namespace for per-hotel cache entries, e.g. content_h3. */
+    public static function hotelNs(string $ns, ?int $hotelId = null): string
+    {
+        return $ns . '_h' . ($hotelId ?? Tenant::current() ?? 0);
+    }
+
     public static function get(string $ns, string $key, int $ttl): mixed
     {
         $file = self::path($ns, $key);

@@ -119,6 +119,7 @@ class ContentCache(context: Context) {
             if (content == null) return emptyList()
             val urls = content.items.orEmpty().mapNotNull { it.cacheableUrl() }.toMutableList()
             content.hotel?.logoUrl?.takeIf { it.isNotBlank() }?.let { urls.add(it) }
+            content.branding?.logoUrl?.takeIf { it.isNotBlank() }?.let { urls.add(it) }
             return urls.distinct()
         }
     }

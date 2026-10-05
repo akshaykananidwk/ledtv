@@ -1,13 +1,23 @@
 <?php
 declare(strict_types=1);
 
-/** English / Gujarati translations. Keys are English strings; lang/gu.php maps them. */
+/**
+ * Translations. Keys are English strings; lang/<code>.php maps them. Module files
+ * lang/<code>_<module>.php (e.g. lang/gu_platform.php, lang/hi_guests.php) are merged
+ * automatically, so modules never need to edit the main language file.
+ *
+ *  - LANGUAGES: admin panel languages (English, Gujarati).
+ *  - GUEST_LANGUAGES: guest-facing languages (TV / guest web app) — adds Hindi.
+ */
 final class I18n
 {
     private static ?string $lang = null;
     private static array $strings = [];
+    /** @var array<string, array<string, string>> loaded string tables per language */
+    private static array $tables = [];
 
     public const LANGUAGES = ['en' => 'English', 'gu' => 'ગુજરાતી'];
+    public const GUEST_LANGUAGES = ['en' => 'English', 'gu' => 'ગુજરાતી', 'hi' => 'हिन्दी'];
 
     public static function lang(): string
     {
@@ -23,15 +33,47 @@ final class I18n
 
     public static function setLang(string $lang): void
     {
-        self::$lang = isset(self::LANGUAGES[$lang]) ? $lang : 'en';
-        $file = HC_ROOT . '/lang/' . self::$lang . '.php';
-        self::$strings = (self::$lang !== 'en' && is_file($file)) ? (array) require $file : [];
+        self::$lang = isset(self::GUEST_LANGUAGES[$lang]) ? $lang : 'en';
+        self::$strings = self::table(self::$lang);
+    }
+
+    /** String table of a language: lang/<code>.php merged with lang/<code>_*.php. */
+    public static function table(string $lang): array
+    {
+        if (!isset(self::GUEST_LANGUAGES[$lang]) || $lang === 'en') {
+            return [];
+        }
+        if (!isset(self::$tables[$lang])) {
+            $strings = [];
+            $main = HC_ROOT . '/lang/' . $lang . '.php';
+            if (is_file($main)) {
+                $strings = (array) require $main;
+            }
+            $modules = glob(HC_ROOT . '/lang/' . $lang . '_*.php') ?: [];
+            sort($modules);
+            foreach ($modules as $f) {
+                $strings = array_merge($strings, (array) require $f);
+            }
+            self::$tables[$lang] = $strings;
+        }
+        return self::$tables[$lang];
     }
 
     public static function t(string $key, array $replace = []): string
     {
         self::lang();
-        $text = self::$strings[$key] ?? $key;
+        return self::replace(self::$strings[$key] ?? $key, $replace);
+    }
+
+    /** Translate into a specific language (guest-facing text: en / gu / hi). */
+    public static function translate(string $key, string $lang, array $replace = []): string
+    {
+        $table = self::table($lang);
+        return self::replace($table[$key] ?? $key, $replace);
+    }
+
+    private static function replace(string $text, array $replace): string
+    {
         foreach ($replace as $k => $v) {
             $text = str_replace(':' . $k, (string) $v, $text);
         }

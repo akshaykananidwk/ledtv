@@ -22,6 +22,7 @@ class HotelCastApp : Application() {
         Thread.setDefaultUncaughtExceptionHandler { thread, error ->
             try {
                 Log.e("HotelCastApp", "Uncaught exception on ${thread.name}", error)
+                CrashReporter.store(this, thread, error) // sent to POST device/crash on the next start
                 val now = System.currentTimeMillis()
                 val rapid = now - Prefs.lastCrashTime < 60_000
                 Prefs.lastCrashTime = now

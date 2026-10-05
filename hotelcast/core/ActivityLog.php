@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-/** Per-user audit trail. */
+/** Per-user audit trail (per hotel; hotel_id NULL = platform-level action). */
 final class ActivityLog
 {
     public static function add(string $action, ?string $entityType = null, ?int $entityId = null, string $details = ''): void
@@ -9,6 +9,7 @@ final class ActivityLog
         $user = Auth::user();
         try {
             DB::insert('activity_logs', [
+                'hotel_id' => Tenant::current(),
                 'user_id' => $user['id'] ?? null,
                 'username' => $user['username'] ?? (PHP_SAPI === 'cli' ? 'system' : null),
                 'action' => substr($action, 0, 60),

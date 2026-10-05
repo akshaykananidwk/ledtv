@@ -7,6 +7,7 @@ declare(strict_types=1);
 final class DB
 {
     private static ?PDO $pdo = null;
+    private static int $unscoped = 0;
 
     public static function connect(array $cfg): PDO
     {
@@ -101,8 +102,31 @@ final class DB
         return self::query($sql, $params)->fetchAll(PDO::FETCH_COLUMN);
     }
 
+    /**
+     * Run $fn without the automatic hotel scoping of insert/update/delete (platform code that
+     * deliberately works across hotels, migrations). Raw SQL is never scoped automatically.
+     */
+    public static function unscoped(callable $fn): mixed
+    {
+        self::$unscoped++;
+        try {
+            return $fn();
+        } finally {
+            self::$unscoped--;
+        }
+    }
+
+    private static function scoped(string $table): bool
+    {
+        return self::$unscoped === 0 && Tenant::isTenantTable($table);
+    }
+
+    /** INSERT; on tenant tables hotel_id defaults to the current hotel (Tenant::id()). */
     public static function insert(string $table, array $data): int
     {
+        if (self::scoped($table) && !array_key_exists('hotel_id', $data)) {
+            $data['hotel_id'] = Tenant::id();
+        }
         $cols = array_keys($data);
         $sql = sprintf(
             'INSERT INTO `%s` (%s) VALUES (%s)',
@@ -114,8 +138,14 @@ final class DB
         return (int) self::pdo()->lastInsertId();
     }
 
+    /** UPDATE; on tenant tables the WHERE clause is restricted to the current hotel. */
     public static function update(string $table, array $data, string $where, array $whereParams = []): int
     {
+        if (self::scoped($table)) {
+            $where = '(' . $where . ') AND `hotel_id` = :__tenant_hid';
+            $whereParams['__tenant_hid'] = Tenant::id();
+            unset($data['hotel_id']);
+        }
         $sets = [];
         $params = [];
         foreach ($data as $col => $val) {
@@ -126,8 +156,13 @@ final class DB
         return self::query($sql, array_merge($params, $whereParams))->rowCount();
     }
 
+    /** DELETE; on tenant tables restricted to the current hotel. */
     public static function delete(string $table, string $where, array $params = []): int
     {
+        if (self::scoped($table)) {
+            $where = '(' . $where . ') AND `hotel_id` = :__tenant_hid';
+            $params['__tenant_hid'] = Tenant::id();
+        }
         return self::query(sprintf('DELETE FROM `%s` WHERE %s', self::ident($table), $where), $params)->rowCount();
     }
 

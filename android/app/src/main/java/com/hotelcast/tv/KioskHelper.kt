@@ -37,9 +37,18 @@ object KioskHelper {
         val dpm = dpm(context)
         val admin = adminComponent(context)
         try {
-            dpm.setLockTaskPackages(admin, arrayOf(context.packageName))
+            if (!externalAppActive) dpm.setLockTaskPackages(admin, arrayOf(context.packageName))
         } catch (e: Exception) {
             Log.w(TAG, "setLockTaskPackages failed", e)
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            try {
+                // HOME is harmless (HotelCast is the persistent HOME app) and lets guests come back
+                // from Live TV / HDMI; global actions = power menu (Android's default feature set).
+                dpm.setLockTaskFeatures(admin, DevicePolicyManager.LOCK_TASK_FEATURE_HOME or DevicePolicyManager.LOCK_TASK_FEATURE_GLOBAL_ACTIONS)
+            } catch (e: Exception) {
+                Log.w(TAG, "setLockTaskFeatures failed", e)
+            }
         }
         try {
             val filter = IntentFilter(Intent.ACTION_MAIN).apply {
@@ -80,6 +89,52 @@ object KioskHelper {
             activity.startLockTask()
         } catch (e: Exception) {
             Log.w(TAG, "startLockTask failed", e)
+        }
+    }
+
+    /** True while the guest is in Live TV / HDMI (another app) started from the guest menu. */
+    @Volatile var externalAppActive: Boolean = false
+        private set
+
+    /**
+     * Lets the guest leave the kiosk for [pkg] (Live TV / HDMI app):
+     *  - device owner on Android 6+: [pkg] is added to the lock-task allow list, so it runs inside
+     *    the locked task; on Android 9+ the HOME key is enabled in lock task (HOME = HotelCast);
+     *  - device owner on Android 5: lock task is paused (re-entered in MainActivity.onResume);
+     *  - not device owner: nothing to do (no lock task; HOME returns to HotelCast as launcher).
+     */
+    fun allowExternalApp(activity: Activity, pkg: String) {
+        externalAppActive = true
+        if (!isDeviceOwner(activity) || !isInLockTask(activity)) return
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            try {
+                dpm(activity).setLockTaskPackages(adminComponent(activity), arrayOf(activity.packageName, pkg))
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                    dpm(activity).setLockTaskFeatures(
+                        adminComponent(activity),
+                        DevicePolicyManager.LOCK_TASK_FEATURE_HOME or DevicePolicyManager.LOCK_TASK_FEATURE_GLOBAL_ACTIONS,
+                    )
+                }
+                return
+            } catch (e: Exception) {
+                Log.w(TAG, "lock-task allow list update failed; pausing lock task", e)
+            }
+        }
+        try {
+            activity.stopLockTask()
+        } catch (e: Exception) {
+            Log.w(TAG, "stopLockTask failed", e)
+        }
+    }
+
+    /** Back in HotelCast: only our own package may run in lock task again. */
+    fun restoreKioskPackages(context: Context) {
+        externalAppActive = false
+        if (!isDeviceOwner(context)) return
+        try {
+            dpm(context).setLockTaskPackages(adminComponent(context), arrayOf(context.packageName))
+        } catch (e: Exception) {
+            Log.w(TAG, "setLockTaskPackages restore failed", e)
         }
     }
 

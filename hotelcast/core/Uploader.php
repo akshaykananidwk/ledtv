@@ -19,11 +19,14 @@ final class Uploader
 
     /**
      * Handle one uploaded file from $_FILES. $kind = image|video|logo|apk.
+     * Files are stored per hotel: uploads/h{hotel_id}/media/YYYY/MM/…, uploads/h{id}/branding/…,
+     * storage/apk/h{id}/… ; $scope 'platform' stores platform-wide branding in uploads/platform/.
+     * (Files uploaded before 2.0 keep their old paths, e.g. media/2026/10/x.jpg — still valid.)
      * Returns ['path' => relative path under its root, 'size' => int, 'mime' => string, 'thumb' => ?string].
      *
      * @throws RuntimeException with a user-friendly message
      */
-    public static function handle(array $file, string $kind): array
+    public static function handle(array $file, string $kind, ?string $scope = null): array
     {
         if (!isset($file['error']) || is_array($file['error'])) {
             throw new RuntimeException(__('Invalid upload.'));
@@ -57,12 +60,12 @@ final class Uploader
                 if (!isset(self::IMAGE_TYPES[$ext]) || !in_array($mime, self::IMAGE_TYPES, true) || @getimagesize($file['tmp_name']) === false) {
                     throw new RuntimeException(__('Only JPG, PNG, GIF or WEBP images are allowed.'));
                 }
-                return self::storeImage($file['tmp_name'], $mime, $kind === 'logo' ? 'branding' : 'media', $kind === 'logo' ? 600 : Settings::int('image_max_width', 1920));
+                return self::storeImage($file['tmp_name'], $mime, self::root($scope) . '/' . ($kind === 'logo' ? 'branding' : 'media'), $kind === 'logo' ? 600 : Settings::int('image_max_width', 1920));
             case 'video':
                 if (!isset(self::VIDEO_TYPES[$ext]) || !str_starts_with($mime, 'video/') && $mime !== 'application/octet-stream') {
                     throw new RuntimeException(__('Only MP4, WEBM, MKV, MOV or 3GP videos are allowed.'));
                 }
-                return self::storeVideo($file['tmp_name'], $ext, $mime);
+                return self::storeVideo($file['tmp_name'], $ext, $mime, self::root($scope) . '/media');
             case 'apk':
                 if ($ext !== 'apk' || !in_array($mime, ['application/vnd.android.package-archive', 'application/zip', 'application/java-archive', 'application/octet-stream'], true)) {
                     throw new RuntimeException(__('Only .apk files are allowed.'));
@@ -72,15 +75,25 @@ final class Uploader
                     throw new RuntimeException(__('This file is not a valid Android APK.'));
                 }
                 $zip->close();
-                $dir = HC_ROOT . '/storage/apk';
+                $sub = self::root($scope);
+                $dir = HC_ROOT . '/storage/apk/' . $sub;
                 if (!is_dir($dir)) {
                     mkdir($dir, 0755, true);
                 }
                 $name = 'hotelcast_' . date('Ymd_His') . '_' . random_token(4) . '.apk';
                 self::move($file['tmp_name'], $dir . '/' . $name);
-                return ['path' => 'apk/' . $name, 'size' => (int) filesize($dir . '/' . $name), 'mime' => 'application/vnd.android.package-archive', 'thumb' => null];
+                return ['path' => 'apk/' . $sub . '/' . $name, 'size' => (int) filesize($dir . '/' . $name), 'mime' => 'application/vnd.android.package-archive', 'thumb' => null];
         }
         throw new RuntimeException('Unknown upload kind');
+    }
+
+    /** Storage root for the current hotel ("h3") or the platform ("platform"). */
+    public static function root(?string $scope = null): string
+    {
+        if ($scope === 'platform' || !Tenant::has()) {
+            return 'platform';
+        }
+        return 'h' . Tenant::id();
     }
 
     private static function move(string $tmp, string $dest): void
@@ -107,7 +120,7 @@ final class Uploader
         [$rel, $abs] = self::subdir($base);
         $name = random_token(12);
         $isGif = $mime === 'image/gif';
-        $keepPng = $mime === 'image/png' || $base === 'branding';
+        $keepPng = $mime === 'image/png' || str_ends_with($base, 'branding');
         $ext = $isGif ? 'gif' : ($keepPng ? 'png' : 'jpg');
         $dest = $abs . '/' . $name . '.' . $ext;
 
@@ -179,9 +192,9 @@ final class Uploader
         return $rel . '/' . $name . '_thumb.jpg';
     }
 
-    private static function storeVideo(string $tmp, string $ext, string $mime): array
+    private static function storeVideo(string $tmp, string $ext, string $mime, string $base = 'media'): array
     {
-        [$rel, $abs] = self::subdir('media');
+        [$rel, $abs] = self::subdir($base);
         $name = random_token(12);
         $dest = $abs . '/' . $name . '.' . $ext;
         self::move($tmp, $dest);

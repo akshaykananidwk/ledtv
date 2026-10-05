@@ -115,6 +115,62 @@ object Prefs {
             sp.edit().putLong(K_LAST_CRASH, v).commit()
         }
 
+    // ---- V2 ----
+
+    /** welcome.id values already shown on this TV (one per line, bounded). */
+    var shownWelcomeIds: String
+        get() = sp.getString(K_WELCOME_SHOWN, "") ?: ""
+        set(v) = sp.edit().putString(K_WELCOME_SHOWN, v).apply()
+
+    /** checkout_reminder.id values the guest dismissed. */
+    var dismissedReminderIds: String
+        get() = sp.getString(K_REMINDER_DISMISSED, "") ?: ""
+        set(v) = sp.edit().putString(K_REMINDER_DISMISSED, v).apply()
+
+    /** Stay key for which volume.default was applied last (see VolumePolicy.stayKey). */
+    var volumeStayApplied: String
+        get() = sp.getString(K_VOLUME_STAY, "") ?: ""
+        set(v) = sp.edit().putString(K_VOLUME_STAY, v).apply()
+
+    /** Branding product name (white-label), shown in the settings title. */
+    var brandProduct: String
+        get() = sp.getString(K_BRAND_PRODUCT, "") ?: ""
+        set(v) = sp.edit().putString(K_BRAND_PRODUCT, v).apply()
+
+    /** Hotel name from the register response / content. */
+    var hotelName: String
+        get() = sp.getString(K_HOTEL_NAME, "") ?: ""
+        set(v) = sp.edit().putString(K_HOTEL_NAME, v).apply()
+
+    /** Snapshot for UPLOAD_LOGS. Secrets (token, registration key) are never included. */
+    fun debugSnapshot(): Map<String, Any?> = linkedMapOf(
+        "device_id" to deviceId,
+        "server_url" to serverUrl,
+        "api_base" to apiBase,
+        "registered" to isRegistered,
+        "token" to if (token.isNullOrBlank()) "(none)" else "(set, hidden)",
+        "registration_key" to if (registrationKey.isBlank()) "(none)" else "(set, hidden)",
+        "room_number" to roomNumber,
+        "room_name" to roomName,
+        "room_id" to roomId,
+        "hotel_name" to hotelName,
+        "brand_product" to brandProduct,
+        "poll_interval" to pollIntervalSec,
+        "heartbeat_interval" to heartbeatIntervalSec,
+        "pin_hash_known" to !pinHash.isNullOrBlank(),
+        "current_hash" to currentHash,
+        "forced_screen_off" to forcedScreenOff,
+        "last_power_off" to lastPowerOff,
+        "power_override" to powerOverride,
+        "kiosk_suspended_until" to kioskSuspendedUntil,
+        "last_poll_time" to lastPollTime,
+        "last_crash_time" to lastCrashTime,
+        "handled_commands" to handledCommands.split(',').size,
+        "volume_stay_applied" to volumeStayApplied,
+        "welcome_shown" to shownWelcomeIds.lines().filter { it.isNotBlank() },
+        "reminders_dismissed" to dismissedReminderIds.lines().filter { it.isNotBlank() },
+    )
+
     /** Forget the server token (revoked device / re-setup). Keeps URL/room/key for convenience. */
     @SuppressLint("ApplySharedPref")
     fun clearRegistration() {
@@ -147,4 +203,9 @@ object Prefs {
     private const val K_HANDLED_CMDS = "handled_commands"
     private const val K_LAST_POLL = "last_poll_time"
     private const val K_LAST_CRASH = "last_crash_time"
+    private const val K_WELCOME_SHOWN = "welcome_shown_ids"
+    private const val K_REMINDER_DISMISSED = "reminder_dismissed_ids"
+    private const val K_VOLUME_STAY = "volume_stay_applied"
+    private const val K_BRAND_PRODUCT = "brand_product"
+    private const val K_HOTEL_NAME = "hotel_name"
 }

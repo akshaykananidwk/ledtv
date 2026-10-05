@@ -2,7 +2,15 @@ package com.hotelcast.tv
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.content.Intent
+import android.graphics.Bitmap
 import android.util.Log
+import com.google.gson.JsonObject
+import kotlinx.coroutines.withContext
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.MultipartBody
+import okhttp3.RequestBody.Companion.toRequestBody
+import java.lang.ref.WeakReference
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -29,6 +37,31 @@ data class SyncStatus(
     val registered: Boolean = false,
 )
 
+/** What the visible player can do for server commands (implemented by MainActivity, main thread only). */
+interface PlayerUi {
+    /** SHOW_WELCOME: returns the ack message or throws CommandFailedException. */
+    fun showWelcomeNow(): String
+    fun showMessage(title: String?, message: String?, durationSec: Int): String
+    fun openInput(input: String): String
+    /** Captures the player window; callback receives null on failure. */
+    fun captureScreen(callback: (Bitmap?) -> Unit)
+}
+
+/** Weak link from the process-wide [SyncManager] to the player activity currently started. */
+object UiBridge {
+    @Volatile private var ref: WeakReference<PlayerUi>? = null
+
+    var player: PlayerUi?
+        get() = ref?.get()
+        set(v) {
+            ref = v?.let { WeakReference(it) }
+        }
+
+    fun clear(p: PlayerUi) {
+        if (ref?.get() === p) ref = null
+    }
+}
+
 sealed class SyncEvent {
     /** Screen on/off state changed (SCREEN_OFF / SCREEN_ON). */
     object ScreenStateChanged : SyncEvent()
@@ -46,6 +79,7 @@ sealed class SyncEvent {
 @SuppressLint("StaticFieldLeak") // holds the application context only
 object SyncManager : CommandActions {
     private const val TAG = "SyncManager"
+    private const val VOLUME_CHECK_MS = 30_000L
 
     private lateinit var app: Context
     private lateinit var cache: ContentCache
@@ -56,6 +90,7 @@ object SyncManager : CommandActions {
     private var pollJob: Job? = null
     private var heartbeatJob: Job? = null
     private var prefetchJob: Job? = null
+    private var volumeJob: Job? = null
     private val wake = Channel<Unit>(Channel.CONFLATED)
     private val pollMutex = Mutex()
 
@@ -106,6 +141,7 @@ object SyncManager : CommandActions {
         if (!Prefs.isRegistered) return
         if (pollJob?.isActive != true) pollJob = scope.launch { pollLoop() }
         if (heartbeatJob?.isActive != true) heartbeatJob = scope.launch { heartbeatLoop() }
+        if (volumeJob?.isActive != true) volumeJob = scope.launch { volumeLoop() }
         // Re-download any media missing from the cache (e.g. after a cold start while offline)
         _content.value?.let { prefetch(it) }
     }
@@ -115,8 +151,10 @@ object SyncManager : CommandActions {
         pollJob?.cancel()
         heartbeatJob?.cancel()
         prefetchJob?.cancel()
+        volumeJob?.cancel()
         pollJob = null
         heartbeatJob = null
+        volumeJob = null
     }
 
     fun restart(context: Context) {
@@ -164,8 +202,40 @@ object SyncManager : CommandActions {
         return (base * (1L shl (failures - 1).coerceIn(0, 3))).coerceAtMost(60)
     }
 
+    /**
+     * Volume policy: volume.default once per stay, and every 30 s clamp STREAM_MUSIC to volume.max /
+     * the night max while the screen is on (also while the guest is in Live TV / HDMI).
+     */
+    private suspend fun volumeLoop() {
+        delay(5_000)
+        _content.value?.let { VolumeController.applyDefaultIfNewStay(app, it) }
+        while (currentCoroutineContext().isActive) {
+            try {
+                val c = _content.value
+                if (c?.volume != null && PowerController.isScreenInteractive()) VolumeController.enforce(app, c.volume)
+            } catch (e: Exception) {
+                Log.w(TAG, "volume check failed: ${e.message}")
+            }
+            delay(VOLUME_CHECK_MS)
+        }
+    }
+
+    /** Clamp right away (e.g. after the guest pressed VOLUME_UP). */
+    fun enforceVolumeSoon() {
+        if (!::app.isInitialized) return
+        val cfg = _content.value?.volume ?: return
+        scope.launch { VolumeController.enforce(app, cfg) }
+    }
+
     private suspend fun heartbeatLoop() {
         delay(2_000)
+        try {
+            CrashReporter.uploadPending(app) { req -> api()?.let { s -> ApiClient.call { s.crash(req) } } }
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Log.w(TAG, "crash upload failed: ${e.message}")
+        }
         while (currentCoroutineContext().isActive && Prefs.isRegistered) {
             try {
                 heartbeatOnce()
@@ -232,10 +302,15 @@ object SyncManager : CommandActions {
     private fun applyContent(content: Content, contentHash: String?) {
         val hash = contentHash?.takeIf { it.isNotBlank() } ?: content.hash.orEmpty()
         val normalized = if (content.hash.isNullOrBlank() && hash.isNotBlank()) content.copy(hash = hash) else content
+        val wasEmergency = _content.value?.isEmergency == true
         cache.saveContent(normalized)
         Prefs.currentHash = hash
         _content.value = normalized
+        normalized.branding?.product?.takeIf { it.isNotBlank() }?.let { if (Prefs.brandProduct != it) Prefs.brandProduct = it }
+        normalized.hotel?.name?.takeIf { it.isNotBlank() }?.let { if (Prefs.hotelName != it) Prefs.hotelName = it }
         PowerController.evaluate(normalized)
+        if (normalized.isEmergency && !wasEmergency) bringPlayerToFront() // e.g. guest is in Live TV / HDMI
+        VolumeController.applyDefaultIfNewStay(app, normalized)
         Log.i(TAG, "New content hash=$hash mode=${normalized.mode} items=${normalized.items?.size ?: 0}")
         prefetch(normalized)
     }
@@ -255,10 +330,10 @@ object SyncManager : CommandActions {
 
     // ------------------------------------------------------------------ played history
 
-    fun reportPlayed(contentId: Long?, startedAtMillis: Long, durationSec: Int) {
+    fun reportPlayed(contentId: Long?, startedAtMillis: Long, durationSec: Int, adCampaignId: Long? = null) {
         if (contentId == null || durationSec <= 0) return
         synchronized(played) {
-            played.add(PlayedItem(contentId, Utils.isoTime(startedAtMillis), durationSec))
+            played.add(PlayedItem(contentId, Utils.isoTime(startedAtMillis), durationSec, adCampaignId))
             if (played.size > 500) played.subList(0, played.size - 500).clear()
             if (played.size >= 20) scope.launch { runCatching { flushPlayed() } }
         }
@@ -284,8 +359,34 @@ object SyncManager : CommandActions {
 
     // ------------------------------------------------------------------ status helpers
 
+    /** Fire-and-forget analytics event (POST device/event); old servers' 404 is ignored. */
+    fun reportEvent(type: String, data: Map<String, Any?> = emptyMap()) {
+        if (!::app.isInitialized || !Prefs.isRegistered) return
+        scope.launch {
+            try {
+                val service = api() ?: return@launch
+                val json = ApiClient.gson.toJsonTree(data).takeIf { it.isJsonObject }?.asJsonObject ?: JsonObject()
+                ApiClient.call { service.event(EventRequest(type, json)) }
+            } catch (e: Exception) {
+                Log.i(TAG, "event $type not sent: ${ApiClient.describe(e)}")
+            }
+        }
+    }
+
+    private fun bringPlayerToFront() {
+        try {
+            app.startActivity(
+                Intent(app, MainActivity::class.java)
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
+            )
+        } catch (e: Exception) {
+            Log.w(TAG, "Cannot bring player to front: ${e.message}")
+        }
+    }
+
     private fun markError(e: Exception, online: Boolean) {
         Log.w(TAG, "Poll failed: ${ApiClient.describe(e)}")
+        ErrorLog.add("poll", ApiClient.describe(e))
         _status.value = _status.value.copy(online = online, lastError = ApiClient.describe(e))
     }
 
@@ -358,6 +459,63 @@ object SyncManager : CommandActions {
         versionName: String?,
         beforeInstall: suspend (String) -> Unit,
     ): AppUpdater.Result = AppUpdater(app).update(url, sha256, versionCode, versionName, beforeInstall)
+
+    // ---- V2 commands
+
+    private fun now() = VolumePolicy.minutesOfDay()
+
+    override suspend fun setVolume(level: Int): String {
+        val cfg = _content.value?.volume
+        val allowed = VolumePolicy.clamp(level, cfg, now())
+        val msg = VolumeController.setPercent(app, allowed)
+        return if (allowed < level) "$msg (requested $level%, limited by ${if (VolumePolicy.isNight(cfg, now())) "night max" else "max"})" else msg
+    }
+
+    override suspend fun setMuted(muted: Boolean): String = VolumeController.setMuted(app, muted)
+
+    private suspend fun <T> onPlayer(block: (PlayerUi) -> T): T = withContext(Dispatchers.Main) {
+        val p = UiBridge.player ?: throw CommandFailedException("Player screen is not open (TV in standby, settings or another app)")
+        block(p)
+    }
+
+    override suspend fun showWelcome(): String = onPlayer { it.showWelcomeNow() }
+
+    override suspend fun showMessage(title: String?, message: String?, durationSec: Int): String =
+        onPlayer { it.showMessage(title, message, durationSec) }
+
+    override suspend fun openInput(input: String): String = onPlayer { it.openInput(input) }
+
+    override suspend fun takeScreenshot(): String {
+        val bitmap = withContext(Dispatchers.Main) {
+            val p = UiBridge.player ?: throw CommandFailedException("Player screen is not open (TV in standby, settings or another app)")
+            kotlinx.coroutines.suspendCancellableCoroutine<Bitmap?> { cont ->
+                try {
+                    p.captureScreen { bmp -> if (cont.isActive) cont.resumeWith(Result.success(bmp)) }
+                } catch (e: Exception) {
+                    if (cont.isActive) cont.resumeWith(Result.success(null))
+                }
+            }
+        } ?: throw CommandFailedException("Screen capture failed")
+        val jpeg = try {
+            withContext(Dispatchers.Default) { ScreenshotEncoder.toJpeg(bitmap) }
+        } finally {
+            bitmap.recycle()
+        }
+        val service = api() ?: throw CommandFailedException("Server not configured")
+        val part = MultipartBody.Part.createFormData(
+            "image", "screenshot-${System.currentTimeMillis()}.jpg", jpeg.toRequestBody("image/jpeg".toMediaType())
+        )
+        ApiClient.call { service.screenshot(part) }
+        return "Screenshot uploaded (${jpeg.size / 1024} KB)"
+    }
+
+    override suspend fun uploadLogs(): String {
+        val service = api() ?: throw CommandFailedException("Server not configured")
+        val logs = withContext(Dispatchers.IO) { LogCollector.capTail(LogCollector.readLogcat()) }
+        val state = withContext(Dispatchers.IO) { LogCollector.state(app) }
+        ApiClient.call { service.logs(LogsRequest(logs, state)) }
+        return "Logs uploaded (${LogCollector.utf8Len(logs) / 1024} KB)"
+    }
 
     /** Local "Clear Cache" from settings. */
     fun clearCacheLocal() {
