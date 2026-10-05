@@ -58,6 +58,10 @@ function inst_use_db(): void
     }
     DB::setPdo($pdo);
     DB::syncTimezone();
+    // A fresh installation is hotel #1.
+    if (Migrator::hasTable($pdo, 'hotels')) {
+        Tenant::set(1);
+    }
 }
 
 // ------------------------------------------------------------ AJAX: test DB
@@ -187,7 +191,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     if (!ContentManager::validUrl($baseUrl, ['http', 'https'])) {
                         $errors[] = 'Enter the full website address, e.g. https://hotel.com/hotelcast/';
                     }
-                    $S['hotel_form'] = ['hotel_name' => $hotel, 'timezone' => $tz, 'language' => $lang, 'base_url' => $baseUrl];
+                    $brand = mb_substr(trim((string) ($_POST['brand_name'] ?? '')), 0, 120);
+                    $S['hotel_form'] = ['hotel_name' => $hotel, 'timezone' => $tz, 'language' => $lang, 'base_url' => $baseUrl, 'brand_name' => $brand];
                     if (!$errors && !empty($_FILES['logo']['name'])) {
                         try {
                             $saved = Uploader::handle($_FILES['logo'], 'logo');
@@ -203,9 +208,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             'default_language' => $lang,
                             'weather_city' => trim((string) ($_POST['weather_city'] ?? 'Dwarka')),
                         ]);
+                        if ($brand !== '') {
+                            Settings::setPlatform('platform_name', $brand);
+                        }
                         $cfg = (array) require HC_ROOT . '/config.php';
                         $cfg['base_url'] = rtrim($baseUrl, '/') . '/';
                         $cfg['timezone'] = $tz;
+                        if ($brand !== '') {
+                            $cfg['brand_name'] = $brand;
+                        }
                         Installer::writeConfig($S['db'], $S['app_key'], $cfg);
                         $S['step'] = 6;
                     }
@@ -213,7 +224,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 case 6:
                     inst_use_db();
-                    if (empty($_POST['skip'])) {
+                    // Installation mode + optional self-hosted license (#19).
+                    $mode = ($_POST['mode'] ?? 'saas') === 'standalone' ? 'standalone' : 'saas';
+                    $licKey = strtoupper(trim((string) ($_POST['license_key'] ?? '')));
+                    $licServer = trim((string) ($_POST['license_server'] ?? ''));
+                    if ($mode === 'standalone' && $licKey !== '' && !ContentManager::validUrl($licServer, ['https', 'http'])) {
+                        $errors[] = 'Enter the license server address (the provider\'s HotelCast URL), e.g. https://tv.provider.com/hotelcast/';
+                    }
+                    if ($licKey !== '' && !preg_match('/^[A-Z0-9-]{8,64}$/', $licKey)) {
+                        $errors[] = 'The license key looks wrong (letters, numbers and dashes).';
+                    }
+                    if (!$errors) {
+                        $cfg = (array) require HC_ROOT . '/config.php';
+                        $cfg['mode'] = $mode;
+                        if ($mode === 'standalone') {
+                            $cfg['license_key'] = $licKey;
+                            $cfg['license_server'] = $licServer !== '' ? rtrim($licServer, '/') . '/' : '';
+                        } else {
+                            unset($cfg['license_key'], $cfg['license_server']);
+                        }
+                        Installer::writeConfig($S['db'], $S['app_key'], $cfg);
+                    }
+                    if (!$errors && empty($_POST['skip'])) {
                         $repo = trim((string) ($_POST['github_repo'] ?? ''));
                         if ($repo !== '' && !Updater::parseRepo($repo)) {
                             $errors[] = 'Repository must look like https://github.com/owner/repo or owner/repo.';
@@ -257,14 +289,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $csrf = $S['csrf'];
-$steps = [1 => 'Requirements', 2 => 'Database', 3 => 'Tables', 4 => 'Admin', 5 => 'Hotel', 6 => 'Auto-Update', 7 => 'Done'];
+$steps = [1 => 'Requirements', 2 => 'Database', 3 => 'Tables', 4 => 'Admin', 5 => 'Hotel', 6 => 'Update & License', 7 => 'Done'];
+$brandName = Branding::installerName();
 ?><!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex">
-<title>HotelCast Installer — <?= e($steps[$step]) ?></title>
+<title><?= e($brandName) ?> Installer — <?= e($steps[$step]) ?></title>
 <style>
 :root{--p:#7b1fa2;--p2:#4a148c;--ok:#2e7d32;--bad:#c62828;--warn:#ef6c00;--bg:#f4f1f8;--card:#fff;--txt:#212121;--mut:#666}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--txt);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans Gujarati",sans-serif}
@@ -298,7 +331,7 @@ code{background:#f3e5f5;padding:2px 6px;border-radius:5px;font-size:.92em}
 </head>
 <body>
 <div class="wrap">
-  <div class="brand"><div class="logo">📺</div><div><h1>HotelCast Installer</h1><small>Hotel TV Remote Management · v<?= e(Version::current()['version']) ?></small></div></div>
+  <div class="brand"><div class="logo">📺</div><div><h1><?= e($brandName) ?> Installer</h1><small>Hotel TV Remote Management · v<?= e(Version::current()['version']) ?></small></div></div>
   <ol class="steps">
     <?php foreach ($steps as $n => $label): ?>
       <li class="<?= $n === $step ? 'on' : ($n < $step ? 'done' : '') ?>"><?= $n ?>. <?= e($label) ?></li>
@@ -354,8 +387,8 @@ code{background:#f3e5f5;padding:2px 6px;border-radius:5px;font-size:.92em}
 
 <?php elseif ($step === 4): $f = ($S['admin_form'] ?? []) + ['username' => 'admin', 'email' => '', 'full_name' => '']; ?>
     <?php if (!empty($S['setup_log'])): ?><pre class="log"><?= e(implode("\n", $S['setup_log'])) ?></pre><?php endif; ?>
-    <h2>Super admin account</h2>
-    <p class="lead">This account has full access. You can add Manager and Staff users later.</p>
+    <h2>Administrator account</h2>
+    <p class="lead">This account has full access: it is the platform admin (auto-update, hotels, billing) and the super admin of this hotel. You can add Manager, Staff and Reception users later.</p>
     <form method="post"><input type="hidden" name="_csrf" value="<?= e($csrf) ?>">
       <div class="row">
         <div><label>Username</label><input type="text" name="username" value="<?= e($f['username']) ?>" required pattern="[A-Za-z0-9_.\-]{3,50}"></div>
@@ -386,15 +419,25 @@ code{background:#f3e5f5;padding:2px 6px;border-radius:5px;font-size:.92em}
         <div><label>Admin panel language</label><select name="language"><option value="en">English</option><option value="gu" <?= $f['language'] === 'gu' ? 'selected' : '' ?>>ગુજરાતી (Gujarati)</option></select></div>
       </div>
       <label>Weather city (for TV weather widget)</label><input type="text" name="weather_city" value="Dwarka">
+      <label>Product name <span style="font-weight:400;color:#888">(optional, white-label)</span></label><input type="text" name="brand_name" value="<?= e($f['brand_name'] ?? '') ?>" placeholder="HotelCast" maxlength="120">
+      <div class="hint">Replaces "HotelCast" on the login page, admin panel and TVs. Logo and colour: Admin → Platform settings.</div>
       <label>Website address of this installation</label><input type="url" name="base_url" value="<?= e($f['base_url']) ?>" required>
       <div class="hint">TVs use this address to connect. Detected automatically — change only if you use a different domain.</div>
       <div class="btns"><button class="ghost" name="back" value="1" formnovalidate>← Back</button><button class="primary">Save →</button></div>
     </form>
 
 <?php elseif ($step === 6): ?>
-    <h2>GitHub auto-update <span style="font-weight:400;color:#888;font-size:15px">(optional)</span></h2>
-    <p class="lead">Connect your GitHub repository once — afterwards updates are installed with one click (backup, migrations and automatic rollback included). You can also set this later in Admin → Auto-Update.</p>
+    <h2>Installation type &amp; license</h2>
+    <p class="lead">Choose <b>Platform (SaaS)</b> if this server hosts one or many hotels and is managed by you. Choose <b>Self-hosted</b> if this is a single hotel installation licensed from a HotelCast provider.</p>
     <form method="post"><input type="hidden" name="_csrf" value="<?= e($csrf) ?>">
+      <div class="row">
+        <div><label>Installation type</label><select name="mode" id="instMode"><option value="saas">Platform (SaaS, no license needed)</option><option value="standalone">Self-hosted single hotel (license key)</option></select></div>
+        <div><label>License key <span style="font-weight:400;color:#888">(self-hosted)</span></label><input type="text" name="license_key" placeholder="HC-XXXXX-XXXXX-XXXXX-XXXXX" autocomplete="off"></div>
+      </div>
+      <label>License server address <span style="font-weight:400;color:#888">(self-hosted)</span></label><input type="url" name="license_server" placeholder="https://tv.your-provider.com/hotelcast/">
+      <div class="hint">Without a key a self-hosted installation runs in demo mode (max <?= License::UNLICENSED_MAX_TVS ?> TVs). You can add the key later in <code>config.php</code>.</div>
+    <h2 style="margin-top:26px">GitHub auto-update <span style="font-weight:400;color:#888;font-size:15px">(optional)</span></h2>
+    <p class="lead">Connect your GitHub repository once — afterwards updates are installed with one click (backup, migrations and automatic rollback included). You can also set this later in Admin → Auto-Update.</p>
       <label>Repository URL</label><input type="text" name="github_repo" placeholder="https://github.com/your-name/hotelcast">
       <div class="row">
         <div><label>Branch</label><input type="text" name="github_branch" value="main"></div>
@@ -423,7 +466,7 @@ code{background:#f3e5f5;padding:2px 6px;border-radius:5px;font-size:.92em}
     <?php $_SESSION = []; session_destroy(); ?>
 <?php endif; ?>
   </div>
-  <p style="text-align:center;color:#999;font-size:13px;margin-top:18px">HotelCast · English + ગુજરાતી</p>
+  <p style="text-align:center;color:#999;font-size:13px;margin-top:18px"><?= e($brandName) ?> · English + ગુજરાતી</p>
 </div>
 </body>
 </html>

@@ -72,42 +72,47 @@ function int_ids(mixed $v): array
 /** Current admin page URL with (merged) query parameters. */
 function self_url(array $query = [], bool $merge = true): string
 {
-    $page = basename((string) parse_url($_SERVER['SCRIPT_NAME'] ?? 'index.php', PHP_URL_PATH));
+    // Path relative to /admin/ (supports pages in sub-folders).
+    $script = (string) parse_url($_SERVER['SCRIPT_NAME'] ?? 'index.php', PHP_URL_PATH);
+    $page = ($pos = strpos($script, '/admin/')) !== false ? substr($script, $pos + 7) : basename($script);
     $q = $merge ? array_merge($_GET, $query) : $query;
     $q = array_filter($q, fn ($v) => $v !== null && $v !== '');
     return admin_url($page, $q);
 }
 
-/** All rooms, natural-ish order. */
+/** Shortcut: ['hid' => current hotel id] for scoped queries. */
+function hid(): array
+{
+    return ['hid' => Tenant::id()];
+}
+
+/** All rooms of the current hotel, natural-ish order. */
 function hc_rooms(): array
 {
-    static $rooms = null;
-    $rooms ??= DB::all('SELECT * FROM rooms ORDER BY LENGTH(floor), floor, LENGTH(room_number), room_number');
-    return $rooms;
+    static $rooms = [];
+    return $rooms[Tenant::id()] ??= DB::all('SELECT * FROM rooms WHERE hotel_id = :hid ORDER BY LENGTH(floor), floor, LENGTH(room_number), room_number', hid());
 }
 
 function hc_groups(): array
 {
-    static $groups = null;
-    $groups ??= DB::all('SELECT * FROM room_groups ORDER BY type, name');
-    return $groups;
+    static $groups = [];
+    return $groups[Tenant::id()] ??= DB::all('SELECT * FROM room_groups WHERE hotel_id = :hid ORDER BY type, name', hid());
 }
 
 function hc_floors(): array
 {
-    static $floors = null;
-    $floors ??= array_map('strval', DB::column("SELECT DISTINCT floor FROM rooms WHERE floor IS NOT NULL AND floor <> '' ORDER BY LENGTH(floor), floor"));
-    return $floors;
+    static $floors = [];
+    return $floors[Tenant::id()] ??= array_map('strval', DB::column("SELECT DISTINCT floor FROM rooms WHERE hotel_id = :hid AND floor IS NOT NULL AND floor <> '' ORDER BY LENGTH(floor), floor", hid()));
 }
 
 function hc_content_list(bool $activeOnly = false): array
 {
-    return DB::all('SELECT id, title, type, is_active FROM content_items' . ($activeOnly ? ' WHERE is_active = 1' : '') . ' ORDER BY title');
+    return DB::all('SELECT id, title, type, is_active FROM content_items WHERE hotel_id = :hid' . ($activeOnly ? ' AND is_active = 1' : '') . ' ORDER BY title', hid());
 }
 
 function hc_playlist_list(): array
 {
-    return DB::all('SELECT p.id, p.name, (SELECT COUNT(*) FROM playlist_items i WHERE i.playlist_id = p.id) AS item_count FROM content_playlists p ORDER BY p.name');
+    return DB::all('SELECT p.id, p.name, (SELECT COUNT(*) FROM playlist_items i WHERE i.playlist_id = p.id) AS item_count FROM content_playlists p WHERE p.hotel_id = :hid ORDER BY p.name', hid());
 }
 
 /** "c:12" / "p:3" / "" for a content/playlist pair. */
@@ -119,14 +124,14 @@ function source_value(mixed $contentId, mixed $playlistId): string
     return $contentId ? 'c:' . (int) $contentId : '';
 }
 
-/** Parse "c:12" / "p:3" → [contentId|null, playlistId|null], verifying the row exists. */
+/** Parse "c:12" / "p:3" → [contentId|null, playlistId|null], verifying the row exists in this hotel (404 if another hotel's). */
 function parse_source(mixed $value): array
 {
     $value = is_string($value) ? $value : '';
-    if (preg_match('/^c:(\d{1,9})$/', $value, $m) && DB::value('SELECT id FROM content_items WHERE id = :id', ['id' => (int) $m[1]])) {
+    if (preg_match('/^c:(\d{1,9})$/', $value, $m) && Tenant::find('content_items', (int) $m[1])) {
         return [(int) $m[1], null];
     }
-    if (preg_match('/^p:(\d{1,9})$/', $value, $m) && DB::value('SELECT id FROM content_playlists WHERE id = :id', ['id' => (int) $m[1]])) {
+    if (preg_match('/^p:(\d{1,9})$/', $value, $m) && Tenant::find('content_playlists', (int) $m[1])) {
         return [null, (int) $m[1]];
     }
     return [null, null];
@@ -174,11 +179,11 @@ function source_select(string $name, string $selected = '', ?string $noneLabel =
 function source_label(mixed $contentId, mixed $playlistId): string
 {
     if ($playlistId) {
-        $n = DB::value('SELECT name FROM content_playlists WHERE id = :id', ['id' => (int) $playlistId]);
+        $n = DB::value('SELECT name FROM content_playlists WHERE id = :id AND hotel_id = :hid', ['id' => (int) $playlistId] + hid());
         return $n !== null ? '▶ ' . $n : '-';
     }
     if ($contentId) {
-        $t = DB::value('SELECT title FROM content_items WHERE id = :id', ['id' => (int) $contentId]);
+        $t = DB::value('SELECT title FROM content_items WHERE id = :id AND hotel_id = :hid', ['id' => (int) $contentId] + hid());
         return $t !== null ? (string) $t : '-';
     }
     return '';
@@ -260,7 +265,7 @@ function target_picker(string $uid, array $opts = []): string
 function hc_devices_by_room(): array
 {
     $map = [];
-    foreach (DB::all('SELECT * FROM devices WHERE is_revoked = 0 AND room_id IS NOT NULL ORDER BY last_ping DESC') as $d) {
+    foreach (DB::all('SELECT * FROM devices WHERE hotel_id = :hid AND is_revoked = 0 AND room_id IS NOT NULL ORDER BY last_ping DESC', hid()) as $d) {
         $map[(int) $d['room_id']][] = $d;
     }
     foreach ($map as &$list) {
@@ -337,6 +342,7 @@ function mode_label(string $mode): string
         'group' => __('Group'),
         'default' => __('Default'),
         'off' => __('Screen off'),
+        'suspended' => __('Service paused'),
         'empty' => __('Welcome screen'),
         default => '-',
     };
@@ -345,19 +351,20 @@ function mode_label(string $mode): string
 /** Dashboard counters. */
 function hc_dashboard_stats(): array
 {
-    $total = (int) DB::value('SELECT COUNT(*) FROM rooms');
-    $devices = DB::all('SELECT status, last_ping FROM devices WHERE is_revoked = 0 AND room_id IS NOT NULL');
+    $total = (int) DB::value('SELECT COUNT(*) FROM rooms WHERE hotel_id = :hid', hid());
+    $devices = DB::all('SELECT status, last_ping FROM devices WHERE hotel_id = :hid AND is_revoked = 0 AND room_id IS NOT NULL', hid());
     $online = 0;
     foreach ($devices as $d) {
         if (DeviceManager::isOnline($d)) {
             $online++;
         }
     }
-    $neverRegistered = (int) DB::value('SELECT COUNT(*) FROM rooms r WHERE NOT EXISTS (SELECT 1 FROM devices d WHERE d.room_id = r.id AND d.is_revoked = 0)');
+    $neverRegistered = (int) DB::value('SELECT COUNT(*) FROM rooms r WHERE r.hotel_id = :hid AND NOT EXISTS (SELECT 1 FROM devices d WHERE d.room_id = r.id AND d.is_revoked = 0)', hid());
+    $h = Tenant::id();
     $last = DB::value('SELECT GREATEST(
-        COALESCE((SELECT MAX(updated_at) FROM content_items), \'1970-01-01\'),
-        COALESCE((SELECT MAX(updated_at) FROM content_playlists), \'1970-01-01\'),
-        COALESCE((SELECT MAX(created_at) FROM broadcast_commands WHERE command = \'SHOW_CONTENT\'), \'1970-01-01\'))');
+        COALESCE((SELECT MAX(updated_at) FROM content_items WHERE hotel_id = :h1), \'1970-01-01\'),
+        COALESCE((SELECT MAX(updated_at) FROM content_playlists WHERE hotel_id = :h2), \'1970-01-01\'),
+        COALESCE((SELECT MAX(created_at) FROM broadcast_commands WHERE hotel_id = :h3 AND command = \'SHOW_CONTENT\'), \'1970-01-01\'))', ['h1' => $h, 'h2' => $h, 'h3' => $h]);
     $last = ($last && !str_starts_with((string) $last, '1970')) ? (string) $last : null;
     $emergencies = Broadcaster::activeEmergencies();
     return [
@@ -512,18 +519,19 @@ function cmd_status_badge(?string $status): string
 function hc_preview_object(int $contentId, int $playlistId, int $roomId): ?array
 {
     if ($roomId) {
-        $room = DB::one('SELECT * FROM rooms WHERE id = :id', ['id' => $roomId]);
+        $room = Tenant::find('rooms', $roomId);
         return $room ? ContentResolver::build($room) : null;
     }
     $base = [
         'mode' => 'preview',
         'screen_on' => true,
         'room' => ['id' => 0, 'number' => '', 'name' => __('Preview'), 'floor' => ''],
-        'hotel' => ['name' => (string) Settings::get('hotel_name', ''), 'logo_url' => media_url((string) Settings::get('hotel_logo', ''))],
+        'hotel' => ['id' => Tenant::id(), 'name' => (string) Settings::get('hotel_name', ''), 'logo_url' => media_url((string) Settings::get('hotel_logo', ''))],
         'playlist' => null,
         'items' => [],
         'overlay' => ContentResolver::overlay(),
         'emergency' => null,
+        'branding' => Branding::forTv(),
     ];
     if ($playlistId) {
         $pl = ContentManager::findPlaylist($playlistId);
