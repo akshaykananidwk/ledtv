@@ -59,6 +59,14 @@ final class I18n
         return self::$tables[$lang];
     }
 
+    /** Forget loaded string tables (after adding language files at runtime, tests). */
+    public static function reset(): void
+    {
+        self::$tables = [];
+        self::$lang = null;
+        self::$strings = [];
+    }
+
     public static function t(string $key, array $replace = []): string
     {
         self::lang();

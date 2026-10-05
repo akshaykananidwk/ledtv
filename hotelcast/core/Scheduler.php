@@ -102,6 +102,7 @@ final class Scheduler
     public static function runTasks(bool $force = false): array
     {
         $out = [];
+        $prevTenant = Tenant::current();
         foreach (self::tasks() as $name => $task) {
             $key = 'task_last_' . $name;
             $last = (int) Settings::platform($key, '0');
@@ -116,6 +117,8 @@ final class Scheduler
             } catch (Throwable $e) {
                 Logger::error('Task ' . $name . ' failed: ' . $e->getMessage());
                 $out[$name] = ['error' => $e->getMessage()];
+            } finally {
+                Tenant::set($prevTenant);
             }
         }
         return $out;

@@ -280,6 +280,12 @@ final class ContentResolver
     /** @var ContentExtension[]|null */
     private static ?array $extensions = null;
 
+    /** Forget discovered extensions (tests / long-running processes). */
+    public static function resetExtensions(): void
+    {
+        self::$extensions = null;
+    }
+
     /** Instances of every core/Extensions/*.php class implementing ContentExtension (sorted by file name). */
     public static function extensions(): array
     {

@@ -17,6 +17,7 @@
             <file>tests/Integration/UpdaterTest.php</file>
             <file>tests/Integration/TenancyTest.php</file>
             <file>tests/Integration/PlatformTest.php</file>
+            <file>tests/Integration/ExtensionPointsTest.php</file>
             <file>tests/Integration/MigrationUpgradeTest.php</file>
         </testsuite>
     </testsuites>

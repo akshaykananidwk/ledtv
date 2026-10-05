@@ -4,7 +4,32 @@ Date: 2026-10-05 · Environment: PHP 8.3.6 (CLI + built-in server), MariaDB 10.1
 JDK 21, Android Gradle Plugin 8.5.2. Apache itself was not available in the test container; its
 `.htaccess` routing was emulated with `hotelcast/tests/router.php`.
 
-## Summary
+## 2.0.0 — multi-hotel foundation (server)
+
+PHPUnit: ✅ **220 tests, 3,978 assertions, 0 failures** (PHP 8.3.6, MariaDB 10.11). New suites:
+
+* **TenancyTest** — two hotels; every admin page / AJAX action / API endpoint used by hotel A's super
+  admin with hotel B's room, group, content, playlist, schedule, power schedule, emergency, APK,
+  device and user ids answers 403/404, a snapshot of all of hotel B's data is unchanged afterwards,
+  list pages never show B's data, B's TV never receives A's emergency / content / ticker, device
+  tokens, command ids and APKs are hotel-bound, the registration key decides the hotel.
+* **PlatformTest** — hotel create / edit / enter / leave through the UI, TV limit (`LICENSE_LIMIT`),
+  suspension (TV `mode: suspended`, `HOTEL_SUSPENDED` on registration, read-only admin, billing still
+  open), expiry, invoice numbers / amounts / 18 % tax, idempotent monthly generation, overdue reminder
+  + auto-suspend, payment → automatic reactivation, reseller isolation / allowance / commission, license
+  server (binding, reset, expired, revoked, rate limit), license client (valid, 24 h cache, 14-day
+  offline grace, invalid, unlicensed 2-TV demo, real loopback check), branding in TV content and login.
+* **MigrationUpgradeTest** — a 1.2.0 database (001 only + data) upgraded in place: all rows kept and
+  in hotel 1, settings split hotel / platform, first super admin → platform admin, per-hotel unique
+  keys, old media paths, interrupted migration resumed, upgraded app works over HTTP (old TV token,
+  old registration key, owner login incl. updater).
+* **ExtensionPointsTest** — nav.d, dashboard.d, ajax.d, api/routes, content extensions, tasks,
+  lang module files (gu / hi), boot.d tenant tables and permissions.
+* Every admin page was crawled as platform admin, reseller (also inside its hotel), super admin,
+  manager, staff and reception: expected 200 / 302 / 403 everywhere, no PHP warnings
+  (`logs/php_error.log` is asserted empty by the suites).
+
+## Summary (1.x)
 
 | Area | Result |
 |------|--------|
