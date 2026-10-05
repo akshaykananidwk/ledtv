@@ -97,24 +97,22 @@ object KioskHelper {
         private set
 
     /**
-     * Lets the guest leave the kiosk for [pkg] (Live TV / HDMI app):
-     *  - device owner on Android 6+: [pkg] is added to the lock-task allow list, so it runs inside
-     *    the locked task; on Android 9+ the HOME key is enabled in lock task (HOME = HotelCast);
-     *  - device owner on Android 5: lock task is paused (re-entered in MainActivity.onResume);
+     * Lets the guest leave the kiosk for [pkg] (Live TV / HDMI app) and come back with HOME:
+     *  - device owner on Android 9+: [pkg] is added to the lock-task allow list (it runs inside the
+     *    locked task) and LOCK_TASK_FEATURE_HOME is on, so HOME returns to HotelCast (the HOME app);
+     *  - device owner on Android 5–8: lock task has no HOME key, so it is paused instead and
+     *    re-entered in MainActivity.onResume (status bar stays disabled by policy);
      *  - not device owner: nothing to do (no lock task; HOME returns to HotelCast as launcher).
      */
     fun allowExternalApp(activity: Activity, pkg: String) {
         externalAppActive = true
         if (!isDeviceOwner(activity) || !isInLockTask(activity)) return
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
             try {
-                dpm(activity).setLockTaskPackages(adminComponent(activity), arrayOf(activity.packageName, pkg))
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                    dpm(activity).setLockTaskFeatures(
-                        adminComponent(activity),
-                        DevicePolicyManager.LOCK_TASK_FEATURE_HOME or DevicePolicyManager.LOCK_TASK_FEATURE_GLOBAL_ACTIONS,
-                    )
-                }
+                val dpm = dpm(activity)
+                val admin = adminComponent(activity)
+                dpm.setLockTaskPackages(admin, arrayOf(activity.packageName, pkg))
+                dpm.setLockTaskFeatures(admin, DevicePolicyManager.LOCK_TASK_FEATURE_HOME or DevicePolicyManager.LOCK_TASK_FEATURE_GLOBAL_ACTIONS)
                 return
             } catch (e: Exception) {
                 Log.w(TAG, "lock-task allow list update failed; pausing lock task", e)

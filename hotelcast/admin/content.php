@@ -418,8 +418,8 @@ if ($action === 'new' || $action === 'edit') {
 $fType = isset(ContentManager::TYPES[$_GET['type'] ?? '']) ? (string) $_GET['type'] : '';
 $q = req_str('q', $_GET, 100);
 $view = ($_GET['view'] ?? '') === 'list' ? 'list' : 'grid';
-$where = [];
-$params = [];
+$where = ['hotel_id = :hid'];
+$params = hid();
 if ($fType !== '') {
     $where[] = 'type = :t';
     $params['t'] = $fType;
@@ -430,7 +430,7 @@ if ($q !== '') {
 }
 $items = DB::all('SELECT * FROM content_items' . ($where ? ' WHERE ' . implode(' AND ', $where) : '') . ' ORDER BY created_at DESC, id DESC LIMIT 500', $params);
 $counts = [];
-foreach (DB::all('SELECT type, COUNT(*) AS n FROM content_items GROUP BY type') as $c) {
+foreach (DB::all('SELECT type, COUNT(*) AS n FROM content_items WHERE hotel_id = :hid GROUP BY type', hid()) as $c) {
     $counts[$c['type']] = (int) $c['n'];
 }
 $total = array_sum($counts);

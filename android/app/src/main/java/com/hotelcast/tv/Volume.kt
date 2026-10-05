@@ -86,7 +86,7 @@ object VolumeController {
     }
 
     private fun isFixed(am: AudioManager): Boolean =
-        Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP && try { am.isVolumeFixed } catch (_: Exception) { false }
+        try { am.isVolumeFixed } catch (_: Exception) { false }
 
     /** Sets the level (already clamped by the caller). Returns a short description for acks/logs. */
     fun setPercent(context: Context, percent: Int): String {

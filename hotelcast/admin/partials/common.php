@@ -14,6 +14,41 @@ if (defined('HC_ADMIN_COMMON')) {
 }
 define('HC_ADMIN_COMMON', true);
 
+/**
+ * Sidebar items from admin/partials/nav.d/*.php grouped by section and filtered for the current
+ * user (permission, hotel context, SaaS-only flag, page file present). Later files override
+ * earlier items with the same key.
+ */
+function hc_nav_sections(): array
+{
+    $sections = ['hotel' => [], 'reseller' => [], 'platform' => []];
+    $files = glob(__DIR__ . '/nav.d/*.php') ?: [];
+    sort($files);
+    foreach ($files as $f) {
+        $items = require $f;
+        foreach ((array) $items as $item) {
+            if (!is_array($item) || count($item) < 5) {
+                continue;
+            }
+            [$key, $file, $perm, $icon, $label] = $item;
+            $section = $item[5] ?? 'hotel';
+            $flags = (array) ($item[6] ?? []);
+            if (!empty($flags['saas']) && License::mode() !== 'saas') {
+                continue;
+            }
+            if ($section === 'hotel' && !Tenant::has()) {
+                continue;
+            }
+            if (!Auth::can((string) $perm) || !is_file(HC_ROOT . '/admin/' . $file)) {
+                continue;
+            }
+            $sections[$section] ??= [];
+            $sections[$section][$key] = [$key, $file, $perm, $icon, $label];
+        }
+    }
+    return array_filter($sections);
+}
+
 /** Send a JSON response and stop. */
 function ajax_json(array $payload, int $status = 200): never
 {

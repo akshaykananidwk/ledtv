@@ -6,17 +6,36 @@ require_once __DIR__ . '/partials/common.php';
 $user = Auth::require('users.manage');
 Csrf::check();
 
-const ROLES = ['super_admin', 'manager', 'staff'];
+const ROLES = Auth::HOTEL_ROLES;
 
 function other_active_super_admins(int $exceptId): int
 {
-    return (int) DB::value("SELECT COUNT(*) FROM users WHERE role = 'super_admin' AND is_active = 1 AND id <> :id", ['id' => $exceptId]);
+    return (int) DB::value("SELECT COUNT(*) FROM users WHERE hotel_id = :hid AND role = 'super_admin' AND is_active = 1 AND id <> :id", ['id' => $exceptId] + hid());
+}
+
+/**
+ * A user of the current hotel (hotel roles only — platform admins / resellers are managed on the
+ * platform). 404 for users of another hotel or platform accounts.
+ */
+function hotel_user(int $id): ?array
+{
+    if ($id <= 0) {
+        return null;
+    }
+    $u = DB::one('SELECT * FROM users WHERE id = :id', ['id' => $id]);
+    if (!$u) {
+        return null;
+    }
+    if ((int) $u['hotel_id'] !== Tenant::id() || !in_array($u['role'], Auth::HOTEL_ROLES, true)) {
+        Tenant::deny('users id ' . $id);
+    }
+    return $u;
 }
 
 if (is_post()) {
     $op = req_str('op', $_POST, 20);
     $id = req_int('id', $_POST);
-    $target = $id ? DB::one('SELECT * FROM users WHERE id = :id', ['id' => $id]) : null;
+    $target = $id ? hotel_user($id) : null;
     $me = (int) $user['id'];
 
     switch ($op) {
@@ -65,13 +84,13 @@ if (is_post()) {
                 $data['password_hash'] = Auth::hash($password);
             }
             if ($target) {
-                DB::update('users', $data, 'id = :id', ['id' => $id]);
+                DB::update('users', $data, 'id = :id AND hotel_id = :hid', ['id' => $id] + hid());
                 if ($password !== '' || !$active || $role !== $target['role']) {
                     Auth::revokeUserSessions($id, $id === $me);
                 }
                 ActivityLog::add('user_update', 'user', $id, $username . ($password !== '' ? ' (password reset)' : ''));
             } else {
-                $id = DB::insert('users', $data + ['created_at' => now()]);
+                $id = DB::insert('users', $data + ['hotel_id' => Tenant::id(), 'created_at' => now()]);
                 ActivityLog::add('user_create', 'user', $id, $username . ' (' . $role . ')');
             }
             flash('success', __('User :u saved.', ['u' => $username]));
@@ -86,7 +105,7 @@ if (is_post()) {
             } elseif ($target['role'] === 'super_admin' && other_active_super_admins((int) $target['id']) === 0) {
                 flash('danger', __('There must always be at least one active Super Admin.'));
             } else {
-                DB::delete('users', 'id = :id', ['id' => $id]);
+                DB::delete('users', 'id = :id AND hotel_id = :hid', ['id' => $id] + hid());
                 ActivityLog::add('user_delete', 'user', $id, $target['username']);
                 flash('success', __('User :u deleted.', ['u' => $target['username']]));
             }
@@ -94,13 +113,16 @@ if (is_post()) {
 
         case 'unlock':
             if ($target) {
-                DB::update('users', ['failed_attempts' => 0, 'locked_until' => null], 'id = :id', ['id' => $id]);
+                DB::update('users', ['failed_attempts' => 0, 'locked_until' => null], 'id = :id AND hotel_id = :hid', ['id' => $id] + hid());
                 ActivityLog::add('user_unlock', 'user', $id, $target['username']);
                 flash('success', __('User :u unlocked.', ['u' => $target['username']]));
             }
             break;
 
         case 'revoke_session':
+            if (!$target) {
+                break;
+            }
             $sid = req_int('session_id', $_POST);
             DB::update('user_sessions', ['revoked' => 1], 'id = :sid AND user_id = :uid', ['sid' => $sid, 'uid' => $id]);
             ActivityLog::add('session_revoke', 'user', $id, 'Session #' . $sid);
@@ -136,7 +158,7 @@ $activeNav = 'users';
 if ($action === 'new' || $action === 'edit') {
     $u = ['id' => 0, 'username' => '', 'email' => '', 'full_name' => '', 'role' => 'staff', 'language' => 'en', 'is_active' => 1];
     if ($action === 'edit') {
-        $u = DB::one('SELECT * FROM users WHERE id = :id', ['id' => req_int('id', $_GET)]);
+        $u = hotel_user(req_int('id', $_GET));
         if (!$u) {
             flash('warning', __('User not found.'));
             redirect(admin_url('users.php'));
@@ -179,9 +201,10 @@ if ($action === 'new' || $action === 'edit') {
           </select>
         </div>
         <div class="col-12 small text-muted">
-          <strong><?= e(__('Super Admin')) ?></strong>: <?= e(__('everything, including users, settings and updates.')) ?>
+          <strong><?= e(__('Super Admin')) ?></strong>: <?= e(__('everything in this hotel, including users, settings and billing.')) ?>
           <strong><?= e(__('Manager')) ?></strong>: <?= e(__('rooms, content, playlists, schedules, TV commands, APK, logs.')) ?>
           <strong><?= e(__('Staff')) ?></strong>: <?= e(__('view rooms and content, send content and emergency messages.')) ?>
+          <strong><?= e(__('Reception')) ?></strong>: <?= e(__('front desk: guests check-in/out, service orders and requests, view rooms.')) ?>
         </div>
         <div class="col-md-6">
           <label class="form-label" for="pw"><?= e($u['id'] ? __('New password (leave empty to keep)') : __('Password')) ?><?= $u['id'] ? '' : ' *' ?></label>
@@ -209,12 +232,12 @@ if ($action === 'new' || $action === 'edit') {
 }
 
 if ($action === 'view') {
-    $u = DB::one('SELECT * FROM users WHERE id = :id', ['id' => req_int('id', $_GET)]);
+    $u = hotel_user(req_int('id', $_GET));
     if (!$u) {
         redirect(admin_url('users.php'));
     }
     $sessions = DB::all('SELECT * FROM user_sessions WHERE user_id = :u AND revoked = 0 AND expires_at > :n ORDER BY last_activity DESC', ['u' => $u['id'], 'n' => now()]);
-    $acts = DB::all('SELECT * FROM activity_logs WHERE user_id = :u ORDER BY id DESC LIMIT 50', ['u' => $u['id']]);
+    $acts = DB::all('SELECT * FROM activity_logs WHERE hotel_id = :hid AND user_id = :u ORDER BY id DESC LIMIT 50', ['u' => $u['id']] + hid());
     $currentHash = !empty($_SESSION['hc_token']) ? hash('sha256', (string) $_SESSION['hc_token']) : '';
     $pageTitle = $u['username'];
     require __DIR__ . '/partials/header.php';
@@ -279,7 +302,7 @@ if ($action === 'view') {
     exit;
 }
 
-$users = DB::all('SELECT * FROM users ORDER BY FIELD(role, \'super_admin\', \'manager\', \'staff\'), username');
+$users = DB::all("SELECT * FROM users WHERE hotel_id = :hid AND role IN ('super_admin','manager','staff','reception') ORDER BY FIELD(role, 'super_admin', 'manager', 'staff', 'reception'), username", hid());
 require __DIR__ . '/partials/header.php';
 ?>
 <div class="page-head">
@@ -297,7 +320,7 @@ require __DIR__ . '/partials/header.php';
             <tr>
               <td><a href="<?= e(admin_url('users.php', ['action' => 'view', 'id' => $u['id']])) ?>" class="fw-semibold text-decoration-none"><?= e($u['full_name'] ?: $u['username']) ?></a>
                 <div class="small text-muted"><?= e($u['username']) ?> · <?= e($u['email']) ?></div></td>
-              <td><span class="badge <?= $u['role'] === 'super_admin' ? 'text-bg-dark' : ($u['role'] === 'manager' ? 'text-bg-primary' : 'text-bg-secondary') ?>"><?= e(role_label($u['role'])) ?></span></td>
+              <td><span class="badge <?= $u['role'] === 'super_admin' ? 'text-bg-dark' : ($u['role'] === 'manager' ? 'text-bg-primary' : ($u['role'] === 'reception' ? 'text-bg-info' : 'text-bg-secondary')) ?>"><?= e(role_label($u['role'])) ?></span></td>
               <td class="d-none d-md-table-cell small"><?= e(time_ago($u['last_login_at'])) ?><?php if ($u['last_login_ip']): ?><div class="text-muted"><?= e($u['last_login_ip']) ?></div><?php endif; ?></td>
               <td>
                 <?php if ($locked): ?><span class="badge text-bg-warning"><i class="bi bi-lock"></i> <?= e(__('Locked')) ?></span>

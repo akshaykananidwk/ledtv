@@ -42,7 +42,7 @@ if (is_post()) {
         $validIds = [];
         if ($items) {
             [$in, $p] = DB::in(array_values(array_unique(array_column($items, 0))), 'c');
-            $validIds = array_map('intval', DB::column("SELECT id FROM content_items WHERE id IN $in", $p));
+            $validIds = Tenant::assertOwnsAll('content_items', array_values(array_unique(array_column($items, 0))));
         }
         DB::transaction(function () use (&$id, $existing, $name, $transition, $items, $validIds) {
             $data = ['name' => $name, 'description' => req_str('description', $_POST, 500) ?: null, 'transition' => $transition];
@@ -60,7 +60,7 @@ if (is_post()) {
             }
         });
         // touch updated_at even when only items changed
-        DB::query('UPDATE content_playlists SET updated_at = :n WHERE id = :id', ['n' => now(), 'id' => $id]);
+        DB::query('UPDATE content_playlists SET updated_at = :n WHERE id = :id AND hotel_id = :hid', ['n' => now(), 'id' => $id] + hid());
         Settings::bumpContentVersion();
         ActivityLog::add($existing ? 'playlist_update' : 'playlist_create', 'playlist', $id, $name . ' (' . count($items) . ' items)');
         flash('success', __('Playlist ":n" saved.', ['n' => $name]));
@@ -98,15 +98,15 @@ if ($action === 'new' || $action === 'edit') {
         }
         $plItems = ContentManager::playlistItems((int) $pl['id'], false);
     }
-    $library = DB::all('SELECT id, title, type, duration, is_active, file_path, thumb_path, url FROM content_items ORDER BY title');
+    $library = DB::all('SELECT id, title, type, duration, is_active, file_path, thumb_path, url FROM content_items WHERE hotel_id = :hid ORDER BY title', hid());
     $libJs = [];
     foreach ($library as $c) {
         $libJs[$c['id']] = ['id' => (int) $c['id'], 'title' => $c['title'], 'type' => __(ContentManager::TYPES[$c['type']]), 'icon' => ContentManager::TYPE_ICONS[$c['type']],
             'duration' => (int) $c['duration'], 'thumb' => ContentManager::thumbUrl($c), 'active' => (bool) (int) $c['is_active']];
     }
     $usage = $pl['id'] ? [
-        'rooms' => (int) DB::value('SELECT COUNT(*) FROM rooms WHERE playlist_id = :p', ['p' => $pl['id']]),
-        'groups' => (int) DB::value('SELECT COUNT(*) FROM room_groups WHERE playlist_id = :p', ['p' => $pl['id']]),
+        'rooms' => (int) DB::value('SELECT COUNT(*) FROM rooms WHERE hotel_id = :hid AND playlist_id = :p', ['p' => $pl['id']] + hid()),
+        'groups' => (int) DB::value('SELECT COUNT(*) FROM room_groups WHERE hotel_id = :hid AND playlist_id = :p', ['p' => $pl['id']] + hid()),
     ] : ['rooms' => 0, 'groups' => 0];
     $pageTitle = $pl['id'] ? __('Edit playlist') : __('New playlist');
     $extraScripts = ['vendor/sortablejs/Sortable.min.js'];
@@ -229,7 +229,9 @@ $playlists = DB::all(
      FROM content_playlists p
      LEFT JOIN playlist_items i ON i.playlist_id = p.id
      LEFT JOIN content_items c ON c.id = i.content_id
-     GROUP BY p.id ORDER BY p.name'
+     WHERE p.hotel_id = :hid
+     GROUP BY p.id ORDER BY p.name',
+    hid()
 );
 require __DIR__ . '/partials/header.php';
 ?>

@@ -21,7 +21,8 @@ import java.util.Locale
  *  2. ACTION_VIEW on `TvContract.Channels.CONTENT_URI` (Live Channels / TV app)
  *  3. launch intents of known TV apps: Google Live Channels, AOSP Live TV, Google TV home (live tab),
  *     MediaTek "TV center" (Sony/Philips/TCL/Xiaomi boards), Sony, TCL, Xiaomi PatchWall
- *  4. Android settings (inputs list) as the last resort
+ *  4. the TV's input list (`android.settings.TV_INPUT_SETTINGS`, where available), and — only for the
+ *     admin's OPEN_INPUT command, never from the guest menu — Android settings as the last resort
  *
  * HDMI: TvInputManager.getTvInputList() → hardware inputs of TYPE_HDMI (CEC child devices skipped),
  * matched to the port by label ("HDMI 2"), id ("…hdmi2…" / "…HW2…") or position, then ACTION_VIEW
@@ -100,7 +101,7 @@ object InputSwitcher {
     }
 
     /** Ordered candidate intents for [target]. */
-    fun candidateIntents(context: Context, target: Target): List<Intent> {
+    fun candidateIntents(context: Context, target: Target, allowSettings: Boolean): List<Intent> {
         val list = mutableListOf<Intent>()
         val inputs = tvInputs(context)
         when (target) {
@@ -126,9 +127,10 @@ object InputSwitcher {
                 }
             }
         }
-        // Last resort: the TV's input list / settings so the guest can pick the source by hand.
+        // Last resort: the TV's input list (where the TV has one) so the source can be picked by hand.
         list += Intent("android.settings.TV_INPUT_SETTINGS")
-        list += Intent(Settings.ACTION_SETTINGS)
+        // Full Android settings only for admin-initiated OPEN_INPUT (a guest must not land in settings).
+        if (allowSettings) list += Intent(Settings.ACTION_SETTINGS)
         return list
     }
 
@@ -142,8 +144,8 @@ object InputSwitcher {
     }
 
     /** Tries each candidate; must be called on the main thread with the player activity. */
-    fun open(activity: Activity, target: Target, label: String): Result {
-        for (intent in candidateIntents(activity, target)) {
+    fun open(activity: Activity, target: Target, label: String, allowSettings: Boolean = false): Result {
+        for (intent in candidateIntents(activity, target, allowSettings)) {
             val pkg = resolvePackage(activity, intent) ?: continue
             if (pkg == activity.packageName) continue
             try {
@@ -166,5 +168,7 @@ object InputSwitcher {
         return Result(false, "$label is not available on this TV")
     }
 
-    private fun describeUri(u: Uri): String = if (TvContract.isChannelUriForPassthroughInput(u)) "passthrough" else u.toString()
+    /** "passthrough" for content://android.media.tv/passthrough/<id> (isChannelUriForPassthroughInput is API 24+). */
+    private fun describeUri(u: Uri): String =
+        if (u.authority == TvContract.AUTHORITY && u.pathSegments.firstOrNull() == "passthrough") "passthrough" else u.toString()
 }

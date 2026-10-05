@@ -54,8 +54,12 @@ if (is_post()) {
     }
 }
 
-$hotelName = (string) Settings::get('hotel_name', 'HotelCast');
-$logo = media_url((string) Settings::get('hotel_logo', ''));
+// White-label: platform branding, or a hotel's / reseller's branding with ?b=<hotel-slug>.
+$brandHotel = is_string($_GET['b'] ?? null) && preg_match('/^[a-z0-9-]{1,80}$/', $_GET['b'])
+    ? DB::one('SELECT id, name, brand_logo FROM hotels WHERE slug = :s', ['s' => $_GET['b']]) : null;
+$brand = Branding::get($brandHotel ? (int) $brandHotel['id'] : 0);
+$hotelName = $brandHotel ? (string) $brandHotel['name'] : $brand['product'];
+$logo = $brand['logo_url'];
 $lang = I18n::lang();
 $pageTitle = __('Log in');
 $user = null;
@@ -71,6 +75,7 @@ $user = null;
 <link rel="stylesheet" href="<?= e(asset('vendor/bootstrap/css/bootstrap.min.css')) ?>">
 <link rel="stylesheet" href="<?= e(asset('vendor/bootstrap-icons/bootstrap-icons.min.css')) ?>">
 <link rel="stylesheet" href="<?= e(asset('css/admin.css')) ?>">
+<style>:root{--hc-accent:<?= e($brand['color']) ?>;--hc-accent-dark:<?= e(Branding::shade($brand['color'])) ?>}.hc-login{background:radial-gradient(circle at 20% 20%,<?= e($brand['color']) ?>,#0f172a 65%)}</style>
 </head>
 <body class="hc-admin lang-<?= e($lang) ?>">
 <div class="hc-login">
@@ -83,7 +88,7 @@ $user = null;
           <div class="hc-brand-icon text-white mx-auto mb-2" style="width:56px;height:56px;font-size:1.7rem"><i class="bi bi-tv"></i></div>
         <?php endif; ?>
         <h1 class="h4 mb-0"><?= e($hotelName) ?></h1>
-        <div class="text-muted small"><?= e(__('HotelCast TV management')) ?></div>
+        <div class="text-muted small"><?= e(__(':product TV management', ['product' => $brand['product']])) ?></div>
       </div>
       <?= flash_show() ?>
       <?php if ($error): ?>
@@ -109,6 +114,9 @@ $user = null;
         </div>
         <button type="submit" class="btn btn-primary btn-lg w-100"><i class="bi bi-box-arrow-in-right"></i> <?= e(__('Log in')) ?></button>
       </form>
+      <?php if ($brand['support_phone'] !== '' || $brand['support_email'] !== ''): ?>
+        <div class="text-center text-muted small mt-3"><i class="bi bi-headset"></i> <?= e(__('Support')) ?>: <?= e(trim($brand['support_phone'] . ' ' . $brand['support_email'])) ?></div>
+      <?php endif; ?>
       <div class="text-center mt-4 small">
         <?php foreach (I18n::LANGUAGES as $code => $name): ?>
           <a href="<?= e(admin_url('login.php', array_filter(['lang' => $code, 'next' => is_string($next) ? $next : '']))) ?>" class="mx-2<?= $code === $lang ? ' fw-bold' : '' ?>"><?= e($name) ?></a>

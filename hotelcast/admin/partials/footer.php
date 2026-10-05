@@ -6,7 +6,10 @@ $user = $user ?? Auth::user();
 <?php if ($user): ?>
     </main>
     <footer class="hc-footer text-muted small">
-      &copy; <?= date('Y') ?> <?= e((string) Settings::get('hotel_name', 'HotelCast')) ?> · HotelCast
+      <?php $fb = Branding::get(); ?>
+      &copy; <?= date('Y') ?> <?= e(Tenant::has() ? (string) Settings::get('hotel_name', $fb['product']) : $fb['product']) ?> · <?= e($fb['product']) ?>
+      <?php if ($fb['footer'] !== ''): ?> · <?= e($fb['footer']) ?><?php endif; ?>
+      <?php if ($fb['support_phone'] !== '' || $fb['support_email'] !== ''): ?> · <?= e(__('Support')) ?>: <?= e(trim($fb['support_phone'] . ' ' . $fb['support_email'])) ?><?php endif; ?>
     </footer>
   </div>
 </div>

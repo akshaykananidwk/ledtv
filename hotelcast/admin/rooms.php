@@ -40,8 +40,11 @@ function guess_floor(string $number): ?string
 
 function save_room_groups(int $roomId, array $groupIds): void
 {
+    if (!Tenant::find('rooms', $roomId)) {
+        return;
+    }
     DB::delete('room_group_members', 'room_id = :r', ['r' => $roomId]);
-    $valid = $groupIds ? DB::column('SELECT id FROM room_groups WHERE id IN ' . DB::in($groupIds, 'g')[0], DB::in($groupIds, 'g')[1]) : [];
+    $valid = $groupIds ? Tenant::assertOwnsAll('room_groups', $groupIds) : [];
     foreach ($valid as $gid) {
         DB::insert('room_group_members', ['room_id' => $roomId, 'group_id' => (int) $gid]);
     }
@@ -55,7 +58,7 @@ if (is_post()) {
             case 'save':
                 require_can('rooms.manage');
                 $id = req_int('id', $_POST);
-                $existing = $id ? DB::one('SELECT * FROM rooms WHERE id = :id', ['id' => $id]) : null;
+                $existing = $id ? Tenant::find('rooms', $id) : null;
                 if ($id && !$existing) {
                     throw new InvalidArgumentException(__('Room not found.'));
                 }
@@ -64,7 +67,7 @@ if (is_post()) {
                 $errors = [];
                 if ($number === '' || mb_strlen($number) > 20 || !preg_match('/^[\p{L}\p{N} _.-]+$/u', $number)) {
                     $errors[] = __('Room number is required (max 20 letters/numbers).');
-                } elseif (DB::value('SELECT id FROM rooms WHERE room_number = :n AND id <> :id', ['n' => $number, 'id' => $id])) {
+                } elseif (DB::value('SELECT id FROM rooms WHERE hotel_id = :hid AND room_number = :n AND id <> :id', ['n' => $number, 'id' => $id] + hid())) {
                     $errors[] = __('Room :n already exists.', ['n' => $number]);
                 }
                 if ($pin !== '' && !preg_match('/^\d{4}$/', $pin)) {
@@ -94,7 +97,7 @@ if (is_post()) {
                     save_room_groups($id, int_ids($_POST['groups'] ?? []));
                 });
                 Settings::bumpContentVersion();
-                $room = DB::one('SELECT * FROM rooms WHERE id = :id', ['id' => $id]);
+                $room = Tenant::find('rooms', (int) $id);
                 Broadcaster::queueForRooms([$room], 'SHOW_CONTENT');
                 ActivityLog::add($existing ? 'room_update' : 'room_create', 'room', $id, 'Room ' . $number);
                 flash('success', $existing ? __('Room :n saved.', ['n' => $number]) : __('Room :n added.', ['n' => $number]));
@@ -103,7 +106,7 @@ if (is_post()) {
             case 'delete':
                 require_can('rooms.manage');
                 $id = req_int('id', $_POST);
-                $room = DB::one('SELECT * FROM rooms WHERE id = :id', ['id' => $id]);
+                $room = Tenant::find('rooms', $id);
                 if ($room) {
                     DB::delete('rooms', 'id = :id', ['id' => $id]);
                     Settings::bumpContentVersion();
@@ -126,7 +129,7 @@ if (is_post()) {
                 $skipped = [];
                 DB::transaction(function () use ($numbers, $floor, $prefix, $groups, &$added, &$skipped) {
                     foreach ($numbers as $n) {
-                        if (DB::value('SELECT id FROM rooms WHERE room_number = :n', ['n' => $n])) {
+                        if (DB::value('SELECT id FROM rooms WHERE hotel_id = :hid AND room_number = :n', ['n' => $n] + hid())) {
                             $skipped[] = $n;
                             continue;
                         }
@@ -148,7 +151,7 @@ if (is_post()) {
                 redirect(admin_url('rooms.php'));
 
             case 'bulk':
-                $ids = int_ids($_POST['room_ids'] ?? []);
+                $ids = Tenant::assertOwnsAll('rooms', int_ids($_POST['room_ids'] ?? []));
                 $do = req_str('bulk_action', $_POST, 30);
                 if (!$ids) {
                     flash('warning', __('Select at least one room first.'));
@@ -187,7 +190,7 @@ if (is_post()) {
                     case 'disable':
                         require_can('rooms.manage');
                         [$in, $p] = DB::in($ids, 'r');
-                        DB::query("UPDATE rooms SET is_enabled = :e WHERE id IN $in", $p + ['e' => $do === 'enable' ? 1 : 0]);
+                        DB::query("UPDATE rooms SET is_enabled = :e WHERE hotel_id = :hid AND id IN $in", $p + ['e' => $do === 'enable' ? 1 : 0] + hid());
                         Settings::bumpContentVersion();
                         Broadcaster::queueForRooms(Broadcaster::targetRooms('rooms', $ids), 'SHOW_CONTENT');
                         flash('success', __('Saved.'));
@@ -195,8 +198,8 @@ if (is_post()) {
                     case 'delete':
                         require_can('rooms.manage');
                         [$in, $p] = DB::in($ids, 'r');
-                        $nums = DB::column("SELECT room_number FROM rooms WHERE id IN $in", $p);
-                        DB::query("DELETE FROM rooms WHERE id IN $in", $p);
+                        $nums = DB::column("SELECT room_number FROM rooms WHERE hotel_id = :hid AND id IN $in", $p + hid());
+                        DB::query("DELETE FROM rooms WHERE hotel_id = :hid AND id IN $in", $p + hid());
                         Settings::bumpContentVersion();
                         ActivityLog::add('room_bulk_delete', 'room', null, 'Deleted rooms: ' . implode(', ', $nums));
                         flash('success', __(':n rooms deleted.', ['n' => count($nums)]));
@@ -209,7 +212,7 @@ if (is_post()) {
             case 'revoke_device':
                 require_can('rooms.manage');
                 $did = req_int('device_id', $_POST);
-                $dev = DB::one('SELECT * FROM devices WHERE id = :id', ['id' => $did]);
+                $dev = Tenant::find('devices', $did);
                 if ($dev) {
                     DB::update('devices', ['is_revoked' => 1, 'status' => 'offline', 'token_hash' => hash('sha256', random_token(32))], 'id = :id', ['id' => $did]);
                     ActivityLog::add('device_revoke', 'device', $did, 'Revoked device ' . $dev['device_uid']);
@@ -220,7 +223,7 @@ if (is_post()) {
             case 'delete_device':
                 require_can('rooms.manage');
                 $did = req_int('device_id', $_POST);
-                $dev = DB::one('SELECT * FROM devices WHERE id = :id AND is_revoked = 1', ['id' => $did]);
+                $dev = Tenant::find('devices', $did, 'is_revoked = 1');
                 if ($dev) {
                     DB::delete('devices', 'id = :id', ['id' => $did]);
                     ActivityLog::add('device_delete', 'device', $did, 'Deleted device ' . $dev['device_uid']);
@@ -251,7 +254,7 @@ $activeNav = 'rooms';
 // ---- Device detail
 if ($action === 'device') {
     $did = req_int('id', $_GET);
-    $dev = DB::one('SELECT d.*, r.room_number, r.name AS room_name FROM devices d LEFT JOIN rooms r ON r.id = d.room_id WHERE d.id = :id', ['id' => $did]);
+    $dev = Tenant::find('devices', $did) ? DB::one('SELECT d.*, r.room_number, r.name AS room_name FROM devices d LEFT JOIN rooms r ON r.id = d.room_id WHERE d.id = :id AND d.hotel_id = :hid', ['id' => $did] + hid()) : null;
     if (!$dev) {
         flash('warning', __('Device not found.'));
         redirect(admin_url('rooms.php'));
@@ -348,13 +351,13 @@ if ($action === 'new' || $action === 'edit') {
     $memberOf = [];
     $devices = [];
     if ($action === 'edit') {
-        $room = DB::one('SELECT * FROM rooms WHERE id = :id', ['id' => req_int('id', $_GET)]);
+        $room = Tenant::find('rooms', req_int('id', $_GET));
         if (!$room) {
             flash('warning', __('Room not found.'));
             redirect(admin_url('rooms.php'));
         }
         $memberOf = array_map('intval', DB::column('SELECT group_id FROM room_group_members WHERE room_id = :r', ['r' => $room['id']]));
-        $devices = DB::all('SELECT * FROM devices WHERE room_id = :r ORDER BY is_revoked, last_ping DESC', ['r' => $room['id']]);
+        $devices = DB::all('SELECT * FROM devices WHERE hotel_id = :hid AND room_id = :r ORDER BY is_revoked, last_ping DESC', ['r' => $room['id']] + hid());
     }
     $pageTitle = $room['id'] ? __('Edit room :n', ['n' => $room['room_number']]) : __('Add room');
     require __DIR__ . '/partials/header.php';
@@ -494,7 +497,7 @@ if ($action === 'bulk_add') {
 
 // ---- Revoked devices list
 if ($action === 'devices') {
-    $revoked = DB::all('SELECT d.*, r.room_number FROM devices d LEFT JOIN rooms r ON r.id = d.room_id WHERE d.is_revoked = 1 OR d.room_id IS NULL ORDER BY d.updated_at DESC');
+    $revoked = DB::all('SELECT d.*, r.room_number FROM devices d LEFT JOIN rooms r ON r.id = d.room_id WHERE d.hotel_id = :hid AND (d.is_revoked = 1 OR d.room_id IS NULL) ORDER BY d.updated_at DESC', hid());
     $pageTitle = __('Revoked & unassigned TVs');
     require __DIR__ . '/partials/header.php';
     ?>
@@ -537,8 +540,8 @@ $fFloor = req_str('floor', $_GET, 20);
 $fGroup = req_int('group', $_GET);
 $fStatus = req_str('status', $_GET, 10);
 
-$where = [];
-$params = [];
+$where = ['r.hotel_id = :hid'];
+$params = hid();
 if ($q !== '') {
     $where[] = '(r.room_number LIKE :q1 OR r.name LIKE :q2 OR r.notes LIKE :q3)';
     $params += ['q1' => "%$q%", 'q2' => "%$q%", 'q3' => "%$q%"];
@@ -554,14 +557,14 @@ if ($fGroup) {
 $rooms = DB::all('SELECT r.* FROM rooms r' . ($where ? ' WHERE ' . implode(' AND ', $where) : '') . ' ORDER BY LENGTH(r.floor), r.floor, LENGTH(r.room_number), r.room_number', $params);
 $devMap = hc_devices_by_room();
 $groupNames = [];
-foreach (DB::all('SELECT m.room_id, g.name FROM room_group_members m JOIN room_groups g ON g.id = m.group_id ORDER BY g.name') as $row) {
+foreach (DB::all('SELECT m.room_id, g.name FROM room_group_members m JOIN room_groups g ON g.id = m.group_id WHERE g.hotel_id = :hid ORDER BY g.name', hid()) as $row) {
     $groupNames[(int) $row['room_id']][] = $row['name'];
 }
 if (in_array($fStatus, ['online', 'offline', 'none'], true)) {
     $rooms = array_values(array_filter($rooms, fn ($r) => hc_room_status($devMap[(int) $r['id']] ?? []) === $fStatus));
 }
-$totalRooms = (int) DB::value('SELECT COUNT(*) FROM rooms');
-$revokedCount = (int) DB::value('SELECT COUNT(*) FROM devices WHERE is_revoked = 1 OR room_id IS NULL');
+$totalRooms = (int) DB::value('SELECT COUNT(*) FROM rooms WHERE hotel_id = :hid', hid());
+$revokedCount = (int) DB::value('SELECT COUNT(*) FROM devices WHERE hotel_id = :hid AND (is_revoked = 1 OR room_id IS NULL)', hid());
 $canCmd = Auth::can('broadcast.device_commands');
 
 require __DIR__ . '/partials/header.php';

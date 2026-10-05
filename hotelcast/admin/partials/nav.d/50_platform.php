@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 return [
-    ['platform_hotels', 'platform_hotels.php', 'platform.hotels', 'bi-buildings', __('Hotels'), 'platform', ['saas' => true]],
+    ['platform_hotels', 'platform_hotels.php', 'platform.manage', 'bi-buildings', __('Hotels'), 'platform', ['saas' => true]],
     ['platform_plans', 'platform_plans.php', 'platform.manage', 'bi-box-seam', __('Plans'), 'platform', ['saas' => true]],
     ['platform_resellers', 'platform_resellers.php', 'platform.manage', 'bi-person-badge', __('Resellers'), 'platform', ['saas' => true]],
     ['platform_invoices', 'platform_invoices.php', 'platform.manage', 'bi-receipt-cutoff', __('Invoices'), 'platform', ['saas' => true]],

@@ -39,7 +39,7 @@ object Provisioning {
     const val EXTRA_AUTOREGISTER = "hc_autoregister"
     const val EXTRA_FORCE = "hc_force"
 
-    private val ROOM_RE = Regex("^[\\p{L}\\p{N} ._/-]{1,32}$")
+    private val ROOM_RE = Regex("^[\\p{L}\\p{M}\\p{N} ._/-]{1,32}$")
 
     data class Request(
         val serverUrl: String,

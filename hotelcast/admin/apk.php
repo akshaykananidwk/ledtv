@@ -60,7 +60,7 @@ if (is_post()) {
 
         case 'delete':
             $id = req_int('id', $_POST);
-            $apk = DB::one('SELECT * FROM apk_releases WHERE id = :id', ['id' => $id]);
+            $apk = Tenant::find('apk_releases', $id);
             if ($apk) {
                 $path = (string) $apk['file_path'];
                 if ($path !== '' && !str_contains($path, '..') && str_starts_with($path, 'apk/')) {
@@ -91,7 +91,7 @@ if (is_post()) {
     redirect(admin_url('apk.php'));
 }
 
-$releases = DB::all('SELECT a.*, u.username FROM apk_releases a LEFT JOIN users u ON u.id = a.uploaded_by ORDER BY a.version_code DESC, a.id DESC');
+$releases = DB::all('SELECT a.*, u.username FROM apk_releases a LEFT JOIN users u ON u.id = a.uploaded_by WHERE a.hotel_id = :hid ORDER BY a.version_code DESC, a.id DESC', hid());
 $latestCode = $releases ? (int) $releases[0]['version_code'] : 0;
 $devices = DB::all(
     "SELECT d.*, r.room_number,
@@ -99,7 +99,8 @@ $devices = DB::all(
             (SELECT c.created_at FROM device_commands c WHERE c.device_id = d.id AND c.command = 'UPDATE_APP' ORDER BY c.id DESC LIMIT 1) AS upd_at,
             (SELECT c.message FROM device_commands c WHERE c.device_id = d.id AND c.command = 'UPDATE_APP' ORDER BY c.id DESC LIMIT 1) AS upd_msg
      FROM devices d LEFT JOIN rooms r ON r.id = d.room_id
-     WHERE d.is_revoked = 0 ORDER BY LENGTH(r.room_number), r.room_number"
+     WHERE d.hotel_id = :hid AND d.is_revoked = 0 ORDER BY LENGTH(r.room_number), r.room_number",
+    hid()
 );
 $pageTitle = __('APK Manager');
 $activeNav = 'apk';

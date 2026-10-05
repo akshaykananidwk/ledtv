@@ -40,7 +40,7 @@ if (is_post()) {
                 if ($errors) {
                     flash_errors($errors);
                 } else {
-                    $b = DB::one('SELECT * FROM broadcast_commands WHERE id = :id', ['id' => $id]);
+                    $b = Tenant::find('broadcast_commands', (int) $id);
                     ActivityLog::add('power_schedule_add', 'broadcast', $id, $b['title'] . ' · ' . Broadcaster::describeTarget($b['target_type'], $b['target_ids']));
                     flash('success', __('Power schedule saved.'));
                 }
@@ -56,7 +56,7 @@ if (is_post()) {
 
             case 'delete':
                 $id = req_int('id', $_POST);
-                $b = DB::one("SELECT * FROM broadcast_commands WHERE id = :id AND command = 'SCREEN_OFF' AND mode = 'window'", ['id' => $id]);
+                $b = Tenant::find('broadcast_commands', $id, "command = 'SCREEN_OFF' AND mode = 'window'");
                 if ($b) {
                     DB::delete('broadcast_commands', 'id = :id', ['id' => $id]);
                     Settings::bumpContentVersion();
@@ -78,15 +78,17 @@ if (is_post()) {
 Scheduler::tick();
 $schedules = DB::all(
     "SELECT b.*, u.username FROM broadcast_commands b LEFT JOIN users u ON u.id = b.created_by
-     WHERE b.command = 'SCREEN_OFF' AND b.mode = 'window' ORDER BY b.status = 'cancelled', b.id DESC"
+     WHERE b.hotel_id = :hid AND b.command = 'SCREEN_OFF' AND b.mode = 'window' ORDER BY b.status = 'cancelled', b.id DESC",
+    hid()
 );
-$roomsOff = (int) DB::value('SELECT COUNT(*) FROM rooms WHERE is_enabled = 0');
+$roomsOff = (int) DB::value('SELECT COUNT(*) FROM rooms WHERE hotel_id = :hid AND is_enabled = 0', hid());
 $activeNow = array_values(array_filter($schedules, fn ($b) => $b['status'] !== 'cancelled' && ContentResolver::windowActive($b)));
 $days = day_names();
 $powerLog = DB::all(
     "SELECT dc.command, dc.status, dc.message, dc.created_at, dc.acked_at, r.room_number
      FROM device_commands dc JOIN devices d ON d.id = dc.device_id LEFT JOIN rooms r ON r.id = d.room_id
-     WHERE dc.command IN ('SCREEN_ON','SCREEN_OFF') ORDER BY dc.id DESC LIMIT 15"
+     WHERE d.hotel_id = :hid AND dc.command IN ('SCREEN_ON','SCREEN_OFF') ORDER BY dc.id DESC LIMIT 15",
+    hid()
 );
 
 $pageTitle = __('TV Power');

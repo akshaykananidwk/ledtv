@@ -56,7 +56,7 @@ try {
             ajax_ok(hc_dashboard_stats() + [
                 'activity' => array_map(fn ($a) => [
                     'user' => $a['username'], 'action' => $a['action'], 'details' => $a['details'], 'ago' => time_ago($a['created_at']),
-                ], DB::all('SELECT * FROM activity_logs ORDER BY id DESC LIMIT 10')),
+                ], DB::all('SELECT * FROM activity_logs WHERE hotel_id = :hid ORDER BY id DESC LIMIT 10', hid())),
             ]);
 
         case 'room_status':
@@ -125,6 +125,13 @@ try {
             ajax_ok(['lang' => $lang]);
 
         default:
+            // Module actions: "<prefix>_<name>" is handled by admin/ajax.d/<prefix>.php (if present).
+            // The file sees $action, $in, $method, $user, $needPost, $parseTarget and must respond
+            // with ajax_ok()/ajax_error(); returning means "not mine".
+            $prefix = strtolower((string) strtok($action, '_'));
+            if ($prefix !== '' && preg_match('/^[a-z0-9]+$/', $prefix) && is_file(__DIR__ . '/ajax.d/' . $prefix . '.php')) {
+                require __DIR__ . '/ajax.d/' . $prefix . '.php';
+            }
             ajax_error('Unknown action', 404, 'UNKNOWN_ACTION');
     }
 } catch (InvalidArgumentException $e) {
@@ -147,10 +154,10 @@ function schedule_events(string $start, string $end): array
     }
     $rows = DB::all(
         "SELECT * FROM broadcast_commands
-         WHERE mode IN ('once','window') AND is_emergency = 0 AND command = 'SHOW_CONTENT' AND status <> 'cancelled'
+         WHERE hotel_id = :hid AND mode IN ('once','window') AND is_emergency = 0 AND command = 'SHOW_CONTENT' AND status <> 'cancelled'
            AND (start_at IS NULL OR start_at < :re) AND (end_at IS NULL OR end_at >= :rs)
          ORDER BY id DESC LIMIT 500",
-        ['re' => date('Y-m-d H:i:s', $re), 'rs' => date('Y-m-d H:i:s', $rs)]
+        ['re' => date('Y-m-d H:i:s', $re), 'rs' => date('Y-m-d H:i:s', $rs)] + hid()
     );
     $colors = ['scheduled' => '#2563eb', 'active' => '#16a34a', 'completed' => '#6b7280'];
     $events = [];

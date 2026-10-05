@@ -731,12 +731,12 @@ class MainActivity : AppCompatActivity(), ContentPlayer.Listener, PlayerUi, Gues
         SyncManager.reportPlayed(item.id, startedAtMillis, durationSec, item.adCampaignId)
     }
 
-    private fun switchInput(input: String, label: String): InputSwitcher.Result {
+    private fun switchInput(input: String, label: String, fromAdmin: Boolean = false): InputSwitcher.Result {
         val c = SyncManager.content.value
         val target = InputSwitcher.parse(input) ?: return InputSwitcher.Result(false, "Unknown input '$input'")
         guestUi.closeAll(notify = false)
         val result = try {
-            InputSwitcher.open(this, target, label)
+            InputSwitcher.open(this, target, label, allowSettings = fromAdmin)
         } catch (e: Throwable) {
             Log.e(TAG, "input switch failed", e)
             InputSwitcher.Result(false, e.message ?: "failed")
@@ -783,7 +783,7 @@ class MainActivity : AppCompatActivity(), ContentPlayer.Listener, PlayerUi, Gues
             InputSwitcher.Target.LiveTv -> guestUi.localized(c).getString(R.string.live_tv)
             null -> throw CommandFailedException("Unknown input '$input'")
         }
-        val r = switchInput(input, label)
+        val r = switchInput(input, label, fromAdmin = true)
         if (!r.ok) throw CommandFailedException(r.message)
         return r.message
     }

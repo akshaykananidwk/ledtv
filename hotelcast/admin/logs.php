@@ -15,6 +15,10 @@ $tabs = [
     'errors' => ['bi-bug', __('System errors')],
     'update' => ['bi-cloud-arrow-down', __('Update log')],
 ];
+// Server-wide logs (errors of all hotels, updater) are for the platform admin only.
+if (!Auth::can('update.manage')) {
+    unset($tabs['errors'], $tabs['update']);
+}
 $tab = isset($tabs[$_GET['tab'] ?? '']) ? (string) $_GET['tab'] : 'status';
 $page = max(1, req_int('page', $_GET));
 $export = ($_GET['export'] ?? '') === 'csv';
@@ -23,11 +27,12 @@ $fUser = req_int('user', $_GET);
 $fFrom = preg_match('/^\d{4}-\d{2}-\d{2}$/', (string) ($_GET['from'] ?? '')) ? (string) $_GET['from'] : '';
 $fTo = preg_match('/^\d{4}-\d{2}-\d{2}$/', (string) ($_GET['to'] ?? '')) ? (string) $_GET['to'] : '';
 
-/** Common date + room filters → [whereSql, params]. */
+/** Common hotel + date + room filters → [whereSql, params]. The hotel column comes from the date column's alias. */
 function log_filters(string $dateCol, ?string $roomCol, string $from, string $to, int $room): array
 {
-    $w = [];
-    $p = [];
+    $alias = str_contains($dateCol, '.') ? strtok($dateCol, '.') . '.' : '';
+    $w = [$alias . 'hotel_id = :hid'];
+    $p = hid();
     if ($from !== '') {
         $w[] = "$dateCol >= :dfrom";
         $p['dfrom'] = $from . ' 00:00:00';
@@ -75,9 +80,10 @@ switch ($tab) {
     case 'broadcasts':
         $detail = req_int('id', $_GET);
         if ($detail) {
-            $bc = DB::one('SELECT b.*, u.username FROM broadcast_commands b LEFT JOIN users u ON u.id = b.created_by WHERE b.id = :id', ['id' => $detail]);
-            $total = (int) DB::value('SELECT COUNT(*) FROM broadcast_logs WHERE broadcast_id = :b', ['b' => $detail]);
-            $rows = DB::all('SELECT l.*, r.room_number FROM broadcast_logs l LEFT JOIN rooms r ON r.id = l.room_id WHERE l.broadcast_id = :b ORDER BY l.id DESC' . $limitSql, ['b' => $detail]);
+            Tenant::find('broadcast_commands', $detail); // 404 for another hotel's broadcast
+            $bc = DB::one('SELECT b.*, u.username FROM broadcast_commands b LEFT JOIN users u ON u.id = b.created_by WHERE b.id = :id AND b.hotel_id = :hid', ['id' => $detail] + hid());
+            $total = (int) DB::value('SELECT COUNT(*) FROM broadcast_logs WHERE hotel_id = :hid AND broadcast_id = :b', ['b' => $detail] + hid());
+            $rows = DB::all('SELECT l.*, r.room_number FROM broadcast_logs l LEFT JOIN rooms r ON r.id = l.room_id WHERE l.hotel_id = :hid AND l.broadcast_id = :b ORDER BY l.id DESC' . $limitSql, ['b' => $detail] + hid());
             if ($export) {
                 csv_download('broadcast_' . $detail . '.csv', ['Time', 'Room', 'Event', 'Message'], array_map(fn ($r) => [$r['created_at'], $r['room_number'], $r['event'], $r['message']], $rows));
             }
@@ -137,7 +143,7 @@ $filterForm = function (bool $room, bool $userSel) use ($tab, $fRoom, $fUser, $f
         <label class="form-label small" for="luser"><?= e(__('User')) ?></label>
         <select class="form-select form-select-sm" id="luser" name="user">
           <option value=""><?= e(__('All users')) ?></option>
-          <?php foreach (DB::all('SELECT id, username FROM users ORDER BY username') as $u): ?><option value="<?= (int) $u['id'] ?>"<?= (int) $u['id'] === $fUser ? ' selected' : '' ?>><?= e($u['username']) ?></option><?php endforeach; ?>
+          <?php foreach (DB::all('SELECT id, username FROM users WHERE hotel_id = :hid ORDER BY username', hid()) as $u): ?><option value="<?= (int) $u['id'] ?>"<?= (int) $u['id'] === $fUser ? ' selected' : '' ?>><?= e($u['username']) ?></option><?php endforeach; ?>
         </select>
       </div>
       <?php endif; ?>

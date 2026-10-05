@@ -149,3 +149,17 @@ body.lang-gu { font-family: "Noto Sans Gujarati", system-ui, -apple-system, "Seg
 /* Bulk action bar */
 .bulk-bar { position: sticky; bottom: .75rem; z-index: 10; }
 .btn-xs { padding: .15rem .45rem; font-size: .75rem; }
+
+/* 2.0: white-label accent, sidebar sections, hotel context banner */
+.btn-primary { --bs-btn-bg: var(--hc-accent); --bs-btn-border-color: var(--hc-accent); --bs-btn-hover-bg: var(--hc-accent-dark, var(--hc-accent)); --bs-btn-hover-border-color: var(--hc-accent-dark, var(--hc-accent)); --bs-btn-active-bg: var(--hc-accent-dark, var(--hc-accent)); --bs-btn-active-border-color: var(--hc-accent-dark, var(--hc-accent)); --bs-btn-disabled-bg: var(--hc-accent); --bs-btn-disabled-border-color: var(--hc-accent); }
+.hc-nav-section { color: #64748b; font-size: .7rem; text-transform: uppercase; letter-spacing: .08em; padding: .9rem .85rem .3rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hc-nav-section:first-child { padding-top: .2rem; }
+.hc-context-banner { background: var(--hc-accent); color: #fff; display: flex; align-items: center; gap: .75rem; padding: .5rem 1rem; }
+.min-w-0 { min-width: 0; }
+.invoice-sheet { background: #fff; max-width: 900px; margin: 0 auto; padding: 2rem; border-radius: var(--hc-radius); }
+@media print {
+  .hc-sidebar, .hc-topbar, .hc-footer, .no-print, .hc-context-banner, .alert { display: none !important; }
+  body.hc-admin, .hc-layout { background: #fff !important; }
+  .hc-content { padding: 0 !important; }
+  .invoice-sheet { box-shadow: none !important; padding: 0; max-width: none; }
+}

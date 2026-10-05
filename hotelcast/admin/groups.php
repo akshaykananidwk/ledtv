@@ -13,13 +13,13 @@ if (is_post()) {
     switch ($op) {
         case 'save':
             $id = req_int('id', $_POST);
-            $existing = $id ? DB::one('SELECT * FROM room_groups WHERE id = :id', ['id' => $id]) : null;
+            $existing = $id ? Tenant::find('room_groups', $id) : null;
             $name = req_str('name', $_POST, 200);
             $type = in_array($_POST['type'] ?? '', GROUP_TYPES, true) ? $_POST['type'] : 'custom';
             $errors = [];
             if ($name === '' || mb_strlen($name) > 120) {
                 $errors[] = __('Group name is required (max 120 characters).');
-            } elseif (DB::value('SELECT id FROM room_groups WHERE name = :n AND id <> :id', ['n' => $name, 'id' => $id])) {
+            } elseif (DB::value('SELECT id FROM room_groups WHERE hotel_id = :hid AND name = :n AND id <> :id', ['n' => $name, 'id' => $id] + hid())) {
                 $errors[] = __('A group with this name already exists.');
             }
             if ($id && !$existing) {
@@ -31,7 +31,7 @@ if (is_post()) {
             }
             [$cid, $pid] = parse_source($_POST['source'] ?? '');
             $data = ['name' => $name, 'type' => $type, 'description' => req_str('description', $_POST, 500) ?: null, 'content_id' => $cid, 'playlist_id' => $pid];
-            $members = int_ids($_POST['members'] ?? []);
+            $members = Tenant::assertOwnsAll('rooms', int_ids($_POST['members'] ?? []));
             DB::transaction(function () use (&$id, $existing, $data, $members) {
                 if ($existing) {
                     DB::update('room_groups', $data, 'id = :id', ['id' => $id]);
@@ -41,7 +41,7 @@ if (is_post()) {
                 DB::delete('room_group_members', 'group_id = :g', ['g' => $id]);
                 if ($members) {
                     [$in, $p] = DB::in($members, 'r');
-                    foreach (DB::column("SELECT id FROM rooms WHERE id IN $in", $p) as $rid) {
+                    foreach (DB::column("SELECT id FROM rooms WHERE hotel_id = :hid AND id IN $in", $p + hid()) as $rid) {
                         DB::insert('room_group_members', ['room_id' => (int) $rid, 'group_id' => $id]);
                     }
                 }
@@ -54,7 +54,7 @@ if (is_post()) {
 
         case 'delete':
             $id = req_int('id', $_POST);
-            $g = DB::one('SELECT * FROM room_groups WHERE id = :id', ['id' => $id]);
+            $g = Tenant::find('room_groups', $id);
             if ($g) {
                 $rooms = Broadcaster::targetRooms('groups', [$id]);
                 DB::delete('room_groups', 'id = :id', ['id' => $id]);
@@ -71,14 +71,14 @@ if (is_post()) {
             DB::transaction(function () use (&$created, &$assigned) {
                 foreach (hc_floors() as $floor) {
                     $name = __('Floor') . ' ' . $floor;
-                    $gid = DB::value('SELECT id FROM room_groups WHERE name = :n', ['n' => $name]);
+                    $gid = DB::value('SELECT id FROM room_groups WHERE hotel_id = :hid AND name = :n', ['n' => $name] + hid());
                     if (!$gid) {
                         $gid = DB::insert('room_groups', ['name' => $name, 'type' => 'floor', 'description' => null, 'created_at' => now()]);
                         $created++;
                     }
                     $assigned += DB::query(
-                        'INSERT IGNORE INTO room_group_members (room_id, group_id) SELECT id, :g FROM rooms WHERE floor = :f',
-                        ['g' => (int) $gid, 'f' => $floor]
+                        'INSERT IGNORE INTO room_group_members (room_id, group_id) SELECT id, :g FROM rooms WHERE hotel_id = :hid AND floor = :f',
+                        ['g' => (int) $gid, 'f' => $floor] + hid()
                     )->rowCount();
                 }
             });
@@ -99,7 +99,7 @@ if ($action === 'new' || $action === 'edit') {
     $g = ['id' => 0, 'name' => '', 'type' => 'custom', 'description' => '', 'content_id' => null, 'playlist_id' => null];
     $members = [];
     if ($action === 'edit') {
-        $g = DB::one('SELECT * FROM room_groups WHERE id = :id', ['id' => req_int('id', $_GET)]);
+        $g = Tenant::find('room_groups', req_int('id', $_GET));
         if (!$g) {
             flash('warning', __('Group not found.'));
             redirect(admin_url('groups.php'));
@@ -183,7 +183,7 @@ if ($action === 'new' || $action === 'edit') {
     exit;
 }
 
-$groups = DB::all('SELECT g.*, (SELECT COUNT(*) FROM room_group_members m WHERE m.group_id = g.id) AS members FROM room_groups g ORDER BY g.type, g.name');
+$groups = DB::all('SELECT g.*, (SELECT COUNT(*) FROM room_group_members m WHERE m.group_id = g.id) AS members FROM room_groups g WHERE g.hotel_id = :hid ORDER BY g.type, g.name', hid());
 require __DIR__ . '/partials/header.php';
 ?>
 <div class="page-head">

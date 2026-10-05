@@ -9,9 +9,15 @@ in [`../docs/API.md`](../docs/API.md).
 | | |
 |---|---|
 | Package / applicationId | `com.hotelcast.tv` |
-| Version | 1.0.0 (versionCode 1) |
+| Version | 2.0.0 (versionCode 4) |
 | Android | 5.0 (API 21) and newer, targetSdk 34 |
-| Signed release APK | `release/HotelCast-TV-1.2.0.apk` |
+| Signed release APK | `release/HotelCast-TV-2.0.0.apk` (same signing key as 1.x, so OTA `UPDATE_APP` from 1.x works) |
+
+What is new in 2.0 (client side of `docs/V2_SPEC.md`): guest menu on the OK key (room-service /
+feedback QR codes, Live TV, HDMI inputs, cast instructions, local guide), personal welcome card,
+checkout reminder, suspended screen, white-label branding, volume policy with night limit, remote
+screenshot / log upload, crash reports, sponsor-ad impressions, bulk provisioning by adb, and Hindi.
+All new Content fields are optional — the app keeps working against a 1.x server.
 
 ---
 
@@ -56,7 +62,7 @@ If that file does not exist, it falls back to environment variables (useful on C
 Check a signature with:
 
 ```bash
-$ANDROID_HOME/build-tools/34.0.0/apksigner verify --print-certs release/HotelCast-TV-1.2.0.apk
+$ANDROID_HOME/build-tools/34.0.0/apksigner verify --print-certs release/HotelCast-TV-2.0.0.apk
 ```
 
 ---
@@ -72,12 +78,12 @@ $ANDROID_HOME/build-tools/34.0.0/apksigner verify --print-certs release/HotelCas
 3. From a PC on the same network:
    ```bash
    adb connect 192.168.1.45:5555          # the TV's IP address
-   adb install -r HotelCast-TV-1.2.0.apk
+   adb install -r HotelCast-TV-2.0.0.apk
    ```
 
 ### b) With a USB pen drive and a file manager
 
-1. Copy `HotelCast-TV-1.2.0.apk` to a FAT32/exFAT pen drive and plug it into the TV.
+1. Copy `HotelCast-TV-2.0.0.apk` to a FAT32/exFAT pen drive and plug it into the TV.
 2. Install a file manager on the TV, such as *File Commander*, *X-plore* or *FX File Explorer*.
 3. Allow unknown sources:
    * Android 8 and newer: *Settings → Apps → Security & restrictions → Unknown sources* (or *Install
@@ -141,7 +147,7 @@ Device-owner mode enables these features:
 Setup: the TV must have **no Google or other accounts** (factory reset it if needed). Then run:
 
 ```bash
-adb install -r HotelCast-TV-1.2.0.apk
+adb install -r HotelCast-TV-2.0.0.apk
 adb shell dpm set-device-owner com.hotelcast.tv/.AdminReceiver
 adb shell am start -n com.hotelcast.tv/.MainActivity
 ```
@@ -187,7 +193,7 @@ Guests cannot see a settings button. Staff open settings with any of these gestu
 | Remote with a MENU (☰) key | Press **MENU** |
 | Any remote | Press **BACK 5 times** within 3 seconds |
 | Any remote | Press **UP, UP, DOWN, DOWN** on the D-pad |
-| Any remote | **Hold OK / centre** for 3 seconds |
+| Any remote | **Hold OK / centre** for 3 seconds (a *short* OK press opens the guest menu instead, §8) |
 | Touch screen | Tap the **top-left corner 5 times** within 3 seconds |
 
 A **PIN** prompt appears next:
@@ -227,6 +233,13 @@ The screen works with the D-pad: large, focusable fields and buttons with a yell
 | `CommandHandler` | Runs the server commands (described below) |
 | `ContentCache` | Stores the last Content JSON in `filesDir/content/` and media files in `filesDir/media/` (named by the SHA-256 of the URL). With no network on a cold start, the cached content and media play straight away. A small red dot (top right) means offline |
 | `AppUpdater` | OTA install (see §4) |
+| `GuestUi` / `GuestMenuPanel` | Welcome card, checkout reminder, message card, guest menu and its QR / cast / content views (§8) |
+| `CenterKeyTracker` | OK-key state machine: short press = guest menu, 3 s hold = settings |
+| `InputSwitcher` | Live TV / HDMI switching chain (§8) |
+| `VolumePolicy` / `VolumeController` | Default / max / night volume (§8) |
+| `QrCodes` / `WifiQr` | On-device QR codes (ZXing core, Apache 2.0) |
+| `LogCollector`, `CrashReporter`, `ScreenshotEncoder` | Support tools (§9) |
+| `Provisioning`, `ProvisionReceiver`, `Registrar` | adb provisioning and registration (§10) |
 
 #### What `ContentPlayer` renders
 
@@ -256,7 +269,12 @@ after 60 s.
 #### Commands handled by `CommandHandler`
 
 * The commands are `SHOW_CONTENT`, `REBOOT`, `CLEAR_CACHE`, `UPDATE_APP`, `SCREEN_OFF`,
-  `SCREEN_ON`, `RELOAD` and `PING`.
+  `SCREEN_ON`, `RELOAD` and `PING`, and since 2.0 `SET_VOLUME {level}`, `MUTE`, `UNMUTE`,
+  `SCREENSHOT`, `UPLOAD_LOGS`, `OPEN_INPUT {input}`, `SHOW_WELCOME` and
+  `SHOW_MESSAGE {title, message, duration_sec}` (see §8–§10).
+* Every ack carries a readable result (e.g. `Volume 25% (requested 60%, limited by night max)`,
+  `Opened HDMI 2 via com.android.tv (passthrough)`); failures are acked as `failed` with the reason
+  (e.g. `Player screen is not open (TV in standby, settings or another app)`).
 * Every delivery is acked.
 * Commands are de-duplicated by `id`. The ids persist, so a command never runs twice, even across
   restarts. A duplicate delivery is only re-acked.
@@ -268,14 +286,18 @@ after 60 s.
 |---|---|
 | `emergency` / `emergency != null` | Full-screen message above everything, in the server's colours |
 | `off`, `screen_on:false`, or `SCREEN_OFF` command | TV goes to standby (see *TV power* below); black screen as fallback |
-| `empty` (or no playable items) | Hotel logo, "Welcome to …" and the room number |
+| `suspended` (hotel suspended / licence expired) | Polite full-screen message (`suspended.title/message`, branding logo and support number); nothing plays |
+| `empty` (or no playable items) | Hotel logo (or branding logo), "Welcome to …", the room number and the product name |
 | anything else | Playlist plus overlay (logo top-left, clock and weather top-right, ticker bottom) |
 
 ### Languages
 
 All text is UTF-8: content, the ticker (drawn with `Canvas.drawText`, which handles Gujarati
 conjuncts), and WebView HTML (`loadDataWithBaseURL(..., "UTF-8")`). The UI strings come in English
-(`res/values`) and Gujarati (`res/values-gu`), and Android picks the TV's system language.
+(`res/values`), Gujarati (`res/values-gu`) and Hindi (`res/values-hi`); staff screens follow the TV's
+system language. Guest-facing screens (welcome card, checkout reminder, guest menu, messages,
+suspended screen) follow `guest.language` (`en` / `gu` / `hi`) from the server when present, via a
+localized `Context` (`createConfigurationContext`), whatever language the TV itself is set to.
 
 ### Network
 
@@ -305,7 +327,10 @@ host, never to a media CDN.
 | Stream stays black | Check the URL in VLC from a PC on the hotel network. RTSP cameras often need `rtsp://user:pass@ip:554/...`. The player retries every 2–30 s |
 | YouTube item is black | The TV's Android System WebView is too old. Update it from the Play Store, or use a `video` or `stream` item |
 | Forgot PIN | Change it in the admin panel; it reaches the TV with the next heartbeat (60 s by default). Or clear the app data with `adb shell pm clear com.hotelcast.tv` (this also clears the registration) |
-| Logs | `adb logcat -s SyncManager ContentPlayer CommandHandler AppUpdater Kiosk BootReceiver` |
+| Logs | `adb logcat -s SyncManager ContentPlayer CommandHandler AppUpdater Kiosk BootReceiver GuestUi InputSwitcher Volume HotelCastSetup` — or send `UPLOAD_LOGS` from the admin panel |
+| OK on the remote does nothing | The server sends no `guest_menu` and room services are off — nothing to show. Settings still open with a 3 s hold |
+| "Live TV is not available on this TV" | No TV input / Live TV app could be found (common on Android boxes without a tuner). See §8 for the per-brand notes |
+| Volume jumps back down | That is the night limit / max volume from the server (`volume` in the content). Change it in the admin panel |
 
 
 ## TV power (automatic off / on)
@@ -341,3 +366,150 @@ stays awake and connected, so *Turn ON* always works. Use it for TV models that 
 Google TV example (Nextview): Settings → System → Power and energy → **Energy modes: Increased (Always
 connected)**, **Shut-off timer → When inactive: Never**, **Power-on behaviour: Google TV home screen**, and as a
 backup **Scheduled power on/off → Power On Time Type: Daily, Auto Power On Time 06:00**.
+
+
+---
+
+## 8. Guest features (2.0)
+
+### Guest menu (OK key)
+
+A **short press of OK / D-pad centre** (released before 3 s) opens a side panel with the room's
+`guest_menu` items (large icons, labels from the server in the guest's language). D-pad up/down
+moves, OK opens an item, **BACK** goes back / closes, and the panel closes by itself after **60 s**
+without a key press. When the server sends no `guest_menu` but `services.enabled` is true, the menu
+has a single "Room Service" QR entry. The staff gestures are unchanged: holding OK for 3 s, MENU,
+BACK ×5 and UP UP DOWN DOWN still open the PIN prompt (OK is only treated as "short" on key-up if
+the 3-second long press did not fire; remotes that send no key repeats are handled on release).
+
+| item `type` | What happens |
+|---|---|
+| `qr` | Full-screen QR code (generated on the TV with ZXing) + title + URL text, e.g. room service, feedback |
+| `live_tv` | Switches to Live TV (chain below) |
+| `input` | Switches to `input` = `hdmi1`…`hdmi4` (HDMI passthrough, below) |
+| `cast` | Cast instructions (`text`) + a Wi-Fi QR code (`WIFI:T:WPA;S:<ssid>;P:<password>;;`, special characters `\ ; , : "` escaped) from `welcome.wifi` |
+| `content` | The embedded ContentItem (e.g. local guide HTML) full screen until BACK (auto-close after 10 min) |
+
+Analytics: the app reports `POST /api/device/event` with `guest_menu_open`, `guest_menu_item`,
+`qr_shown`, `input_switch` (with the result) and `welcome_shown`. A 1.x server's 404 is ignored.
+
+### Live TV / HDMI
+
+Live TV tries, in order, the first thing that resolves to an app on the TV:
+
+1. the TV's tuner input: `ACTION_VIEW` on `TvContract.buildChannelsUriForInput(tunerId)`;
+2. `ACTION_VIEW` on `TvContract.Channels.CONTENT_URI` (the system *Live Channels* / TV app);
+3. launch intents of known TV apps: `com.google.android.tv` (Live Channels), `com.android.tv` (AOSP),
+   `com.google.android.apps.tv.launcherx` (Google TV home), `com.mediatek.wwtv.tvcenter` (MediaTek
+   "TV center" used by many Sony / Philips / TCL / Xiaomi / Nextview boards), `com.sony.dtv.tvx`,
+   `com.tcl.tv`, `com.mitv.tvhome` (Xiaomi PatchWall);
+4. the TV's input list (`android.settings.TV_INPUT_SETTINGS`, where the TV has it); for the admin's
+   `OPEN_INPUT` command only, Android settings as the very last resort (never from the guest menu, so
+   a guest cannot land in Android settings).
+
+HDMI (`hdmi1`…`hdmi4`): `TvInputManager.getTvInputList()` → hardware inputs of `TYPE_HDMI` (HDMI-CEC
+child devices skipped), matched by label ("HDMI 2"), by id (`…hdmi2…`) or by position, then
+`ACTION_VIEW` on `TvContract.buildChannelUriForPassthroughInput(inputId)`. Listing inputs needs no
+permission on Android TV; a `SecurityException` is caught and the input list is opened instead.
+
+| TV / platform | Notes |
+|---|---|
+| Google TV / Android TV with a tuner (Sony, Philips, TCL, Xiaomi, Nextview…) | Works: the system TV app handles the passthrough / channel URIs. Test each model once (`OPEN_INPUT` from the admin panel; the ack names the app used) |
+| MediaTek-based TVs | Usually `com.mediatek.wwtv.tvcenter`; HDMI labels are "HDMI 1…4" |
+| Android boxes / sticks (no tuner, no HDMI-in) | No TV inputs exist: Live TV / HDMI show "not available" — remove those items from the menu for such rooms |
+| TVs whose HDMI switching is outside Android | The input list opens; the guest picks the source by hand |
+
+Kiosk: as device owner on **Android 9+** the target package is added to the lock-task allow list and
+the HOME key is enabled inside lock task; on **Android 5–8** lock task is paused while the guest is in
+the TV app. In both cases the guest returns with **HOME** (HotelCast is the HOME app), and HotelCast
+restores the allow list / re-enters lock task on return. An emergency brings HotelCast back to the
+front automatically.
+
+### Personal welcome card, checkout reminder, messages
+
+* **Welcome** (`welcome`, `guest`): full-screen card with the guest name, hotel/branding logo, the
+  message, Wi-Fi name/password with a Wi-Fi QR code and the room-service QR (`services.url`). Shown
+  once per `welcome.id` (remembered on the TV) for `duration_sec` (default 20 s), and again after
+  each power-on within 24 h of `guest.checkin_at`. Any key closes it. Content (and ads) do not play
+  behind it. `SHOW_WELCOME` shows it again now. It never appears over an emergency.
+* **Checkout reminder** (`checkout_reminder`): banner at the bottom with the text and the services
+  QR. OK or BACK dismisses it for good (per `id`); otherwise it hides after 2 minutes and comes back
+  after the next power-on.
+* **`SHOW_MESSAGE`** `{title, message, duration_sec}`: a card in the middle of the screen
+  (default 15 s), closed with OK / BACK — e.g. "Your food is on the way".
+* **Branding** (`branding`): product name, logo and colour are used on the welcome / empty /
+  suspended screens, the guest UI accents and the settings screen title (`<product> – Settings`).
+
+### Volume (`volume`)
+
+* `volume.default` is applied once per stay (per `welcome.id`, else per `guest.checkin_at`; without
+  guest data once on the first content).
+* Every 30 s while the screen is on (also while the guest watches Live TV / HDMI) and right after a
+  VOLUME key, `STREAM_MUSIC` is lowered to `volume.max`, or to `night_max` between `night_from` and
+  `night_to` (TV local time, window may cross midnight).
+* `SET_VOLUME {level}` (0–100, clamped to the current limit), `MUTE`, `UNMUTE`.
+* TVs whose speaker volume is handled by the TV firmware outside Android (`isVolumeFixed`, some
+  HDMI-CEC/ARC setups) cannot be controlled: the command is acked `failed` with that reason.
+
+---
+
+## 9. Support tools (screenshots, logs, crash reports)
+
+| Command / event | What the TV does |
+|---|---|
+| `SCREENSHOT` | Captures its own window (PixelCopy on Android 8+, `View.draw` before), scales to ≤ 1280 px wide, JPEG quality 80, uploads `POST /api/device/screenshot` (multipart field `image`). Video surfaces may appear black on some TVs (hardware overlays are not part of the window); WebView, images and text are captured. Fails with a reason when the player is not on screen (standby, settings, Live TV) |
+| `UPLOAD_LOGS` | Last 2000 logcat lines of its own process (`logcat -d -t 2000 --pid=<pid>`, without `--pid` on Android < 7) + a JSON state (settings **without the token or registration key**, versions, device owner / lock task, power state, network, current content, volume, last errors), capped at 512 KB → `POST /api/device/logs` |
+| crash | The uncaught-exception handler writes the stack trace to `files/crash/`; the app restarts as before (2 s, or 30 s in a crash loop), and on the next start sends `POST /api/device/crash {stack, app_version, happened_at}` and deletes the file (max. 5 kept) |
+| ads | Items with `ad_campaign_id` are reported in `POST /api/device/played` with `ad_campaign_id` |
+
+---
+
+## 10. Bulk provisioning (setup tool / adb)
+
+The PC setup tool (`tools/windows/HotelCast-Setup.ps1`) configures TVs over adb. Either open the
+setup screen with extras:
+
+```bash
+adb shell am start -n com.hotelcast.tv/.SettingsActivity \
+    --es hc_server https://hotel.com/hotelcast --es hc_room 101 --es hc_key KEY \
+    --ez hc_autoregister true            # optional: --ez hc_force true
+```
+
+or send a broadcast (no UI needed, also works while the player is locked):
+
+```bash
+adb shell am broadcast -a com.hotelcast.tv.PROVISION -n com.hotelcast.tv/.ProvisionReceiver \
+    -f 0x20 --es hc_server https://hotel.com/hotelcast --es hc_room 101 --es hc_key KEY \
+    --ez hc_autoregister true
+```
+
+(`-f 0x20` = `FLAG_INCLUDE_STOPPED_PACKAGES`, needed when the app was installed but never opened.)
+
+| extra | |
+|---|---|
+| `hc_server` | Server URL (normalised like the setup screen) |
+| `hc_room` | Room number (letters/digits/space `. _ / -`, max 32) |
+| `hc_key` | Registration key |
+| `hc_autoregister` | `true` = register immediately; otherwise the fields are only filled in / saved |
+| `hc_force` | `true` = accept even if the TV is already registered (re-provisioning) |
+
+Values are accepted only when the TV is **not registered yet**, unless `hc_force=true`. The result is
+written to logcat with tag `HotelCastSetup`; read it with `adb logcat -d -s HotelCastSetup`:
+
+```
+I HotelCastSetup: REGISTERED room=101
+E HotelCastSetup: FAILED INVALID_REGISTRATION_KEY: Invalid registration key
+E HotelCastSetup: FAILED already registered (room 101); add --ez hc_force true to re-provision
+I HotelCastSetup: SAVED room=101 (hc_autoregister=false)
+```
+
+**Security.** `SettingsActivity` and `ProvisionReceiver` are exported but protected with
+`android:permission="android.permission.DUMP"`. DUMP is a `signature|privileged|development`
+permission held by the adb shell and the system, never grantable to a normal app — so only `adb
+shell`, the system and HotelCast itself (same uid) can start them; another app on the TV gets a
+`SecurityException`, and guests cannot reach the setup screen without the PIN. (Checking the caller
+uid of `am start` is not reliable before Android 14, hence the permission approach.)
+
+Registration errors are shown clearly on the setup screen (English / Gujarati / Hindi):
+`HOTEL_SUSPENDED` (the hotel's service is paused), `LICENSE_LIMIT` (licence TV limit reached),
+`INVALID_REGISTRATION_KEY` and `ROOM_NOT_FOUND`.

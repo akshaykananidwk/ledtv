@@ -8,7 +8,7 @@ Csrf::check();
 Scheduler::tick();
 
 $stats = hc_dashboard_stats();
-$activity = DB::all('SELECT * FROM activity_logs ORDER BY id DESC LIMIT 10');
+$activity = DB::all('SELECT * FROM activity_logs WHERE hotel_id = :hid ORDER BY id DESC LIMIT 10', hid());
 $roomStatus = hc_room_status_list();
 $emergencies = Broadcaster::activeEmergencies();
 
@@ -121,6 +121,17 @@ $cards = [
     </div>
   </div>
 </div>
+
+<?php
+// Dashboard widgets from modules: admin/partials/dashboard.d/*.php (each prints one Bootstrap column
+// inside this row; check your own permission first).
+$widgets = glob(__DIR__ . '/partials/dashboard.d/*.php') ?: [];
+sort($widgets);
+if ($widgets): ?>
+<div class="row g-3 mt-0">
+  <?php foreach ($widgets as $widget) { require $widget; } ?>
+</div>
+<?php endif; ?>
 
 <?php if (Auth::can('broadcast.emergency')): ?>
 <div class="modal fade" id="emergencyModal" tabindex="-1" aria-hidden="true">

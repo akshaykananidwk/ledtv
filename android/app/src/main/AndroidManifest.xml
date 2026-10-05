@@ -23,6 +23,32 @@
     <uses-feature android:name="android.software.leanback" android:required="false" />
     <uses-feature android:name="android.hardware.wifi" android:required="false" />
 
+    <!-- Android 11+ package visibility: Live TV / HDMI switching resolves these apps and intents
+         (see InputSwitcher). -->
+    <queries>
+        <package android:name="com.google.android.tv" />
+        <package android:name="com.android.tv" />
+        <package android:name="com.google.android.apps.tv.launcherx" />
+        <package android:name="com.mediatek.wwtv.tvcenter" />
+        <package android:name="com.sony.dtv.tvx" />
+        <package android:name="com.tcl.tv" />
+        <package android:name="com.mitv.tvhome" />
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="content" android:host="android.media.tv" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:mimeType="vnd.android.cursor.dir/channel" />
+        </intent>
+        <intent>
+            <action android:name="android.settings.TV_INPUT_SETTINGS" />
+        </intent>
+        <intent>
+            <action android:name="android.settings.SETTINGS" />
+        </intent>
+    </queries>
+
     <application
         android:name=".HotelCastApp"
         android:allowBackup="false"

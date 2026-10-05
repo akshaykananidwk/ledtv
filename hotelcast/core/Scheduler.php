@@ -69,6 +69,16 @@ final class Scheduler
         return $result;
     }
 
+    /** Maintenance of the current hotel only (schedules, offline TVs, notifications). */
+    public static function tickHotel(): array
+    {
+        return [
+            'schedules' => Broadcaster::processSchedules(),
+            'offline' => count(DeviceManager::detectOffline()),
+            'notified' => Notifier::checkOffline(),
+        ];
+    }
+
     /** Instances of every core/Tasks/*.php class implementing Task (sorted by file name). */
     public static function tasks(): array
     {

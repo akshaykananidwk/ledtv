@@ -122,7 +122,7 @@ if (is_post()) {
                 break;
 
             case 'regen_key':
-                Settings::set('registration_key', strtoupper(random_token(8)));
+                Settings::set('registration_key', Hotels::newRegistrationKey());
                 ActivityLog::add('registration_key_regen', 'settings', null, 'Registration key regenerated');
                 flash('success', __('New registration key created. TVs that are already set up keep working; new TVs need the new key.'));
                 redirect(admin_url('settings.php', ['tab' => 'devices']));
@@ -187,14 +187,15 @@ if (is_post()) {
                 break;
 
             case 'clear_cache':
-                Cache::clear();
+                Cache::clear(Cache::hotelNs('content'));
                 Settings::bumpContentVersion();
                 ActivityLog::add('cache_clear', 'settings', null, 'Server cache cleared');
                 flash('success', __('Server cache cleared.'));
                 redirect(admin_url('settings.php', ['tab' => 'maintenance']));
 
             case 'run_maintenance':
-                $r = Scheduler::tick(true);
+                // Hotel users run the maintenance of their own hotel; the platform admin runs everything.
+                $r = Auth::can('update.manage') ? Scheduler::tick(true) : Scheduler::tickHotel();
                 ActivityLog::add('maintenance_run', 'settings', null, json_out($r));
                 flash('success', __('Maintenance finished.') . (isset($r['error']) ? ' ' . $r['error'] : ''));
                 redirect(admin_url('settings.php', ['tab' => 'maintenance']));

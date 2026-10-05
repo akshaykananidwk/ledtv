@@ -99,7 +99,8 @@ $canSchedule = Auth::can('schedule.manage');
 $canCmd = Auth::can('broadcast.device_commands');
 $emergencies = Broadcaster::activeEmergencies();
 $history = DB::all(
-    'SELECT b.*, u.username FROM broadcast_commands b LEFT JOIN users u ON u.id = b.created_by ORDER BY b.id DESC LIMIT 30'
+    'SELECT b.*, u.username FROM broadcast_commands b LEFT JOIN users u ON u.id = b.created_by WHERE b.hotel_id = :hid ORDER BY b.id DESC LIMIT 30',
+    hid()
 );
 $stats = [];
 if ($history) {
@@ -108,7 +109,7 @@ if ($history) {
         $stats[(int) $r['broadcast_id']][$r['status']] = (int) $r['n'];
     }
 }
-$hasContent = (bool) DB::value('SELECT 1 FROM content_items LIMIT 1') || (bool) DB::value('SELECT 1 FROM content_playlists LIMIT 1');
+$hasContent = (bool) DB::value('SELECT 1 FROM content_items WHERE hotel_id = :hid LIMIT 1', hid()) || (bool) DB::value('SELECT 1 FROM content_playlists WHERE hotel_id = :hid LIMIT 1', hid());
 
 $pageTitle = __('Broadcast');
 $activeNav = 'broadcast';
