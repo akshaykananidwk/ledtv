@@ -43,6 +43,7 @@ class PollService : LifecycleService() {
     /** Report screen on/off to the server immediately (admin panel shows "Standby"). */
     private val screenReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
+            if (intent.action == Intent.ACTION_SCREEN_ON) SyncManager.notifyPowerOn()
             SyncManager.heartbeatSoon()
         }
     }

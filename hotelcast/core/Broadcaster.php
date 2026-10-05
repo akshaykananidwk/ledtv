@@ -10,38 +10,42 @@ final class Broadcaster
     public const DEVICE_COMMANDS = ['REBOOT', 'CLEAR_CACHE', 'UPDATE_APP', 'SCREEN_OFF', 'SCREEN_ON', 'RELOAD', 'PING', 'SHOW_CONTENT'];
     public const TARGET_TYPES = ['all', 'rooms', 'groups', 'floors'];
 
-    /** Resolve target → list of room rows. */
+    /** Resolve target → list of room rows (current hotel only). */
     public static function targetRooms(string $type, array $ids): array
     {
+        $h = ['hid' => Tenant::id()];
         switch ($type) {
             case 'all':
-                return DB::all('SELECT * FROM rooms ORDER BY room_number');
+                return DB::all('SELECT * FROM rooms WHERE hotel_id = :hid ORDER BY room_number', $h);
             case 'rooms':
                 $ids = array_values(array_filter(array_map('intval', $ids)));
                 if (!$ids) {
                     return [];
                 }
                 [$in, $p] = DB::in($ids, 'r');
-                return DB::all("SELECT * FROM rooms WHERE id IN $in ORDER BY room_number", $p);
+                return DB::all("SELECT * FROM rooms WHERE hotel_id = :hid AND id IN $in ORDER BY room_number", $p + $h);
             case 'groups':
                 $ids = array_values(array_filter(array_map('intval', $ids)));
                 if (!$ids) {
                     return [];
                 }
                 [$in, $p] = DB::in($ids, 'g');
-                return DB::all("SELECT DISTINCT r.* FROM rooms r JOIN room_group_members m ON m.room_id = r.id WHERE m.group_id IN $in ORDER BY r.room_number", $p);
+                return DB::all("SELECT DISTINCT r.* FROM rooms r JOIN room_group_members m ON m.room_id = r.id JOIN room_groups g ON g.id = m.group_id AND g.hotel_id = r.hotel_id WHERE r.hotel_id = :hid AND m.group_id IN $in ORDER BY r.room_number", $p + $h);
             case 'floors':
                 $ids = array_values(array_filter(array_map('strval', $ids), fn ($v) => $v !== ''));
                 if (!$ids) {
                     return [];
                 }
                 [$in, $p] = DB::in($ids, 'f');
-                return DB::all("SELECT * FROM rooms WHERE floor IN $in ORDER BY room_number", $p);
+                return DB::all("SELECT * FROM rooms WHERE hotel_id = :hid AND floor IN $in ORDER BY room_number", $p + $h);
         }
         return [];
     }
 
-    /** Normalise target input from forms: returns [type, ids]. */
+    /**
+     * Normalise target input from forms: returns [type, ids]. Room / group ids of another hotel are
+     * refused (Tenant::deny → 404); ids that do not exist are dropped.
+     */
     public static function parseTarget(array $in): array
     {
         $type = in_array($in['target_type'] ?? 'all', self::TARGET_TYPES, true) ? $in['target_type'] : 'all';
@@ -51,7 +55,15 @@ final class Broadcaster
             'floors' => array_map('strval', (array) ($in['floors'] ?? $in['target_ids'] ?? [])),
             default => [],
         };
-        return [$type, array_values(array_unique($ids))];
+        $ids = array_values(array_unique($ids));
+        if ($type === 'rooms' && $ids) {
+            $owned = Tenant::assertOwnsAll('rooms', $ids);
+            $ids = array_values(array_filter($ids, fn ($i) => in_array($i, $owned, true)));
+        } elseif ($type === 'groups' && $ids) {
+            $owned = Tenant::assertOwnsAll('room_groups', $ids);
+            $ids = array_values(array_filter($ids, fn ($i) => in_array($i, $owned, true)));
+        }
+        return [$type, $ids];
     }
 
     public static function describeTarget(string $type, array|string|null $ids): string
@@ -68,14 +80,14 @@ final class Broadcaster
                     return __('No rooms');
                 }
                 [$in, $p] = DB::in(array_map('intval', $ids), 'r');
-                $nums = DB::column("SELECT room_number FROM rooms WHERE id IN $in ORDER BY room_number", $p);
+                $nums = DB::column("SELECT room_number FROM rooms WHERE hotel_id = :hid AND id IN $in ORDER BY room_number", $p + ['hid' => Tenant::id()]);
                 return __('Rooms') . ': ' . (count($nums) > 8 ? implode(', ', array_slice($nums, 0, 8)) . ' +' . (count($nums) - 8) : implode(', ', $nums));
             case 'groups':
                 if (!$ids) {
                     return __('No groups');
                 }
                 [$in, $p] = DB::in(array_map('intval', $ids), 'g');
-                return __('Groups') . ': ' . implode(', ', DB::column("SELECT name FROM room_groups WHERE id IN $in ORDER BY name", $p));
+                return __('Groups') . ': ' . implode(', ', DB::column("SELECT name FROM room_groups WHERE hotel_id = :hid AND id IN $in ORDER BY name", $p + ['hid' => Tenant::id()]));
             case 'floors':
                 return __('Floors') . ': ' . implode(', ', $ids);
         }
@@ -90,7 +102,7 @@ final class Broadcaster
             return 0;
         }
         [$in, $p] = DB::in($roomIds, 'r');
-        $devices = DB::all("SELECT id, room_id FROM devices WHERE is_revoked = 0 AND room_id IN $in", $p);
+        $devices = DB::all("SELECT id, room_id FROM devices WHERE hotel_id = :hid AND is_revoked = 0 AND room_id IN $in", $p + ['hid' => Tenant::id()]);
         $json = json_out((object) $payload);
         foreach ($devices as $d) {
             if ($command === 'SHOW_CONTENT') {
@@ -121,6 +133,9 @@ final class Broadcaster
      */
     public static function pushNow(string $targetType, array $ids, ?int $contentId, ?int $playlistId, string $title = '', ?int $userId = null): int
     {
+        if (($contentId && !ContentManager::find($contentId)) || ($playlistId && !ContentManager::findPlaylist($playlistId))) {
+            throw new InvalidArgumentException(__('Select content or a playlist.'));
+        }
         if (!$contentId && !$playlistId) {
             throw new InvalidArgumentException(__('Select content or a playlist.'));
         }
@@ -152,17 +167,17 @@ final class Broadcaster
     {
         $roomIds = array_map(fn ($r) => (int) $r['id'], $rooms);
         [$in, $p] = DB::in($roomIds, 'r');
-        DB::query("UPDATE rooms SET content_id = :c, playlist_id = :pl WHERE id IN $in", $p + ['c' => $contentId, 'pl' => $playlistId]);
+        DB::query("UPDATE rooms SET content_id = :c, playlist_id = :pl WHERE hotel_id = :hid AND id IN $in", $p + ['c' => $contentId, 'pl' => $playlistId, 'hid' => Tenant::id()]);
         Settings::bumpContentVersion();
     }
 
     public static function contentTitle(?int $contentId, ?int $playlistId): string
     {
         if ($playlistId) {
-            return (string) (DB::value('SELECT name FROM content_playlists WHERE id = :id', ['id' => $playlistId]) ?? 'Playlist');
+            return (string) (DB::value('SELECT name FROM content_playlists WHERE id = :id AND hotel_id = :hid', ['id' => $playlistId, 'hid' => Tenant::id()]) ?? 'Playlist');
         }
         if ($contentId) {
-            return (string) (DB::value('SELECT title FROM content_items WHERE id = :id', ['id' => $contentId]) ?? 'Content');
+            return (string) (DB::value('SELECT title FROM content_items WHERE id = :id AND hotel_id = :hid', ['id' => $contentId, 'hid' => Tenant::id()]) ?? 'Content');
         }
         return '';
     }
@@ -211,6 +226,12 @@ final class Broadcaster
         } else {
             $contentId = (int) ($in['content_id'] ?? 0) ?: null;
             $playlistId = (int) ($in['playlist_id'] ?? 0) ?: null;
+        }
+        if ($contentId && !ContentManager::find($contentId)) {
+            $contentId = null;
+        }
+        if ($playlistId && !ContentManager::findPlaylist($playlistId)) {
+            $playlistId = null;
         }
         if (!$contentId && !$playlistId) {
             $errors[] = __('Select content or a playlist.');
@@ -316,7 +337,7 @@ final class Broadcaster
     /** Pause / resume a power schedule. */
     public static function setPowerScheduleEnabled(int $id, bool $enabled): void
     {
-        $b = DB::one("SELECT * FROM broadcast_commands WHERE id = :id AND command = 'SCREEN_OFF' AND mode = 'window'", ['id' => $id]);
+        $b = Tenant::find('broadcast_commands', $id, "command = 'SCREEN_OFF' AND mode = 'window'");
         if (!$b) {
             return;
         }
@@ -353,9 +374,12 @@ final class Broadcaster
     /** Stop one (or all) emergency broadcasts. */
     public static function emergencyStop(?int $id = null): int
     {
-        $rows = $id
-            ? DB::all("SELECT * FROM broadcast_commands WHERE id = :id AND is_emergency = 1 AND status = 'active'", ['id' => $id])
-            : DB::all("SELECT * FROM broadcast_commands WHERE is_emergency = 1 AND status = 'active'");
+        if ($id) {
+            $row = Tenant::find('broadcast_commands', $id, "is_emergency = 1 AND status = 'active'");
+            $rows = $row ? [$row] : [];
+        } else {
+            $rows = DB::all("SELECT * FROM broadcast_commands WHERE hotel_id = :hid AND is_emergency = 1 AND status = 'active'", ['hid' => Tenant::id()]);
+        }
         foreach ($rows as $b) {
             DB::update('broadcast_commands', ['status' => 'completed', 'end_at' => now()], 'id = :id', ['id' => $b['id']]);
             Settings::bumpContentVersion();
@@ -366,7 +390,7 @@ final class Broadcaster
 
     public static function activeEmergencies(): array
     {
-        return DB::all("SELECT * FROM broadcast_commands WHERE is_emergency = 1 AND status = 'active' ORDER BY id DESC");
+        return DB::all("SELECT * FROM broadcast_commands WHERE hotel_id = :hid AND is_emergency = 1 AND status = 'active' ORDER BY id DESC", ['hid' => Tenant::id()]);
     }
 
     /** Send a device command (REBOOT, CLEAR_CACHE, UPDATE_APP...). Returns [broadcastId, deviceCount]. */
@@ -393,7 +417,7 @@ final class Broadcaster
             $roomIds = array_map(fn ($r) => (int) $r['id'], $rooms);
             if ($roomIds) {
                 [$in, $p] = DB::in($roomIds, 'r');
-                DB::query("UPDATE rooms SET is_enabled = :e WHERE id IN $in", $p + ['e' => $command === 'SCREEN_ON' ? 1 : 0]);
+                DB::query("UPDATE rooms SET is_enabled = :e WHERE hotel_id = :hid AND id IN $in", $p + ['e' => $command === 'SCREEN_ON' ? 1 : 0, 'hid' => Tenant::id()]);
                 Settings::bumpContentVersion();
             }
         }
@@ -404,7 +428,7 @@ final class Broadcaster
     /** Push an APK update to TVs. */
     public static function pushApk(int $apkId, string $targetType, array $ids, ?int $userId = null): array
     {
-        $apk = DB::one('SELECT * FROM apk_releases WHERE id = :id', ['id' => $apkId]);
+        $apk = Tenant::find('apk_releases', $apkId);
         if (!$apk) {
             throw new InvalidArgumentException('APK not found');
         }
@@ -423,14 +447,15 @@ final class Broadcaster
     }
 
     /**
-     * Process schedules (called by Scheduler::tick).
+     * Process schedules of the current hotel (Scheduler::tick runs it for every hotel).
      * - 'once' broadcasts whose start time arrived are pushed.
      * - 'window' broadcasts flip scheduled→active→completed; TVs are told to refresh on each change.
      */
     public static function processSchedules(): array
     {
         $done = ['pushed' => 0, 'activated' => 0, 'ended' => 0];
-        $due = DB::all("SELECT * FROM broadcast_commands WHERE mode = 'once' AND status = 'scheduled' AND start_at <= :n", ['n' => now()]);
+        $hid = Tenant::id();
+        $due = DB::all("SELECT * FROM broadcast_commands WHERE hotel_id = :hid AND mode = 'once' AND status = 'scheduled' AND start_at <= :n", ['n' => now(), 'hid' => $hid]);
         foreach ($due as $b) {
             // Claim atomically so concurrent ticks don't double-process.
             if (DB::update('broadcast_commands', ['status' => 'completed'], "id = :id AND status = 'scheduled'", ['id' => $b['id']]) !== 1) {
@@ -444,7 +469,7 @@ final class Broadcaster
             $done['pushed']++;
         }
 
-        $windows = DB::all("SELECT * FROM broadcast_commands WHERE mode = 'window' AND status IN ('scheduled','active')");
+        $windows = DB::all("SELECT * FROM broadcast_commands WHERE hotel_id = :hid AND mode = 'window' AND status IN ('scheduled','active')", ['hid' => $hid]);
         foreach ($windows as $b) {
             $ended = !empty($b['end_at']) && strtotime($b['end_at']) <= time();
             $active = !$ended && ContentResolver::windowActive($b);

@@ -435,6 +435,12 @@ object SyncManager : CommandActions {
         return result
     }
 
+    /** Screen switched on (power-on from standby): welcome re-show rule + checkout reminder come back. */
+    fun notifyPowerOn() {
+        GuestSession.onPowerOn()
+        _events.tryEmit(SyncEvent.ScreenStateChanged)
+    }
+
     /** Send a heartbeat right away (e.g. after the screen turned on/off) so the admin panel is current. */
     fun heartbeatSoon() {
         if (!::app.isInitialized || !Prefs.isRegistered) return

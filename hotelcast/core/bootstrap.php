@@ -16,9 +16,14 @@ mb_internal_encoding('UTF-8');
 ini_set('default_charset', 'UTF-8');
 
 spl_autoload_register(static function (string $class): void {
-    $file = HC_CORE . '/' . str_replace('\\', '/', $class) . '.php';
-    if (is_file($file)) {
-        require $file;
+    $rel = str_replace('\\', '/', $class) . '.php';
+    // core/<Class>.php, then the extension folders (core/Extensions, core/Tasks).
+    foreach (['', '/Extensions', '/Tasks'] as $dir) {
+        $file = HC_CORE . $dir . '/' . $rel;
+        if (is_file($file)) {
+            require $file;
+            return;
+        }
     }
 });
 
@@ -91,6 +96,13 @@ if (!defined('HC_INSTALLER') && !hc_installed()) {
     header('Location: ' . base_url('install/'));
     exit;
 }
+
+// Module boot hooks: core/boot.d/*.php (register tenant tables, permissions, …). Loaded before
+// any request handling so modules never need to edit core files.
+foreach (glob(HC_CORE . '/boot.d/*.php') ?: [] as $__boot) {
+    require_once $__boot;
+}
+unset($__boot);
 
 if (hc_installed()) {
     $tz = Settings::get('timezone');

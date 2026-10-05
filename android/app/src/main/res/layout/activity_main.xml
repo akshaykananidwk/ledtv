@@ -55,6 +55,17 @@
             android:textColor="@color/accent"
             android:textSize="28sp"
             tools:text="Room 101" />
+
+        <TextView
+            android:id="@+id/welcome_footer"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="48dp"
+            android:gravity="center"
+            android:textColor="@color/settings_text_dim"
+            android:textSize="16sp"
+            android:visibility="gone"
+            tools:text="HotelCast" />
     </LinearLayout>
 
     <!-- Overlay: logo, clock, weather, ticker -->
@@ -120,6 +131,61 @@
             android:layout_alignParentBottom="true"
             android:visibility="gone" />
     </RelativeLayout>
+
+    <!-- Hotel suspended / licence expired (Content mode "suspended") -->
+    <LinearLayout
+        android:id="@+id/suspended_layer"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/settings_bg"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:padding="48dp"
+        android:visibility="gone">
+
+        <ImageView
+            android:id="@+id/suspended_logo"
+            android:layout_width="wrap_content"
+            android:layout_height="120dp"
+            android:adjustViewBounds="true"
+            android:contentDescription="@null"
+            android:maxWidth="420dp"
+            android:scaleType="fitCenter"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/suspended_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:gravity="center"
+            android:textColor="@color/white"
+            android:textSize="44sp"
+            android:textStyle="bold"
+            tools:text="Service paused" />
+
+        <TextView
+            android:id="@+id/suspended_message"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:gravity="center"
+            android:lineSpacingMultiplier="1.15"
+            android:textColor="@color/settings_text"
+            android:textSize="26sp"
+            tools:text="Please contact reception." />
+
+        <TextView
+            android:id="@+id/suspended_support"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="32dp"
+            android:gravity="center"
+            android:textColor="@color/accent"
+            android:textSize="20sp"
+            android:visibility="gone"
+            tools:text="Support: +91 98765 43210" />
+    </LinearLayout>
 
     <!-- Screen off -->
     <View

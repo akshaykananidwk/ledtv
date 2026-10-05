@@ -15,6 +15,7 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.text.DateFormat
@@ -86,6 +87,13 @@ class SettingsActivity : AppCompatActivity() {
         // Focus the first empty field (or the register button) so the remote works immediately.
         val firstEmpty = listOf(inputServer, inputRoom, inputKey).firstOrNull { it.text.isNullOrBlank() }
         (firstEmpty ?: btnRegister).requestFocus()
+        if (savedInstanceState == null) handleProvisioning(intent)
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        handleProvisioning(intent)
     }
 
     override fun onResume() {
@@ -100,7 +108,12 @@ class SettingsActivity : AppCompatActivity() {
     }
 
     private fun applyMode() {
-        findViewById<TextView>(R.id.settings_title).setText(if (isSetup) R.string.setup_title else R.string.settings_title)
+        val product = Prefs.brandProduct.takeIf { it.isNotBlank() }
+        findViewById<TextView>(R.id.settings_title).text = when {
+            product == null -> getString(if (isSetup) R.string.setup_title else R.string.settings_title)
+            isSetup -> getString(R.string.setup_title_brand, product)
+            else -> getString(R.string.settings_title_brand, product)
+        }
         btnBack.visibility = if (isSetup) View.GONE else View.VISIBLE
     }
 
@@ -143,54 +156,76 @@ class SettingsActivity : AppCompatActivity() {
     private fun register() {
         if (busyJob?.isActive == true) return
         val (base, room, key) = readInputs() ?: return
+        doRegister(inputServer.text.toString(), base, room, key, provisioned = false)
+    }
+
+    private fun doRegister(serverRaw: String, base: String, room: String, key: String, provisioned: Boolean) {
         showStatus(getString(R.string.registering), ok = true)
         setBusy(true)
         busyJob = lifecycleScope.launch {
             try {
-                val req = RegisterRequest(
-                    deviceId = Prefs.deviceId,
-                    roomNumber = room,
-                    registrationKey = key,
-                    appVersion = DeviceInfo.appVersion,
-                    appVersionCode = DeviceInfo.appVersionCode,
-                    androidVersion = DeviceInfo.androidVersion,
-                    model = DeviceInfo.model,
-                    ipAddress = withContext(Dispatchers.IO) { DeviceInfo.ipAddress() },
-                )
-                val data = withContext(Dispatchers.IO) {
-                    val api = ApiClient.serviceFor(base)
-                    ApiClient.call { api.register(req) }
+                val outcome = Registrar.register(applicationContext, serverRaw, base, room, key)
+                if (provisioned) {
+                    Provisioning.logResult(if (outcome.ok) "REGISTERED room=${outcome.room}" else "FAILED ${outcome.message}")
                 }
-                val token = data?.token
-                if (token.isNullOrBlank()) throw IllegalStateException("Server returned no token")
-
-                SyncManager.stop()
-                Prefs.serverUrl = inputServer.text.toString().trim()
-                Prefs.apiBase = base
-                Prefs.registrationKey = key
-                Prefs.roomNumber = data.room?.number ?: room
-                Prefs.roomName = data.room?.name.orEmpty()
-                Prefs.roomId = data.room?.id ?: 0L
-                data.pollInterval?.let { Prefs.pollIntervalSec = it }
-                data.heartbeatInterval?.let { Prefs.heartbeatIntervalSec = it }
-                Prefs.pinHash = data.settingsPinHash
-                Prefs.currentHash = "" // ask for the full content object on the next poll
-                Prefs.token = token
-
+                if (!outcome.ok) {
+                    showStatus(registerErrorText(outcome), ok = false)
+                    return@launch
+                }
                 showStatus(getString(R.string.register_ok, Prefs.roomNumber), ok = true)
-                PollService.start(this@SettingsActivity)
-                SyncManager.pollNow()
+                if (provisioned) delay(2_500) // let the installer / technician read the result
                 startActivity(
                     Intent(this@SettingsActivity, MainActivity::class.java)
                         .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_NEW_TASK)
                 )
                 finish()
-            } catch (e: kotlinx.coroutines.CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                showStatus(getString(R.string.register_failed, ApiClient.describe(e)), ok = false)
             } finally {
                 setBusy(false)
+            }
+        }
+    }
+
+    /** Clear, translated messages for the V2 licence / suspension errors. */
+    private fun registerErrorText(o: RegisterOutcome): String = when (o.errorCode) {
+        "HOTEL_SUSPENDED" -> getString(R.string.register_error_hotel_suspended)
+        "LICENSE_LIMIT" -> getString(R.string.register_error_license_limit)
+        "INVALID_REGISTRATION_KEY" -> getString(R.string.register_error_invalid_key)
+        "ROOM_NOT_FOUND" -> getString(R.string.register_error_room_not_found)
+        else -> getString(R.string.register_failed, o.message)
+    }
+
+    /**
+     * Provisioning extras from the bulk setup tool (see [Provisioning]). This activity is exported
+     * only to holders of android.permission.DUMP (adb shell / system), so extras cannot come from
+     * another app.
+     */
+    private fun handleProvisioning(intent: Intent?) {
+        val parsed = Provisioning.parse(intent?.extras)
+        when (parsed) {
+            Provisioning.Parsed.None -> return
+            is Provisioning.Parsed.Invalid -> {
+                Provisioning.logResult("FAILED ${parsed.reason}")
+                showStatus(getString(R.string.provision_invalid, parsed.reason), ok = false)
+            }
+            is Provisioning.Parsed.Valid -> {
+                val r = parsed.request
+                val refusal = Provisioning.refusal(r, Prefs.isRegistered)
+                if (refusal != null) {
+                    Provisioning.logResult("FAILED $refusal")
+                    showStatus(getString(R.string.provision_rejected, refusal), ok = false)
+                    return
+                }
+                inputServer.setText(r.serverUrl)
+                inputRoom.setText(r.room)
+                inputKey.setText(r.key)
+                Provisioning.saveFields(r)
+                if (r.autoRegister) {
+                    doRegister(r.serverUrl, r.apiBase, r.room, r.key, provisioned = true)
+                } else {
+                    Provisioning.logResult("SAVED room=${r.room} (hc_autoregister=false)")
+                    showStatus(getString(R.string.provision_filled), ok = true)
+                    btnRegister.requestFocus()
+                }
             }
         }
     }
@@ -263,6 +298,7 @@ class SettingsActivity : AppCompatActivity() {
             getString(R.string.info_android) to "${DeviceInfo.androidVersion} (API ${android.os.Build.VERSION.SDK_INT})",
             getString(R.string.info_model) to DeviceInfo.model,
             getString(R.string.info_room) to room,
+            getString(R.string.info_hotel) to Prefs.hotelName.ifBlank { "-" },
             getString(R.string.info_status) to status,
             getString(R.string.info_last_poll) to lastPoll,
             getString(R.string.info_device_owner) to getString(if (KioskHelper.isDeviceOwner(this)) R.string.yes else R.string.no),

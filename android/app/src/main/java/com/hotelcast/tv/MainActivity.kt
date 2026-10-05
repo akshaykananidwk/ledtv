@@ -1,6 +1,8 @@
 package com.hotelcast.tv
 
 import android.content.Intent
+import android.graphics.Bitmap
+import android.graphics.Canvas
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
@@ -10,6 +12,7 @@ import android.provider.Settings
 import android.util.Log
 import android.view.KeyEvent
 import android.view.MotionEvent
+import android.view.PixelCopy
 import android.view.View
 import android.view.WindowManager
 import android.widget.FrameLayout
@@ -42,8 +45,12 @@ import kotlin.math.roundToInt
  *  - D-pad UP, UP, DOWN, DOWN, or
  *  - holding OK / D-pad centre for 3 seconds, or
  *  - (touch screens) 5 taps in the top-left corner within 3 seconds.
+ *
+ * Guest features (V2): a short press of OK / D-pad centre opens the guest menu (side panel), the
+ * personal welcome card, the checkout reminder banner, SHOW_MESSAGE cards and the suspended screen
+ * (see [GuestUi]). Emergency always stays on top of all of them.
  */
-class MainActivity : AppCompatActivity(), ContentPlayer.Listener {
+class MainActivity : AppCompatActivity(), ContentPlayer.Listener, PlayerUi, GuestUi.Listener {
 
     private lateinit var stage: FrameLayout
     private lateinit var welcomeLayer: LinearLayout
@@ -61,6 +68,15 @@ class MainActivity : AppCompatActivity(), ContentPlayer.Listener {
     private lateinit var emergencyTitle: TextView
     private lateinit var emergencyMessage: TextView
     private lateinit var offlineDot: View
+    private lateinit var welcomeFooter: TextView
+    private lateinit var suspendedLayer: View
+    private lateinit var suspendedLogo: ImageView
+    private lateinit var suspendedTitle: TextView
+    private lateinit var suspendedMessage: TextView
+    private lateinit var suspendedSupport: TextView
+    private lateinit var guestUi: GuestUi
+    private var suspendedLogoUrl: String? = null
+    private var rendering = false
 
     private var player: ContentPlayer? = null
     private val handler = Handler(Looper.getMainLooper())
@@ -74,8 +90,7 @@ class MainActivity : AppCompatActivity(), ContentPlayer.Listener {
     private val backPresses = ArrayDeque<Long>()
     private val dpadSequence = ArrayDeque<Int>()
     private val cornerTaps = ArrayDeque<Long>()
-    private var centerDownAt = 0L
-    private var centerLongFired = false
+    private val centerKey = CenterKeyTracker(LONG_PRESS_MS)
 
     private val overlayClockTicker = object : Runnable {
         override fun run() {
@@ -121,6 +136,7 @@ class MainActivity : AppCompatActivity(), ContentPlayer.Listener {
         KioskHelper.applyDeviceOwnerPolicies(this)
 
         player = ContentPlayer(this, stage, SyncManager.contentCache, this)
+        guestUi = GuestUi(this, findViewById(R.id.root), emergencyLayer, SyncManager.contentCache, this)
 
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
@@ -194,6 +210,12 @@ class MainActivity : AppCompatActivity(), ContentPlayer.Listener {
         emergencyTitle = findViewById(R.id.emergency_title)
         emergencyMessage = findViewById(R.id.emergency_message)
         offlineDot = findViewById(R.id.offline_dot)
+        welcomeFooter = findViewById(R.id.welcome_footer)
+        suspendedLayer = findViewById(R.id.suspended_layer)
+        suspendedLogo = findViewById(R.id.suspended_logo)
+        suspendedTitle = findViewById(R.id.suspended_title)
+        suspendedMessage = findViewById(R.id.suspended_message)
+        suspendedSupport = findViewById(R.id.suspended_support)
     }
 
     override fun onStart() {
@@ -204,6 +226,7 @@ class MainActivity : AppCompatActivity(), ContentPlayer.Listener {
             return
         }
         setupLaunched = false
+        UiBridge.player = this
         // The guest switched the TV on with the remote while it is scheduled off → show content.
         if (PowerController.wasSleptBySchedule()) PowerController.guestOverride()
         PollService.start(this)
@@ -214,6 +237,8 @@ class MainActivity : AppCompatActivity(), ContentPlayer.Listener {
     override fun onResume() {
         super.onResume()
         hideSystemUi()
+        // Back from Live TV / HDMI: only HotelCast may run in lock task again.
+        if (KioskHelper.externalAppActive) KioskHelper.restoreKioskPackages(this)
         if (Prefs.isRegistered) {
             KioskHelper.enterKioskIfPossible(this)
             if (Prefs.isKioskSuspended) {
@@ -226,13 +251,18 @@ class MainActivity : AppCompatActivity(), ContentPlayer.Listener {
     override fun onStop() {
         super.onStop()
         setupLaunched = false
+        UiBridge.clear(this)
         handler.removeCallbacks(overlayClockTicker)
         overlayTicker.stop()
         player?.stop()
+        // Leaving for Live TV / HDMI / settings: close the menu and any full-screen guest detail.
+        try { guestUi.closeAll(notify = false) } catch (_: Throwable) {}
+        centerKey.reset()
     }
 
     override fun onDestroy() {
         handler.removeCallbacksAndMessages(null)
+        try { guestUi.release() } catch (_: Throwable) {}
         player?.release()
         player = null
         super.onDestroy()
@@ -266,19 +296,25 @@ class MainActivity : AppCompatActivity(), ContentPlayer.Listener {
 
     private fun render() {
         if (!lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED) || !Prefs.isRegistered) return
+        if (rendering) return // re-entrant call from a guest-layer callback
+        rendering = true
         val c = SyncManager.content.value
         try {
             when {
                 c != null && c.isEmergency -> {
+                    guestUi.hideAll()
                     player?.stop()
+                    suspendedLayer.visibility = View.GONE
                     setScreenAwake(true)
                     showEmergency(c)
                 }
                 PowerController.desiredOff(c) && !PowerController.isLocallyOverridden() -> {
+                    guestUi.hideAll()
                     player?.stop()
                     hideOverlay()
                     welcomeLayer.visibility = View.GONE
                     emergencyLayer.visibility = View.GONE
+                    suspendedLayer.visibility = View.GONE
                     blackLayer.visibility = View.VISIBLE
                     // Black-screen mode keeps the TV awake so it can always be switched on remotely.
                     setScreenAwake(PowerController.blackMode(c))
@@ -287,32 +323,92 @@ class MainActivity : AppCompatActivity(), ContentPlayer.Listener {
                     resetLayers()
                     showWelcome(null, getString(R.string.connecting))
                 }
-                c.isEmpty -> {
+                c.isSuspended -> {
                     resetLayers()
+                    guestUi.hideAll()
                     player?.stop()
-                    showWelcome(c, null)
-                    applyOverlay(c)
+                    hideOverlay()
+                    welcomeLayer.visibility = View.GONE
+                    showSuspended(c)
                 }
                 else -> {
                     resetLayers()
-                    welcomeLayer.visibility = View.GONE
-                    applyOverlay(c)
-                    player?.setContent(c)
+                    maybeShowWelcomeCard(c)
+                    if (guestUi.blocksPlayback) {
+                        // Welcome card / full-screen guest detail: no playback (and no ad impressions) behind it.
+                        player?.stop()
+                        hideOverlay()
+                    } else if (c.isEmpty) {
+                        player?.stop()
+                        showWelcome(c, null)
+                        applyOverlay(c)
+                    } else {
+                        welcomeLayer.visibility = View.GONE
+                        applyOverlay(c)
+                        player?.setContent(c)
+                    }
+                    updateReminder(c)
                 }
             }
         } catch (e: Throwable) {
             Log.e(TAG, "render failed", e)
+            ErrorLog.add("render", e.toString())
             try {
                 player?.stop()
                 showWelcome(c, null)
             } catch (_: Throwable) {
             }
+        } finally {
+            rendering = false
         }
+    }
+
+    /** Personal welcome card: once per welcome.id, and again after each power-on within 24 h of check-in. */
+    private fun maybeShowWelcomeCard(c: Content) {
+        val powerOn = GuestSession.powerOnPending
+        GuestSession.powerOnPending = false
+        if (guestUi.welcomeVisible) return
+        val shown = IdSet.parse(Prefs.shownWelcomeIds)
+        if (!GuestPrompts.shouldShowWelcome(c.welcome, c.guest, shown, System.currentTimeMillis(), powerOn)) return
+        shown.add(c.welcome?.id)
+        Prefs.shownWelcomeIds = shown.serialize()
+        guestUi.showWelcome(c)
+        SyncManager.reportEvent("welcome_shown", mapOf("id" to c.welcome?.id))
+    }
+
+    private fun updateReminder(c: Content) {
+        if (guestUi.welcomeVisible || guestUi.detailOpen) return
+        val show = GuestPrompts.shouldShowReminder(c.checkoutReminder, IdSet.parse(Prefs.dismissedReminderIds), GuestSession.remindersHidden.toSet())
+        if (show) guestUi.showReminder(c) else guestUi.removeReminder()
+    }
+
+    private fun showSuspended(c: Content) {
+        val ctx = guestUi.localized(c)
+        val s = c.suspended
+        suspendedTitle.text = s?.title?.takeIf { it.isNotBlank() } ?: ctx.getString(R.string.suspended_default_title)
+        suspendedMessage.text = s?.message?.takeIf { it.isNotBlank() } ?: ctx.getString(R.string.suspended_default_message)
+        val support = c.branding?.support?.takeIf { it.isNotBlank() }
+        suspendedSupport.text = support?.let { ctx.getString(R.string.suspended_support, it) }
+        suspendedSupport.visibility = if (support != null) View.VISIBLE else View.GONE
+        suspendedSupport.setTextColor(guestUi.accent(c))
+        val logo = c.branding?.logoUrl?.takeIf { it.isNotBlank() } ?: c.hotel?.logoUrl?.takeIf { it.isNotBlank() }
+        if (logo != null) {
+            suspendedLogo.visibility = View.VISIBLE
+            if (logo != suspendedLogoUrl) {
+                suspendedLogoUrl = logo
+                Glide.with(this).load(SyncManager.contentCache.cachedFile(logo) ?: logo).into(suspendedLogo)
+            }
+        } else {
+            suspendedLogo.visibility = View.GONE
+            suspendedLogoUrl = null
+        }
+        suspendedLayer.visibility = View.VISIBLE
     }
 
     private fun resetLayers() {
         blackLayer.visibility = View.GONE
         emergencyLayer.visibility = View.GONE
+        suspendedLayer.visibility = View.GONE
         setScreenAwake(true)
     }
 
@@ -345,11 +441,15 @@ class MainActivity : AppCompatActivity(), ContentPlayer.Listener {
 
     private fun showWelcome(c: Content?, statusText: String?) {
         welcomeLayer.visibility = View.VISIBLE
-        val hotelName = c?.hotel?.name?.takeIf { it.isNotBlank() }
+        val hotelName = c?.hotel?.name?.takeIf { it.isNotBlank() } ?: c?.branding?.product?.takeIf { it.isNotBlank() }
         welcomeTitle.text = statusText ?: hotelName?.let { getString(R.string.welcome_to, it) } ?: getString(R.string.welcome)
         val room = c?.room?.number ?: Prefs.roomNumber
         welcomeSubtitle.text = if (room.isNotBlank()) getString(R.string.room_label, room) else ""
-        val logo = c?.hotel?.logoUrl?.takeIf { it.isNotBlank() }
+        val logo = c?.hotel?.logoUrl?.takeIf { it.isNotBlank() } ?: c?.branding?.logoUrl?.takeIf { it.isNotBlank() }
+        welcomeSubtitle.setTextColor(Utils.parseColor(c?.branding?.color, ContextCompat.getColor(this, R.color.accent)))
+        val product = c?.branding?.product?.takeIf { it.isNotBlank() }
+        welcomeFooter.text = product
+        welcomeFooter.visibility = if (product != null && product != hotelName) View.VISIBLE else View.GONE
         if (logo != null) {
             welcomeLogo.visibility = View.VISIBLE
             if (logo != welcomeLogoUrl) {
@@ -438,7 +538,7 @@ class MainActivity : AppCompatActivity(), ContentPlayer.Listener {
     }
 
     override fun onItemFinished(item: ContentItem, startedAtMillis: Long, durationSec: Int) {
-        SyncManager.reportPlayed(item.id, startedAtMillis, durationSec)
+        SyncManager.reportPlayed(item.id, startedAtMillis, durationSec, item.adCampaignId)
     }
 
     override fun onNothingToPlay() {
@@ -473,37 +573,118 @@ class MainActivity : AppCompatActivity(), ContentPlayer.Listener {
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
         if (pinDialogShowing) return super.dispatchKeyEvent(event)
         val code = event.keyCode
+        val down = event.action == KeyEvent.ACTION_DOWN
+        val up = event.action == KeyEvent.ACTION_UP
         // Guest turned the TV on with the remote while it is scheduled "off": show content again.
-        if (event.action == KeyEvent.ACTION_UP && code != KeyEvent.KEYCODE_MENU &&
+        if (up && code != KeyEvent.KEYCODE_MENU &&
             blackLayer.visibility == View.VISIBLE && PowerController.desiredOff(SyncManager.content.value)
         ) {
             PowerController.guestOverride()
             render()
             return true
         }
+        if (isVolumeKey(code)) {
+            // Let the system change the volume, then clamp it to volume.max / the night max.
+            if (up) handler.postDelayed({ SyncManager.enforceVolumeSoon() }, 300)
+            return super.dispatchKeyEvent(event)
+        }
+        val isCenter = code == KeyEvent.KEYCODE_DPAD_CENTER || code == KeyEvent.KEYCODE_ENTER || code == KeyEvent.KEYCODE_NUMPAD_ENTER
+        val isBack = code == KeyEvent.KEYCODE_BACK || code == KeyEvent.KEYCODE_ESCAPE
+
+        // 1. Welcome card: any key dismisses it (handled on key up).
+        if (guestUi.welcomeVisible && emergencyLayer.visibility != View.VISIBLE) {
+            if (up) {
+                centerKey.reset()
+                guestUi.hideWelcome(notify = true)
+            }
+            return true
+        }
+        // 2. Message card: OK / BACK dismiss it.
+        if (guestUi.messageVisible && (isCenter || isBack)) {
+            if (up) {
+                centerKey.reset()
+                guestUi.hideMessage()
+            }
+            return true
+        }
+        // 3. Guest menu / detail open.
+        if (guestUi.menuOpen || guestUi.detailOpen) {
+            guestUi.touch()
+            val inList = guestUi.menuOpen && !guestUi.detailOpen
+            when {
+                isBack -> {
+                    if (down && event.repeatCount == 0) {
+                        guestUi.back()
+                        registerBackPress()
+                    }
+                    return true
+                }
+                code == KeyEvent.KEYCODE_MENU -> {
+                    if (up) {
+                        guestUi.closeAll()
+                        requestSettings()
+                    }
+                    return true
+                }
+                isCenter -> {
+                    if (down) {
+                        if (centerKey.onDown(event.repeatCount, event.eventTime) == CenterKeyTracker.Action.LONG_PRESS) {
+                            guestUi.closeAll()
+                            requestSettings()
+                            return true
+                        }
+                        return if (inList) super.dispatchKeyEvent(event) else true
+                    }
+                    if (up) {
+                        when (centerKey.onUp(event.eventTime)) {
+                            CenterKeyTracker.Action.SHORT_PRESS -> return if (inList) super.dispatchKeyEvent(event) else true
+                            CenterKeyTracker.Action.LONG_PRESS -> {
+                                guestUi.closeAll()
+                                requestSettings()
+                            }
+                            else -> Unit
+                        }
+                    }
+                    return true
+                }
+                code == KeyEvent.KEYCODE_DPAD_UP || code == KeyEvent.KEYCODE_DPAD_DOWN ||
+                    code == KeyEvent.KEYCODE_DPAD_LEFT || code == KeyEvent.KEYCODE_DPAD_RIGHT -> {
+                    return if (inList) super.dispatchKeyEvent(event) else true
+                }
+            }
+            return super.dispatchKeyEvent(event)
+        }
+        // 4. Normal playback.
         when (code) {
             KeyEvent.KEYCODE_MENU -> {
-                if (event.action == KeyEvent.ACTION_UP) requestSettings()
+                if (up) requestSettings()
                 return true
             }
             KeyEvent.KEYCODE_BACK, KeyEvent.KEYCODE_ESCAPE -> {
-                if (event.action == KeyEvent.ACTION_DOWN && event.repeatCount == 0) registerBackPress()
+                if (down && event.repeatCount == 0) {
+                    if (guestUi.reminderVisible) guestUi.dismissReminder()
+                    registerBackPress()
+                }
                 return true // never leave the kiosk with BACK
             }
             KeyEvent.KEYCODE_DPAD_CENTER, KeyEvent.KEYCODE_ENTER, KeyEvent.KEYCODE_NUMPAD_ENTER -> {
-                if (event.action == KeyEvent.ACTION_DOWN) {
-                    if (event.repeatCount == 0) {
-                        centerDownAt = SystemClock.uptimeMillis()
-                        centerLongFired = false
-                    } else if (!centerLongFired && SystemClock.uptimeMillis() - centerDownAt >= LONG_PRESS_MS) {
-                        centerLongFired = true
-                        requestSettings()
+                if (down) {
+                    // Long press (3 s, key repeats) → settings, exactly as before.
+                    if (centerKey.onDown(event.repeatCount, event.eventTime) == CenterKeyTracker.Action.LONG_PRESS) requestSettings()
+                } else if (up) {
+                    when (centerKey.onUp(event.eventTime)) {
+                        CenterKeyTracker.Action.SHORT_PRESS -> {
+                            if (guestUi.reminderVisible) guestUi.dismissReminder() else openGuestMenu()
+                        }
+                        // remotes that send no key repeats: long press detected on release
+                        CenterKeyTracker.Action.LONG_PRESS -> requestSettings()
+                        else -> Unit
                     }
                 }
                 return true
             }
             KeyEvent.KEYCODE_DPAD_UP, KeyEvent.KEYCODE_DPAD_DOWN, KeyEvent.KEYCODE_DPAD_LEFT, KeyEvent.KEYCODE_DPAD_RIGHT -> {
-                if (event.action == KeyEvent.ACTION_DOWN && event.repeatCount == 0) {
+                if (down && event.repeatCount == 0) {
                     dpadSequence.addLast(code)
                     while (dpadSequence.size > SECRET_SEQUENCE.size) dpadSequence.removeFirst()
                     if (dpadSequence.toList() == SECRET_SEQUENCE) {
@@ -515,6 +696,134 @@ class MainActivity : AppCompatActivity(), ContentPlayer.Listener {
             }
         }
         return super.dispatchKeyEvent(event)
+    }
+
+    private fun isVolumeKey(code: Int) =
+        code == KeyEvent.KEYCODE_VOLUME_UP || code == KeyEvent.KEYCODE_VOLUME_DOWN || code == KeyEvent.KEYCODE_VOLUME_MUTE
+
+    // ------------------------------------------------------------------ guest menu
+
+    /** Short OK press: open the guest menu when content (or the welcome/empty screen) is showing. */
+    private fun openGuestMenu() {
+        val c = SyncManager.content.value ?: return
+        if (c.isEmergency || c.isSuspended || isFinishing) return
+        if (PowerController.desiredOff(c) && !PowerController.isLocallyOverridden()) return
+        val items = c.effectiveGuestMenu()
+        if (items.isEmpty()) return
+        guestUi.openMenu(c, items)
+        SyncManager.reportEvent("guest_menu_open", mapOf("items" to items.size))
+    }
+
+    override fun onFullScreenLayer(open: Boolean) {
+        if (open) {
+            player?.stop()
+            hideOverlay()
+        } else {
+            render()
+        }
+    }
+
+    override fun onSwitchInput(input: String, label: String) {
+        switchInput(input, label)
+    }
+
+    override fun onItemPlayed(item: ContentItem, startedAtMillis: Long, durationSec: Int) {
+        SyncManager.reportPlayed(item.id, startedAtMillis, durationSec, item.adCampaignId)
+    }
+
+    private fun switchInput(input: String, label: String): InputSwitcher.Result {
+        val c = SyncManager.content.value
+        val target = InputSwitcher.parse(input) ?: return InputSwitcher.Result(false, "Unknown input '$input'")
+        guestUi.closeAll(notify = false)
+        val result = try {
+            InputSwitcher.open(this, target, label)
+        } catch (e: Throwable) {
+            Log.e(TAG, "input switch failed", e)
+            InputSwitcher.Result(false, e.message ?: "failed")
+        }
+        SyncManager.reportEvent("input_switch", mapOf("input" to input, "ok" to result.ok, "package" to result.packageName, "message" to result.message))
+        if (!result.ok) {
+            ErrorLog.add("input", result.message)
+            val ctx = guestUi.localized(c)
+            guestUi.showMessage(c, label, ctx.getString(R.string.input_unavailable), 8)
+            render()
+        }
+        return result
+    }
+
+    // ------------------------------------------------------------------ PlayerUi (server commands)
+
+    override fun showWelcomeNow(): String {
+        val c = SyncManager.content.value ?: throw CommandFailedException("No content yet")
+        if (c.isEmergency) throw CommandFailedException("Not shown: emergency active")
+        if (c.isSuspended) throw CommandFailedException("Not shown: hotel suspended")
+        if (c.welcome == null) throw CommandFailedException("No welcome for this room (no guest checked in)")
+        if (PowerController.desiredOff(c) && !PowerController.isLocallyOverridden()) throw CommandFailedException("Not shown: TV is switched off")
+        guestUi.showWelcome(c)
+        if (!guestUi.welcomeVisible) throw CommandFailedException("Welcome card could not be built")
+        player?.stop()
+        hideOverlay()
+        return "Welcome shown for ${GuestPrompts.welcomeDurationSec(c.welcome)} s"
+    }
+
+    override fun showMessage(title: String?, message: String?, durationSec: Int): String {
+        val c = SyncManager.content.value
+        if (c?.isEmergency == true) throw CommandFailedException("Not shown: emergency active")
+        guestUi.showMessage(c, title, message, durationSec)
+        if (!guestUi.messageVisible) throw CommandFailedException("Message could not be shown")
+        val off = PowerController.desiredOff(c) && !PowerController.isLocallyOverridden()
+        return if (off || !PowerController.isScreenInteractive()) "Message shown for $durationSec s (TV is off)" else "Message shown for $durationSec s"
+    }
+
+    override fun openInput(input: String): String {
+        val c = SyncManager.content.value
+        if (c?.isEmergency == true) throw CommandFailedException("Not switched: emergency active")
+        val label = when (val t = InputSwitcher.parse(input)) {
+            is InputSwitcher.Target.Hdmi -> "HDMI ${t.port}"
+            InputSwitcher.Target.LiveTv -> guestUi.localized(c).getString(R.string.live_tv)
+            null -> throw CommandFailedException("Unknown input '$input'")
+        }
+        val r = switchInput(input, label)
+        if (!r.ok) throw CommandFailedException(r.message)
+        return r.message
+    }
+
+    override fun captureScreen(callback: (Bitmap?) -> Unit) {
+        val decor = window?.decorView
+        val w = decor?.width ?: 0
+        val h = decor?.height ?: 0
+        if (decor == null || w <= 0 || h <= 0) {
+            callback(null)
+            return
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            try {
+                val bmp = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
+                PixelCopy.request(window, bmp, { result ->
+                    if (result == PixelCopy.SUCCESS) {
+                        callback(bmp)
+                    } else {
+                        Log.w(TAG, "PixelCopy failed ($result), falling back to View.draw")
+                        bmp.recycle()
+                        callback(drawDecor(decor, w, h))
+                    }
+                }, handler)
+                return
+            } catch (e: Throwable) {
+                Log.w(TAG, "PixelCopy unavailable: ${e.message}")
+            }
+        }
+        callback(drawDecor(decor, w, h))
+    }
+
+    /** API < 26 fallback. Video surfaces (SurfaceView) come out black. */
+    private fun drawDecor(decor: View, w: Int, h: Int): Bitmap? = try {
+        val bmp = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
+        decor.draw(Canvas(bmp))
+        bmp
+    } catch (e: Throwable) {
+        Log.w(TAG, "View.draw capture failed", e)
+        null
     }
 
     override fun dispatchTouchEvent(ev: MotionEvent): Boolean {

@@ -24,14 +24,27 @@ final class ContentManager
         'url' => 'bi-globe', 'youtube' => 'bi-youtube', 'clock' => 'bi-clock',
     ];
 
+    /** Content item of the current hotel (404 when it belongs to another hotel). */
     public static function find(int $id): ?array
     {
-        return DB::one('SELECT * FROM content_items WHERE id = :id', ['id' => $id]);
+        return Tenant::find('content_items', $id);
     }
 
+    /** Scoped lookups without the cross-hotel 404 (used by ContentResolver on TV polls). */
+    public static function findOwn(int $id): ?array
+    {
+        return DB::one('SELECT * FROM content_items WHERE id = :id AND hotel_id = :h', ['id' => $id, 'h' => Tenant::id()]);
+    }
+
+    public static function findOwnPlaylist(int $id): ?array
+    {
+        return DB::one('SELECT * FROM content_playlists WHERE id = :id AND hotel_id = :h', ['id' => $id, 'h' => Tenant::id()]);
+    }
+
+    /** Playlist of the current hotel (404 when it belongs to another hotel). */
     public static function findPlaylist(int $id): ?array
     {
-        return DB::one('SELECT * FROM content_playlists WHERE id = :id', ['id' => $id]);
+        return Tenant::find('content_playlists', $id);
     }
 
     public static function settings(array $item): array
@@ -48,10 +61,12 @@ final class ContentManager
     {
         return DB::all(
             'SELECT c.*, pi.id AS pli_id, pi.sort_order, pi.duration AS pli_duration
-             FROM playlist_items pi JOIN content_items c ON c.id = pi.content_id
+             FROM playlist_items pi
+             JOIN content_playlists p ON p.id = pi.playlist_id AND p.hotel_id = :h
+             JOIN content_items c ON c.id = pi.content_id AND c.hotel_id = :h2
              WHERE pi.playlist_id = :p' . ($activeOnly ? ' AND c.is_active = 1' : '') . '
              ORDER BY pi.sort_order, pi.id',
-            ['p' => $playlistId]
+            ['p' => $playlistId, 'h' => Tenant::id(), 'h2' => Tenant::id()]
         );
     }
 
@@ -335,11 +350,12 @@ HTML;
     /** Number of places a content item is used (rooms, groups, playlists, broadcasts). */
     public static function usage(int $contentId): array
     {
+        $h = Tenant::id();
         return [
-            'rooms' => (int) DB::value('SELECT COUNT(*) FROM rooms WHERE content_id = :id', ['id' => $contentId]),
-            'groups' => (int) DB::value('SELECT COUNT(*) FROM room_groups WHERE content_id = :id', ['id' => $contentId]),
-            'playlists' => (int) DB::value('SELECT COUNT(DISTINCT playlist_id) FROM playlist_items WHERE content_id = :id', ['id' => $contentId]),
-            'broadcasts' => (int) DB::value("SELECT COUNT(*) FROM broadcast_commands WHERE content_id = :id AND status IN ('scheduled','active')", ['id' => $contentId]),
+            'rooms' => (int) DB::value('SELECT COUNT(*) FROM rooms WHERE hotel_id = :h AND content_id = :id', ['id' => $contentId, 'h' => $h]),
+            'groups' => (int) DB::value('SELECT COUNT(*) FROM room_groups WHERE hotel_id = :h AND content_id = :id', ['id' => $contentId, 'h' => $h]),
+            'playlists' => (int) DB::value('SELECT COUNT(DISTINCT pi.playlist_id) FROM playlist_items pi JOIN content_playlists p ON p.id = pi.playlist_id WHERE p.hotel_id = :h AND pi.content_id = :id', ['id' => $contentId, 'h' => $h]),
+            'broadcasts' => (int) DB::value("SELECT COUNT(*) FROM broadcast_commands WHERE hotel_id = :h AND content_id = :id AND status IN ('scheduled','active')", ['id' => $contentId, 'h' => $h]),
         ];
     }
 

@@ -30,20 +30,36 @@ final class DeviceManager
         if (!self::validUid($uid) || $roomNumber === '' || mb_strlen($roomNumber) > 20) {
             Api::error('VALIDATION_ERROR', 'device_id (8-64 chars) and room_number are required', 400);
         }
-        $expected = (string) Settings::get('registration_key', '');
-        if ($expected === '' || !hash_equals($expected, $key)) {
+        // The registration key identifies the hotel (unique per hotel).
+        $hotel = $key !== '' && strlen($key) <= 64 ? DB::one('SELECT id, registration_key FROM hotels WHERE registration_key = :k', ['k' => $key]) : null;
+        if (!$hotel || !hash_equals((string) $hotel['registration_key'], $key)) {
             Logger::write('device', 'warning', 'Registration rejected (bad key)', ['uid' => $uid, 'room' => $roomNumber, 'ip' => client_ip()]);
             Api::error('INVALID_REGISTRATION_KEY', 'Registration key is wrong. Check Admin → Settings → Devices.', 401);
         }
+        Tenant::set((int) $hotel['id']);
+        if (!Tenant::isActive()) {
+            Logger::write('device', 'warning', 'Registration rejected (hotel suspended)', ['uid' => $uid, 'hotel' => $hotel['id']]);
+            Api::error('HOTEL_SUSPENDED', Tenant::suspendedMessage()['title'] . ': ' . Tenant::suspendedMessage()['message'], 403);
+        }
+        $hid = Tenant::id();
+        $existing = DB::one('SELECT id, is_revoked, room_id FROM devices WHERE hotel_id = :h AND device_uid = :u', ['h' => $hid, 'u' => $uid]);
 
-        $room = DB::one('SELECT * FROM rooms WHERE room_number = :n', ['n' => $roomNumber]);
+        // Plan / license limit: a new TV (or a revoked / unassigned one coming back) needs a free slot.
+        $max = Tenant::maxTvs();
+        $countsAlready = $existing && !(int) $existing['is_revoked'] && $existing['room_id'] !== null;
+        if ($max !== null && !$countsAlready && Tenant::tvCount() >= $max) {
+            Logger::write('device', 'warning', 'Registration rejected (TV limit)', ['uid' => $uid, 'hotel' => $hid, 'max' => $max]);
+            Api::error('LICENSE_LIMIT', 'TV limit reached (' . $max . ' TVs). Remove an old TV in the admin panel or upgrade your plan.', 403);
+        }
+
+        $room = DB::one('SELECT * FROM rooms WHERE hotel_id = :h AND room_number = :n', ['h' => $hid, 'n' => $roomNumber]);
         if (!$room) {
             if (!Settings::bool('auto_create_rooms')) {
                 Api::error('ROOM_NOT_FOUND', 'Room ' . $roomNumber . ' does not exist. Add it in the admin panel first.', 404);
             }
             $floor = preg_match('/^(\d+)\d{2}$/', $roomNumber, $m) ? $m[1] : null;
             $rid = DB::insert('rooms', ['room_number' => $roomNumber, 'name' => 'Room ' . $roomNumber, 'floor' => $floor, 'created_at' => now()]);
-            $room = DB::one('SELECT * FROM rooms WHERE id = :id', ['id' => $rid]);
+            $room = DB::one('SELECT * FROM rooms WHERE id = :id AND hotel_id = :h', ['id' => $rid, 'h' => $hid]);
             ActivityLog::add('room_auto_created', 'room', $rid, 'Created by TV registration ' . $uid);
         }
 
@@ -61,7 +77,6 @@ final class DeviceManager
             'is_revoked' => 0,
             'last_ping' => now(),
         ];
-        $existing = DB::one('SELECT id FROM devices WHERE device_uid = :u', ['u' => $uid]);
         if ($existing) {
             DB::update('devices', $fields + ['registered_at' => now()], 'id = :id', ['id' => $existing['id']]);
             $deviceId = (int) $existing['id'];
@@ -70,11 +85,12 @@ final class DeviceManager
         }
         // One active TV per room: other devices in the same room keep working (e.g. 2 TVs in a suite).
         DB::insert('device_status_logs', ['device_id' => $deviceId, 'room_id' => $room['id'], 'status' => 'online', 'created_at' => now()]);
-        Logger::write('device', 'info', 'Device registered', ['uid' => $uid, 'room' => $roomNumber]);
+        Logger::write('device', 'info', 'Device registered', ['uid' => $uid, 'room' => $roomNumber, 'hotel' => $hid]);
 
         return [
             'token' => $token,
             'device_id' => $uid,
+            'hotel' => ['id' => $hid, 'name' => (string) Settings::get('hotel_name', '')],
             'room' => ['id' => (int) $room['id'], 'number' => $room['room_number'], 'name' => (string) $room['name'], 'floor' => (string) $room['floor']],
             'poll_interval' => self::pollInterval(),
             'heartbeat_interval' => max(15, Settings::int('heartbeat_interval', 60)),
@@ -99,6 +115,8 @@ final class DeviceManager
         if (!$device || (int) $device['is_revoked'] || ($uid !== '' && !hash_equals($device['device_uid'], $uid))) {
             Api::error('INVALID_TOKEN', 'Device token invalid or revoked. Please register again.', 401);
         }
+        // From here on every query runs in the device's hotel.
+        Tenant::forDevice($device);
 
         $retry = RateLimiter::hit('dev:' . $device['id'], 120, 60);
         if ($retry > 0) {
@@ -118,7 +136,7 @@ final class DeviceManager
 
     public static function room(array $device): array
     {
-        $room = $device['room_id'] ? DB::one('SELECT * FROM rooms WHERE id = :id', ['id' => $device['room_id']]) : null;
+        $room = $device['room_id'] ? DB::one('SELECT * FROM rooms WHERE id = :id AND hotel_id = :h', ['id' => $device['room_id'], 'h' => (int) $device['hotel_id']]) : null;
         if (!$room) {
             Api::error('ROOM_NOT_FOUND', 'This TV is not assigned to a room. Register it again.', 404);
         }
@@ -190,7 +208,7 @@ final class DeviceManager
             'last_ping' => now(),
             'status' => 'online',
         ], 'id = :id', ['id' => $device['id']]);
-        $room = $device['room_id'] ? DB::one('SELECT * FROM rooms WHERE id = :id', ['id' => $device['room_id']]) : null;
+        $room = $device['room_id'] ? DB::one('SELECT * FROM rooms WHERE id = :id AND hotel_id = :h', ['id' => $device['room_id'], 'h' => (int) $device['hotel_id']]) : null;
         return [
             'server_time' => date('c'),
             'poll_interval' => self::pollInterval(),
@@ -220,14 +238,14 @@ final class DeviceManager
         return ['saved' => $count];
     }
 
-    /** Mark devices offline when they stopped polling. Returns newly offline devices. */
+    /** Mark the current hotel's devices offline when they stopped polling. Returns newly offline devices. */
     public static function detectOffline(): array
     {
         $limit = max(30, Settings::int('offline_after', 90));
         $stale = DB::all(
             "SELECT d.*, r.room_number FROM devices d LEFT JOIN rooms r ON r.id = d.room_id
-             WHERE d.status = 'online' AND (d.last_ping IS NULL OR d.last_ping < :t)",
-            ['t' => date('Y-m-d H:i:s', time() - $limit)]
+             WHERE d.hotel_id = :h AND d.status = 'online' AND (d.last_ping IS NULL OR d.last_ping < :t)",
+            ['t' => date('Y-m-d H:i:s', time() - $limit), 'h' => Tenant::id()]
         );
         $changed = [];
         foreach ($stale as $d) {
