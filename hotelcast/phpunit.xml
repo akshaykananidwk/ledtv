@@ -19,6 +19,7 @@
             <file>tests/Integration/PlatformTest.php</file>
             <file>tests/Integration/ExtensionPointsTest.php</file>
             <file>tests/Integration/MigrationUpgradeTest.php</file>
+            <file>tests/Integration/PwaSupportDevicesTest.php</file>
         </testsuite>
     </testsuites>
 </phpunit>

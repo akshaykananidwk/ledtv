@@ -317,7 +317,7 @@ final class DeviceSupport
         $recent = DB::all(
             "SELECT f.id, f.hotel_id, h.name AS hotel, r.room_number, f.app_version, f.happened_at, f.created_at, f.meta
              FROM device_support_files f JOIN hotels h ON h.id = f.hotel_id LEFT JOIN rooms r ON r.id = f.room_id AND r.hotel_id = f.hotel_id
-             WHERE f.kind = 'crash' ORDER BY f.id DESC LIMIT 20"
+             WHERE f.kind = 'crash' ORDER BY f.created_at DESC, f.id DESC LIMIT 20"
         );
         $sum = static fn (string $k) => array_sum(array_column($hotels, $k));
         return [

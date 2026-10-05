@@ -191,6 +191,10 @@ if ($action === 'new' || $action === 'edit') {
             redirect(admin_url('content.php'));
         }
         $type = (string) $item['type'];
+        // Template items (templates module) are edited in the template form; ?raw=1 opens the HTML editor.
+        if (empty($_GET['raw']) && class_exists('Templates') && Templates::fromContent($item) && Auth::can('templates.manage') && Tenant::feature('templates')) {
+            redirect(admin_url('templates.php', ['action' => 'edit', 'id' => $item['id']]));
+        }
     } else {
         $type = (string) ($_GET['type'] ?? '');
         if (!isset(ContentManager::TYPES[$type])) {
@@ -448,6 +452,10 @@ require __DIR__ . '/partials/header.php';
       <?php foreach (ContentManager::TYPES as $t => $label): ?>
         <li><a class="dropdown-item py-2" href="<?= e(admin_url('content.php', ['action' => 'new', 'type' => $t])) ?>"><i class="bi <?= e(ContentManager::TYPE_ICONS[$t]) ?> me-2"></i><?= e(__($label)) ?></a></li>
       <?php endforeach; ?>
+      <?php if (Auth::can('templates.manage') && Tenant::feature('templates') && is_file(__DIR__ . '/templates.php')): ?>
+        <li><hr class="dropdown-divider"></li>
+        <li><a class="dropdown-item py-2" href="<?= e(admin_url('templates.php')) ?>"><i class="bi bi-palette me-2"></i><?= e(__('From a template…')) ?></a></li>
+      <?php endif; ?>
     </ul>
   </div>
   <?php endif; ?>
