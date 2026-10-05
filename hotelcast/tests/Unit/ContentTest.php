@@ -72,7 +72,7 @@ final class ContentTest extends TestCase
         $file = HC_ROOT . '/uploads/' . $saved['path'];
         $this->assertFileExists($file);
         $this->assertSame(1920, getimagesize($file)[0], 'Image resized to max width');
-        $this->assertMatchesRegularExpression('#^media/\d{4}/\d{2}/[a-f0-9]{24}\.jpg$#', $saved['path'], 'Renamed to random name');
+        $this->assertMatchesRegularExpression('#^h1/media/\d{4}/\d{2}/[a-f0-9]{24}\.jpg$#', $saved['path'], 'Renamed to random name');
         $this->assertNotNull($saved['thumb']);
 
         // A PHP file disguised as an image must be rejected.

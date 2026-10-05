@@ -14,17 +14,24 @@ final class AdminPanelTest extends TestCase
     private static array $jars = [];
 
     public const PAGES = [
-        'index.php' => 'staff', 'rooms.php' => 'staff', 'content.php' => 'staff', 'broadcast.php' => 'staff',
+        'index.php' => 'reception', 'rooms.php' => 'reception', 'content.php' => 'staff', 'broadcast.php' => 'staff',
         'groups.php' => 'manager', 'playlists.php' => 'manager', 'schedule.php' => 'manager', 'apk.php' => 'manager',
-        'logs.php' => 'manager', 'power.php' => 'manager', 'users.php' => 'super_admin', 'settings.php' => 'super_admin', 'update.php' => 'super_admin',
-        'profile.php' => 'staff',
+        'logs.php' => 'manager', 'power.php' => 'manager', 'users.php' => 'super_admin', 'settings.php' => 'super_admin', 'update.php' => 'platform_admin',
+        'profile.php' => 'reception', 'billing.php' => 'super_admin',
+        'platform_hotels.php' => 'platform_admin', 'platform_plans.php' => 'platform_admin', 'platform_resellers.php' => 'platform_admin',
+        'platform_invoices.php' => 'platform_admin', 'platform_licenses.php' => 'platform_admin', 'platform_settings.php' => 'platform_admin',
+        'platform_support.php' => 'platform_admin',
     ];
+
+    /** Role level per test user (platform admin acts as super admin inside hotel 1). */
+    private const USERS = ['root' => 5, 'boss' => 4, 'mgr' => 3, 'desk' => 2, 'recep' => 1];
+    private const LEVEL = ['reception' => 1, 'staff' => 2, 'manager' => 3, 'super_admin' => 4, 'platform_admin' => 5];
 
     public static function setUpBeforeClass(): void
     {
         TestEnv::resetDatabase();
         Installer::demoData();
-        foreach (['super_admin' => 'boss', 'manager' => 'mgr', 'staff' => 'desk'] as $role => $u) {
+        foreach (['platform_admin' => 'root', 'super_admin' => 'boss', 'manager' => 'mgr', 'staff' => 'desk', 'reception' => 'recep'] as $role => $u) {
             DB::insert('users', ['username' => $u, 'email' => $u . '@hotel.test', 'full_name' => ucfirst($u), 'password_hash' => Auth::hash('Passw0rd!'), 'role' => $role]);
         }
         DB::insert('rooms', ['room_number' => 'X1', 'name' => '<script>alert("xss")</script>', 'floor' => '9']);
@@ -84,7 +91,7 @@ final class AdminPanelTest extends TestCase
 
     public function testLoginSuccess(): void
     {
-        foreach (['boss', 'mgr', 'desk'] as $u) {
+        foreach (array_keys(self::USERS) as $u) {
             [$s, , , $head] = self::login($u);
             $this->assertSame(302, $s, "login $u");
             $this->assertStringNotContainsString('login.php', $head);
@@ -95,8 +102,8 @@ final class AdminPanelTest extends TestCase
     {
         $rows = [];
         foreach (self::PAGES as $page => $min) {
-            foreach (['boss' => 3, 'mgr' => 2, 'desk' => 1] as $u => $lvl) {
-                $rows["$page as $u"] = [$page, $u, $lvl >= ['staff' => 1, 'manager' => 2, 'super_admin' => 3][$min]];
+            foreach (self::USERS as $u => $lvl) {
+                $rows["$page as $u"] = [$page, $u, $lvl >= self::LEVEL[$min]];
             }
         }
         return $rows;
@@ -175,13 +182,15 @@ final class AdminPanelTest extends TestCase
 
     public function testUpdatePageAjaxStatus(): void
     {
-        self::login('boss');
-        [$s, $j] = TestEnv::http('GET', self::$url . 'admin/ajax_update.php?action=update_status', null, ['X-Requested-With: XMLHttpRequest', 'Accept: application/json'], self::jar('boss'));
+        self::login('root');
+        [$s, $j] = TestEnv::http('GET', self::$url . 'admin/ajax_update.php?action=update_status', null, ['X-Requested-With: XMLHttpRequest', 'Accept: application/json'], self::jar('root'));
         $this->assertSame(200, $s);
         $this->assertTrue($j['ok']);
-        self::login('mgr');
-        [$s] = TestEnv::http('GET', self::$url . 'admin/ajax_update.php?action=update_status', null, ['X-Requested-With: XMLHttpRequest', 'Accept: application/json'], self::jar('mgr'));
-        $this->assertSame(403, $s, 'Managers cannot use the updater');
+        foreach (['boss', 'mgr'] as $u) {
+            self::login($u);
+            [$s] = TestEnv::http('GET', self::$url . 'admin/ajax_update.php?action=update_status', null, ['X-Requested-With: XMLHttpRequest', 'Accept: application/json'], self::jar($u));
+            $this->assertSame(403, $s, 'Only the platform admin can use the updater (' . $u . ')');
+        }
     }
 
     public function testLogout(): void

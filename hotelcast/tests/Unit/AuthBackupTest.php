@@ -22,8 +22,14 @@ final class AuthBackupTest extends TestCase
 
     public function testRolePermissions(): void
     {
-        $this->assertSame(3, Auth::ROLE_LEVEL['super_admin']);
-        $this->assertSame('super_admin', Auth::PERMISSIONS['update.manage']);
+        $this->assertSame(4, Auth::ROLE_LEVEL['super_admin']);
+        $this->assertSame(1, Auth::ROLE_LEVEL['reception']);
+        $this->assertSame(['platform_admin'], Auth::PLATFORM_PERMISSIONS['update.manage']);
+        $this->assertSame(['platform_admin'], Auth::PLATFORM_PERMISSIONS['platform.manage']);
+        $this->assertSame('reception', Auth::PERMISSIONS['guests.manage']);
+        $this->assertSame('reception', Auth::PERMISSIONS['services.manage']);
+        $this->assertSame('reception', Auth::PERMISSIONS['rooms.view']);
+        $this->assertSame('super_admin', Auth::PERMISSIONS['billing.view']);
         $this->assertSame('super_admin', Auth::PERMISSIONS['users.manage']);
         $this->assertSame('manager', Auth::PERMISSIONS['content.manage']);
         $this->assertSame('staff', Auth::PERMISSIONS['broadcast.send']);

@@ -115,7 +115,12 @@ final class InstallerTest extends TestCase
 
         // Verify database contents directly
         $pdo = DB::connect(['host' => $db['host'], 'port' => $db['port'], 'name' => self::$dbName, 'user' => $db['user'], 'pass' => $db['pass']]);
-        $this->assertSame('super_admin', $pdo->query("SELECT role FROM users WHERE username='owner'")->fetchColumn());
+        // The installing user is platform admin and works inside hotel #1.
+        $this->assertSame('platform_admin', $pdo->query("SELECT role FROM users WHERE username='owner'")->fetchColumn());
+        $this->assertSame(1, (int) $pdo->query("SELECT hotel_id FROM users WHERE username='owner'")->fetchColumn());
+        $this->assertSame('હોટેલ દ્વારકા Palace', $pdo->query('SELECT name FROM hotels WHERE id = 1')->fetchColumn());
+        $this->assertSame($pdo->query("SELECT setting_value FROM system_settings WHERE hotel_id = 1 AND setting_key='registration_key'")->fetchColumn(), $pdo->query('SELECT registration_key FROM hotels WHERE id = 1')->fetchColumn());
+        $this->assertSame('', (string) $pdo->query("SELECT setting_value FROM system_settings WHERE hotel_id = 1 AND setting_key='github_repo'")->fetchColumn(), 'GitHub settings are platform-wide (hotel 0)');
         $this->assertSame(20, (int) $pdo->query('SELECT COUNT(*) FROM rooms')->fetchColumn(), 'Demo rooms');
         $this->assertSame('હોટેલ દ્વારકા Palace', $pdo->query("SELECT setting_value FROM system_settings WHERE setting_key='hotel_name'")->fetchColumn());
         $this->assertMatchesRegularExpression('/^[A-F0-9]{16}$/', (string) $pdo->query("SELECT setting_value FROM system_settings WHERE setting_key='registration_key'")->fetchColumn());
