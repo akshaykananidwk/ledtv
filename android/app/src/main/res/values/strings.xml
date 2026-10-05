@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">HotelCast TV</string>
+    <string name="device_admin_description">Allows HotelCast to lock the TV in kiosk mode, install updates silently and reboot the TV remotely.</string>
+
+    <!-- Player / main screen -->
+    <string name="connecting">Connecting to server…</string>
+    <string name="waiting_for_content">Waiting for content…</string>
+    <string name="welcome">Welcome</string>
+    <string name="welcome_to">Welcome to %1$s</string>
+    <string name="room_label">Room %1$s</string>
+    <string name="offline">Offline</string>
+    <string name="emergency_default_title">EMERGENCY</string>
+    <string name="weather_format">%1$s %2$d°C %3$s</string>
+
+    <!-- PIN -->
+    <string name="pin_title">Enter settings PIN</string>
+    <string name="pin_hint">4-digit PIN</string>
+    <string name="pin_wrong">Wrong PIN</string>
+    <string name="ok">OK</string>
+    <string name="cancel">Cancel</string>
+
+    <!-- Settings -->
+    <string name="settings_title">HotelCast TV – Settings</string>
+    <string name="setup_title">HotelCast TV – First time setup</string>
+    <string name="setup_hint">Enter the server address, the room number and the hotel registration key (Admin → Settings → Devices), then select “Save &amp; Register”.</string>
+    <string name="server_url">Server URL</string>
+    <string name="server_url_hint">e.g. https://hotel.com/hotelcast or http://192.168.1.10/hotelcast</string>
+    <string name="room_number">Room number</string>
+    <string name="room_number_hint">e.g. 101</string>
+    <string name="registration_key">Registration key</string>
+    <string name="registration_key_hint">Hotel registration key</string>
+    <string name="save_register">Save &amp; Register</string>
+    <string name="test_connection">Test Connection</string>
+    <string name="clear_cache">Clear Cache</string>
+    <string name="exit_kiosk">Exit kiosk / Android settings</string>
+    <string name="back_to_player">Back to player</string>
+    <string name="device_info">Device information</string>
+    <string name="registering">Registering…</string>
+    <string name="testing">Testing connection…</string>
+    <string name="register_ok">Registered as room %1$s</string>
+    <string name="register_failed">Registration failed: %1$s</string>
+    <string name="test_ok">Server OK (version %1$s, database %2$s)</string>
+    <string name="test_failed">Connection failed: %1$s</string>
+    <string name="cache_cleared">Cache cleared</string>
+    <string name="invalid_url">Invalid server URL</string>
+    <string name="field_required">This field is required</string>
+    <string name="kiosk_suspended">Kiosk paused for 10 minutes. The player returns automatically.</string>
+    <string name="status_online">Online</string>
+    <string name="status_offline">Offline</string>
+    <string name="status_not_registered">Not registered</string>
+    <string name="never">never</string>
+    <string name="yes">yes</string>
+    <string name="no">no</string>
+    <string name="info_device_id">Device ID</string>
+    <string name="info_ip">IP address</string>
+    <string name="info_app_version">App version</string>
+    <string name="info_android">Android version</string>
+    <string name="info_model">Model</string>
+    <string name="info_status">Connection</string>
+    <string name="info_last_poll">Last poll</string>
+    <string name="info_room">Registered room</string>
+    <string name="info_device_owner">Device owner (full kiosk)</string>
+    <string name="info_network">Network</string>
+
+    <!-- Service notification -->
+    <string name="service_channel">Background sync</string>
+    <string name="service_running">HotelCast is connected to the hotel server</string>
+    <string name="update_installing">Installing update %1$s…</string>
+</resources>

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Hotel servers are frequently on the LAN over plain HTTP, so cleartext is allowed.
+     HTTPS uses the system CAs plus user-installed CAs (self-signed hotel certificates). -->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true">
+        <trust-anchors>
+            <certificates src="system" />
+            <certificates src="user" />
+        </trust-anchors>
+    </base-config>
+</network-security-config>

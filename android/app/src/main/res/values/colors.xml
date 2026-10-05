@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+    <color name="brand">#FFC8102E</color>
+    <color name="brand_dark">#FF8A0B20</color>
+    <color name="accent">#FFFFC107</color>
+    <color name="settings_bg">#FF101418</color>
+    <color name="settings_panel">#FF1C232B</color>
+    <color name="settings_text">#FFECEFF1</color>
+    <color name="settings_text_dim">#FFB0BEC5</color>
+    <color name="field_bg">#FF263038</color>
+    <color name="emergency_bg">#FFB00020</color>
+    <color name="offline_dot">#FFE53935</color>
+    <color name="overlay_shadow">#99000000</color>
+</resources>

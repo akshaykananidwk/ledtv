@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/settings_scroll"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/settings_bg"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:baselineAligned="false"
+        android:orientation="horizontal"
+        android:padding="32dp">
+
+        <!-- Left: configuration -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="24dp"
+            android:layout_weight="3"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/settings_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/settings_title"
+                android:textColor="@color/white"
+                android:textSize="30sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/setup_hint"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="@string/setup_hint"
+                android:textColor="@color/settings_text_dim"
+                android:textSize="17sp" />
+
+            <TextView
+                style="@style/SettingsLabel"
+                android:labelFor="@+id/input_server"
+                android:text="@string/server_url" />
+
+            <EditText
+                android:id="@+id/input_server"
+                style="@style/SettingsField"
+                android:hint="@string/server_url_hint"
+                android:importantForAutofill="no"
+                android:inputType="textUri"
+                android:nextFocusDown="@+id/input_room" />
+
+            <TextView
+                style="@style/SettingsLabel"
+                android:labelFor="@+id/input_room"
+                android:text="@string/room_number" />
+
+            <EditText
+                android:id="@+id/input_room"
+                style="@style/SettingsField"
+                android:hint="@string/room_number_hint"
+                android:importantForAutofill="no"
+                android:inputType="text"
+                android:nextFocusDown="@+id/input_key" />
+
+            <TextView
+                style="@style/SettingsLabel"
+                android:labelFor="@+id/input_key"
+                android:text="@string/registration_key" />
+
+            <EditText
+                android:id="@+id/input_key"
+                style="@style/SettingsField"
+                android:hint="@string/registration_key_hint"
+                android:imeOptions="actionDone|flagNoExtractUi"
+                android:importantForAutofill="no"
+                android:inputType="text"
+                android:nextFocusDown="@+id/btn_register" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:orientation="horizontal">
+
+                <Button
+                    android:id="@+id/btn_register"
+                    style="@style/SettingsButton"
+                    android:text="@string/save_register" />
+
+                <Button
+                    android:id="@+id/btn_test"
+                    style="@style/SettingsButton"
+                    android:text="@string/test_connection" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <Button
+                    android:id="@+id/btn_clear_cache"
+                    style="@style/SettingsButton"
+                    android:text="@string/clear_cache" />
+
+                <Button
+                    android:id="@+id/btn_exit_kiosk"
+                    style="@style/SettingsButton"
+                    android:text="@string/exit_kiosk" />
+
+                <Button
+                    android:id="@+id/btn_back"
+                    style="@style/SettingsButton"
+                    android:text="@string/back_to_player" />
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/status_message"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:minHeight="32dp"
+                android:textColor="@color/accent"
+                android:textSize="20sp" />
+        </LinearLayout>
+
+        <!-- Right: device information -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="2"
+            android:background="@color/settings_panel"
+            android:orientation="vertical"
+            android:padding="20dp">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/device_info"
+                android:textColor="@color/white"
+                android:textSize="22sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/device_info"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:lineSpacingMultiplier="1.3"
+                android:textColor="@color/settings_text"
+                android:textIsSelectable="false"
+                android:textSize="17sp" />
+        </LinearLayout>
+    </LinearLayout>
+</ScrollView>

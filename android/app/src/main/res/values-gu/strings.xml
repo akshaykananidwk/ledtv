@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">HotelCast TV</string>
+    <string name="device_admin_description">HotelCast ને ટીવીને કિઓસ્ક મોડમાં લૉક કરવા, અપડેટ્સ આપમેળે ઇન્સ્ટોલ કરવા અને ટીવીને દૂરથી રીબૂટ કરવાની મંજૂરી આપે છે.</string>
+
+    <string name="connecting">સર્વર સાથે જોડાઈ રહ્યું છે…</string>
+    <string name="waiting_for_content">સામગ્રીની રાહ જોવાઈ રહી છે…</string>
+    <string name="welcome">સ્વાગત છે</string>
+    <string name="welcome_to">%1$s માં આપનું સ્વાગત છે</string>
+    <string name="room_label">રૂમ %1$s</string>
+    <string name="offline">ઑફલાઇન</string>
+    <string name="emergency_default_title">કટોકટી</string>
+    <string name="weather_format">%1$s %2$d°C %3$s</string>
+
+    <string name="pin_title">સેટિંગ્સ પિન દાખલ કરો</string>
+    <string name="pin_hint">4 અંકનો પિન</string>
+    <string name="pin_wrong">ખોટો પિન</string>
+    <string name="ok">બરાબર</string>
+    <string name="cancel">રદ કરો</string>
+
+    <string name="settings_title">HotelCast TV – સેટિંગ્સ</string>
+    <string name="setup_title">HotelCast TV – પ્રથમ સેટઅપ</string>
+    <string name="setup_hint">સર્વરનું સરનામું, રૂમ નંબર અને હોટેલની નોંધણી કી (Admin → Settings → Devices) દાખલ કરો, પછી “સાચવો અને નોંધણી કરો” પસંદ કરો.</string>
+    <string name="server_url">સર્વર URL</string>
+    <string name="server_url_hint">દા.ત. https://hotel.com/hotelcast અથવા http://192.168.1.10/hotelcast</string>
+    <string name="room_number">રૂમ નંબર</string>
+    <string name="room_number_hint">દા.ત. 101</string>
+    <string name="registration_key">નોંધણી કી</string>
+    <string name="registration_key_hint">હોટેલ નોંધણી કી</string>
+    <string name="save_register">સાચવો અને નોંધણી કરો</string>
+    <string name="test_connection">જોડાણ તપાસો</string>
+    <string name="clear_cache">કેશ સાફ કરો</string>
+    <string name="exit_kiosk">કિઓસ્કમાંથી બહાર / Android સેટિંગ્સ</string>
+    <string name="back_to_player">પ્લેયર પર પાછા જાઓ</string>
+    <string name="device_info">ઉપકરણની માહિતી</string>
+    <string name="registering">નોંધણી થઈ રહી છે…</string>
+    <string name="testing">જોડાણ તપાસાઈ રહ્યું છે…</string>
+    <string name="register_ok">રૂમ %1$s તરીકે નોંધાયેલ</string>
+    <string name="register_failed">નોંધણી નિષ્ફળ: %1$s</string>
+    <string name="test_ok">સર્વર બરાબર છે (આવૃત્તિ %1$s, ડેટાબેઝ %2$s)</string>
+    <string name="test_failed">જોડાણ નિષ્ફળ: %1$s</string>
+    <string name="cache_cleared">કેશ સાફ થઈ ગઈ</string>
+    <string name="invalid_url">અમાન્ય સર્વર URL</string>
+    <string name="field_required">આ ફીલ્ડ જરૂરી છે</string>
+    <string name="kiosk_suspended">કિઓસ્ક 10 મિનિટ માટે થોભાવ્યું. પ્લેયર આપમેળે પાછું આવશે.</string>
+    <string name="status_online">ઑનલાઇન</string>
+    <string name="status_offline">ઑફલાઇન</string>
+    <string name="status_not_registered">નોંધાયેલ નથી</string>
+    <string name="never">ક્યારેય નહીં</string>
+    <string name="yes">હા</string>
+    <string name="no">ના</string>
+    <string name="info_device_id">ઉપકરણ ID</string>
+    <string name="info_ip">IP સરનામું</string>
+    <string name="info_app_version">એપ આવૃત્તિ</string>
+    <string name="info_android">Android આવૃત્તિ</string>
+    <string name="info_model">મોડેલ</string>
+    <string name="info_status">જોડાણ</string>
+    <string name="info_last_poll">છેલ્લું પોલ</string>
+    <string name="info_room">નોંધાયેલ રૂમ</string>
+    <string name="info_device_owner">ડિવાઇસ ઓનર (સંપૂર્ણ કિઓસ્ક)</string>
+    <string name="info_network">નેટવર્ક</string>
+
+    <string name="service_channel">પૃષ્ઠભૂમિ સમન્વય</string>
+    <string name="service_running">HotelCast હોટેલ સર્વર સાથે જોડાયેલ છે</string>
+    <string name="update_installing">અપડેટ %1$s ઇન્સ્ટોલ થઈ રહ્યું છે…</string>
+</resources>

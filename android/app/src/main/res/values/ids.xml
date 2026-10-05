@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <item name="tag_clock_updater" type="id" />
+    <item name="tag_web_html" type="id" />
+    <item name="tag_web_url" type="id" />
+</resources>

@@ -1,0 +1,65 @@
+# HotelCast — Apache rules
+Options -Indexes
+DirectoryIndex index.php index.html
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    # Pass Authorization header to PHP (CGI/FastCGI hosts).
+    RewriteCond %{HTTP:Authorization} .
+    RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
+    # Force HTTPS: uncomment once an SSL certificate is installed.
+    # RewriteCond %{HTTPS} off
+    # RewriteCond %{HTTP:X-Forwarded-Proto} !https
+    # RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+    # Block internal folders.
+    RewriteRule ^(core|backups|logs|storage|migrations|lang|tests)(/|$) - [F,L]
+    # Block dotfiles (.env, .git, …) and sensitive files.
+    RewriteRule (^|/)\. - [F,L]
+    RewriteRule ^(config\.php|config\.sample\.php|installed\.lock|cron\.php|phpunit\.xml)$ - [F,L]
+</IfModule>
+
+# Fallback when mod_rewrite is missing.
+<FilesMatch "^(\.env|\.htaccess|config\.php|config\.sample\.php|installed\.lock|cron\.php|composer\.(json|lock)|phpunit\.xml)$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Deny from all
+    </IfModule>
+</FilesMatch>
+
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "SAMEORIGIN"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    # HSTS is sent by PHP only when the request is HTTPS.
+</IfModule>
+
+<IfModule mod_php.c>
+    php_value upload_max_filesize 256M
+    php_value post_max_size 260M
+    php_value max_execution_time 300
+    php_value memory_limit 256M
+</IfModule>
+<IfModule mod_php8.c>
+    php_value upload_max_filesize 256M
+    php_value post_max_size 260M
+    php_value max_execution_time 300
+    php_value memory_limit 256M
+</IfModule>
+
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType image/jpeg "access plus 30 days"
+    ExpiresByType image/png "access plus 30 days"
+    ExpiresByType image/webp "access plus 30 days"
+    ExpiresByType video/mp4 "access plus 30 days"
+    ExpiresByType text/css "access plus 7 days"
+    ExpiresByType application/javascript "access plus 7 days"
+</IfModule>
+
+# Signed TV app download (downloads/HotelCast-TV-x.y.z.apk)
+AddType application/vnd.android.package-archive .apk

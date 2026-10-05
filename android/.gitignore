@@ -1,0 +1,24 @@
+# Build outputs
+build/
+app/build/
+.gradle/
+.kotlin/
+captures/
+.externalNativeBuild/
+.cxx/
+
+# Local machine config
+local.properties
+
+# IDE
+.idea/
+*.iml
+.DS_Store
+
+# Release signing secrets — NEVER commit (this repository is public).
+# Keep a safe offline copy: every future APK must be signed with the same key
+# or TVs will refuse in-app updates.
+keystore/
+keystore.properties
+*.jks
+*.keystore

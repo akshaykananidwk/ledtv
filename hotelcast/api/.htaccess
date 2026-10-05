@@ -1,0 +1,13 @@
+# Route every /api/* request to the front controller.
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    # Pass the Authorization header through on CGI/FastCGI hosts.
+    RewriteCond %{HTTP:Authorization} .
+    RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteRule ^ index.php [QSA,L]
+</IfModule>
+
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options "nosniff"
+</IfModule>

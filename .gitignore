@@ -1,0 +1,26 @@
+# HotelCast server — never commit secrets or runtime data
+hotelcast/.env
+hotelcast/config.php
+hotelcast/installed.lock
+hotelcast/uploads/*
+!hotelcast/uploads/.htaccess
+!hotelcast/uploads/.gitkeep
+hotelcast/backups/*
+!hotelcast/backups/.htaccess
+!hotelcast/backups/.gitkeep
+hotelcast/logs/*
+!hotelcast/logs/.htaccess
+!hotelcast/logs/.gitkeep
+hotelcast/storage/*
+!hotelcast/storage/.htaccess
+!hotelcast/storage/.gitkeep
+!hotelcast/storage/cache/
+hotelcast/storage/cache/*
+!hotelcast/storage/cache/.gitkeep
+hotelcast/tests/.phpunit.cache/
+*.phar
+/dist/
+.DS_Store
+.idea/
+.vscode/
+signing-key-DO-NOT-COMMIT/

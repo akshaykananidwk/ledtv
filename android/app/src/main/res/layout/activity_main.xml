@@ -1,0 +1,175 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/black"
+    android:keepScreenOn="true">
+
+    <!-- Content items are added here by ContentPlayer -->
+    <FrameLayout
+        android:id="@+id/stage"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/black" />
+
+    <!-- Welcome / empty / connecting screen -->
+    <LinearLayout
+        android:id="@+id/welcome_layer"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/black"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:padding="48dp"
+        android:visibility="gone">
+
+        <ImageView
+            android:id="@+id/welcome_logo"
+            android:layout_width="wrap_content"
+            android:layout_height="160dp"
+            android:adjustViewBounds="true"
+            android:contentDescription="@null"
+            android:maxWidth="480dp"
+            android:scaleType="fitCenter"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/welcome_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:gravity="center"
+            android:textColor="@color/white"
+            android:textSize="48sp"
+            android:textStyle="bold"
+            tools:text="Welcome to Hotel Dwarka Palace" />
+
+        <TextView
+            android:id="@+id/welcome_subtitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:gravity="center"
+            android:textColor="@color/accent"
+            android:textSize="28sp"
+            tools:text="Room 101" />
+    </LinearLayout>
+
+    <!-- Overlay: logo, clock, weather, ticker -->
+    <RelativeLayout
+        android:id="@+id/overlay_layer"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone">
+
+        <ImageView
+            android:id="@+id/overlay_logo"
+            android:layout_width="wrap_content"
+            android:layout_height="72dp"
+            android:layout_alignParentStart="true"
+            android:layout_alignParentTop="true"
+            android:layout_margin="24dp"
+            android:adjustViewBounds="true"
+            android:contentDescription="@null"
+            android:maxWidth="260dp"
+            android:scaleType="fitStart"
+            android:visibility="gone" />
+
+        <LinearLayout
+            android:id="@+id/overlay_top_right"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentEnd="true"
+            android:layout_alignParentTop="true"
+            android:layout_margin="24dp"
+            android:background="@drawable/overlay_pill"
+            android:gravity="end"
+            android:orientation="vertical"
+            android:paddingStart="18dp"
+            android:paddingTop="8dp"
+            android:paddingEnd="18dp"
+            android:paddingBottom="8dp"
+            android:visibility="gone">
+
+            <TextView
+                android:id="@+id/overlay_clock"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/white"
+                android:textSize="34sp"
+                android:textStyle="bold"
+                android:visibility="gone"
+                tools:text="06:30 PM" />
+
+            <TextView
+                android:id="@+id/overlay_weather"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/white"
+                android:textSize="22sp"
+                android:visibility="gone"
+                tools:text="☀ 31°C Dwarka" />
+        </LinearLayout>
+
+        <com.hotelcast.tv.MarqueeView
+            android:id="@+id/overlay_ticker"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:layout_alignParentBottom="true"
+            android:visibility="gone" />
+    </RelativeLayout>
+
+    <!-- Screen off -->
+    <View
+        android:id="@+id/black_layer"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/black"
+        android:visibility="gone" />
+
+    <!-- Emergency: above everything -->
+    <LinearLayout
+        android:id="@+id/emergency_layer"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/emergency_bg"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:padding="48dp"
+        android:visibility="gone">
+
+        <TextView
+            android:id="@+id/emergency_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:textColor="@color/white"
+            android:textSize="64sp"
+            android:textStyle="bold"
+            tools:text="FIRE ALARM" />
+
+        <TextView
+            android:id="@+id/emergency_message"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:gravity="center"
+            android:lineSpacingMultiplier="1.15"
+            android:textColor="@color/white"
+            android:textSize="36sp"
+            tools:text="Please leave the building using the nearest staircase." />
+    </LinearLayout>
+
+    <!-- Unobtrusive offline indicator -->
+    <View
+        android:id="@+id/offline_dot"
+        android:layout_width="12dp"
+        android:layout_height="12dp"
+        android:layout_gravity="top|end"
+        android:layout_margin="6dp"
+        android:background="@drawable/offline_dot"
+        android:contentDescription="@string/offline"
+        android:visibility="gone" />
+</FrameLayout>
