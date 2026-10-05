@@ -67,4 +67,36 @@
     <string name="service_channel">Background sync</string>
     <string name="service_running">HotelCast is connected to the hotel server</string>
     <string name="update_installing">Installing update %1$s…</string>
+    <!-- V2: guest features (shown in guest.language when the server sends it) -->
+    <string name="guest_welcome_title">Welcome %1$s</string>
+    <string name="guest_press_any_key">Press any key on the remote to continue</string>
+    <string name="guest_scan_wifi">Scan to join the Wi-Fi</string>
+    <string name="guest_scan_services">Scan for Room Service</string>
+    <string name="guest_wifi_network">Wi-Fi: %1$s</string>
+    <string name="guest_wifi_password">Password: %1$s</string>
+    <string name="guest_reminder_hint">Press OK to close</string>
+    <string name="guest_message_hint">Press OK to close</string>
+    <string name="guest_menu_title">Guest menu</string>
+    <string name="guest_menu_hint">OK = open · BACK = close</string>
+    <string name="guest_qr_hint">Scan with your phone camera</string>
+    <string name="guest_back_hint">Press BACK to return</string>
+    <string name="guest_cast_title">Cast from your phone</string>
+    <string name="guest_cast_default">Connect your phone to the hotel Wi-Fi, open YouTube, Netflix or your photos, tap the Cast icon and choose this TV.</string>
+    <string name="live_tv">Live TV</string>
+    <string name="input_unavailable">This is not available on this TV. Please contact reception.</string>
+    <string name="suspended_default_title">Service paused</string>
+    <string name="suspended_default_message">Please contact reception.</string>
+    <string name="suspended_support">Support: %1$s</string>
+
+    <!-- V2: setup / provisioning -->
+    <string name="settings_title_brand">%1$s – Settings</string>
+    <string name="setup_title_brand">%1$s – First time setup</string>
+    <string name="register_error_hotel_suspended">Registration refused: this hotel\'s service is paused (HOTEL_SUSPENDED). Please contact your service provider.</string>
+    <string name="register_error_license_limit">Registration refused: the TV limit of this hotel\'s licence is reached (LICENSE_LIMIT). Remove an old TV in the admin panel or upgrade the plan.</string>
+    <string name="register_error_invalid_key">Registration refused: wrong registration key (INVALID_REGISTRATION_KEY). Copy it again from Admin → Settings → Devices.</string>
+    <string name="register_error_room_not_found">Registration refused: room not found (ROOM_NOT_FOUND). Create the room in the admin panel first.</string>
+    <string name="provision_invalid">Values from the setup tool are invalid: %1$s</string>
+    <string name="provision_rejected">Values from the setup tool ignored: %1$s</string>
+    <string name="provision_filled">Values from the setup tool filled in. Select “Save &amp; Register”.</string>
+    <string name="info_hotel">Hotel</string>
 </resources>

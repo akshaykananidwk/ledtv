@@ -81,10 +81,7 @@ final class Tenant
         try {
             return $fn();
         } finally {
-            self::$id = $prev;
-            if ($prev !== null) {
-                self::set($prev);
-            }
+            self::set($prev);
         }
     }
 

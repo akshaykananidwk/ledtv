@@ -63,4 +63,34 @@
     <string name="service_channel">પૃષ્ઠભૂમિ સમન્વય</string>
     <string name="service_running">HotelCast હોટેલ સર્વર સાથે જોડાયેલ છે</string>
     <string name="update_installing">અપડેટ %1$s ઇન્સ્ટોલ થઈ રહ્યું છે…</string>
+    <string name="guest_welcome_title">%1$s, આપનું સ્વાગત છે</string>
+    <string name="guest_press_any_key">આગળ વધવા રિમોટનું કોઈપણ બટન દબાવો</string>
+    <string name="guest_scan_wifi">Wi-Fi સાથે જોડાવા સ્કેન કરો</string>
+    <string name="guest_scan_services">રૂમ સર્વિસ માટે સ્કેન કરો</string>
+    <string name="guest_wifi_network">Wi-Fi: %1$s</string>
+    <string name="guest_wifi_password">પાસવર્ડ: %1$s</string>
+    <string name="guest_reminder_hint">બંધ કરવા OK દબાવો</string>
+    <string name="guest_message_hint">બંધ કરવા OK દબાવો</string>
+    <string name="guest_menu_title">મહેમાન મેનુ</string>
+    <string name="guest_menu_hint">OK = ખોલો · BACK = બંધ કરો</string>
+    <string name="guest_qr_hint">તમારા ફોનના કેમેરાથી સ્કેન કરો</string>
+    <string name="guest_back_hint">પાછા જવા BACK દબાવો</string>
+    <string name="guest_cast_title">ફોનમાંથી કાસ્ટ કરો</string>
+    <string name="guest_cast_default">તમારો ફોન હોટેલના Wi-Fi સાથે જોડો, YouTube, Netflix અથવા ફોટા ખોલો, કાસ્ટ આઇકન દબાવો અને આ ટીવી પસંદ કરો.</string>
+    <string name="live_tv">લાઇવ ટીવી</string>
+    <string name="input_unavailable">આ સુવિધા આ ટીવી પર ઉપલબ્ધ નથી. કૃપા કરીને રિસેપ્શનનો સંપર્ક કરો.</string>
+    <string name="suspended_default_title">સેવા હાલ બંધ છે</string>
+    <string name="suspended_default_message">કૃપા કરીને રિસેપ્શનનો સંપર્ક કરો.</string>
+    <string name="suspended_support">સહાય: %1$s</string>
+
+    <string name="settings_title_brand">%1$s – સેટિંગ્સ</string>
+    <string name="setup_title_brand">%1$s – પ્રથમ સેટઅપ</string>
+    <string name="register_error_hotel_suspended">નોંધણી નકારી: આ હોટેલની સેવા હાલ બંધ છે (HOTEL_SUSPENDED). કૃપા કરીને તમારા સેવા પ્રદાતાનો સંપર્ક કરો.</string>
+    <string name="register_error_license_limit">નોંધણી નકારી: આ હોટેલના લાઇસન્સની ટીવી મર્યાદા પૂરી થઈ ગઈ છે (LICENSE_LIMIT). એડમિન પેનલમાં જૂનું ટીવી દૂર કરો અથવા પ્લાન અપગ્રેડ કરો.</string>
+    <string name="register_error_invalid_key">નોંધણી નકારી: નોંધણી કી ખોટી છે (INVALID_REGISTRATION_KEY). Admin → Settings → Devices માંથી ફરી કૉપિ કરો.</string>
+    <string name="register_error_room_not_found">નોંધણી નકારી: રૂમ મળ્યો નથી (ROOM_NOT_FOUND). પહેલા એડમિન પેનલમાં રૂમ બનાવો.</string>
+    <string name="provision_invalid">સેટઅપ ટૂલની કિંમતો અમાન્ય છે: %1$s</string>
+    <string name="provision_rejected">સેટઅપ ટૂલની કિંમતો અવગણવામાં આવી: %1$s</string>
+    <string name="provision_filled">સેટઅપ ટૂલની કિંમતો ભરાઈ ગઈ. “સાચવો અને નોંધણી કરો” પસંદ કરો.</string>
+    <string name="info_hotel">હોટેલ</string>
 </resources>
