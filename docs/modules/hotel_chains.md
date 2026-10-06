@@ -4,6 +4,11 @@ A chain groups hotels of one owner. The **chain admin** sees every hotel of the 
 enters any of them (acting as super admin there), publishes chain-wide content, broadcasts to all rooms
 of selected hotels and pushes chain-wide settings templates.
 
+**Off by default (2.2).** The platform switches the feature on in **Platform settings → Features**
+(platform setting `feature_chains`, `Chains::enabled()`). While off, the chain menus and pages answer 404,
+chain admins cannot enter hotels and no chains / chain admins can be created; the data stays untouched.
+See `docs/modules/user_access.md`.
+
 ## Files
 
 | file | purpose |

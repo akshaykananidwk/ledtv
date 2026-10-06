@@ -77,8 +77,13 @@ if (is_post()) {
                 if ($id && !$existing) {
                     throw new InvalidArgumentException(__('Room not found.'));
                 }
-                // Users limited to some TVs edit only their rooms and never add rooms.
+                // Users limited to some TVs edit only their rooms, never add rooms and only (un)assign their groups.
                 $existing ? Access::requireRoom($id) : Access::requireUnrestricted('room create');
+                if (Access::restricted()) {
+                    foreach (Tenant::assertOwnsAll('room_groups', int_ids($_POST['groups'] ?? [])) as $gid) {
+                        Access::requireGroup($gid);
+                    }
+                }
                 $number = req_str('room_number', $_POST, 40);
                 $pin = req_str('settings_pin', $_POST, 10);
                 $errors = [];

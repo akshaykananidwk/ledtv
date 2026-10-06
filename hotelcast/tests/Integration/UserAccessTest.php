@@ -166,7 +166,7 @@ final class UserAccessTest extends TestCase
             foreach ($other as $n) {
                 $this->assertStringNotContainsString($n, $html, "$u must not see $n");
             }
-            $this->assertStringNotContainsString('action=new', $html, 'no "Add room" for limited users');
+            $this->assertStringNotContainsString('rooms.php?action=new', $html, 'no "Add room" for limited users');
             $this->assertStringNotContainsString('TESTKEY', $html, 'registration key hidden');
 
             [$s, $j] = self::as($u)->ajax('room_status');
@@ -183,30 +183,32 @@ final class UserAccessTest extends TestCase
             [$s, , $html] = self::as($u)->get('index.php');
             $this->assertSame(200, $s);
             $this->assertStringNotContainsString('A202', $html);
-            $this->assertStringNotContainsString('btnRefreshAll', $html, 'no "refresh all TVs" for limited users');
+            $this->assertStringNotContainsString('id="btnRefreshAll"', $html, 'no "refresh all TVs" for limited users');
             $this->assertStringContainsString('UA-ALL-EMERGENCY', $html, 'a hotel-wide emergency is shown …');
-            $this->assertStringNotContainsString('js-emergency-stop', $html, '… but cannot be stopped by a limited user');
+            $this->assertStringNotContainsString('js-emergency-stop" data-id', $html, '… but cannot be stopped by a limited user');
         }
         // Target pickers: no "All rooms", only own groups / floors.
         [, , $html] = self::as('deskG')->get('broadcast.php');
         $this->assertStringNotContainsString('name="target_type" value="all"', $html);
         $this->assertStringContainsString('G-MINE', $html);
         $this->assertStringNotContainsString('H-OTHER', $html);
-        $this->assertStringNotContainsString('value="2"', substr($html, (int) strpos($html, 'data-panel="floors"'), 2000), 'floor 2 is not fully theirs');
+        $this->assertStringContainsString('name="floors[]" value="1"', $html);
+        $this->assertStringNotContainsString('name="floors[]" value="2"', $html, 'floor 2 is not fully theirs');
 
         // Groups page (manager): only the assigned group, no create / delete.
         [$s, , $html] = self::as('mgrG')->get('groups.php');
         $this->assertSame(200, $s);
         $this->assertStringContainsString('G-MINE', $html);
         $this->assertStringNotContainsString('H-OTHER', $html);
-        $this->assertStringNotContainsString('action=new', $html);
-        $this->assertStringNotContainsString('value="delete"', $html);
+        $this->assertStringNotContainsString('groups.php?action=new', $html);
+        $this->assertStringNotContainsString('value="auto_floors"', $html);
+        $this->assertStringNotContainsString('name="op" value="delete"', $html);
 
         // Schedules / power schedules: only the ones for their TVs.
         [, , $html] = self::as('mgrG')->get('schedule.php');
         $this->assertStringContainsString('UA-SCHED-MINE', $html);
         $this->assertStringNotContainsString('UA-SCHED-ALL', $html);
-        [, $j] = self::as('mgrG')->ajax('schedule_events&start=2020-01-01&end=2040-01-01');
+        [, $j] = self::as('mgrG')->ajax('schedule_events&start=' . date('Y-m-d', time() - 86400) . '&end=' . date('Y-m-d', time() + 60 * 86400));
         $titles = implode('|', array_column($j['data']['events'], 'title'));
         $this->assertStringContainsString('UA-SCHED-MINE', $titles);
         $this->assertStringNotContainsString('UA-SCHED-ALL', $titles);
@@ -241,7 +243,7 @@ final class UserAccessTest extends TestCase
         }
         [, , $html] = self::as('mgrAll')->get('groups.php');
         $this->assertStringContainsString('H-OTHER', $html);
-        $this->assertStringContainsString('action=new', $html);
+        $this->assertStringContainsString('groups.php?action=new', $html);
     }
 
     // ------------------------------------------------------------------ refused actions
@@ -316,13 +318,15 @@ final class UserAccessTest extends TestCase
         }
         $gets = ['preview.php?room_id=' . $i['A202'], 'rooms.php?action=device&id=' . $i['dev202'], 'rooms.php?action=edit&id=' . $i['A301'],
             'rooms.php?action=new', 'rooms.php?action=bulk_add', 'groups.php?action=new', 'groups.php?action=edit&id=' . $i['H'],
-            'schedule.php?action=edit&id=' . $i['S_all'], 'support.php?device=' . $i['dev202'], 'logs.php?tab=broadcasts&id=' . $i['S_all'],
-            'ajax.php?action=preview_content&room_id=' . $i['A202']];
+            'schedule.php?action=edit&id=' . $i['S_all'], 'support.php?device=' . $i['dev202'], 'logs.php?tab=broadcasts&id=' . $i['S_all']];
         foreach ($gets as $p) {
             [$s, , $html] = self::as('mgrG')->get($p);
             $this->assertSame(403, $s, $p);
             $this->assertStringNotContainsString('A301', $html, $p);
         }
+        [$s, $j] = self::as('mgrG')->ajax('preview_content&room_id=' . $i['A202']);
+        $this->assertSame(403, $s);
+        $this->assertSame('FORBIDDEN', $j['error']['code'] ?? null);
         Settings::flush();
         $this->assertSame($before, self::snapshot(), 'Nothing may change after refused actions');
         $this->assertSame('active', DB::value('SELECT status FROM broadcast_commands WHERE id = :id', ['id' => $i['E_all']]));
@@ -384,7 +388,7 @@ final class UserAccessTest extends TestCase
         // Own room edit + own group edit (membership of other groups is kept).
         [$s] = self::as('mgrG')->get('rooms.php?action=edit&id=' . $i['A101']);
         $this->assertSame(200, $s);
-        [$s] = self::as('mgrG')->post('rooms.php', ['op' => 'save', 'id' => $i['A201'], 'room_number' => 'A201', 'name' => 'Renamed 201', 'is_enabled' => 1, 'groups' => [$i['G']]]);
+        [$s] = self::as('mgrG')->post('rooms.php', ['op' => 'save', 'id' => $i['A201'], 'room_number' => 'A201', 'floor' => '2', 'name' => 'Renamed 201', 'is_enabled' => 1, 'groups' => [$i['G']]]);
         $this->assertSame(302, $s);
         $this->assertSame('Renamed 201', DB::value('SELECT name FROM rooms WHERE id = :id', ['id' => $i['A201']]));
         $this->assertSame(1, (int) DB::value('SELECT COUNT(*) FROM room_group_members WHERE room_id = :r AND group_id = :g', ['r' => $i['A201'], 'g' => $i['G']]));
@@ -490,7 +494,7 @@ final class UserAccessTest extends TestCase
         Settings::setPlatform('feature_chains', '0');
         Settings::flush();
         $p = self::as('padmin');
-        [$s, , $html] = $p->get('platform_hotels.php');
+        [$s, , $html] = $p->get('platform_settings.php');
         $this->assertSame(200, $s);
         $this->assertStringNotContainsString('platform_chains.php', $html, 'no chain menu');
         [$s] = $p->get('platform_chains.php');
@@ -513,7 +517,7 @@ final class UserAccessTest extends TestCase
         $this->assertSame(302, $s);
         Settings::flush();
         $this->assertSame('1', (string) Settings::platform('feature_chains'));
-        [, , $html] = $p->get('platform_hotels.php');
+        [, , $html] = $p->get('platform_settings.php');
         $this->assertStringContainsString('platform_chains.php', $html);
         [$s] = $p->get('platform_chains.php');
         $this->assertSame(200, $s);

@@ -5,22 +5,42 @@ from the top bar. Everything works on a phone, tablet or PC.
 
 ## Roles
 
-| Role | Scope | Can do |
+HotelCast is a SaaS platform. From top to bottom: the **Super Admin (Platform)** owns the platform,
+each customer (hotel) has one or more **Admins**, and the Admin adds the people who work with the TVs.
+
+| Role (shown as) | Scope | Can do |
 |------|-------|--------|
-| **Platform Admin** | whole platform | Hotels, plans, invoices, resellers, licenses, platform settings & branding, auto-update / backups; can *enter* any hotel and works there as its Super Admin |
+| **Super Admin (Platform)** | whole platform | Hotels (customers), plans, invoices, resellers, licenses, platform settings & branding, features (e.g. hotel chains), auto-update / backups; can *enter* any hotel and works there as its Admin |
 | **Reseller** | own hotels | Create hotels (within an allowance), enter and manage them, see their invoices and the commission report |
-| **Super Admin** | one hotel | Everything inside the hotel: users, settings, billing (read-only invoices) and all of the below |
+| **Admin** | one hotel (customer) | Everything inside the hotel: users, settings, billing (read-only invoices) and all of the below. Always controls all TVs |
 | **Manager** | one hotel | Rooms, groups, content, playlists, broadcasts, schedules, device commands (reboot…), APK manager, logs |
 | **Staff** | one hotel | View dashboard/rooms/content, push existing content and playlists, send emergency messages |
 | **Reception** | one hotel | Front desk: view dashboard and rooms; guests check-in/out and service orders (modules added in 2.x) |
+
+Older screens and documents call the Admin "Super Admin" and the Super Admin (Platform) "Platform
+Admin". Only the names changed; the accounts and their rights are the same.
+
+**Different people for different TVs.** When the Admin adds or edits a Manager, Staff or Reception
+user (**Users**), they choose **All TVs** (default) or **Only these TVs** and tick groups and/or rooms.
+Such a user then sees and controls only those TVs: rooms list, dashboard numbers, broadcasts, commands,
+power, schedules, emergency messages, guests and orders of those rooms. They cannot send to "All
+rooms", cannot add or delete rooms or groups, cannot change hotel-wide TV settings (volume rules, guest
+menu, power-off mode) and can stop only emergency messages that show on their TVs. The content library
+and playlists stay shared. A group gives access to every room in the group, also rooms added later.
+Details: `docs/modules/user_access.md`.
 
 A hotel's users only ever see **their own hotel** — rooms, TVs, content, logs and users of other
 hotels on the same platform are invisible and cannot be opened even with a guessed link.
 
 When a 1.x installation is upgraded to 2.0, the first Super Admin automatically becomes **Platform
-Admin** (and still manages the hotel as before); other Super Admins stay Super Admins.
+Admin** (now shown as Super Admin (Platform)) and still manages the hotel as before; other Super Admins
+stay hotel Admins.
 
-Five wrong passwords lock an account for 15 minutes (a Super Admin can unlock it in **Users**).
+**Hotel chains** (one owner, several hotels) are switched off by default. The Super Admin (Platform)
+can switch them on in **Platform settings → Features**; while off, the chain menus and pages are hidden
+and existing chain data is kept.
+
+Five wrong passwords lock an account for 15 minutes (an Admin can unlock it in **Users**).
 
 ## 1. Dashboard
 
@@ -131,7 +151,9 @@ update history with **Rollback** per row, **Backups** (create, download, upload,
 ## 12. Users
 
 Add users with a role and language, reset passwords, disable accounts, unlock locked accounts, see each
-user's activity and active sessions (and log them out remotely).
+user's activity and active sessions (and log them out remotely). For Managers, Staff and Reception choose
+**All TVs** or **Only these TVs** (groups / rooms, searchable); the **TVs** column shows each user's scope
+and a "Who can do what" box explains the roles.
 
 ## 13. Billing (hotel Super Admin)
 
