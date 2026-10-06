@@ -240,6 +240,13 @@ Parallel modules: pick a distinct name (`003_guests.sql`, `004_services.sql` …
 * `Notifier::send()` (hotel alerts, per-hotel settings) and `Notifier::sendToContact()` (platform →
   hotel contact, email / WhatsApp gateway with `{phone}` / `{message}`).
 * `Branding::get()` / `Branding::forTv()` — resolved white-label branding of the current hotel.
+* `admin/partials/billing.d/*.php` — included by `admin/billing.php` (POST-able while a hotel is suspended):
+  handle your own `op`, return a callable that prints a card (example: free-trial upgrade).
+* `admin/partials/tv_simulator.php` — the TV simulator page (`$obj`, `$label`, `$simRefreshUrl`, …), used by
+  `admin/preview.php` and the public `demo_tv.php`.
+* `Demo::sampleContent([floor => rooms])` — sample rooms / content / playlist for the current hotel (installer,
+  sign-up, demo hotels). Demo hotels (`hotels.demo_kind`) are write-protected by `Demo::guard()`; see
+  `docs/modules/signup_demo.md`.
 
 ---------------------------------------------------------------------------------------------------
 ## 3. Platform model (reference)
