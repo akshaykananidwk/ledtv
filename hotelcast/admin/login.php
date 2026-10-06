@@ -114,6 +114,12 @@ $user = null;
         </div>
         <button type="submit" class="btn btn-primary btn-lg w-100"><i class="bi bi-box-arrow-in-right"></i> <?= e(__('Log in')) ?></button>
       </form>
+      <?php if (!$brandHotel && (Signup::enabled() || Demo::publicEnabled())): // Free trial (#17) / public demo (#21) ?>
+        <div class="text-center mt-3 d-flex flex-wrap justify-content-center gap-2">
+          <?php if (Signup::enabled()): ?><a class="btn btn-outline-success btn-sm" href="<?= e(base_url('signup.php')) ?>"><i class="bi bi-rocket-takeoff"></i> <?= e(__('Start free trial')) ?></a><?php endif; ?>
+          <?php if (Demo::publicEnabled()): ?><a class="btn btn-outline-secondary btn-sm" href="<?= e(base_url('demo.php')) ?>"><i class="bi bi-easel"></i> <?= e(__('Try the demo')) ?></a><?php endif; ?>
+        </div>
+      <?php endif; ?>
       <?php if ($brand['support_phone'] !== '' || $brand['support_email'] !== ''): ?>
         <div class="text-center text-muted small mt-3"><i class="bi bi-headset"></i> <?= e(__('Support')) ?>: <?= e(trim($brand['support_phone'] . ' ' . $brand['support_email'])) ?></div>
       <?php endif; ?>

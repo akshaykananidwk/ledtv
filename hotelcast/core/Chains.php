@@ -29,6 +29,20 @@ final class Chains
     public const BROADCAST_KINDS = ['push', 'schedule', 'emergency', 'emergency_stop'];
 
     private static array $chainCache = [];
+    /** User the checks run for outside a web request (CLI tasks, tests); null = Auth::user(). */
+    private static ?array $actor = null;
+
+    /** Run chain checks as $user (CLI / tests). Pass null to go back to the session user. */
+    public static function actAs(?array $user): void
+    {
+        self::$actor = $user;
+        self::$chainCache = [];
+    }
+
+    private static function actor(): ?array
+    {
+        return self::$actor ?? Auth::user();
+    }
 
     // ------------------------------------------------------------------ lookups
 
@@ -64,12 +78,19 @@ final class Chains
         );
     }
 
-    /** Hotels of a chain (with plan). */
+    /** Hotels of a chain (with plan). A reseller only ever gets its own hotels. */
     public static function hotels(int $chainId): array
     {
+        $u = self::actor();
+        $p = ['c' => $chainId];
+        $extra = '';
+        if ($u && $u['role'] === 'reseller') {
+            $extra = ' AND h.reseller_id = :r';
+            $p['r'] = (int) $u['reseller_id'];
+        }
         return DB::all(
-            'SELECT h.*, p.name AS plan_name FROM hotels h LEFT JOIN plans p ON p.id = h.plan_id WHERE h.chain_id = :c ORDER BY h.name',
-            ['c' => $chainId]
+            'SELECT h.*, p.name AS plan_name FROM hotels h LEFT JOIN plans p ON p.id = h.plan_id WHERE h.chain_id = :c' . $extra . ' ORDER BY h.name',
+            $p
         );
     }
 
@@ -83,7 +104,7 @@ final class Chains
     /** Chain ids the user may use (dashboard, library, broadcast, enter hotels). */
     public static function userChainIds(?array $u = null): array
     {
-        $u ??= Auth::user();
+        $u ??= self::actor();
         if (!$u) {
             return [];
         }
@@ -134,7 +155,7 @@ final class Chains
     /** chain_admin, or hotel super admin with a valid chain grant. */
     public static function isChainUser(?array $u = null): bool
     {
-        $u ??= Auth::user();
+        $u ??= self::actor();
         if (!$u) {
             return false;
         }
@@ -179,7 +200,7 @@ final class Chains
     /** Create chains / assign hotels / add chain admins: platform admin (all) or reseller (own chains). */
     public static function canAdminister(?int $chainId = null): bool
     {
-        $u = Auth::user();
+        $u = self::actor();
         if (!$u) {
             return false;
         }
@@ -206,7 +227,7 @@ final class Chains
         if (!$h || (int) $h['chain_id'] !== $chainId) {
             return false;
         }
-        $u = Auth::user();
+        $u = self::actor();
         if ($u && $u['role'] === 'reseller') {
             return (int) $h['reseller_id'] === (int) $u['reseller_id'];
         }
@@ -335,7 +356,7 @@ final class Chains
     /** Hotels that may be added to a chain by the current user (not in another chain). */
     public static function assignableHotels(array $chain): array
     {
-        $u = Auth::user();
+        $u = self::actor();
         $p = ['c' => (int) $chain['id']];
         $where = '(h.chain_id IS NULL OR h.chain_id = :c)';
         if ($u && $u['role'] === 'reseller') {
@@ -353,11 +374,14 @@ final class Chains
         if (!$chain || !$h) {
             throw new InvalidArgumentException(__('Hotel not found.'));
         }
-        $u = Auth::user();
+        $u = self::actor();
         if ($u && $u['role'] === 'reseller' && (int) $h['reseller_id'] !== (int) $u['reseller_id']) {
             self::deny("reseller assign hotel $hotelId");
         }
         if ($add) {
+            if ($chain['reseller_id'] !== null && (int) $h['reseller_id'] !== (int) $chain['reseller_id']) {
+                throw new InvalidArgumentException(__('A reseller\'s chain can only contain hotels of that reseller.'));
+            }
             if ($h['chain_id'] !== null && (int) $h['chain_id'] !== $chainId) {
                 throw new InvalidArgumentException(__('This hotel already belongs to another chain.'));
             }

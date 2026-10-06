@@ -53,6 +53,19 @@ if (is_post()) {
                 flash('success', __('New registration key created. TVs that are already set up keep working; new TVs need the new key.'));
                 redirect(admin_url('platform_hotels.php', ['action' => 'view', 'id' => $id]));
 
+            case 'set_chain':
+                // Hotel chains (#20): assign / remove the hotel's chain.
+                $chainId = req_int('chain_id', $_POST);
+                if ($hotel['chain_id'] && (int) $hotel['chain_id'] !== $chainId) {
+                    Chains::assignHotel((int) $hotel['chain_id'], $id, false);
+                }
+                if ($chainId) {
+                    Chains::assignHotel($chainId, $id, true);
+                }
+                ActivityLog::add('chain_hotel_set', 'hotel', $id, $hotel['name'] . ' → chain #' . $chainId);
+                flash('success', __('Saved.'));
+                redirect(admin_url('platform_hotels.php', ['action' => 'view', 'id' => $id]));
+
             case 'add_admin':
                 [$admin, $errors] = Hotels::validateAdmin($_POST, true);
                 if ($errors) {
@@ -200,6 +213,14 @@ if ($action === 'view') {
             <?php endforeach; ?>
           </ul>
         </div>
+        <?php $hcChains = Chains::all(); if ($hcChains || $h['chain_id']): ?>
+        <div class="card mb-3"><div class="card-header"><i class="bi bi-diagram-3"></i> <?= e(__('Hotel chain')) ?></div><div class="card-body">
+          <form method="post" class="d-flex gap-2"><?= Csrf::field() ?><input type="hidden" name="op" value="set_chain"><input type="hidden" name="id" value="<?= $hid ?>">
+            <select class="form-select" name="chain_id" aria-label="<?= e(__('Hotel chain')) ?>"><option value="0"><?= e(__('— Not in a chain —')) ?></option>
+              <?php foreach ($hcChains as $hcC): ?><option value="<?= (int) $hcC['id'] ?>"<?= (int) $h['chain_id'] === (int) $hcC['id'] ? ' selected' : '' ?>><?= e($hcC['name']) ?></option><?php endforeach; ?></select>
+            <button class="btn btn-outline-primary"><?= e(__('Save')) ?></button></form>
+        </div></div>
+        <?php endif; ?>
         <div class="card"><div class="card-header"><?= e(__('Add a super admin')) ?></div><div class="card-body">
           <form method="post" class="row g-2" autocomplete="off">
             <?= Csrf::field() ?><input type="hidden" name="op" value="add_admin"><input type="hidden" name="id" value="<?= $hid ?>">

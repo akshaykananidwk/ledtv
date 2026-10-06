@@ -303,6 +303,7 @@ final class Auth
             return false;
         }
         $_SESSION['hc_hotel'] = $hotelId;
+        unset($_SESSION['hc_back']); // set again by the page that wants its own "back" link (chain.php)
         Tenant::set($hotelId);
         // Logged in the entered hotel: its staff can see when the platform / reseller worked in it.
         ActivityLog::add('hotel_enter', 'hotel', $hotelId, 'Entered hotel #' . $hotelId, $hotelId);
