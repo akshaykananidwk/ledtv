@@ -62,6 +62,43 @@ class QrSetupViewModel(app: Application) : AndroidViewModel(app) {
     private val _state = MutableStateFlow<QrSetupState>(QrSetupState.Starting(currentServer()))
     val state: StateFlow<QrSetupState> = _state
 
+    /** Result of the last network check (DNS / HTTPS / HTTP / TV clock), null while not needed. */
+    private val _report = MutableStateFlow<NetReport?>(null)
+    val report: StateFlow<NetReport?> = _report
+    private var diagJob: Job? = null
+    private var lastDiagAt = 0L
+
+    private fun onState(s: QrSetupState) {
+        _state.value = s
+        when (s) {
+            is QrSetupState.Waiting, is QrSetupState.Claimed, is QrSetupState.Registered -> _report.value = null
+            is QrSetupState.Offline -> diagnose(s.server)
+            else -> {}
+        }
+    }
+
+    /** Find out *why* the server is unreachable (at most every 20 s), and retry at once when fixed. */
+    private fun diagnose(server: String) {
+        val now = SystemClock.elapsedRealtime()
+        if (diagJob?.isActive == true || now - lastDiagAt < 20_000) return
+        lastDiagAt = now
+        val hadOffset = NetworkTime.clockWrong
+        diagJob = scope.launch {
+            val r = try {
+                NetDiagnostics.run(getApplication(), server)
+            } catch (e: Exception) {
+                Log.w(TAG, "Diagnostics failed", e)
+                return@launch
+            }
+            if (currentServer() != server) return@launch
+            val st = _state.value
+            if (st is QrSetupState.Waiting || st is QrSetupState.Claimed || st is QrSetupState.Registered) return@launch
+            _report.value = r
+            // HTTPS works now (e.g. TV clock corrected / network time learned) → don't wait for the backoff.
+            if (r.httpsOk || (r.clockWrong && !hadOffset)) kick()
+        }
+    }
+
     fun currentServer(): String = QrSetupLogic.effectiveServer(Prefs.serverUrl, BuildConfig.DEFAULT_SERVER_URL)
 
     private val isFinal: Boolean
@@ -94,6 +131,9 @@ class QrSetupViewModel(app: Application) : AndroidViewModel(app) {
     fun restart() {
         pollJob?.cancel()
         if (registerJob?.isActive == true) return
+        diagJob?.cancel()
+        lastDiagAt = 0L
+        _report.value = null
         _state.value = QrSetupState.Starting(currentServer())
         launchPoll(null)
     }
@@ -102,7 +142,7 @@ class QrSetupViewModel(app: Application) : AndroidViewModel(app) {
         val server = currentServer()
         val keep = resume?.takeIf { _state.value.server == server }
         pollJob = scope.launch {
-            val claimed = flow.run(server, keep) { _state.value = it }
+            val claimed = flow.run(server, keep) { onState(it) }
             if (claimed != null) register(server, claimed)
         }
     }
@@ -153,6 +193,12 @@ class QrSetupActivity : AppCompatActivity() {
     private lateinit var qrCard: FrameLayout
     private lateinit var qrImage: ImageView
     private lateinit var qrProgress: ProgressBar
+    private lateinit var qrSide: View
+    private lateinit var qrSideIcon: TextView
+    private lateinit var qrSideText: TextView
+    private lateinit var detail: TextView
+    private lateinit var btnHttp: Button
+    private lateinit var btnTime: Button
     private lateinit var codeView: TextView
     private lateinit var codeCaption: TextView
     private lateinit var btnTryAgain: Button
@@ -195,6 +241,12 @@ class QrSetupActivity : AppCompatActivity() {
         qrCard = findViewById(R.id.qr_card)
         qrImage = findViewById(R.id.qr_image)
         qrProgress = findViewById(R.id.qr_progress)
+        qrSide = findViewById(R.id.qr_side)
+        qrSideIcon = findViewById(R.id.qr_side_icon)
+        qrSideText = findViewById(R.id.qr_side_text)
+        detail = findViewById(R.id.qr_detail)
+        btnHttp = findViewById(R.id.qr_btn_http)
+        btnTime = findViewById(R.id.qr_btn_time)
         codeView = findViewById(R.id.qr_code)
         codeCaption = findViewById(R.id.qr_code_caption)
         btnTryAgain = findViewById(R.id.qr_btn_try_again)
@@ -214,6 +266,13 @@ class QrSetupActivity : AppCompatActivity() {
             startActivity(Intent(this, SettingsActivity::class.java).putExtra(SettingsActivity.EXTRA_FROM_QR, true))
         }
         btnServer.setOnClickListener { showServerDialog() }
+        btnHttp.setOnClickListener {
+            val http = vm.report.value?.httpServer ?: return@setOnClickListener
+            Prefs.serverUrl = http
+            Toast.makeText(this, getString(R.string.qr_http_selected, http), Toast.LENGTH_LONG).show()
+            vm.restart()
+        }
+        btnTime.setOnClickListener { openDateSettings() }
 
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
@@ -224,7 +283,8 @@ class QrSetupActivity : AppCompatActivity() {
 
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-                vm.state.collect { render(it) }
+                launch { vm.state.collect { render(it) } }
+                launch { vm.report.collect { render(vm.state.value) } }
             }
         }
         btnManual.requestFocus()
@@ -289,7 +349,7 @@ class QrSetupActivity : AppCompatActivity() {
             intArrayOf(Color.parseColor("#FF0B1020"), blend(accent, Color.parseColor("#FF0B1020"), 0.6f)),
         )
         val radius = dp(12).toFloat()
-        listOf(btnTryAgain, btnWifi, btnManual, btnServer).forEach {
+        listOf(btnTryAgain, btnHttp, btnTime, btnWifi, btnManual, btnServer).forEach {
             it.background = GuestMenuPanel.focusBackground(accent, radius)
         }
         qrCard.background = GradientDrawable().apply {
@@ -352,18 +412,27 @@ class QrSetupActivity : AppCompatActivity() {
                 renderedQrUrl = session.claimUrl
             }
             qrImage.alpha = if (s is QrSetupState.Waiting) 1f else 0.55f
-            qrProgress.visibility = View.GONE
+            qrCard.visibility = View.VISIBLE
+            qrSide.visibility = View.GONE
             codeView.text = QrSetupLogic.displayCode(session.code)
             codeView.visibility = View.VISIBLE
             codeCaption.visibility = View.VISIBLE
         } else {
+            // No code (yet): no empty white box, no "— — —" — a spinner or a clear status instead.
             qrImage.setImageDrawable(null)
             renderedQrUrl = null
-            qrProgress.visibility = if (s is QrSetupState.Starting || s is QrSetupState.Claimed) View.VISIBLE else View.GONE
-            codeView.text = if (s is QrSetupState.Claimed) "" else getString(R.string.qr_code_placeholder)
-            codeView.visibility = View.VISIBLE
-            codeCaption.visibility = View.INVISIBLE
+            qrCard.visibility = View.GONE
+            codeView.visibility = View.GONE
+            codeCaption.visibility = View.GONE
+            qrSide.visibility = View.VISIBLE
+            renderSide(s)
         }
+
+        val report = vm.report.value
+        val problem = s is QrSetupState.Offline || s is QrSetupState.Unsupported || s is QrSetupState.RateLimited
+        btnHttp.visibility = if (problem && report?.offerHttp == true) View.VISIBLE else View.GONE
+        btnTime.visibility = if (problem && report?.clockWrong == true) View.VISIBLE else View.GONE
+        renderDetail(s, report)
 
         btnTryAgain.visibility = if (s is QrSetupState.RegisterFailed) View.VISIBLE else View.GONE
         val busy = s is QrSetupState.Claimed || s is QrSetupState.Registered
@@ -371,7 +440,12 @@ class QrSetupActivity : AppCompatActivity() {
         btnServer.isEnabled = !busy
         if (s is QrSetupState.RegisterFailed && !btnTryAgain.hasFocus()) btnTryAgain.requestFocus()
         if (currentFocus == null || currentFocus?.isEnabled == false || currentFocus?.visibility != View.VISIBLE) {
-            (if (btnTryAgain.visibility == View.VISIBLE) btnTryAgain else btnManual).requestFocus()
+            when {
+                btnTryAgain.visibility == View.VISIBLE -> btnTryAgain
+                btnTime.visibility == View.VISIBLE -> btnTime
+                btnHttp.visibility == View.VISIBLE -> btnHttp
+                else -> btnManual
+            }.requestFocus()
         }
 
         serverLine.text = getString(R.string.qr_server_line, s.server, DeviceInfo.appVersion, Prefs.deviceId.take(8))
@@ -383,6 +457,65 @@ class QrSetupActivity : AppCompatActivity() {
             else -> {}
         }
     }
+
+    /** Right side while there is no QR code. */
+    private fun renderSide(s: QrSetupState) {
+        val checking = s is QrSetupState.Offline && vm.report.value == null
+        val busy = s is QrSetupState.Starting || s is QrSetupState.Claimed || checking
+        qrProgress.visibility = if (busy) View.VISIBLE else View.GONE
+        val icon = when (s) {
+            is QrSetupState.Offline, is QrSetupState.Unsupported, is QrSetupState.InvalidServer,
+            is QrSetupState.RegisterFailed, is QrSetupState.RateLimited -> if (busy) null else "!"
+            is QrSetupState.Registered, is QrSetupState.AlreadyRegistered -> "✔"
+            else -> null
+        }
+        qrSideIcon.visibility = if (icon != null) View.VISIBLE else View.GONE
+        qrSideIcon.text = icon.orEmpty()
+        qrSideIcon.setTextColor(if (icon == "✔") OK else ERROR)
+        qrSideText.text = when (s) {
+            is QrSetupState.Starting -> getString(R.string.qr_side_starting)
+            is QrSetupState.Claimed -> getString(R.string.qr_status_claimed, s.config.room)
+            is QrSetupState.Offline -> if (checking) getString(R.string.qr_detail_checking) else getString(R.string.qr_side_error)
+            is QrSetupState.Unsupported, is QrSetupState.InvalidServer, is QrSetupState.RateLimited,
+            is QrSetupState.RegisterFailed -> getString(R.string.qr_side_error)
+            else -> ""
+        }
+    }
+
+    /** Plain-language reason why the server cannot be reached (from [NetDiagnostics]). */
+    private fun renderDetail(s: QrSetupState, r: NetReport?) {
+        val raw = when (s) {
+            is QrSetupState.Offline -> s.error
+            is QrSetupState.Unsupported -> null // already in the status line
+            else -> null
+        }
+        if (s !is QrSetupState.Offline) {
+            detail.visibility = View.GONE
+            return
+        }
+        val lines = mutableListOf<String>()
+        if (r == null) {
+            lines += getString(R.string.qr_detail_checking)
+        } else {
+            when {
+                !r.dnsOk -> lines += getString(R.string.qr_detail_dns, r.host)
+                r.clockWrong -> lines += getString(
+                    R.string.qr_detail_clock,
+                    formatDate(System.currentTimeMillis()),
+                    r.networkTimeMs?.let { formatDate(it) } ?: "?",
+                )
+                !r.httpsOk -> lines += getString(R.string.qr_detail_ssl, r.httpsError ?: "?")
+                else -> lines += getString(R.string.qr_detail_https_ok)
+            }
+            if (r.offerHttp) lines += getString(R.string.qr_detail_http_ok)
+        }
+        if (!raw.isNullOrBlank()) lines += getString(R.string.qr_detail_error, raw)
+        detail.text = lines.joinToString("\n")
+        detail.visibility = View.VISIBLE
+    }
+
+    private fun formatDate(ms: Long): String =
+        java.text.SimpleDateFormat("dd MMM yyyy HH:mm", java.util.Locale.getDefault()).format(java.util.Date(ms))
 
     /** Status + countdown (also refreshed every second by [ticker]). */
     private fun renderClockParts(s: QrSetupState) {
@@ -488,6 +621,22 @@ class QrSetupActivity : AppCompatActivity() {
             }
         }
         Toast.makeText(this, R.string.qr_wifi_unavailable, Toast.LENGTH_LONG).show()
+    }
+
+    private fun openDateSettings() {
+        if (KioskHelper.isInLockTask(this)) {
+            Prefs.kioskSuspendedUntil = System.currentTimeMillis() + 10 * 60_000L
+            KioskHelper.exitKiosk(this)
+        }
+        for (i in listOf(Intent(Settings.ACTION_DATE_SETTINGS), Intent(Settings.ACTION_SETTINGS))) {
+            try {
+                startActivity(i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+                return
+            } catch (e: Exception) {
+                Log.w(TAG, "Cannot open ${i.action}: ${e.message}")
+            }
+        }
+        Toast.makeText(this, R.string.qr_time_unavailable, Toast.LENGTH_LONG).show()
     }
 
     /** Only the server URL — for hotels with their own HotelCast server. */

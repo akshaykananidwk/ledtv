@@ -114,7 +114,7 @@
     <string name="qr_status_claimed">Assigned to room %1$s – connecting…</string>
     <string name="qr_status_registered">Registered ✔ Room %1$s</string>
     <string name="qr_status_opening">Opening the player…</string>
-    <string name="qr_status_offline">Offline – check Wi-Fi. Retrying in %1$d s.</string>
+    <string name="qr_status_offline">Cannot reach the server. Retrying in %1$d s.</string>
     <string name="qr_status_server_error">Server error: %1$s. Retrying in %2$d s.</string>
     <string name="qr_status_rate_limited">Too many requests – waiting %1$d s.</string>
     <string name="qr_status_unsupported">This server does not offer QR setup (%1$s). Use “Enter details manually” or “Change server”. Retrying in %2$d s.</string>
@@ -141,4 +141,17 @@
     <string name="resetup_confirm_title">Re-setup this TV with QR?</string>
     <string name="resetup_confirm_message">This TV (room %1$s) will be unregistered and show a new QR code. Use this to move the TV to another room.</string>
     <string name="resetup_confirm_yes">Unregister and show QR</string>
+    <string name="qr_btn_http">Connect without HTTPS</string>
+    <string name="qr_btn_time">Fix date &amp; time</string>
+    <string name="qr_time_unavailable">Date &amp; time settings cannot be opened on this TV.</string>
+    <string name="qr_http_selected">Using %1$s (HTTP)</string>
+    <string name="qr_side_starting">Getting the QR code…</string>
+    <string name="qr_side_error">No QR code yet – the reason is shown on the left.</string>
+    <string name="qr_detail_checking">Checking the connection…</string>
+    <string name="qr_detail_dns">The server name %1$s cannot be found (DNS). This Wi-Fi may have no internet.</string>
+    <string name="qr_detail_clock">The TV date is wrong: %1$s (correct: %2$s). Secure connections (HTTPS) fail with a wrong date – select “Fix date &amp; time” and turn on automatic time.</string>
+    <string name="qr_detail_ssl">Secure connection (HTTPS) fails on this TV: %1$s</string>
+    <string name="qr_detail_https_ok">The connection to the server works now – retrying.</string>
+    <string name="qr_detail_http_ok">The server works over HTTP – select “Connect without HTTPS”.</string>
+    <string name="qr_detail_error">Details: %1$s</string>
 </resources>

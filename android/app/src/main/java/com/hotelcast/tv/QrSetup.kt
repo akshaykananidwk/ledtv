@@ -3,6 +3,7 @@ package com.hotelcast.tv
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.ensureActive
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import java.util.Locale
 
 /**
@@ -159,8 +160,19 @@ object QrSetupLogic {
             else -> StatusResult.Invalid("unknown status '${data.status}'")
         }
 
+    /**
+     * The server reports its https:// address, but a TV that could only reach it over http:// (old TV
+     * without working HTTPS, chosen on the setup screen) must keep using http:// for the same host.
+     */
+    fun keepHttp(claimed: String, currentServer: String): String {
+        val cur = ServerUrl.normalize(currentServer)?.toHttpUrlOrNull() ?: return claimed
+        val cl = ServerUrl.normalize(claimed)?.toHttpUrlOrNull() ?: return claimed
+        if (cur.scheme != "http" || cl.scheme != "https" || !cur.host.equals(cl.host, ignoreCase = true)) return claimed
+        return ServerUrl.root(cl.newBuilder().scheme("http").port(cur.port).build().toString())
+    }
+
     fun claim(data: ProvisionStatusResponse, currentServer: String): StatusResult {
-        val server = data.serverUrl?.trim()?.takeIf { it.isNotEmpty() } ?: currentServer
+        val server = keepHttp(data.serverUrl?.trim()?.takeIf { it.isNotEmpty() } ?: currentServer, currentServer)
         val values = mapOf(
             Provisioning.EXTRA_SERVER to server,
             Provisioning.EXTRA_ROOM to data.roomNumber,

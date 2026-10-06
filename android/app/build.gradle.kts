@@ -30,8 +30,8 @@ android {
         applicationId = "com.hotelcast.tv"
         minSdk = 21
         targetSdk = 34
-        versionCode = 5
-        versionName = "2.1.0"
+        versionCode = 6
+        versionName = "2.1.1"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
         buildConfigField(

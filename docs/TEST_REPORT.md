@@ -1,3 +1,23 @@
+# HotelCast TV app 2.1.1 — QR setup fix for old TVs (2026-10-06)
+
+Problem: on some TVs the setup screen stayed on "Offline – check Wi-Fi" with an empty white box although
+Wi-Fi was connected. The live server answered `provision/start` correctly, so the TV could not complete
+the HTTPS connection. The usual causes are old root certificates on Android 7.0 and earlier, or a wrong
+TV date.
+
+| Change | Test |
+|--------|------|
+| Bundled current public roots (ISRG X1/X2, USERTrust, GTS, DigiCert G2, …) in addition to the system list | ✅ TlsCompatTest (15 roots parse, valid) |
+| Wrong TV clock: network time from plain-HTTP `Date` headers; chain re-validated at that time; device owner (Android 9+) sets the clock | ✅ CompatTrustManagerTest (accepted at network time, rejected without it / unknown root / outside validity) |
+| Setup screen shows the real reason (DNS, HTTPS error, wrong date) and buttons "Fix date & time" / "Connect without HTTPS" | ✅ build + lint 0 errors |
+| QR claim keeps `http://` when the TV had to use it | ✅ TlsCompatTest |
+| No empty white box / "— — —" while there is no code | ✅ |
+| Android unit tests | ✅ **126 tests, 0 failures**; APK 2.1.1 (code 6) signed with the same key |
+
+Not verified here: the fix on the physical TV (no emulator in this environment).
+
+---
+
 # HotelCast 2.1.0 — Test summary (2026-10-06)
 
 | Area | Result |

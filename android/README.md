@@ -390,6 +390,7 @@ host, never to a media CDN.
 | "Cannot connect" / "Unknown host" | Check the Server URL with **Test Connection**. Make sure the TV is on the same network or VLAN as a LAN server. Open `http://SERVER/hotelcast/api/health` in a PC browser to compare |
 | HTML 404 page on Test Connection | Apache `mod_rewrite` is off on the server. Enable it, since the app uses route-style URLs (`/api/device/...`) |
 | SSL error | The certificate is expired, or self-signed and not installed on the TV. Install the CA on the TV or use `http://` on the LAN |
+| QR setup: "Cannot reach the server" although Wi-Fi works (2.1.1+) | The screen now shows the reason. **TV date wrong**: select *Fix date & time* and turn on automatic time (the app also learns the network time and, as device owner on Android 9+, sets the clock itself). **HTTPS error on an old TV**: 2.1.1 bundles current root certificates (Let's Encrypt etc.); if HTTPS still fails and the server answers over HTTP, select *Connect without HTTPS*. Traffic is then not encrypted, so use it only as a fallback. **DNS error**: the Wi-Fi has no internet or blocks the server name |
 | Red dot in the top-right corner | The TV cannot reach the server. It keeps playing cached content and catches up when the network returns |
 | TV went back to the setup screen | An admin revoked the device or it was re-registered elsewhere (401 INVALID_TOKEN). Register it again |
 | Guests can leave the app with HOME | Make HotelCast the default launcher, or better, set it as device owner (§4) |

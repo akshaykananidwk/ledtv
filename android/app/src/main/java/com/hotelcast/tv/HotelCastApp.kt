@@ -8,6 +8,8 @@ class HotelCastApp : Application() {
     override fun onCreate() {
         super.onCreate()
         Prefs.init(this)
+        TlsCompat.init(this) // before any HTTPS request (old CA lists, wrong TV clock)
+        NetworkTime.checkAtStartup(this)
         installCrashRecovery()
         SyncManager.init(this)
         PollWorker.schedule(this)

@@ -83,7 +83,7 @@ object ApiClient {
         val logging = HttpLoggingInterceptor { Log.d("HTTP", it) }.apply {
             level = if (BuildConfig.DEBUG) HttpLoggingInterceptor.Level.BASIC else HttpLoggingInterceptor.Level.NONE
         }
-        OkHttpClient.Builder()
+        TlsCompat.apply(OkHttpClient.Builder())
             .connectTimeout(10, TimeUnit.SECONDS)
             .readTimeout(40, TimeUnit.SECONDS) // > max long-poll wait (25 s)
             .writeTimeout(30, TimeUnit.SECONDS)

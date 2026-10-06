@@ -82,6 +82,17 @@
                     android:textColor="@color/settings_text"
                     android:textSize="18sp" />
 
+                <!-- Why the server cannot be reached (DNS / HTTPS / TV clock); hidden when all is fine -->
+                <TextView
+                    android:id="@+id/qr_detail"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:lineSpacingExtra="2dp"
+                    android:textColor="#FFFFE0B2"
+                    android:textSize="16sp"
+                    android:visibility="gone" />
+
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -92,6 +103,18 @@
                         android:id="@+id/qr_btn_try_again"
                         style="@style/QrButton"
                         android:text="@string/qr_btn_try_again"
+                        android:visibility="gone" />
+
+                    <Button
+                        android:id="@+id/qr_btn_http"
+                        style="@style/QrButton"
+                        android:text="@string/qr_btn_http"
+                        android:visibility="gone" />
+
+                    <Button
+                        android:id="@+id/qr_btn_time"
+                        style="@style/QrButton"
+                        android:text="@string/qr_btn_time"
                         android:visibility="gone" />
 
                     <Button
@@ -134,11 +157,13 @@
             android:gravity="center"
             android:orientation="vertical">
 
+            <!-- White QR card: only shown when there is a real QR code (no empty box) -->
             <FrameLayout
                 android:id="@+id/qr_card"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:padding="14dp">
+                android:padding="14dp"
+                android:visibility="gone">
 
                 <ImageView
                     android:id="@+id/qr_image"
@@ -146,14 +171,41 @@
                     android:layout_height="280dp"
                     android:contentDescription="@string/qr_image_description"
                     android:scaleType="fitCenter" />
+            </FrameLayout>
+
+            <!-- Shown instead of the QR while there is no code: spinner or a big status icon -->
+            <LinearLayout
+                android:id="@+id/qr_side"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:orientation="vertical">
 
                 <ProgressBar
                     android:id="@+id/qr_progress"
-                    android:layout_width="72dp"
-                    android:layout_height="72dp"
-                    android:layout_gravity="center"
+                    android:layout_width="96dp"
+                    android:layout_height="96dp"
                     android:indeterminate="true" />
-            </FrameLayout>
+
+                <TextView
+                    android:id="@+id/qr_side_icon"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="#FFFF8A80"
+                    android:textSize="96sp"
+                    android:textStyle="bold"
+                    android:visibility="gone" />
+
+                <TextView
+                    android:id="@+id/qr_side_text"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:gravity="center"
+                    android:maxWidth="360dp"
+                    android:textColor="@color/settings_text"
+                    android:textSize="20sp" />
+            </LinearLayout>
 
             <TextView
                 android:id="@+id/qr_code"

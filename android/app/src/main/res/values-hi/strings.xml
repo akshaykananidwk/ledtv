@@ -109,7 +109,7 @@
     <string name="qr_status_claimed">कमरा %1$s सौंपा गया – कनेक्ट हो रहा है…</string>
     <string name="qr_status_registered">पंजीकरण हो गया ✔ कमरा %1$s</string>
     <string name="qr_status_opening">प्लेयर खोला जा रहा है…</string>
-    <string name="qr_status_offline">ऑफ़लाइन – Wi-Fi जाँचें। %1$d सेकंड में फिर कोशिश।</string>
+    <string name="qr_status_offline">सर्वर तक नहीं पहुँच पा रहे। %1$d सेकंड में फिर कोशिश।</string>
     <string name="qr_status_server_error">सर्वर त्रुटि: %1$s। %2$d सेकंड में फिर कोशिश।</string>
     <string name="qr_status_rate_limited">बहुत अधिक अनुरोध – %1$d सेकंड प्रतीक्षा करें।</string>
     <string name="qr_status_unsupported">यह सर्वर QR सेटअप नहीं देता (%1$s)। “विवरण स्वयं दर्ज करें” या “सर्वर बदलें” चुनें। %2$d सेकंड में फिर कोशिश।</string>
@@ -134,4 +134,17 @@
     <string name="resetup_confirm_title">इस टीवी को QR से फिर सेट करें?</string>
     <string name="resetup_confirm_message">इस टीवी (कमरा %1$s) का पंजीकरण हटेगा और नया QR कोड दिखेगा। टीवी को दूसरे कमरे में ले जाने के लिए इसका उपयोग करें।</string>
     <string name="resetup_confirm_yes">पंजीकरण हटाएँ और QR दिखाएँ</string>
+    <string name="qr_btn_http">HTTPS के बिना जोड़ें</string>
+    <string name="qr_btn_time">तारीख/समय ठीक करें</string>
+    <string name="qr_time_unavailable">इस TV में तारीख/समय सेटिंग नहीं खुल सकती।</string>
+    <string name="qr_http_selected">%1$s (HTTP) इस्तेमाल हो रहा है</string>
+    <string name="qr_side_starting">QR कोड ले रहे हैं…</string>
+    <string name="qr_side_error">अभी QR कोड नहीं – कारण बाईं ओर लिखा है।</string>
+    <string name="qr_detail_checking">कनेक्शन जाँच रहे हैं…</string>
+    <string name="qr_detail_dns">सर्वर का नाम %1$s नहीं मिल रहा (DNS)। इस Wi-Fi में शायद इंटरनेट नहीं है।</string>
+    <string name="qr_detail_clock">TV की तारीख गलत है: %1$s (सही: %2$s)। गलत तारीख से HTTPS नहीं चलता – “तारीख/समय ठीक करें” दबाकर automatic time चालू करें।</string>
+    <string name="qr_detail_ssl">इस TV पर सुरक्षित कनेक्शन (HTTPS) विफल: %1$s</string>
+    <string name="qr_detail_https_ok">अब सर्वर से कनेक्शन हो रहा है – फिर कोशिश।</string>
+    <string name="qr_detail_http_ok">सर्वर HTTP पर चलता है – “HTTPS के बिना जोड़ें” दबाएँ।</string>
+    <string name="qr_detail_error">विवरण: %1$s</string>
 </resources>
