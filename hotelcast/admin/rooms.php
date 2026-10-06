@@ -576,6 +576,7 @@ require __DIR__ . '/partials/header.php';
   </div>
   <?php if ($canManage): ?>
   <div class="d-flex flex-wrap gap-2">
+    <?php if (is_file(__DIR__ . '/claim.php')): ?><a href="<?= e(admin_url('claim.php')) ?>" class="btn btn-success"><i class="bi bi-qr-code-scan"></i> <?= e(__('Add TV with QR')) ?></a><?php endif; ?>
     <a href="<?= e(admin_url('rooms.php', ['action' => 'new'])) ?>" class="btn btn-primary"><i class="bi bi-plus-lg"></i> <?= e(__('Add room')) ?></a>
     <a href="<?= e(admin_url('rooms.php', ['action' => 'bulk_add'])) ?>" class="btn btn-outline-primary"><i class="bi bi-plus-square-dotted"></i> <?= e(__('Add many rooms')) ?></a>
     <?php if ($revokedCount): ?><a href="<?= e(admin_url('rooms.php', ['action' => 'devices'])) ?>" class="btn btn-light border"><i class="bi bi-slash-circle"></i> <?= e(__('Revoked TVs')) ?> (<?= $revokedCount ?>)</a><?php endif; ?>

@@ -94,4 +94,44 @@
     <string name="provision_rejected">सेटअप टूल के मान अनदेखे किए गए: %1$s</string>
     <string name="provision_filled">सेटअप टूल के मान भर दिए गए। “सहेजें और पंजीकरण करें” चुनें।</string>
     <string name="info_hotel">होटल</string>
+
+    <!-- 2.1: QR setup -->
+    <string name="qr_title">इस टीवी को सेट करें</string>
+    <string name="qr_title_brand">%1$s – इस टीवी को सेट करें</string>
+    <string name="qr_subtitle">टीवी पर कुछ टाइप करने की ज़रूरत नहीं – अपने फ़ोन का उपयोग करें।</string>
+    <string name="qr_step1">अपने फ़ोन से यह QR कोड स्कैन करें</string>
+    <string name="qr_step2">एडमिन पैनल में लॉग इन करें</string>
+    <string name="qr_step3">कमरा चुनें → हो गया</string>
+    <string name="qr_code_caption">कैमरा नहीं है? यह कोड एडमिन पैनल में दर्ज करें।</string>
+    <string name="qr_image_description">इस टीवी को सेट करने का QR कोड</string>
+    <string name="qr_status_starting">सर्वर से सेटअप कोड लिया जा रहा है…</string>
+    <string name="qr_status_waiting">फ़ोन पर कमरा चुने जाने की प्रतीक्षा…</string>
+    <string name="qr_status_claimed">कमरा %1$s सौंपा गया – कनेक्ट हो रहा है…</string>
+    <string name="qr_status_registered">पंजीकरण हो गया ✔ कमरा %1$s</string>
+    <string name="qr_status_opening">प्लेयर खोला जा रहा है…</string>
+    <string name="qr_status_offline">ऑफ़लाइन – Wi-Fi जाँचें। %1$d सेकंड में फिर कोशिश।</string>
+    <string name="qr_status_server_error">सर्वर त्रुटि: %1$s। %2$d सेकंड में फिर कोशिश।</string>
+    <string name="qr_status_rate_limited">बहुत अधिक अनुरोध – %1$d सेकंड प्रतीक्षा करें।</string>
+    <string name="qr_status_unsupported">यह सर्वर QR सेटअप नहीं देता (%1$s)। “विवरण स्वयं दर्ज करें” या “सर्वर बदलें” चुनें। %2$d सेकंड में फिर कोशिश।</string>
+    <string name="qr_status_invalid_server">सर्वर का पता मान्य नहीं है। “सर्वर बदलें” चुनें।</string>
+    <string name="qr_try_again_hint">नया कोड पाने के लिए “फिर कोशिश करें” चुनें।</string>
+    <string name="qr_expires_in">कोड %1$s तक मान्य</string>
+    <string name="qr_network_wifi">नेटवर्क: Wi-Fi जुड़ा है (IP %1$s)</string>
+    <string name="qr_network_ethernet">नेटवर्क: केबल जुड़ी है (IP %1$s)</string>
+    <string name="qr_network_other">नेटवर्क: जुड़ा है (IP %1$s)</string>
+    <string name="qr_network_none">नेटवर्क: जुड़ा नहीं – Wi-Fi सेटिंग्स खोलें या नेटवर्क केबल लगाएँ</string>
+    <string name="qr_server_line">सर्वर: %1$s · ऐप %2$s · ID %3$s</string>
+    <string name="qr_btn_manual">विवरण स्वयं दर्ज करें</string>
+    <string name="qr_btn_change_server">सर्वर बदलें</string>
+    <string name="qr_btn_wifi">Wi-Fi सेटिंग्स खोलें</string>
+    <string name="qr_btn_try_again">फिर कोशिश करें</string>
+    <string name="qr_change_server_title">इस टीवी का सर्वर</string>
+    <string name="qr_change_server_hint">केवल अपने HotelCast सर्वर वाले होटलों के लिए। “डिफ़ॉल्ट उपयोग करें” = %1$s</string>
+    <string name="qr_use_default">डिफ़ॉल्ट उपयोग करें</string>
+    <string name="qr_wifi_unavailable">इस टीवी पर Wi-Fi सेटिंग्स नहीं खोली जा सकतीं।</string>
+    <string name="back_to_qr">QR सेटअप पर वापस</string>
+    <string name="resetup_qr">QR से फिर सेटअप (दूसरे कमरे में ले जाएँ)</string>
+    <string name="resetup_confirm_title">इस टीवी को QR से फिर सेट करें?</string>
+    <string name="resetup_confirm_message">इस टीवी (कमरा %1$s) का पंजीकरण हटेगा और नया QR कोड दिखेगा। टीवी को दूसरे कमरे में ले जाने के लिए इसका उपयोग करें।</string>
+    <string name="resetup_confirm_yes">पंजीकरण हटाएँ और QR दिखाएँ</string>
 </resources>

@@ -93,4 +93,44 @@
     <string name="provision_rejected">સેટઅપ ટૂલની કિંમતો અવગણવામાં આવી: %1$s</string>
     <string name="provision_filled">સેટઅપ ટૂલની કિંમતો ભરાઈ ગઈ. “સાચવો અને નોંધણી કરો” પસંદ કરો.</string>
     <string name="info_hotel">હોટેલ</string>
+
+    <!-- 2.1: QR setup -->
+    <string name="qr_title">આ ટીવી સેટ કરો</string>
+    <string name="qr_title_brand">%1$s – આ ટીવી સેટ કરો</string>
+    <string name="qr_subtitle">ટીવી પર કંઈ ટાઇપ કરવાની જરૂર નથી – તમારા ફોનનો ઉપયોગ કરો.</string>
+    <string name="qr_step1">તમારા ફોનથી આ QR કોડ સ્કેન કરો</string>
+    <string name="qr_step2">એડમિન પેનલમાં લૉગ ઇન કરો</string>
+    <string name="qr_step3">રૂમ પસંદ કરો → થઈ ગયું</string>
+    <string name="qr_code_caption">કૅમેરા નથી? આ કોડ એડમિન પેનલમાં દાખલ કરો.</string>
+    <string name="qr_image_description">આ ટીવી સેટ કરવા માટેનો QR કોડ</string>
+    <string name="qr_status_starting">સર્વર પરથી સેટઅપ કોડ મેળવી રહ્યા છીએ…</string>
+    <string name="qr_status_waiting">ફોન પર રૂમ પસંદ થવાની રાહ જોઈ રહ્યા છીએ…</string>
+    <string name="qr_status_claimed">રૂમ %1$s સોંપાયો – જોડાઈ રહ્યા છીએ…</string>
+    <string name="qr_status_registered">નોંધણી થઈ ગઈ ✔ રૂમ %1$s</string>
+    <string name="qr_status_opening">પ્લેયર ખોલી રહ્યા છીએ…</string>
+    <string name="qr_status_offline">ઑફલાઇન – Wi-Fi તપાસો. %1$d સેકન્ડમાં ફરી પ્રયાસ.</string>
+    <string name="qr_status_server_error">સર્વર ભૂલ: %1$s. %2$d સેકન્ડમાં ફરી પ્રયાસ.</string>
+    <string name="qr_status_rate_limited">ઘણી બધી વિનંતીઓ – %1$d સેકન્ડ રાહ જુઓ.</string>
+    <string name="qr_status_unsupported">આ સર્વર QR સેટઅપ આપતું નથી (%1$s). “વિગતો જાતે દાખલ કરો” અથવા “સર્વર બદલો” પસંદ કરો. %2$d સેકન્ડમાં ફરી પ્રયાસ.</string>
+    <string name="qr_status_invalid_server">સર્વરનું સરનામું માન્ય નથી. “સર્વર બદલો” પસંદ કરો.</string>
+    <string name="qr_try_again_hint">નવો કોડ મેળવવા “ફરી પ્રયાસ કરો” પસંદ કરો.</string>
+    <string name="qr_expires_in">કોડ %1$s સુધી માન્ય</string>
+    <string name="qr_network_wifi">નેટવર્ક: Wi-Fi જોડાયેલ (IP %1$s)</string>
+    <string name="qr_network_ethernet">નેટવર્ક: કેબલ જોડાયેલ (IP %1$s)</string>
+    <string name="qr_network_other">નેટવર્ક: જોડાયેલ (IP %1$s)</string>
+    <string name="qr_network_none">નેટવર્ક: જોડાયેલ નથી – Wi-Fi સેટિંગ્સ ખોલો અથવા નેટવર્ક કેબલ લગાવો</string>
+    <string name="qr_server_line">સર્વર: %1$s · ઍપ %2$s · ID %3$s</string>
+    <string name="qr_btn_manual">વિગતો જાતે દાખલ કરો</string>
+    <string name="qr_btn_change_server">સર્વર બદલો</string>
+    <string name="qr_btn_wifi">Wi-Fi સેટિંગ્સ ખોલો</string>
+    <string name="qr_btn_try_again">ફરી પ્રયાસ કરો</string>
+    <string name="qr_change_server_title">આ ટીવી માટે સર્વર</string>
+    <string name="qr_change_server_hint">ફક્ત પોતાનું HotelCast સર્વર ધરાવતી હોટેલો માટે. “ડિફૉલ્ટ વાપરો” = %1$s</string>
+    <string name="qr_use_default">ડિફૉલ્ટ વાપરો</string>
+    <string name="qr_wifi_unavailable">આ ટીવી પર Wi-Fi સેટિંગ્સ ખોલી શકાતી નથી.</string>
+    <string name="back_to_qr">QR સેટઅપ પર પાછા</string>
+    <string name="resetup_qr">QR વડે ફરી સેટઅપ (બીજા રૂમમાં ખસેડો)</string>
+    <string name="resetup_confirm_title">આ ટીવી QR વડે ફરી સેટ કરવું છે?</string>
+    <string name="resetup_confirm_message">આ ટીવી (રૂમ %1$s)ની નોંધણી રદ થશે અને નવો QR કોડ દેખાશે. ટીવીને બીજા રૂમમાં ખસેડવા માટે આનો ઉપયોગ કરો.</string>
+    <string name="resetup_confirm_yes">નોંધણી રદ કરો અને QR બતાવો</string>
 </resources>

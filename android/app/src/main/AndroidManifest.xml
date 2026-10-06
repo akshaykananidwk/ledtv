@@ -99,6 +99,16 @@
             android:theme="@style/Theme.HotelCast.Settings"
             android:windowSoftInputMode="adjustResize|stateHidden" />
 
+        <!-- 2.1 QR setup: first-run screen (not exported; opened by MainActivity when not registered). -->
+        <activity
+            android:name=".QrSetupActivity"
+            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboard|keyboardHidden|navigation|uiMode"
+            android:exported="false"
+            android:launchMode="singleTop"
+            android:lockTaskMode="if_whitelisted"
+            android:theme="@style/Theme.HotelCast.Settings"
+            android:windowSoftInputMode="stateHidden" />
+
         <service
             android:name=".PollService"
             android:exported="false"

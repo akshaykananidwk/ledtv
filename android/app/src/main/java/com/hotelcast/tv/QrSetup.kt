@@ -334,13 +334,26 @@ class QrSetupFlow(
 
 /** Real backend: Retrofit against `{apiBase}provision/…` (no auth headers, see ApiClient). */
 class RetrofitProvisionBackend : ProvisionBackend {
+    private var cachedBase: String? = null
+    private var cachedApi: ApiService? = null
+
+    @Synchronized
+    private fun api(apiBase: String): ApiService {
+        val existing = cachedApi
+        if (existing != null && cachedBase == apiBase) return existing
+        return ApiClient.serviceFor(apiBase).also {
+            cachedApi = it
+            cachedBase = apiBase
+        }
+    }
+
     override suspend fun start(apiBase: String, body: ProvisionStartRequest): ProvisionStartResponse? {
-        val api = ApiClient.serviceFor(apiBase)
+        val api = api(apiBase)
         return ApiClient.call { api.provisionStart(body) }
     }
 
     override suspend fun status(apiBase: String, code: String, secret: String): ProvisionStatusResponse? {
-        val api = ApiClient.serviceFor(apiBase)
+        val api = api(apiBase)
         return ApiClient.call { api.provisionStatus(code, secret) }
     }
 }

@@ -1,5 +1,6 @@
 package com.hotelcast.tv
 
+import android.app.AlertDialog
 import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
@@ -35,6 +36,7 @@ class SettingsActivity : AppCompatActivity() {
     private lateinit var btnClear: Button
     private lateinit var btnExit: Button
     private lateinit var btnBack: Button
+    private lateinit var btnResetup: Button
     private lateinit var statusMessage: TextView
     private lateinit var deviceInfo: TextView
 
@@ -63,10 +65,12 @@ class SettingsActivity : AppCompatActivity() {
         btnClear = findViewById(R.id.btn_clear_cache)
         btnExit = findViewById(R.id.btn_exit_kiosk)
         btnBack = findViewById(R.id.btn_back)
+        btnResetup = findViewById(R.id.btn_resetup_qr)
         statusMessage = findViewById(R.id.status_message)
         deviceInfo = findViewById(R.id.device_info)
 
-        inputServer.setText(Prefs.serverUrl)
+        // Nothing configured yet → the built-in server (BuildConfig.DEFAULT_SERVER_URL).
+        inputServer.setText(QrSetupLogic.effectiveServer(Prefs.serverUrl, BuildConfig.DEFAULT_SERVER_URL))
         inputRoom.setText(Prefs.roomNumber)
         inputKey.setText(Prefs.registrationKey)
 
@@ -78,6 +82,7 @@ class SettingsActivity : AppCompatActivity() {
         }
         btnExit.setOnClickListener { exitKiosk() }
         btnBack.setOnClickListener { leave() }
+        btnResetup.setOnClickListener { confirmResetup() }
 
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() = leave()
@@ -114,11 +119,40 @@ class SettingsActivity : AppCompatActivity() {
             isSetup -> getString(R.string.setup_title_brand, product)
             else -> getString(R.string.settings_title_brand, product)
         }
-        btnBack.visibility = if (isSetup) View.GONE else View.VISIBLE
+        // Before registration "Back" returns to the QR setup screen (the player needs a room first).
+        btnBack.setText(if (isSetup) R.string.back_to_qr else R.string.back_to_player)
+        findViewById<View>(R.id.resetup_row).visibility = if (isSetup) View.GONE else View.VISIBLE
     }
 
     private fun leave() {
-        if (isSetup) return // nothing to go back to before registration
+        if (isSetup) {
+            if (busyJob?.isActive == true) return
+            if (!intent.getBooleanExtra(EXTRA_FROM_QR, false)) {
+                startActivity(Intent(this, QrSetupActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP))
+            }
+        }
+        finish()
+    }
+
+    /** "Re-setup with QR": move this TV to another room without typing. */
+    private fun confirmResetup() {
+        if (busyJob?.isActive == true) return
+        val room = Prefs.roomNumber.ifBlank { "-" }
+        AlertDialog.Builder(this)
+            .setTitle(R.string.resetup_confirm_title)
+            .setMessage(getString(R.string.resetup_confirm_message, room))
+            .setPositiveButton(R.string.resetup_confirm_yes) { _, _ -> resetupWithQr() }
+            .setNegativeButton(R.string.cancel, null)
+            .show()
+            .also { it.getButton(AlertDialog.BUTTON_NEGATIVE)?.requestFocus() }
+    }
+
+    private fun resetupWithQr() {
+        android.util.Log.i("SettingsActivity", "Unregistered room=${Prefs.roomNumber} for re-setup with QR")
+        SyncManager.stop()
+        PollService.stop(this)
+        Prefs.clearRegistration()
+        startActivity(Intent(this, QrSetupActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP))
         finish()
     }
 
@@ -164,9 +198,10 @@ class SettingsActivity : AppCompatActivity() {
         setBusy(true)
         busyJob = lifecycleScope.launch {
             try {
-                val outcome = Registrar.register(applicationContext, serverRaw, base, room, key)
-                if (provisioned) {
-                    Provisioning.logResult(if (outcome.ok) "REGISTERED room=${outcome.room}" else "FAILED ${outcome.message}")
+                val outcome = if (provisioned) {
+                    Provisioning.saveAndRegister(applicationContext, Provisioning.Request(serverRaw, base, room, key, autoRegister = true, force = true))
+                } else {
+                    Registrar.register(applicationContext, serverRaw, base, room, key)
                 }
                 if (!outcome.ok) {
                     showStatus(registerErrorText(outcome), ok = false)
@@ -308,5 +343,7 @@ class SettingsActivity : AppCompatActivity() {
 
     companion object {
         const val EXTRA_SETUP = "setup"
+        /** Opened from the QR setup screen ("Enter details manually"): Back returns there. */
+        const val EXTRA_FROM_QR = "from_qr"
     }
 }

@@ -99,4 +99,45 @@
     <string name="provision_rejected">Values from the setup tool ignored: %1$s</string>
     <string name="provision_filled">Values from the setup tool filled in. Select “Save &amp; Register”.</string>
     <string name="info_hotel">Hotel</string>
+
+    <!-- 2.1: QR setup (no typing on the TV) -->
+    <string name="qr_title">Set up this TV</string>
+    <string name="qr_title_brand">%1$s – Set up this TV</string>
+    <string name="qr_subtitle">No typing on the TV – use your phone.</string>
+    <string name="qr_step1">Scan this QR code with your phone</string>
+    <string name="qr_step2">Log in to the admin panel</string>
+    <string name="qr_step3">Choose the room → done</string>
+    <string name="qr_code_caption">No camera? Enter this code in the admin panel.</string>
+    <string name="qr_image_description">QR code for setting up this TV</string>
+    <string name="qr_status_starting">Getting a setup code from the server…</string>
+    <string name="qr_status_waiting">Waiting for the room to be chosen on the phone…</string>
+    <string name="qr_status_claimed">Assigned to room %1$s – connecting…</string>
+    <string name="qr_status_registered">Registered ✔ Room %1$s</string>
+    <string name="qr_status_opening">Opening the player…</string>
+    <string name="qr_status_offline">Offline – check Wi-Fi. Retrying in %1$d s.</string>
+    <string name="qr_status_server_error">Server error: %1$s. Retrying in %2$d s.</string>
+    <string name="qr_status_rate_limited">Too many requests – waiting %1$d s.</string>
+    <string name="qr_status_unsupported">This server does not offer QR setup (%1$s). Use “Enter details manually” or “Change server”. Retrying in %2$d s.</string>
+    <string name="qr_status_invalid_server">The server address is not valid. Select “Change server”.</string>
+    <string name="qr_try_again_hint">Select “Try again” to get a new code.</string>
+    <string name="qr_expires_in">Code valid for %1$s</string>
+    <string name="qr_network_wifi">Network: Wi-Fi connected (IP %1$s)</string>
+    <string name="qr_network_ethernet">Network: cable connected (IP %1$s)</string>
+    <string name="qr_network_other">Network: connected (IP %1$s)</string>
+    <string name="qr_network_none">Network: NOT connected – open Wi-Fi settings or plug in a network cable</string>
+    <string name="qr_server_line">Server: %1$s · App %2$s · ID %3$s</string>
+    <string name="qr_btn_manual">Enter details manually</string>
+    <string name="qr_btn_change_server">Change server</string>
+    <string name="qr_btn_wifi">Open Wi-Fi settings</string>
+    <string name="qr_btn_try_again">Try again</string>
+    <string name="qr_change_server_title">Server for this TV</string>
+    <string name="qr_change_server_hint">Only for hotels with their own HotelCast server. “Use default” = %1$s</string>
+    <string name="qr_use_default">Use default</string>
+    <string name="qr_wifi_unavailable">Wi-Fi settings cannot be opened on this TV.</string>
+    <string name="qr_done_icon" translatable="false">✔</string>
+    <string name="back_to_qr">Back to QR setup</string>
+    <string name="resetup_qr">Re-setup with QR (move to another room)</string>
+    <string name="resetup_confirm_title">Re-setup this TV with QR?</string>
+    <string name="resetup_confirm_message">This TV (room %1$s) will be unregistered and show a new QR code. Use this to move the TV to another room.</string>
+    <string name="resetup_confirm_yes">Unregister and show QR</string>
 </resources>

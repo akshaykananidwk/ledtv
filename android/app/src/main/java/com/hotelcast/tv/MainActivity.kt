@@ -565,7 +565,8 @@ class MainActivity : AppCompatActivity(), ContentPlayer.Listener, PlayerUi, Gues
     private fun openSetup() {
         if (setupLaunched) return
         setupLaunched = true
-        startActivity(Intent(this, SettingsActivity::class.java).putExtra(SettingsActivity.EXTRA_SETUP, true))
+        // 2.1: first run / revoked → QR setup (no typing). The manual form is one button away.
+        startActivity(Intent(this, QrSetupActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP))
     }
 
     // ------------------------------------------------------------------ hidden settings gesture

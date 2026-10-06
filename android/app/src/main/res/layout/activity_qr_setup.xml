@@ -1,0 +1,222 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- QR first-run setup (10-foot UI). Designed for 960x540 dp, i.e. 720p (tvdpi) and 1080p (xhdpi) TVs. -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/qr_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/settings_bg">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:baselineAligned="false"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="40dp"
+        android:paddingTop="24dp"
+        android:paddingEnd="40dp"
+        android:paddingBottom="20dp">
+
+        <!-- Left: instructions, status, buttons -->
+        <ScrollView
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_marginEnd="32dp"
+            android:layout_weight="1.2"
+            android:fillViewport="true"
+            android:scrollbars="none">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/qr_title"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/qr_title"
+                    android:textColor="@color/white"
+                    android:textSize="32sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/qr_subtitle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:text="@string/qr_subtitle"
+                    android:textColor="@color/settings_text_dim"
+                    android:textSize="18sp" />
+
+                <LinearLayout
+                    android:id="@+id/qr_steps"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="14dp"
+                    android:orientation="vertical" />
+
+                <TextView
+                    android:id="@+id/qr_status"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="14dp"
+                    android:minHeight="34dp"
+                    android:textColor="@color/accent"
+                    android:textSize="23sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/qr_countdown"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:textColor="@color/settings_text"
+                    android:textSize="18sp" />
+
+                <TextView
+                    android:id="@+id/qr_network"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:textColor="@color/settings_text"
+                    android:textSize="18sp" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:orientation="horizontal">
+
+                    <Button
+                        android:id="@+id/qr_btn_try_again"
+                        style="@style/QrButton"
+                        android:text="@string/qr_btn_try_again"
+                        android:visibility="gone" />
+
+                    <Button
+                        android:id="@+id/qr_btn_wifi"
+                        style="@style/QrButton"
+                        android:text="@string/qr_btn_wifi" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+
+                    <Button
+                        android:id="@+id/qr_btn_manual"
+                        style="@style/QrButton"
+                        android:text="@string/qr_btn_manual" />
+
+                    <Button
+                        android:id="@+id/qr_btn_change_server"
+                        style="@style/QrButton"
+                        android:text="@string/qr_btn_change_server" />
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/qr_server"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:textColor="@color/settings_text_dim"
+                    android:textSize="14sp" />
+            </LinearLayout>
+        </ScrollView>
+
+        <!-- Right: QR + code -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:orientation="vertical">
+
+            <FrameLayout
+                android:id="@+id/qr_card"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:padding="14dp">
+
+                <ImageView
+                    android:id="@+id/qr_image"
+                    android:layout_width="280dp"
+                    android:layout_height="280dp"
+                    android:contentDescription="@string/qr_image_description"
+                    android:scaleType="fitCenter" />
+
+                <ProgressBar
+                    android:id="@+id/qr_progress"
+                    android:layout_width="72dp"
+                    android:layout_height="72dp"
+                    android:layout_gravity="center"
+                    android:indeterminate="true" />
+            </FrameLayout>
+
+            <TextView
+                android:id="@+id/qr_code"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:fontFamily="monospace"
+                android:letterSpacing="0.08"
+                android:textColor="@color/white"
+                android:textSize="64sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/qr_code_caption"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:maxWidth="380dp"
+                android:text="@string/qr_code_caption"
+                android:textColor="@color/settings_text_dim"
+                android:textSize="16sp" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- Success layer (3 s, then the player opens) -->
+    <LinearLayout
+        android:id="@+id/qr_done_layer"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/settings_bg"
+        android:clickable="true"
+        android:focusable="false"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:visibility="gone">
+
+        <TextView
+            android:id="@+id/qr_done_icon"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/qr_done_icon"
+            android:textColor="#FF4CAF50"
+            android:textSize="110sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/qr_done_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:textColor="@color/white"
+            android:textSize="40sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/qr_done_subtitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:gravity="center"
+            android:text="@string/qr_status_opening"
+            android:textColor="@color/settings_text_dim"
+            android:textSize="22sp" />
+    </LinearLayout>
+</FrameLayout>

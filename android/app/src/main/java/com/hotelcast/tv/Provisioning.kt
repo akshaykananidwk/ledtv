@@ -90,6 +90,17 @@ object Provisioning {
         if (line.startsWith("FAILED")) Log.e(SETUP_TAG, line) else Log.i(SETUP_TAG, line)
     }
 
+    /**
+     * Saves the values, registers through [Registrar] and logs `REGISTERED room=…` / `FAILED …` with
+     * [SETUP_TAG] — shared by the bulk-tool extras and QR setup.
+     */
+    suspend fun saveAndRegister(context: Context, r: Request): RegisterOutcome {
+        saveFields(r)
+        val outcome = Registrar.register(context.applicationContext, r.serverUrl, r.apiBase, r.room, r.key)
+        logResult(if (outcome.ok) "REGISTERED room=${outcome.room}" else "FAILED ${outcome.message}")
+        return outcome
+    }
+
     /** Stores the values without registering (fields are pre-filled on the setup screen). */
     fun saveFields(r: Request) {
         Prefs.serverUrl = r.serverUrl

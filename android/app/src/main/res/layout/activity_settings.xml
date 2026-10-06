@@ -117,6 +117,18 @@
                     android:text="@string/back_to_player" />
             </LinearLayout>
 
+            <LinearLayout
+                android:id="@+id/resetup_row"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <Button
+                    android:id="@+id/btn_resetup_qr"
+                    style="@style/SettingsButton"
+                    android:text="@string/resetup_qr" />
+            </LinearLayout>
+
             <TextView
                 android:id="@+id/status_message"
                 android:layout_width="match_parent"
