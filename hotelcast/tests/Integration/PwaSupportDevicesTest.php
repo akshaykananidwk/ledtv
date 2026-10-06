@@ -638,7 +638,6 @@ final class PwaSupportDevicesTest extends TestCase
 
         [$s, , $html] = $m1->get('push.php');
         $this->assertSame(200, $s);
-        $this->assertStringContainsString('Linux', $html . 'Linux');
         $this->assertFalse(TestEnv::hasPhpError($html));
         [$s, $j] = $m1->ajax('push_unsubscribe', ['endpoint' => $ep]);
         $this->assertSame(1, $j['data']['removed']);

@@ -120,7 +120,7 @@ final class TemplatesTest extends TestCase
             $this->assertStringNotContainsString('<script', $html, $id);
             $this->assertStringNotContainsString('<img', $html, $id);
             $this->assertStringNotContainsString('javascript:', $html, $id);
-            $this->assertStringNotContainsString('</style><', $html, $id);
+            $this->assertSame(1, substr_count($html, '</style>'), $id . ' colour cannot close the style block');
             $this->assertStringContainsString('&lt;script&gt;alert(1)&lt;/script&gt;', $html, $id . ' text shown escaped');
         }
     }
