@@ -165,7 +165,7 @@ $config = [
 <title><?= e($data['hotel']['name']) ?> · <?= e(I18n::translate('Room', $lang)) ?> <?= e($data['room']['number']) ?></title>
 <link rel="stylesheet" href="<?= e(asset('guest/guest.css')) ?>">
 <link rel="stylesheet" href="<?= e(base_url('g/theme.php') . '?c=' . rawurlencode(ltrim($color, '#'))) ?>">
-<script type="application/json" id="gConfig"><?= json_embed($config) ?></script>
+<script type="application/json" id="gConfig"><?= json_encode($config, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_INVALID_UTF8_SUBSTITUTE) ?: '{}' ?></script>
 <script src="<?= e(asset('guest/guest.js')) ?>" defer></script>
 </head>
 <body>

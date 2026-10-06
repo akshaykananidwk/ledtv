@@ -223,7 +223,8 @@ final class MigrationUpgradeTest extends TestCase
             $pdo->exec('ALTER TABLE rooms ADD COLUMN hotel_id INT UNSIGNED NOT NULL DEFAULT 1 AFTER id');
             $pdo->exec('ALTER TABLE rooms DROP INDEX uq_room_number, ADD UNIQUE KEY uq_rooms_hotel_number (hotel_id, room_number)');
             $pdo->exec('ALTER TABLE system_settings ADD COLUMN hotel_id INT UNSIGNED NOT NULL DEFAULT 1 FIRST');
-            $this->assertSame(['002_multitenancy_upgrade.php'], Migrator::migrate());
+            // 002's upgrade step resumes first; later module migrations (003+) follow.
+            $this->assertSame('002_multitenancy_upgrade.php', Migrator::migrate()[0] ?? null);
             $this->assertSame(['hotel_id', 'setting_key'], Migrator::indexColumns($pdo, 'system_settings', 'PRIMARY'));
             $this->assertTrue(Migrator::hasForeignKey($pdo, 'devices', 'fk_devices_hotel'));
             // Running the upgrade step once more is harmless.

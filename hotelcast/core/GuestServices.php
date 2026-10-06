@@ -541,6 +541,7 @@ final class GuestServices
             'id' => (int) $o['id'],
             'status' => $o['status'],
             'created_at' => iso_time((string) $o['created_at']),
+            'created_label' => date('h:i A', (int) strtotime((string) $o['created_at'])),
             'total' => round((float) $o['total'], 2),
             'notes' => (string) ($o['notes'] ?? ''),
             'items' => array_map(fn ($i) => ['item_id' => $i['item_id'] !== null ? (int) $i['item_id'] : null, 'name' => $i['name'], 'qty' => (int) $i['qty'], 'price' => round((float) $i['price'], 2)], $o['items'] ?? []),
@@ -555,8 +556,11 @@ final class GuestServices
             'type' => (string) $r['type_name'],
             'status' => $r['status'],
             'time' => $r['requested_time'] ? iso_time((string) $r['requested_time']) : null,
+            // Hotel-local labels (the guest's phone may be set to another time zone).
+            'time_label' => $r['requested_time'] ? date('h:i A', (int) strtotime((string) $r['requested_time'])) : null,
             'notes' => (string) ($r['notes'] ?? ''),
             'created_at' => iso_time((string) $r['created_at']),
+            'created_label' => date('h:i A', (int) strtotime((string) $r['created_at'])),
         ];
     }
 

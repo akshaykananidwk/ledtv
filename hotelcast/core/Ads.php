@@ -134,7 +134,7 @@ final class Ads
         if (!$contentId || !Tenant::find('content_items', $contentId)) {
             $errors[] = __('Choose the ad content.');
         }
-        [$targetType, $targetIds] = Broadcaster::parseTarget($in);
+        [$targetType, $targetIds] = Broadcaster::parseTarget($in + ['target_type' => 'all']);
         if ($targetType !== 'all' && !$targetIds) {
             $errors[] = __('Select at least one target.');
         }
@@ -171,7 +171,7 @@ final class Ads
             'freq_minutes' => $freqMinutes,
             'max_per_day' => $max === '' || (int) $max <= 0 ? null : min(100000, (int) $max),
             'priority' => max(-100, min(100, (int) ($in['priority'] ?? 0))),
-            'status' => in_array($in['status'] ?? 'active', self::STATUSES, true) ? $in['status'] : 'active',
+            'status' => in_array($in['status'] ?? 'active', self::STATUSES, true) ? (string) ($in['status'] ?? 'active') : 'active',
         ], $errors];
     }
 

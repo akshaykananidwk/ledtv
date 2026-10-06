@@ -117,7 +117,8 @@ $ranges = [
   </div>
 </form>
 
-<div class="row g-3 mb-3">
+<style>.an-kpis .stat-value{font-size:1.3rem;white-space:normal;overflow-wrap:anywhere}.an-kpis .stat-label{overflow-wrap:normal}@media (max-width:575.98px){.an-kpis .stat-card{padding:.75rem}.an-kpis .stat-card .stat-icon{display:none}}</style>
+<div class="row g-3 mb-3 an-kpis">
   <?php
   $kpis = [
       ['bi-play-circle', 'bg-soft-primary', number_format($totPlays), __('Content plays'), 'plays'],
@@ -130,7 +131,7 @@ $ranges = [
       $kpis[] = ['bi-door-closed', 'bg-soft-secondary', $occ['average'] . ' %', __('Average occupancy'), 'occupancy'];
   }
   foreach ($kpis as [$icon, $cls, $value, $label, $key]): ?>
-  <div class="col-6 col-md-4 col-xl-2"><div class="card h-100"><div class="stat-card">
+  <div class="col-6 col-md-4 col-xxl-2"><div class="card h-100"><div class="stat-card">
     <div class="stat-icon <?= e($cls) ?>"><i class="bi <?= e($icon) ?>"></i></div>
     <div class="min-w-0"><div class="stat-value" data-kpi="<?= e($key) ?>"><?= e($value) ?></div><div class="stat-label"><?= e($label) ?></div></div>
   </div></div></div>
@@ -250,7 +251,7 @@ $ranges = [
           <?php if ($gs['orders'] !== null): ?>
           <div class="col-6 col-md-3"><div class="border rounded p-2"><div class="fs-4 fw-bold" data-kpi="orders"><?= (int) $gs['orders']['count'] ?></div><div class="small text-muted"><?= e(__('Room service orders')) ?></div></div></div>
           <div class="col-6 col-md-3"><div class="border rounded p-2"><div class="fs-4 fw-bold"><?= $gs['orders']['avg_delivery_min'] !== null ? e((string) $gs['orders']['avg_delivery_min']) : '–' ?></div><div class="small text-muted"><?= e(__('Avg. delivery (min)')) ?></div></div></div>
-          <div class="col-6 col-md-3"><div class="border rounded p-2"><div class="fs-4 fw-bold"><?= e(money($gs['orders']['revenue'])) ?></div><div class="small text-muted"><?= e(__('Order value')) ?></div></div></div>
+          <div class="col-6 col-md-3"><div class="border rounded p-2"><div class="fs-4 fw-bold"><?= e(preg_replace('/\.00$/', '', money($gs['orders']['revenue']))) ?></div><div class="small text-muted"><?= e(__('Order value')) ?></div></div></div>
           <?php endif; ?>
           <?php if ($gs['feedback'] !== null): ?>
           <div class="col-6 col-md-3"><div class="border rounded p-2"><div class="fs-4 fw-bold" data-kpi="feedback"><?= $gs['feedback']['average'] !== null ? e((string) $gs['feedback']['average']) . ' ★' : '–' ?></div><div class="small text-muted"><?= e(__('Feedback (:n)', ['n' => $gs['feedback']['count']])) ?></div></div></div>

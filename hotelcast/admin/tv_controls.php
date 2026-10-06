@@ -92,15 +92,15 @@ function tvc_target(string $uid, string $label, string $confirm): string
           <input class="form-check-input" type="checkbox" role="switch" id="volume_night_enabled" name="volume_night_enabled" value="1"<?= $s('volume_night_enabled') === '1' ? ' checked' : '' ?>>
           <label class="form-check-label" for="volume_night_enabled"><?= e(__('Lower limit at night')) ?></label>
         </div>
-        <div class="col-4">
+        <div class="col-12 col-sm-4">
           <label class="form-label" for="volume_night_max"><?= e(__('Night maximum (%)')) ?></label>
           <input type="number" class="form-control" id="volume_night_max" name="volume_night_max" min="0" max="100" required value="<?= e($s('volume_night_max', '25')) ?>">
         </div>
-        <div class="col-4">
+        <div class="col-6 col-sm-4">
           <label class="form-label" for="volume_night_from"><?= e(__('Night from')) ?></label>
           <input type="time" class="form-control" id="volume_night_from" name="volume_night_from" required value="<?= e($s('volume_night_from', '22:00')) ?>">
         </div>
-        <div class="col-4">
+        <div class="col-6 col-sm-4">
           <label class="form-label" for="volume_night_to"><?= e(__('Night until')) ?></label>
           <input type="time" class="form-control" id="volume_night_to" name="volume_night_to" required value="<?= e($s('volume_night_to', '06:00')) ?>">
         </div>

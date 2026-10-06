@@ -522,6 +522,7 @@ final class GuestsTest extends TestCase
                 [$c, , $html] = $s->get($page);
                 $this->assertSame($code, $c, "$user → $page");
                 $this->assertFalse(TestEnv::hasPhpError($html), "$user $page: PHP error");
+                $this->assertStringNotContainsString('<h1>Something went wrong</h1>', $html, "$user $page: exception");
             }
         }
         // Reception lands on the front desk and sees only its menu items.
@@ -535,6 +536,8 @@ final class GuestsTest extends TestCase
             [$c, , $html] = (new AdminSession(self::$url, 'gMgr'))->get('services_setup.php?tab=' . $tab);
             $this->assertSame(200, $c, $tab);
             $this->assertFalse(TestEnv::hasPhpError($html));
+            $this->assertStringNotContainsString('<h1>Something went wrong</h1>', $html, $tab);
+            $this->assertStringContainsString('</html>', $html, $tab . ' rendered completely');
         }
         [$c, , $html] = $r->get('guests.php?tab=history');
         $this->assertSame(200, $c);

@@ -219,11 +219,11 @@ require __DIR__ . '/partials/header.php';
   <div class="col-6 col-md-4 col-xl-3 col-xxl-2" data-gd-room data-state="<?= $s ? 'occupied' : 'vacant' ?>" data-due="<?= $due ? '1' : '0' ?>" data-search="<?= e($search) ?>">
     <div class="card h-100 <?= $s ? ($due ? 'border-danger' : 'border-primary') : '' ?>">
       <div class="card-body p-2 d-flex flex-column">
-        <div class="d-flex justify-content-between align-items-start">
-          <div><span class="fs-5 fw-bold"><?= e($r['room_number']) ?></span>
-            <?php if ($r['floor'] !== null && $r['floor'] !== ''): ?><span class="small text-muted"> · <?= e(__('Floor')) ?> <?= e($r['floor']) ?></span><?php endif; ?></div>
+        <div class="d-flex justify-content-between align-items-start gap-1">
+          <span class="fs-5 fw-bold lh-sm"><?= e($r['room_number']) ?></span>
           <?php if ($s): ?><span class="badge text-bg-primary"><?= e(__('Occupied')) ?></span><?php else: ?><span class="badge text-bg-light border text-muted"><?= e(__('Vacant')) ?></span><?php endif; ?>
         </div>
+        <?php if ($r['floor'] !== null && $r['floor'] !== ''): ?><div class="small text-muted lh-sm"><?= e(__('Floor')) ?> <?= e($r['floor']) ?></div><?php endif; ?>
         <?php if ($s): ?>
           <div class="fw-semibold text-truncate mt-1" title="<?= e(trim($s['salutation'] . ' ' . $s['guest_name'])) ?>"><?= e(trim($s['salutation'] . ' ' . $s['guest_name'])) ?></div>
           <div class="small text-muted">

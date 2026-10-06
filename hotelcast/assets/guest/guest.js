@@ -64,7 +64,7 @@
     el.className = 'g-toast' + (bad ? ' g-bad' : '');
     el.hidden = false;
     clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => { el.hidden = true; }, 3500);
+    toastTimer = setTimeout(() => { el.hidden = true; }, 3000);
   }
 
   // ------------------------------------------------------------------ header / tabs
@@ -103,6 +103,7 @@
   function setTab(id, push) {
     if (!tabsList().some((x) => x[0] === id)) id = tabsList()[0][0];
     tab = id;
+    $('#gToast').hidden = true;
     if (push !== false && history.replaceState) history.replaceState(null, '', '#' + id);
     render();
     window.scrollTo(0, 0);
@@ -120,7 +121,7 @@
       return '<div class="g-card"><div class="g-order-head"><strong>' + esc(t('Order #:n', { n: o.id })) + '</strong>'
         + '<span class="g-status g-st-' + esc(o.status) + '">' + esc(t(stLabel[o.status] || o.status)) + '</span></div>'
         + (o.status !== 'cancelled' ? '<div class="g-steps">' + steps.map((s, i) => '<span class="' + (i <= idx ? 'on' : '') + '"></span>').join('') + '</div>' : '')
-        + '<div class="g-small">' + o.items.map((i) => esc(i.qty + '× ' + itemName(i))).join(', ') + ' · ' + esc(money(o.total)) + '</div></div>';
+        + '<div class="g-small">' + esc(o.created_label || '') + ' · ' + o.items.map((i) => esc(i.qty + '× ' + itemName(i))).join(', ') + ' · ' + esc(money(o.total)) + '</div></div>';
     }).join('');
   }
 
@@ -221,8 +222,8 @@
     h += '<h2 class="g-h2 g-mt">' + esc(t('Your requests')) + '</h2>';
     h += reqs.length ? '<div class="g-card">' + reqs.slice(0, 10).map((r) => {
       const type = types.find((x) => x.id === r.type_id);
-      const when = r.time ? ' · ⏰ ' + new Date(r.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
-      return '<div class="g-line"><div class="g-line-name">' + esc((type ? (type.icon + ' ' + L(type.name)) : r.type)) + '<div class="g-small">' + esc(new Date(r.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + when) + '</div></div>'
+      const when = r.time_label ? ' · ⏰ ' + r.time_label : '';
+      return '<div class="g-line"><div class="g-line-name">' + esc((type ? (type.icon + ' ' + L(type.name)) : r.type)) + '<div class="g-small">' + esc((r.created_label || '') + when) + '</div></div>'
         + '<span class="g-status g-st-' + esc(r.status) + '">' + esc(t(stLabel[r.status] || r.status)) + '</span></div>';
     }).join('') + '</div>' : '<div class="g-card g-empty">' + esc(t('No requests yet.')) + '</div>';
     main.innerHTML = h;
@@ -305,8 +306,9 @@
       if (D.wifi.password) h += '<div class="g-info-row"><span class="g-info-icon">🔑</span><div class="g-info-main"><div class="g-small">' + esc(t('Password')) + '</div><div class="g-info-val">' + esc(D.wifi.password) + '</div></div><button type="button" class="g-link-btn" data-copy="' + esc(D.wifi.password) + '">' + esc(t('Copy')) + '</button></div>';
     }
     h += '<div class="g-info-row"><span class="g-info-icon">🧳</span><div class="g-info-main"><div class="g-small">' + esc(t(D.checkout_date ? 'Checkout' : 'Checkout time')) + '</div><div class="g-info-val">' + esc((D.checkout_date ? D.checkout_date + ', ' : '') + D.checkout_time) + '</div></div></div>';
-    if (D.reception_phone) h += '<div class="g-info-row"><span class="g-info-icon">📞</span><div class="g-info-main"><div class="g-small">' + esc(t('Reception')) + '</div><div class="g-info-val">' + esc(D.reception_phone) + '</div></div><a class="g-btn" href="tel:' + esc(D.reception_phone.replace(/[^0-9+]/g, '')) + '">' + esc(t('Call reception')) + '</a></div>';
+    if (D.reception_phone) h += '<div class="g-info-row"><span class="g-info-icon">📞</span><div class="g-info-main"><div class="g-small">' + esc(t('Reception')) + '</div><div class="g-info-val">' + esc(D.reception_phone) + '</div></div></div>';
     h += '</div>';
+    if (D.reception_phone) h += '<a class="g-btn g-btn-block" href="tel:' + esc(D.reception_phone.replace(/[^0-9+]/g, '')) + '">📞 ' + esc(t('Call reception')) + '</a>';
     main.innerHTML = h;
   }
 

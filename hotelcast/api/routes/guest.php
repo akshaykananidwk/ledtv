@@ -51,8 +51,8 @@ return static function (string $route, array $parts, string $method): bool {
         if (!is_array($in)) {
             Api::error('VALIDATION_ERROR', 'Body must be a JSON object', 400);
         }
-        $limit('guest:w:tok:' . $tk, 20, 600, 'Too many requests from this room. Please call reception.');
-        $limit('guest:w:ip:' . $ip, 40, 600, 'Too many requests. Please call reception.');
+        $limit('guest:w:tok:' . $tk, 30, 600, 'Too many requests from this room. Please call reception.');
+        $limit('guest:w:ip:' . $ip, 60, 600, 'Too many requests. Please call reception.');
         try {
             $data = match ($action) {
                 'order' => GuestServices::placeOrder($ctx, $in),

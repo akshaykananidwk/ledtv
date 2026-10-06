@@ -203,7 +203,7 @@ if (is_post()) {
     redirect(admin_url('services_setup.php', $back));
 }
 
-$s = fn (string $k) => Guests::setting($k);
+$gset = fn (string $k) => Guests::setting($k);
 $newKey = null;
 if ($tab === 'pms') {
     Auth::startSession();
@@ -246,7 +246,7 @@ require __DIR__ . '/partials/header.php';
         <div class="card-header"><i class="bi bi-door-open"></i> <?= e(__('Check-in mode & vacant rooms')) ?></div>
         <div class="card-body">
           <div class="form-check form-switch mb-2">
-            <input class="form-check-input" type="checkbox" name="guest_checkin_mode" value="1" id="sCheckin" <?= $s('guest_checkin_mode') === '1' ? 'checked' : '' ?>>
+            <input class="form-check-input" type="checkbox" name="guest_checkin_mode" value="1" id="sCheckin" <?= $gset('guest_checkin_mode') === '1' ? 'checked' : '' ?>>
             <label class="form-check-label" for="sCheckin"><strong><?= e(__('Check-in mode')) ?></strong> — <?= e(__('TVs know whether a room is occupied')) ?></label>
           </div>
           <div class="ms-md-4 mb-3">
@@ -260,19 +260,19 @@ require __DIR__ . '/partials/header.php';
           <div class="row g-2">
             <div class="col-sm-6">
               <label class="form-label" for="sDur"><?= e(__('Welcome screen duration (seconds)')) ?></label>
-              <input class="form-control" type="number" min="5" max="600" name="guest_welcome_duration" id="sDur" value="<?= e($s('guest_welcome_duration')) ?>">
+              <input class="form-control" type="number" min="5" max="600" name="guest_welcome_duration" id="sDur" value="<?= e($gset('guest_welcome_duration')) ?>">
             </div>
             <div class="col-sm-6">
               <label class="form-label" for="sCo"><?= e(__('Standard checkout time')) ?></label>
-              <input class="form-control" type="time" name="guest_checkout_time" id="sCo" value="<?= e($s('guest_checkout_time')) ?>" required>
+              <input class="form-control" type="time" name="guest_checkout_time" id="sCo" value="<?= e($gset('guest_checkout_time')) ?>" required>
             </div>
             <div class="col-sm-6">
               <label class="form-label" for="sSsid"><?= e(__('Guest Wi-Fi name (SSID)')) ?></label>
-              <input class="form-control" name="guest_wifi_ssid" id="sSsid" maxlength="32" value="<?= e($s('guest_wifi_ssid')) ?>">
+              <input class="form-control" name="guest_wifi_ssid" id="sSsid" maxlength="32" value="<?= e($gset('guest_wifi_ssid')) ?>">
             </div>
             <div class="col-sm-6">
               <label class="form-label" for="sWpw"><?= e(__('Wi-Fi password')) ?></label>
-              <input class="form-control" name="guest_wifi_password" id="sWpw" maxlength="63" value="<?= e($s('guest_wifi_password')) ?>" autocomplete="off">
+              <input class="form-control" name="guest_wifi_password" id="sWpw" maxlength="63" value="<?= e($gset('guest_wifi_password')) ?>" autocomplete="off">
             </div>
           </div>
         </div>
@@ -283,16 +283,16 @@ require __DIR__ . '/partials/header.php';
         <div class="card-header"><i class="bi bi-alarm"></i> <?= e(__('Checkout reminder & privacy')) ?></div>
         <div class="card-body">
           <div class="form-check form-switch mb-2">
-            <input class="form-check-input" type="checkbox" name="guest_reminder_enabled" value="1" id="sRem" <?= $s('guest_reminder_enabled') === '1' ? 'checked' : '' ?>>
+            <input class="form-check-input" type="checkbox" name="guest_reminder_enabled" value="1" id="sRem" <?= $gset('guest_reminder_enabled') === '1' ? 'checked' : '' ?>>
             <label class="form-check-label" for="sRem"><?= e(__('Show a checkout reminder on the TV on checkout day')) ?></label>
           </div>
           <div class="row g-2 mb-2">
             <div class="col-sm-6">
               <label class="form-label" for="sRemT"><?= e(__('Show from')) ?></label>
-              <input class="form-control" type="time" name="guest_reminder_time" id="sRemT" value="<?= e($s('guest_reminder_time')) ?>" required>
+              <input class="form-control" type="time" name="guest_reminder_time" id="sRemT" value="<?= e($gset('guest_reminder_time')) ?>" required>
             </div>
             <div class="col-sm-6 d-flex align-items-end">
-              <div class="form-check"><input class="form-check-input" type="checkbox" name="guest_reminder_balance" value="1" id="sBal" <?= $s('guest_reminder_balance') === '1' ? 'checked' : '' ?>>
+              <div class="form-check"><input class="form-check-input" type="checkbox" name="guest_reminder_balance" value="1" id="sBal" <?= $gset('guest_reminder_balance') === '1' ? 'checked' : '' ?>>
                 <label class="form-check-label" for="sBal"><?= e(__('Include the bill summary (from front desk or PMS)')) ?></label></div>
             </div>
           </div>
@@ -300,7 +300,7 @@ require __DIR__ . '/partials/header.php';
           <div class="row g-2">
             <div class="col-sm-6">
               <label class="form-label" for="sRet"><?= e(__('Delete guest details after (days)')) ?></label>
-              <input class="form-control" type="number" min="1" max="3650" name="guest_retention_days" id="sRet" value="<?= e($s('guest_retention_days')) ?>">
+              <input class="form-control" type="number" min="1" max="3650" name="guest_retention_days" id="sRet" value="<?= e($gset('guest_retention_days')) ?>">
               <div class="form-text"><?= e(__('Name, phone and notes are removed automatically after checkout (DPDP).')) ?></div>
             </div>
           </div>
@@ -315,17 +315,17 @@ require __DIR__ . '/partials/header.php';
         <div class="card-header"><i class="bi bi-phone"></i> <?= e(__('Guest app (scan QR on TV)')) ?></div>
         <div class="card-body">
           <?php foreach (['guest_services_enabled' => __('Room-service menu & orders'), 'guest_requests_enabled' => __('Service requests (water, towels, wake-up call…)'), 'guest_feedback_enabled' => __('Feedback (stars + comment)'), 'guest_tv_notify' => __('Tell the guest on the TV when an order / request status changes'), 'guest_notify_external' => __('Also send new orders by email / WhatsApp (hotel notification settings)')] as $k => $label): ?>
-            <div class="form-check form-switch mb-1"><input class="form-check-input" type="checkbox" name="<?= e($k) ?>" value="1" id="s<?= e($k) ?>" <?= $s($k) === '1' ? 'checked' : '' ?>>
+            <div class="form-check form-switch mb-1"><input class="form-check-input" type="checkbox" name="<?= e($k) ?>" value="1" id="s<?= e($k) ?>" <?= $gset($k) === '1' ? 'checked' : '' ?>>
               <label class="form-check-label" for="s<?= e($k) ?>"><?= e($label) ?></label></div>
           <?php endforeach; ?>
           <div class="row g-2 mt-2">
             <div class="col-sm-6">
               <label class="form-label" for="sRp"><?= e(__('Reception phone (shown to guests)')) ?></label>
-              <input class="form-control" type="tel" name="guest_reception_phone" id="sRp" maxlength="30" value="<?= e($s('guest_reception_phone')) ?>">
+              <input class="form-control" type="tel" name="guest_reception_phone" id="sRp" maxlength="30" value="<?= e($gset('guest_reception_phone')) ?>">
             </div>
             <div class="col-sm-6">
               <label class="form-label" for="sGr"><?= e(__('Google review link')) ?></label>
-              <input class="form-control" type="url" name="guest_google_review_url" id="sGr" maxlength="500" placeholder="https://g.page/r/…/review" value="<?= e($s('guest_google_review_url')) ?>">
+              <input class="form-control" type="url" name="guest_google_review_url" id="sGr" maxlength="500" placeholder="https://g.page/r/…/review" value="<?= e($gset('guest_google_review_url')) ?>">
               <div class="form-text"><?= e(__('Shown after a rating of 4 or 5 stars.')) ?></div>
             </div>
           </div>
@@ -378,12 +378,12 @@ require __DIR__ . '/partials/header.php';
           </div>
         <?php endif; ?>
         <p class="mb-2"><?= e(__('Status')) ?>:
-          <?php if ($s('guest_pms_key_hash') !== ''): ?><span class="badge text-bg-success"><?= e(__('Active')) ?></span> <span class="text-muted small">…<?= e($s('guest_pms_key_hint')) ?></span>
+          <?php if ($gset('guest_pms_key_hash') !== ''): ?><span class="badge text-bg-success"><?= e(__('Active')) ?></span> <span class="text-muted small">…<?= e($gset('guest_pms_key_hint')) ?></span>
           <?php else: ?><span class="badge text-bg-secondary"><?= e(__('No key')) ?></span><?php endif; ?></p>
         <div class="d-flex gap-2 flex-wrap">
           <form method="post" class="m-0"><?= Csrf::field() ?><input type="hidden" name="op" value="pms_key"><input type="hidden" name="tab" value="pms">
-            <button class="btn btn-primary btn-sm"<?= $s('guest_pms_key_hash') !== '' ? ' data-confirm="' . e(__('Create a new key? The PMS must be updated with the new key.')) . '"' : '' ?>><i class="bi bi-arrow-repeat"></i> <?= e($s('guest_pms_key_hash') !== '' ? __('Rotate key') : __('Generate key')) ?></button></form>
-          <?php if ($s('guest_pms_key_hash') !== ''): ?>
+            <button class="btn btn-primary btn-sm"<?= $gset('guest_pms_key_hash') !== '' ? ' data-confirm="' . e(__('Create a new key? The PMS must be updated with the new key.')) . '"' : '' ?>><i class="bi bi-arrow-repeat"></i> <?= e($gset('guest_pms_key_hash') !== '' ? __('Rotate key') : __('Generate key')) ?></button></form>
+          <?php if ($gset('guest_pms_key_hash') !== ''): ?>
           <form method="post" class="m-0"><?= Csrf::field() ?><input type="hidden" name="op" value="pms_revoke"><input type="hidden" name="tab" value="pms">
             <button class="btn btn-outline-danger btn-sm" data-confirm="<?= e(__('Revoke the PMS key? The PMS can no longer check guests in or out.')) ?>"><i class="bi bi-x-circle"></i> <?= e(__('Revoke')) ?></button></form>
           <?php endif; ?>
