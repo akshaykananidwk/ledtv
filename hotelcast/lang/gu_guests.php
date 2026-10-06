@@ -267,7 +267,7 @@ return [
     'Webhook URL (for PMS that cannot send headers)' => 'Webhook URL (હેડર ન મોકલી શકે તેવા PMS માટે)',
     'Webhook field mapping' => 'Webhook ફીલ્ડ મેપિંગ',
     'Start from a preset' => 'તૈયાર નમૂનાથી શરૂ કરો',
-    'Generic (HotelCast field names)' => 'સામાન્ય (HotelCast ફીલ્ડ નામો)',
+    'Generic (standard field names)' => 'સામાન્ય (standard ફીલ્ડ નામો)',
     'Replace the current mapping with this preset?' => 'હાલનું મેપિંગ આ નમૂનાથી બદલવું છે?',
     'Load preset' => 'નમૂનો લોડ કરો',
     'Mapping (JSON: field → path in the PMS payload, e.g. "booking.guest.name")' => 'મેપિંગ (JSON: ફીલ્ડ → PMS ડેટામાં path, દા.ત. "booking.guest.name")',

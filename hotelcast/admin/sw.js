@@ -63,9 +63,9 @@ self.addEventListener('push', (event) => {
   try {
     data = event.data ? event.data.json() : {};
   } catch (e) {
-    data = { title: 'HotelCast', body: event.data ? event.data.text() : '' };
+    data = { title: 'Krishna Cloud LED TV', body: event.data ? event.data.text() : '' };
   }
-  const title = data.title || 'HotelCast';
+  const title = data.title || 'Krishna Cloud LED TV';
   const options = {
     body: data.body || '',
     icon: data.icon || ICON,

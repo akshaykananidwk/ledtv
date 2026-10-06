@@ -46,7 +46,7 @@ if (is_post()) {
                 Settings::setPlatform('platform_logo', '');
             }
             if (!$errors) {
-                foreach (['platform_name' => $P('platform_name', 120) ?: 'HotelCast', 'platform_color' => strtoupper($color),
+                foreach (['platform_name' => $P('platform_name', 120) ?: Branding::DEFAULT_PRODUCT, 'platform_color' => strtoupper($color),
                     'platform_support_phone' => $P('platform_support_phone', 40), 'platform_support_email' => $email,
                     'platform_footer' => $P('platform_footer', 200)] as $k => $v) {
                     Settings::setPlatform($k, $v);

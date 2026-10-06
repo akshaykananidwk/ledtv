@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">HotelCast TV</string>
-    <string name="device_admin_description">HotelCast को टीवी को कियोस्क मोड में लॉक करने, अपडेट अपने आप इंस्टॉल करने और टीवी को दूर से रीबूट करने की अनुमति देता है।</string>
+    <string name="app_name">Krishna Cloud LED TV</string>
+    <string name="device_admin_description">Krishna Cloud LED TV को टीवी को कियोस्क मोड में लॉक करने, अपडेट अपने आप इंस्टॉल करने और टीवी को दूर से रीबूट करने की अनुमति देता है।</string>
 
     <string name="connecting">सर्वर से जुड़ रहा है…</string>
     <string name="waiting_for_content">सामग्री की प्रतीक्षा है…</string>
@@ -18,8 +18,8 @@
     <string name="ok">ठीक है</string>
     <string name="cancel">रद्द करें</string>
 
-    <string name="settings_title">HotelCast TV – सेटिंग्स</string>
-    <string name="setup_title">HotelCast TV – पहली बार सेटअप</string>
+    <string name="settings_title">Krishna Cloud LED TV – सेटिंग्स</string>
+    <string name="setup_title">Krishna Cloud LED TV – पहली बार सेटअप</string>
     <string name="setup_hint">सर्वर का पता, कमरा नंबर और होटल की पंजीकरण कुंजी (Admin → Settings → Devices) दर्ज करें, फिर “सहेजें और पंजीकरण करें” चुनें।</string>
     <string name="server_url">सर्वर URL</string>
     <string name="server_url_hint">जैसे https://hotel.com/hotelcast या http://192.168.1.10/hotelcast</string>
@@ -61,7 +61,7 @@
     <string name="info_network">नेटवर्क</string>
 
     <string name="service_channel">बैकग्राउंड सिंक</string>
-    <string name="service_running">HotelCast होटल सर्वर से जुड़ा है</string>
+    <string name="service_running">Krishna Cloud LED TV होटल सर्वर से जुड़ा है</string>
     <string name="update_installing">अपडेट %1$s इंस्टॉल हो रहा है…</string>
 
     <string name="guest_welcome_title">%1$s, आपका स्वागत है</string>
@@ -126,7 +126,7 @@
     <string name="qr_btn_wifi">Wi-Fi सेटिंग्स खोलें</string>
     <string name="qr_btn_try_again">फिर कोशिश करें</string>
     <string name="qr_change_server_title">इस टीवी का सर्वर</string>
-    <string name="qr_change_server_hint">केवल अपने HotelCast सर्वर वाले होटलों के लिए। “डिफ़ॉल्ट उपयोग करें” = %1$s</string>
+    <string name="qr_change_server_hint">केवल अपने Krishna Cloud LED TV सर्वर वाले होटलों के लिए। “डिफ़ॉल्ट उपयोग करें” = %1$s</string>
     <string name="qr_use_default">डिफ़ॉल्ट उपयोग करें</string>
     <string name="qr_wifi_unavailable">इस टीवी पर Wi-Fi सेटिंग्स नहीं खोली जा सकतीं।</string>
     <string name="back_to_qr">QR सेटअप पर वापस</string>

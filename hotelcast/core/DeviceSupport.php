@@ -127,7 +127,7 @@ final class DeviceSupport
             throw new LengthException('state must be at most 64 KB');
         }
         $logs = mb_convert_encoding($logs, 'UTF-8', 'UTF-8');
-        $text = "=== HotelCast TV log bundle ===\n"
+        $text = "=== Krishna Cloud LED TV log bundle ===\n"
             . 'Received: ' . date('c') . "\nDevice: " . $device['device_uid'] . "\n\n=== App state ===\n" . $stateJson . "\n\n=== logcat ===\n" . $logs;
         return self::store($device, 'logs', 'txt', $text, [
             'meta' => json_out(['state' => (object) $state, 'log_bytes' => strlen($logs), 'lines' => substr_count($logs, "\n") + 1]),

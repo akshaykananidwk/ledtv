@@ -38,7 +38,7 @@ function setup_file_text(array $rooms): string
     }
     $hotel = setup_cell((string) Settings::get('hotel_name', ''));
     $lines = [
-        '# HotelCast bulk TV setup file - ' . $hotel . ' - ' . date('Y-m-d H:i'),
+        '# Krishna Cloud LED TV bulk setup file - ' . $hotel . ' - ' . date('Y-m-d H:i'),
         '# Contains the registration key of the hotel: keep it private and delete it after the setup.',
         '# One TV per line: tv_address,room_number. tv_address = TV IP (port 5555 is used) or IP:PORT shown in',
         '# Wireless debugging (Android 11+). Fill in the address where it is blank - rows without one are skipped.',
@@ -91,7 +91,7 @@ require __DIR__ . '/partials/header.php';
 ?>
 <div class="page-head">
   <div><h1><i class="bi bi-filetype-csv"></i> <?= e(__('TV setup file')) ?></h1>
-    <p class="lead-sm"><?= e(__('tvs.csv for the Windows bulk setup tool (tools/windows/HotelCast-Setup.bat).')) ?></p></div>
+    <p class="lead-sm"><?= e(__('tvs.csv for the Windows bulk setup tool (tools/windows/KrishnaCloud-Setup.bat).')) ?></p></div>
   <div class="d-flex gap-2 flex-wrap">
     <a href="<?= e(admin_url('rooms.php')) ?>" class="btn btn-light border"><i class="bi bi-arrow-left"></i> <?= e(__('Back')) ?></a>
     <?php if ($key !== '' && $rooms): ?><a href="<?= e(admin_url('setup_file.php', ['download' => 'all'])) ?>" class="btn btn-primary"><i class="bi bi-download"></i> <?= e(__('Download for all rooms')) ?></a><?php endif; ?>
@@ -102,9 +102,9 @@ require __DIR__ . '/partials/header.php';
 <?php endif; ?>
 <div class="hint-box mb-3 small">
   <ol class="mb-0 ps-3">
-    <li><?= e(__('Download the file and put it next to HotelCast-Setup.bat and the TV app APK on a Windows PC in the hotel network.')) ?></li>
+    <li><?= e(__('Download the file and put it next to KrishnaCloud-Setup.bat and the TV app APK on a Windows PC in the hotel network.')) ?></li>
     <li><?= e(__('Fill in the IP address of each TV where it is blank (TV: Settings → Network). Android 11+ TVs: use IP:PORT from Developer options → Wireless debugging.')) ?></li>
-    <li><?= e(__('Run HotelCast-Setup.bat. It installs the app and registers every TV with this server and its room number.')) ?></li>
+    <li><?= e(__('Run KrishnaCloud-Setup.bat. It installs the app and registers every TV with this server and its room number.')) ?></li>
   </ol>
   <div class="mt-2 text-danger"><i class="bi bi-shield-lock"></i> <?= e(__('The file contains the registration key. Keep it private and delete it after the setup.')) ?></div>
 </div>

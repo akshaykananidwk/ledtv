@@ -7,6 +7,9 @@ declare(strict_types=1);
  */
 final class Branding
 {
+    /** Product name shown everywhere unless a white-label name is set (Platform settings / reseller / hotel). */
+    public const DEFAULT_PRODUCT = 'Krishna Cloud LED TV';
+
     private static array $cache = [];
 
     /**
@@ -20,7 +23,7 @@ final class Branding
             return self::$cache[$hotelId];
         }
         $b = [
-            'product' => trim((string) Settings::platform('platform_name', 'HotelCast')) ?: 'HotelCast',
+            'product' => trim((string) Settings::platform('platform_name', self::DEFAULT_PRODUCT)) ?: self::DEFAULT_PRODUCT,
             'logo_path' => (string) Settings::platform('platform_logo', ''),
             'color' => clean_color((string) Settings::platform('platform_color', '#7B1FA2'), '#7B1FA2'),
             'support_phone' => (string) Settings::platform('platform_support_phone', ''),
@@ -83,7 +86,7 @@ final class Branding
     public static function installerName(): string
     {
         $n = trim((string) Config::get('brand_name', ''));
-        return $n !== '' ? $n : 'HotelCast';
+        return $n !== '' ? $n : self::DEFAULT_PRODUCT;
     }
 
     /** Darker shade of a #RRGGBB colour (for hover / gradients). */

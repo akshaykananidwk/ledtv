@@ -115,7 +115,7 @@ switch (true) {
         }
         header('Content-Type: application/vnd.android.package-archive');
         header('Content-Length: ' . filesize($file));
-        header('Content-Disposition: attachment; filename="HotelCast-' . preg_replace('/[^A-Za-z0-9._-]/', '', $apk['version_name']) . '.apk"');
+        header('Content-Disposition: attachment; filename="KrishnaCloud-TV-' . preg_replace('/[^A-Za-z0-9._-]/', '', $apk['version_name']) . '.apk"');
         header('X-Content-SHA256: ' . $apk['sha256']);
         readfile($file);
         exit;

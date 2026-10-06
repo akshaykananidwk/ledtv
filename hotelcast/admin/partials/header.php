@@ -8,7 +8,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/common.php';
 
 $user = $user ?? Auth::user();
-$pageTitle = $pageTitle ?? 'HotelCast';
+$pageTitle = $pageTitle ?? Branding::get()['product'];
 $activeNav = $activeNav ?? '';
 $extraScripts = $extraScripts ?? [];
 $extraStyles = $extraStyles ?? [];

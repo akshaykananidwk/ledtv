@@ -22,4 +22,5 @@ return [
     'Support' => 'सहायता',
     'Emergency' => 'आपातकाल',
     'Thank you' => 'धन्यवाद',
+    'TV management panel' => 'TV प्रबंधन पैनल',
 ];

@@ -1,3 +1,10 @@
+# 2.2.1 — product renamed to "Krishna Cloud LED TV" (2026-10-06)
+
+Visible name changed in the admin panel, login, installer, PWA, notifications, setup tool (`KrishnaCloud-Setup.bat`) and TV app label. Migration `011_product_name.php` replaces the old default name on existing servers and leaves custom white-label names unchanged. Package name and update key are unchanged, so installed TVs update in place.
+PHPUnit ✅ 367 tests, 0 failures · Android ✅ 142 tests, lint 0 errors, APK `KrishnaCloud-TV-2.2.1.apk` (code 8), same signing key.
+
+---
+
 # HotelCast 2.2.0 — Test summary (2026-10-06)
 
 | Area | Result |

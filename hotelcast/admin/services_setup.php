@@ -406,7 +406,7 @@ require __DIR__ . '/partials/header.php';
           <?= Csrf::field() ?><input type="hidden" name="op" value="pms_mapping"><input type="hidden" name="tab" value="pms">
           <div><label class="form-label small mb-0" for="pPreset"><?= e(__('Start from a preset')) ?></label>
             <select class="form-select form-select-sm" name="preset" id="pPreset">
-              <option value="generic"><?= e(__('Generic (HotelCast field names)')) ?></option>
+              <option value="generic"><?= e(__('Generic (standard field names)')) ?></option>
               <option value="ezee">eZee style</option><option value="hotelogix">Hotelogix style</option><option value="stayflexi">StayFlexi style</option>
             </select></div>
           <button class="btn btn-sm btn-outline-primary" data-confirm="<?= e(__('Replace the current mapping with this preset?')) ?>" data-confirm-safe="1"><?= e(__('Load preset')) ?></button>

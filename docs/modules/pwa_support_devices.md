@@ -143,7 +143,7 @@ managers, at most once per 6 h per hotel), `SupportCleanupTask` (daily).
 * **TV support** (manager+): list of TVs with crashes (7 days), logs, last screenshot, outdated app;
   per TV: *Take screenshot* / *Request logs* (the page waits for the upload), logs viewer / download,
   crash stacks, recent TV events.
-* **Rooms → Download setup file** (manager+): `tvs.csv` for `tools/windows/HotelCast-Setup.bat` —
+* **Rooms → Download setup file** (manager+): `tvs.csv` for `tools/windows/KrishnaCloud-Setup.bat` —
   lines `server,<url>`, `key,<registration key>`, `tv_address,room`, then one `<last known TV IP or
   blank>,<room>` per room (all rooms or a selection). Fill in blank addresses (the tool skips rows
   without one). The file contains the registration key.

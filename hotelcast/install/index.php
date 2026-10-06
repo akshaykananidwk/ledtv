@@ -13,7 +13,7 @@ require __DIR__ . '/Installer.php';
 if (is_file(HC_ROOT . '/installed.lock')) {
     http_response_code(403);
     echo '<!DOCTYPE html><meta charset="utf-8"><title>Already installed</title><body style="font-family:sans-serif;padding:40px">'
-        . '<h1>HotelCast is already installed</h1><p>The installer is locked. For security, delete the <code>/install</code> folder.</p>'
+        . '<h1>Krishna Cloud LED TV is already installed</h1><p>The installer is locked. For security, delete the <code>/install</code> folder.</p>'
         . '<p><a href="../admin/">Go to the admin panel →</a></p></body>';
     exit;
 }
@@ -229,7 +229,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $licKey = strtoupper(trim((string) ($_POST['license_key'] ?? '')));
                     $licServer = trim((string) ($_POST['license_server'] ?? ''));
                     if ($mode === 'standalone' && $licKey !== '' && !ContentManager::validUrl($licServer, ['https', 'http'])) {
-                        $errors[] = 'Enter the license server address (the provider\'s HotelCast URL), e.g. https://tv.provider.com/hotelcast/';
+                        $errors[] = 'Enter the license server address (the provider\'s server URL), e.g. https://tv.provider.com/hotelcast/';
                     }
                     if ($licKey !== '' && !preg_match('/^[A-Z0-9-]{8,64}$/', $licKey)) {
                         $errors[] = 'The license key looks wrong (letters, numbers and dashes).';
@@ -270,7 +270,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             'github' => (string) Settings::get('github_repo', ''),
                         ];
                         Version::write(['installed_at' => date('c')]);
-                        ActivityLog::add('installed', null, null, 'HotelCast ' . Version::current()['version'] . ' installed');
+                        ActivityLog::add('installed', null, null, 'Krishna Cloud LED TV ' . Version::current()['version'] . ' installed');
                         $S['finish_msg'] = Installer::finish();
                         $S['step'] = 7;
                     }
@@ -339,11 +339,11 @@ code{background:#f3e5f5;padding:2px 6px;border-radius:5px;font-size:.92em}
   </ol>
   <div class="card">
     <?php foreach ($errors as $err): ?><div class="alert err">✘ <?= e($err) ?></div><?php endforeach; ?>
-    <?php if (!is_https() && $step < 7): ?><div class="alert warn">⚠ You are not using HTTPS. It is strongly recommended to install an SSL certificate (free with Let's Encrypt on most hosts) before using HotelCast.</div><?php endif; ?>
+    <?php if (!is_https() && $step < 7): ?><div class="alert warn">⚠ You are not using HTTPS. It is strongly recommended to install an SSL certificate (free with Let's Encrypt on most hosts) before using Krishna Cloud LED TV.</div><?php endif; ?>
 
 <?php if ($step === 1): $checks = Installer::requirements(); $met = Installer::requirementsMet(); ?>
     <h2>Welcome! Let's check your server</h2>
-    <p class="lead">HotelCast needs PHP 8.1+, MySQL/MariaDB and a few standard PHP extensions. Everything else is automatic.</p>
+    <p class="lead">Krishna Cloud LED TV needs PHP 8.1+, MySQL/MariaDB and a few standard PHP extensions. Everything else is automatic.</p>
     <ul class="checks">
       <?php foreach ($checks as $c): $cls = $c['ok'] ? 'ok' : ($c['required'] ? 'bad' : 'warn'); ?>
         <li><span class="i <?= $cls ?>"><?= $c['ok'] ? '✔' : ($c['required'] ? '✘' : '!') ?></span><span><?= e($c['label']) ?><?= !$c['ok'] && !$c['required'] ? ' <em style="color:#999">(recommended)</em>' : '' ?></span></li>
@@ -419,8 +419,8 @@ code{background:#f3e5f5;padding:2px 6px;border-radius:5px;font-size:.92em}
         <div><label>Admin panel language</label><select name="language"><option value="en">English</option><option value="gu" <?= $f['language'] === 'gu' ? 'selected' : '' ?>>ગુજરાતી (Gujarati)</option></select></div>
       </div>
       <label>Weather city (for TV weather widget)</label><input type="text" name="weather_city" value="Dwarka">
-      <label>Product name <span style="font-weight:400;color:#888">(optional, white-label)</span></label><input type="text" name="brand_name" value="<?= e($f['brand_name'] ?? '') ?>" placeholder="HotelCast" maxlength="120">
-      <div class="hint">Replaces "HotelCast" on the login page, admin panel and TVs. Logo and colour: Admin → Platform settings.</div>
+      <label>Product name <span style="font-weight:400;color:#888">(optional, white-label)</span></label><input type="text" name="brand_name" value="<?= e($f['brand_name'] ?? '') ?>" placeholder="Krishna Cloud LED TV" maxlength="120">
+      <div class="hint">Replaces "Krishna Cloud LED TV" on the login page, admin panel and TVs. Logo and colour: Admin → Platform settings.</div>
       <label>Website address of this installation</label><input type="url" name="base_url" value="<?= e($f['base_url']) ?>" required>
       <div class="hint">TVs use this address to connect. Detected automatically — change only if you use a different domain.</div>
       <div class="btns"><button class="ghost" name="back" value="1" formnovalidate>← Back</button><button class="primary">Save →</button></div>
@@ -428,7 +428,7 @@ code{background:#f3e5f5;padding:2px 6px;border-radius:5px;font-size:.92em}
 
 <?php elseif ($step === 6): ?>
     <h2>Installation type &amp; license</h2>
-    <p class="lead">Choose <b>Platform (SaaS)</b> if this server hosts one or many hotels and is managed by you. Choose <b>Self-hosted</b> if this is a single hotel installation licensed from a HotelCast provider.</p>
+    <p class="lead">Choose <b>Platform (SaaS)</b> if this server hosts one or many hotels and is managed by you. Choose <b>Self-hosted</b> if this is a single hotel installation licensed from a Krishna Cloud LED TV provider.</p>
     <form method="post"><input type="hidden" name="_csrf" value="<?= e($csrf) ?>">
       <div class="row">
         <div><label>Installation type</label><select name="mode" id="instMode"><option value="saas">Platform (SaaS, no license needed)</option><option value="standalone">Self-hosted single hotel (license key)</option></select></div>
@@ -451,7 +451,7 @@ code{background:#f3e5f5;padding:2px 6px;border-radius:5px;font-size:.92em}
 
 <?php else: $sum = $S['summary'] ?? []; ?>
     <h2>🎉 Installation complete!</h2>
-    <p class="lead">HotelCast is ready. <?= e($S['finish_msg'] ?? '') ?></p>
+    <p class="lead">Krishna Cloud LED TV is ready. <?= e($S['finish_msg'] ?? '') ?></p>
     <div class="kv">
       <b>Admin panel</b><span><a href="<?= e(($sum['url'] ?? '../') . 'admin/') ?>"><?= e(($sum['url'] ?? '') . 'admin/') ?></a></span>
       <b>Admin username</b><span><?= e($sum['admin'] ?? '') ?></span>
@@ -461,7 +461,7 @@ code{background:#f3e5f5;padding:2px 6px;border-radius:5px;font-size:.92em}
       <b>TV server address</b><span><code><?= e($sum['url'] ?? '') ?></code></span>
       <b>TV registration key</b><span class="big"><?= e($sum['key'] ?? '') ?></span>
     </div>
-    <div class="alert ok" style="margin-top:18px">Next: install the HotelCast APK on each TV, open it, enter the server address, room number and the registration key above. The TV appears in Admin → Rooms within seconds.</div>
+    <div class="alert ok" style="margin-top:18px">Next: install the Krishna Cloud LED TV app (APK) on each TV, open it, enter the server address, room number and the registration key above. The TV appears in Admin → Rooms within seconds.</div>
     <div class="btns"><span></span><a class="btn primary" href="<?= e(($sum['url'] ?? '../') . 'admin/login.php') ?>">Open admin panel →</a></div>
     <?php $_SESSION = []; session_destroy(); ?>
 <?php endif; ?>

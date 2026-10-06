@@ -15,7 +15,7 @@ final class Settings
     private static array $cache = [];
 
     public const DEFAULTS = [
-        'hotel_name' => 'HotelCast Hotel',
+        'hotel_name' => 'Krishna Cloud LED TV',
         'hotel_logo' => '',
         'timezone' => 'Asia/Kolkata',
         'default_language' => 'en',
@@ -63,7 +63,7 @@ final class Settings
         'backup_keep' => '10',
         'last_tick' => '0',
         // White-label branding (#21)
-        'platform_name' => 'HotelCast',
+        'platform_name' => 'Krishna Cloud LED TV',
         'platform_logo' => '',
         'platform_color' => '#7B1FA2',
         'platform_support_phone' => '',

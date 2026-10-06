@@ -48,7 +48,7 @@ function signup_page(string $title, callable $body, array $brand, string $lang):
       <?php if ($brand['logo_url']): ?><img src="<?= e($brand['logo_url']) ?>" alt="" style="max-height:60px;max-width:200px" class="mb-2">
       <?php else: ?><div class="hc-brand-icon text-white mx-auto mb-2" style="width:52px;height:52px;font-size:1.6rem"><i class="bi bi-tv"></i></div><?php endif; ?>
       <h1 class="h4 mb-0"><?= e($title) ?></h1>
-      <div class="text-muted small"><?= e(__(':product TV management', ['product' => $brand['product']])) ?></div>
+      <div class="text-muted small"><?= e($brand['product']) ?></div>
     </div>
     <?php $body(); ?>
     <div class="text-center mt-4 small">

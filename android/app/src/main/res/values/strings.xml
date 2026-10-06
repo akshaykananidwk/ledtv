@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">HotelCast TV</string>
-    <string name="device_admin_description">Allows HotelCast to lock the TV in kiosk mode, install updates silently and reboot the TV remotely.</string>
+    <string name="app_name">Krishna Cloud LED TV</string>
+    <string name="device_admin_description">Allows Krishna Cloud LED TV to lock the TV in kiosk mode, install updates silently and reboot the TV remotely.</string>
 
     <!-- Player / main screen -->
     <string name="connecting">Connecting to server…</string>
@@ -21,8 +21,8 @@
     <string name="cancel">Cancel</string>
 
     <!-- Settings -->
-    <string name="settings_title">HotelCast TV – Settings</string>
-    <string name="setup_title">HotelCast TV – First time setup</string>
+    <string name="settings_title">Krishna Cloud LED TV – Settings</string>
+    <string name="setup_title">Krishna Cloud LED TV – First time setup</string>
     <string name="setup_hint">Enter the server address, the room number and the hotel registration key (Admin → Settings → Devices), then select “Save &amp; Register”.</string>
     <string name="server_url">Server URL</string>
     <string name="server_url_hint">e.g. https://hotel.com/hotelcast or http://192.168.1.10/hotelcast</string>
@@ -65,7 +65,7 @@
 
     <!-- Service notification -->
     <string name="service_channel">Background sync</string>
-    <string name="service_running">HotelCast is connected to the hotel server</string>
+    <string name="service_running">Krishna Cloud LED TV is connected to the hotel server</string>
     <string name="update_installing">Installing update %1$s…</string>
     <!-- V2: guest features (shown in guest.language when the server sends it) -->
     <string name="guest_welcome_title">Welcome %1$s</string>
@@ -131,7 +131,7 @@
     <string name="qr_btn_wifi">Open Wi-Fi settings</string>
     <string name="qr_btn_try_again">Try again</string>
     <string name="qr_change_server_title">Server for this TV</string>
-    <string name="qr_change_server_hint">Only for hotels with their own HotelCast server. “Use default” = %1$s</string>
+    <string name="qr_change_server_hint">Only for hotels with their own TV server. “Use default” = %1$s</string>
     <string name="qr_use_default">Use default</string>
     <string name="qr_wifi_unavailable">Wi-Fi settings cannot be opened on this TV.</string>
     <string name="qr_done_icon" translatable="false">✔</string>

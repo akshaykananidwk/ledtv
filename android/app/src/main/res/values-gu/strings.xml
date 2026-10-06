@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">HotelCast TV</string>
-    <string name="device_admin_description">HotelCast ને ટીવીને કિઓસ્ક મોડમાં લૉક કરવા, અપડેટ્સ આપમેળે ઇન્સ્ટોલ કરવા અને ટીવીને દૂરથી રીબૂટ કરવાની મંજૂરી આપે છે.</string>
+    <string name="app_name">Krishna Cloud LED TV</string>
+    <string name="device_admin_description">Krishna Cloud LED TV ને ટીવીને કિઓસ્ક મોડમાં લૉક કરવા, અપડેટ્સ આપમેળે ઇન્સ્ટોલ કરવા અને ટીવીને દૂરથી રીબૂટ કરવાની મંજૂરી આપે છે.</string>
 
     <string name="connecting">સર્વર સાથે જોડાઈ રહ્યું છે…</string>
     <string name="waiting_for_content">સામગ્રીની રાહ જોવાઈ રહી છે…</string>
@@ -18,8 +18,8 @@
     <string name="ok">બરાબર</string>
     <string name="cancel">રદ કરો</string>
 
-    <string name="settings_title">HotelCast TV – સેટિંગ્સ</string>
-    <string name="setup_title">HotelCast TV – પ્રથમ સેટઅપ</string>
+    <string name="settings_title">Krishna Cloud LED TV – સેટિંગ્સ</string>
+    <string name="setup_title">Krishna Cloud LED TV – પ્રથમ સેટઅપ</string>
     <string name="setup_hint">સર્વરનું સરનામું, રૂમ નંબર અને હોટેલની નોંધણી કી (Admin → Settings → Devices) દાખલ કરો, પછી “સાચવો અને નોંધણી કરો” પસંદ કરો.</string>
     <string name="server_url">સર્વર URL</string>
     <string name="server_url_hint">દા.ત. https://hotel.com/hotelcast અથવા http://192.168.1.10/hotelcast</string>
@@ -61,7 +61,7 @@
     <string name="info_network">નેટવર્ક</string>
 
     <string name="service_channel">પૃષ્ઠભૂમિ સમન્વય</string>
-    <string name="service_running">HotelCast હોટેલ સર્વર સાથે જોડાયેલ છે</string>
+    <string name="service_running">Krishna Cloud LED TV હોટેલ સર્વર સાથે જોડાયેલ છે</string>
     <string name="update_installing">અપડેટ %1$s ઇન્સ્ટોલ થઈ રહ્યું છે…</string>
     <string name="guest_welcome_title">%1$s, આપનું સ્વાગત છે</string>
     <string name="guest_press_any_key">આગળ વધવા રિમોટનું કોઈપણ બટન દબાવો</string>
@@ -125,7 +125,7 @@
     <string name="qr_btn_wifi">Wi-Fi સેટિંગ્સ ખોલો</string>
     <string name="qr_btn_try_again">ફરી પ્રયાસ કરો</string>
     <string name="qr_change_server_title">આ ટીવી માટે સર્વર</string>
-    <string name="qr_change_server_hint">ફક્ત પોતાનું HotelCast સર્વર ધરાવતી હોટેલો માટે. “ડિફૉલ્ટ વાપરો” = %1$s</string>
+    <string name="qr_change_server_hint">ફક્ત પોતાનું TV સર્વર ધરાવતી હોટેલો માટે. “ડિફૉલ્ટ વાપરો” = %1$s</string>
     <string name="qr_use_default">ડિફૉલ્ટ વાપરો</string>
     <string name="qr_wifi_unavailable">આ ટીવી પર Wi-Fi સેટિંગ્સ ખોલી શકાતી નથી.</string>
     <string name="back_to_qr">QR સેટઅપ પર પાછા</string>

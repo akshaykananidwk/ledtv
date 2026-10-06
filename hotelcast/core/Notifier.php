@@ -14,9 +14,9 @@ final class Notifier
             return;
         }
         $rooms = array_map(fn ($d) => $d['room_number'] ?? ('#' . $d['id']), $devices);
-        $hotel = (string) Settings::get('hotel_name', 'HotelCast');
+        $hotel = (string) Settings::get('hotel_name', Branding::DEFAULT_PRODUCT);
         $msg = sprintf('[%s] TV offline in room(s): %s (since %s)', $hotel, implode(', ', $rooms), date('d M H:i'));
-        self::send('HotelCast: ' . count($devices) . ' TV(s) offline', $msg);
+        self::send(Branding::get()['product'] . ': ' . count($devices) . ' TV(s) offline', $msg);
     }
 
     /** Called when a device that we reported offline starts polling again. */
@@ -30,8 +30,8 @@ final class Notifier
             return;
         }
         $room = $device['room_id'] ? (string) DB::value('SELECT room_number FROM rooms WHERE id = :id AND hotel_id = :h', ['id' => $device['room_id'], 'h' => (int) $device['hotel_id']]) : '#' . $device['id'];
-        $hotel = (string) Settings::get('hotel_name', 'HotelCast');
-        self::send('HotelCast: TV back online', sprintf('[%s] TV in room %s is back online (%s)', $hotel, $room, date('d M H:i')));
+        $hotel = (string) Settings::get('hotel_name', Branding::DEFAULT_PRODUCT);
+        self::send(Branding::get()['product'] . ': TV back online', sprintf('[%s] TV in room %s is back online (%s)', $hotel, $room, date('d M H:i')));
     }
 
     /** Devices offline for longer than the configured delay that were not yet reported. */
@@ -75,7 +75,7 @@ final class Notifier
     public static function email(string $toList, string $subject, string $message, string $from = '', string $fromName = ''): bool
     {
         $from = $from !== '' ? $from : (trim((string) Settings::get('notify_from_email', '')) ?: 'no-reply@' . (parse_url(base_url(), PHP_URL_HOST) ?: 'localhost'));
-        $fromName = preg_replace('/[^\p{L}\p{N} ._-]/u', '', $fromName !== '' ? $fromName : Branding::get()['product']) ?: 'HotelCast';
+        $fromName = preg_replace('/[^\p{L}\p{N} ._-]/u', '', $fromName !== '' ? $fromName : Branding::get()['product']) ?: 'Krishna Cloud';
         $ok = true;
         foreach (array_filter(array_map('trim', explode(',', $toList))) as $to) {
             if (!filter_var($to, FILTER_VALIDATE_EMAIL)) {

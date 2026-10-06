@@ -108,7 +108,7 @@ if ($action === 'new' || $action === 'edit') {
         <div class="col-12"><label class="form-label" for="r_no"><?= e(__('Notes')) ?></label><textarea class="form-control" id="r_no" name="notes" rows="2"><?= $v('notes') ?></textarea></div>
       </div></div></div>
       <div class="col-lg-5"><div class="card"><div class="card-header"><?= e(__('Branding for their hotels')) ?></div><div class="card-body row g-3">
-        <div class="col-sm-7"><label class="form-label" for="r_bn"><?= e(__('Product name')) ?></label><input class="form-control" id="r_bn" name="brand_name" value="<?= $v('brand_name') ?>" placeholder="HotelCast"></div>
+        <div class="col-sm-7"><label class="form-label" for="r_bn"><?= e(__('Product name')) ?></label><input class="form-control" id="r_bn" name="brand_name" value="<?= $v('brand_name') ?>" placeholder="Krishna Cloud LED TV"></div>
         <div class="col-sm-5"><label class="form-label" for="r_bc"><?= e(__('Colour')) ?></label><input class="form-control" id="r_bc" name="brand_color" value="<?= $v('brand_color') ?>" pattern="#[0-9A-Fa-f]{6}" placeholder="#7B1FA2"></div>
         <div class="col-sm-6"><label class="form-label" for="r_sp"><?= e(__('Support phone')) ?></label><input class="form-control" id="r_sp" name="support_phone" value="<?= $v('support_phone') ?>"></div>
         <div class="col-sm-6"><label class="form-label" for="r_se"><?= e(__('Support email')) ?></label><input class="form-control" type="email" id="r_se" name="support_email" value="<?= $v('support_email') ?>"></div>

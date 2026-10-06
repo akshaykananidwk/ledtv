@@ -88,7 +88,7 @@ $user = null;
           <div class="hc-brand-icon text-white mx-auto mb-2" style="width:56px;height:56px;font-size:1.7rem"><i class="bi bi-tv"></i></div>
         <?php endif; ?>
         <h1 class="h4 mb-0"><?= e($hotelName) ?></h1>
-        <div class="text-muted small"><?= e(__(':product TV management', ['product' => $brand['product']])) ?></div>
+        <div class="text-muted small"><?= e($brand['product']) ?></div>
       </div>
       <?= flash_show() ?>
       <?php if ($error): ?>

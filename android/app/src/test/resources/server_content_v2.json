@@ -9,7 +9,7 @@
     },
     "hotel": {
         "id": 1,
-        "name": "HotelCast Hotel",
+        "name": "Krishna Cloud LED TV",
         "logo_url": null
     },
     "playlist": {
@@ -36,7 +36,7 @@
             "type": "timetable",
             "title": "Dwarkadhish Darshan Timings / દ્વારકાધીશ દર્શન સમય",
             "duration": 20,
-            "html": "<!DOCTYPE html><html><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">\n<style>\n*{box-sizing:border-box}html,body{margin:0;height:100%;background:#4A0E0E;color:#FFF8E1;font-family:\"Noto Sans Gujarati\",\"Noto Sans\",Arial,sans-serif}\n.wrap{display:flex;flex-direction:column;height:100%;padding:3vh 5vw}\nh1{margin:0;text-align:center;font-size:6vh;color:#FFB300;letter-spacing:.05em}\nh2{margin:.5vh 0 2vh;text-align:center;font-size:3.2vh;font-weight:400;opacity:.85}\ntable{width:100%;border-collapse:collapse;font-size:3.6vh;flex:1}\nth{text-align:left;color:#FFB300;border-bottom:3px solid #FFB300;padding:1vh 2vw;font-size:3vh;text-transform:uppercase}\ntd{padding:1.1vh 2vw;border-bottom:1px solid rgba(255,255,255,.15)}\ntd.t{white-space:nowrap;font-weight:700;width:30%}\ntr.now{background:#FFB300;color:#000}tr.now td{font-weight:700}\ntr.past{opacity:.45}\n.foot{display:flex;justify-content:space-between;margin-top:2vh;font-size:2.6vh;opacity:.85}\n</style></head><body><div class=\"wrap\">\n<h1>શ્રી દ્વારકાધીશ મંદિર — દર્શન સમય</h1><h2>Shri Dwarkadhish Temple — Darshan Timings</h2>\n<table><thead><tr><th>Time / સમય</th><th>Darshan / દર્શન</th></tr></thead><tbody><tr data-time=\"06:30 - 07:00\"><td class=\"t\">06:30 - 07:00</td><td>Mangla Aarti / મંગળા આરતી</td></tr><tr data-time=\"07:00 - 08:00\"><td class=\"t\">07:00 - 08:00</td><td>Mangla Darshan / મંગળા દર્શન</td></tr><tr data-time=\"08:00 - 09:00\"><td class=\"t\">08:00 - 09:00</td><td>Abhishek Puja (Snan) / અભિષેક</td></tr><tr data-time=\"09:00 - 09:30\"><td class=\"t\">09:00 - 09:30</td><td>Shringar Darshan / શૃંગાર દર્શન</td></tr><tr data-time=\"10:30 - 11:00\"><td class=\"t\">10:30 - 11:00</td><td>Gwal Bhog / ગ્વાલ ભોગ</td></tr><tr data-time=\"11:30 - 12:00\"><td class=\"t\">11:30 - 12:00</td><td>Rajbhog / રાજભોગ</td></tr><tr data-time=\"12:00 - 13:00\"><td class=\"t\">12:00 - 13:00</td><td>Anosar (Temple closed) / અનોસર</td></tr><tr data-time=\"17:00 - 17:30\"><td class=\"t\">17:00 - 17:30</td><td>Uthappan Darshan / ઉત્થાપન</td></tr><tr data-time=\"17:30 - 19:15\"><td class=\"t\">17:30 - 19:15</td><td>Darshan / દર્શન</td></tr><tr data-time=\"19:30 - 19:45\"><td class=\"t\">19:30 - 19:45</td><td>Sandhya Aarti / સંધ્યા આરતી</td></tr><tr data-time=\"20:00 - 20:30\"><td class=\"t\">20:00 - 20:30</td><td>Shayan Aarti / શયન આરતી</td></tr><tr data-time=\"21:30\"><td class=\"t\">21:30</td><td>Darshan closes / દર્શન બંધ</td></tr></tbody></table>\n<div class=\"foot\"><span>Timings may change on festivals. / તહેવારોમાં સમય બદલાઈ શકે છે.</span><span>HotelCast Hotel · <b id=\"clk\"></b></span></div>\n</div>\n<script>\nfunction mins(s){var m=/(\\d{1,2})[:.](\\d{2})\\s*(am|pm|AM|PM)?/.exec(s||'');if(!m)return null;var h=+m[1],mi=+m[2],ap=(m[3]||'').toLowerCase();if(ap==='pm'&&h<12)h+=12;if(ap==='am'&&h===12)h=0;return h*60+mi;}\nfunction upd(){var d=new Date(),n=d.getHours()*60+d.getMinutes();var rows=[].slice.call(document.querySelectorAll('tbody tr'));var cur=-1;\nrows.forEach(function(r,i){var t=r.getAttribute('data-time');var parts=t.split(/\\s*[-–]\\s*/);var s=mins(parts[0]),e=parts[1]?mins(parts[1]):null;r.className='';\nif(s===null)return;if(e!==null){if(n>=s&&n<e)cur=i;else if(n>=e)r.className='past';}else{if(n>=s)cur=i;}});\nrows.forEach(function(r,i){if(i<cur&&!r.className)r.className='past';});if(cur>=0)rows[cur].className='now';\nvar h=d.getHours(),m=d.getMinutes(),ap=h>=12?'PM':'AM';h=h%12||12;document.getElementById('clk').textContent=h+':'+(m<10?'0':'')+m+' '+ap;}\nupd();setInterval(upd,30000);\n</script></body></html>",
+            "html": "<!DOCTYPE html><html><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">\n<style>\n*{box-sizing:border-box}html,body{margin:0;height:100%;background:#4A0E0E;color:#FFF8E1;font-family:\"Noto Sans Gujarati\",\"Noto Sans\",Arial,sans-serif}\n.wrap{display:flex;flex-direction:column;height:100%;padding:3vh 5vw}\nh1{margin:0;text-align:center;font-size:6vh;color:#FFB300;letter-spacing:.05em}\nh2{margin:.5vh 0 2vh;text-align:center;font-size:3.2vh;font-weight:400;opacity:.85}\ntable{width:100%;border-collapse:collapse;font-size:3.6vh;flex:1}\nth{text-align:left;color:#FFB300;border-bottom:3px solid #FFB300;padding:1vh 2vw;font-size:3vh;text-transform:uppercase}\ntd{padding:1.1vh 2vw;border-bottom:1px solid rgba(255,255,255,.15)}\ntd.t{white-space:nowrap;font-weight:700;width:30%}\ntr.now{background:#FFB300;color:#000}tr.now td{font-weight:700}\ntr.past{opacity:.45}\n.foot{display:flex;justify-content:space-between;margin-top:2vh;font-size:2.6vh;opacity:.85}\n</style></head><body><div class=\"wrap\">\n<h1>શ્રી દ્વારકાધીશ મંદિર — દર્શન સમય</h1><h2>Shri Dwarkadhish Temple — Darshan Timings</h2>\n<table><thead><tr><th>Time / સમય</th><th>Darshan / દર્શન</th></tr></thead><tbody><tr data-time=\"06:30 - 07:00\"><td class=\"t\">06:30 - 07:00</td><td>Mangla Aarti / મંગળા આરતી</td></tr><tr data-time=\"07:00 - 08:00\"><td class=\"t\">07:00 - 08:00</td><td>Mangla Darshan / મંગળા દર્શન</td></tr><tr data-time=\"08:00 - 09:00\"><td class=\"t\">08:00 - 09:00</td><td>Abhishek Puja (Snan) / અભિષેક</td></tr><tr data-time=\"09:00 - 09:30\"><td class=\"t\">09:00 - 09:30</td><td>Shringar Darshan / શૃંગાર દર્શન</td></tr><tr data-time=\"10:30 - 11:00\"><td class=\"t\">10:30 - 11:00</td><td>Gwal Bhog / ગ્વાલ ભોગ</td></tr><tr data-time=\"11:30 - 12:00\"><td class=\"t\">11:30 - 12:00</td><td>Rajbhog / રાજભોગ</td></tr><tr data-time=\"12:00 - 13:00\"><td class=\"t\">12:00 - 13:00</td><td>Anosar (Temple closed) / અનોસર</td></tr><tr data-time=\"17:00 - 17:30\"><td class=\"t\">17:00 - 17:30</td><td>Uthappan Darshan / ઉત્થાપન</td></tr><tr data-time=\"17:30 - 19:15\"><td class=\"t\">17:30 - 19:15</td><td>Darshan / દર્શન</td></tr><tr data-time=\"19:30 - 19:45\"><td class=\"t\">19:30 - 19:45</td><td>Sandhya Aarti / સંધ્યા આરતી</td></tr><tr data-time=\"20:00 - 20:30\"><td class=\"t\">20:00 - 20:30</td><td>Shayan Aarti / શયન આરતી</td></tr><tr data-time=\"21:30\"><td class=\"t\">21:30</td><td>Darshan closes / દર્શન બંધ</td></tr></tbody></table>\n<div class=\"foot\"><span>Timings may change on festivals. / તહેવારોમાં સમય બદલાઈ શકે છે.</span><span>Krishna Cloud LED TV · <b id=\"clk\"></b></span></div>\n</div>\n<script>\nfunction mins(s){var m=/(\\d{1,2})[:.](\\d{2})\\s*(am|pm|AM|PM)?/.exec(s||'');if(!m)return null;var h=+m[1],mi=+m[2],ap=(m[3]||'').toLowerCase();if(ap==='pm'&&h<12)h+=12;if(ap==='am'&&h===12)h=0;return h*60+mi;}\nfunction upd(){var d=new Date(),n=d.getHours()*60+d.getMinutes();var rows=[].slice.call(document.querySelectorAll('tbody tr'));var cur=-1;\nrows.forEach(function(r,i){var t=r.getAttribute('data-time');var parts=t.split(/\\s*[-–]\\s*/);var s=mins(parts[0]),e=parts[1]?mins(parts[1]):null;r.className='';\nif(s===null)return;if(e!==null){if(n>=s&&n<e)cur=i;else if(n>=e)r.className='past';}else{if(n>=s)cur=i;}});\nrows.forEach(function(r,i){if(i<cur&&!r.className)r.className='past';});if(cur>=0)rows[cur].className='now';\nvar h=d.getHours(),m=d.getMinutes(),ap=h>=12?'PM':'AM';h=h%12||12;document.getElementById('clk').textContent=h+':'+(m<10?'0':'')+m+' '+ap;}\nupd();setInterval(upd,30000);\n</script></body></html>",
             "refresh_sec": 60
         },
         {
@@ -112,7 +112,7 @@
     "emergency": null,
     "power_off_mode": "standby",
     "branding": {
-        "product": "HotelCast",
+        "product": "Krishna Cloud LED TV",
         "logo_url": null,
         "color": "#7B1FA2",
         "support": null
@@ -121,14 +121,14 @@
         "name": "શ્રી Shah",
         "first_name": "Rajesh",
         "language": "gu",
-        "checkin_at": "2026-10-06T18:17:04+05:30",
+        "checkin_at": "2026-10-06T18:24:11+05:30",
         "checkout_at": "2026-10-06T23:59:00+05:30"
     },
     "welcome": {
         "show": true,
         "id": "stay-1",
         "title": "સ્વાગત છે શ્રી Rajesh Shah 🙏",
-        "message": "HotelCast Hotel માં આપનું હાર્દિક સ્વાગત છે. રૂમ 101 માં આપનું રોકાણ આનંદદાયક રહે!",
+        "message": "Krishna Cloud LED TV માં આપનું હાર્દિક સ્વાગત છે. રૂમ 101 માં આપનું રોકાણ આનંદદાયક રહે!",
         "wifi": {
             "ssid": "Hotel-Guest",
             "password": "pa;ss:wo\"rd"
@@ -142,7 +142,7 @@
     },
     "services": {
         "enabled": true,
-        "url": "http://127.0.0.1/g/T69HHrp6r9pXv2uQV7ri",
+        "url": "http://127.0.0.1/g/nGiKfzpdvpd9CoutLMG7",
         "label": "રૂમ સર્વિસ માટે સ્કેન કરો"
     },
     "guest_menu": [
@@ -151,21 +151,21 @@
             "type": "qr",
             "title": "રૂમ સર્વિસ",
             "icon": "food",
-            "url": "http://127.0.0.1/g/T69HHrp6r9pXv2uQV7ri"
+            "url": "http://127.0.0.1/g/nGiKfzpdvpd9CoutLMG7"
         },
         {
             "id": "requests",
             "type": "qr",
             "title": "વિનંતીઓ",
             "icon": "bell",
-            "url": "http://127.0.0.1/g/T69HHrp6r9pXv2uQV7ri#requests"
+            "url": "http://127.0.0.1/g/nGiKfzpdvpd9CoutLMG7#requests"
         },
         {
             "id": "feedback",
             "type": "qr",
             "title": "પ્રતિભાવ",
             "icon": "star",
-            "url": "http://127.0.0.1/g/T69HHrp6r9pXv2uQV7ri#feedback"
+            "url": "http://127.0.0.1/g/nGiKfzpdvpd9CoutLMG7#feedback"
         },
         {
             "id": "guide",
@@ -211,6 +211,6 @@
         "night_from": "22:00",
         "night_to": "06:00"
     },
-    "hash": "16bced116003b1738f30ceb6afedbc04972389e0",
-    "generated_at": "2026-10-06T18:17:04+05:30"
+    "hash": "06cf0257f7d2444183ea4ef04061e14b8cd38531",
+    "generated_at": "2026-10-06T18:24:11+05:30"
 }

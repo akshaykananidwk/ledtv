@@ -171,7 +171,7 @@ provisioning by adb extras (bulk setup).
 ---------------------------------------------------------------------------------------------------
 ## 7. Bulk TV setup tool — #23
 
-* `tools/windows/HotelCast-Setup.bat` + `HotelCast-Setup.ps1`: downloads adb (platform-tools) if
+* `tools/windows/KrishnaCloud-Setup.bat` + `KrishnaCloud-Setup.ps1`: downloads adb (platform-tools) if
   missing, reads `tvs.csv` (ip_or_ip:port, room_number) exported from Admin → Rooms → "Download setup
   file" (includes server URL + registration key), and for each TV: pair (asks for the 6-digit code shown
   on the TV, handles Android 11+ wireless debugging) or connect (older TVs, port 5555), install APK,

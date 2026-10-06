@@ -25,7 +25,7 @@ echo json_out([
     'id' => './',
     'name' => $name,
     'short_name' => $short,
-    'description' => __(':product TV management', ['product' => $product]),
+    'description' => $product . ' – ' . __('TV management panel'),
     'lang' => I18n::lang(),
     'dir' => 'ltr',
     'start_url' => './index.php?source=pwa',

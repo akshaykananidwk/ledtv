@@ -110,7 +110,7 @@ try {
             $tmp = $_FILES['backup']['tmp_name'];
             $zip = new ZipArchive();
             if ($zip->open($tmp) !== true || $zip->locateName('database.sql') === false) {
-                throw new RuntimeException(__('This is not a HotelCast backup file (database.sql missing).'));
+                throw new RuntimeException(__('This is not a Krishna Cloud LED TV backup file (database.sql missing).'));
             }
             $zip->close();
             $name = 'backup_uploaded_' . date('Y-m-d_H-i-s') . '.zip';

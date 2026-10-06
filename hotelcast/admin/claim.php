@@ -396,7 +396,7 @@ require __DIR__ . '/partials/header.php';
   <div class="card mb-3">
     <div class="card-body">
       <ol class="mb-3 ps-3">
-        <li><?= e(__('Install the HotelCast app on the TV and open it. The TV shows a QR code and a 6-character code.')) ?></li>
+        <li><?= e(__('Install the Krishna Cloud LED TV app on the TV and open it. The TV shows a QR code and a 6-character code.')) ?></li>
         <li><?= e(__('Scan the QR code with your phone camera — this page opens with the TV already selected.')) ?></li>
         <li><?= e(__('Or type the code from the TV screen here:')) ?></li>
       </ol>

@@ -10,6 +10,7 @@ return [
     ':n invoices created for :p.' => ':p માટે :n ઇન્વૉઇસ બનાવ્યા.',
     ':n overdue' => ':n મુદત વીતી',
     ':n unpaid' => ':n બાકી',
+    'TV management panel' => 'TV વ્યવસ્થાપન પેનલ',
     ':product TV management' => ':product TV વ્યવસ્થાપન',
     'A hotel that was suspended for non-payment is reactivated automatically.' => 'ચુકવણી ન થવાથી બંધ થયેલી હોટેલ આપમેળે ફરી ચાલુ થઈ જશે.',
     'A plan with this name already exists.' => 'આ નામનો પ્લાન પહેલેથી છે.',

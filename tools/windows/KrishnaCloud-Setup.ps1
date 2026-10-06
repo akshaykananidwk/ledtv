@@ -1,18 +1,18 @@
 ﻿<#
-  HotelCast bulk TV setup tool (Windows PowerShell 5.1+).
+  Krishna Cloud LED TV bulk setup tool (Windows PowerShell 5.1+).
 
   For every TV listed in tvs.csv it:
     1. connects with adb (pairs first on Android 11+ "Wireless debugging" TVs - asks for the 6-digit code)
-    2. installs / updates the HotelCast APK found in this folder
+    2. installs / updates the Krishna Cloud LED TV APK found in this folder
     3. removes extra Android users (Kids / guest profiles) - required for device owner
     4. checks Google accounts (device owner is impossible while an account exists)
-    5. makes HotelCast the device owner (kiosk, real standby/wake, silent updates, reboot)
+    5. makes the TV app the device owner (kiosk, real standby/wake, silent updates, reboot)
     6. allows auto-start (SYSTEM_ALERT_WINDOW)
     7. sends server address, room number and registration key to the app and waits until the TV
        has registered with the server
   and writes a colour summary plus a log file.
 
-  Usage: double-click HotelCast-Setup.bat   (or: powershell -ExecutionPolicy Bypass -File HotelCast-Setup.ps1 [-Csv tvs.csv])
+  Usage: double-click KrishnaCloud-Setup.bat   (or: powershell -ExecutionPolicy Bypass -File KrishnaCloud-Setup.ps1 [-Csv tvs.csv])
 #>
 param(
     [string]$Csv = "",
@@ -111,10 +111,10 @@ foreach ($raw in Get-Content -Path $Csv -Encoding UTF8) {
 if (-not $Server -or -not $Key) { Log "tvs.csv must contain 'server,<url>' and 'key,<registration key>' lines." "Red"; exit 1 }
 if ($Tvs.Count -eq 0) { Log "No TVs in tvs.csv." "Red"; exit 1 }
 
-$Apk = Get-ChildItem -Path $Here -Filter "HotelCast-TV-*.apk" | Sort-Object LastWriteTime -Descending | Select-Object -First 1
-if (-not $Apk) { Log "Put HotelCast-TV-x.y.z.apk in this folder first. / APK ફાઇલ આ folder માં મૂકો." "Red"; exit 1 }
+$Apk = Get-ChildItem -Path $Here -Filter "*-TV-*.apk" | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+if (-not $Apk) { Log "Put KrishnaCloud-TV-x.y.z.apk in this folder first. / APK ફાઇલ આ folder માં મૂકો." "Red"; exit 1 }
 
-Title "HotelCast bulk setup: $($Tvs.Count) TV(s)" "HotelCast TV setup: $($Tvs.Count) TV"
+Title "Krishna Cloud LED TV bulk setup: $($Tvs.Count) TV(s)" "Krishna Cloud LED TV setup: $($Tvs.Count) TV"
 Log "Server: $Server"
 Log "APK:    $($Apk.Name)"
 Write-Host ""
@@ -177,7 +177,7 @@ foreach ($tv in $Tvs) {
         $ir = AdbRun @("-s", $serial, "install", "-r", "-g", $Apk.FullName) 300
         if ($ir.out -match "Success") { $res.Installed = "yes"; Log "  Installed." "Green" }
         elseif ($ir.out -match "INSTALL_FAILED_UPDATE_INCOMPATIBLE") {
-            $res.Note = "signature differs: uninstall old app first"; Log "  FAILED: a different HotelCast build is installed. Uninstall it on the TV first." "Red"
+            $res.Note = "signature differs: uninstall old app first"; Log "  FAILED: a different TV app build is installed. Uninstall it on the TV first." "Red"
         } else { $res.Note = "install failed"; Log "  Install failed: $($ir.out)" "Red" }
 
         # 2. device owner

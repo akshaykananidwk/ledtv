@@ -1,4 +1,6 @@
-# HotelCast — Hotel TV Remote Management System
+# Krishna Cloud LED TV — TV Remote Management System
+
+> Product name: **Krishna Cloud LED TV**. "HotelCast" remains the internal code name (folder `hotelcast/`, Android package `com.hotelcast.tv`). Changing those would break updates of TVs that are already installed.
 
 Control every Android TV in your hotel from one browser tab. When a TV is switched on, the
 HotelCast app opens full-screen and shows whatever the admin has pushed — **Dwarkadhish live

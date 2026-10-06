@@ -65,7 +65,7 @@
             android:textColor="@color/settings_text_dim"
             android:textSize="16sp"
             android:visibility="gone"
-            tools:text="HotelCast" />
+            tools:text="Krishna Cloud LED TV" />
     </LinearLayout>
 
     <!-- Overlay: logo, clock, weather (kept clear of the ticker bar by margins) -->

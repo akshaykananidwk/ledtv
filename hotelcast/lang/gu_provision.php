@@ -16,7 +16,7 @@ return [
     'Create new room' => 'નવો રૂમ બનાવો',
     'Find TV' => 'TV શોધો',
     'Has TV' => 'TV છે',
-    'Install the HotelCast app on the TV and open it. The TV shows a QR code and a 6-character code.' => 'TV માં HotelCast એપ ઇન્સ્ટોલ કરીને ખોલો. TV પર QR કોડ અને 6 અક્ષરનો કોડ દેખાશે.',
+    'Install the Krishna Cloud LED TV app on the TV and open it. The TV shows a QR code and a 6-character code.' => 'TV માં Krishna Cloud LED TV એપ ઇન્સ્ટોલ કરીને ખોલો. TV પર QR કોડ અને 6 અક્ષરનો કોડ દેખાશે.',
     'No TV is waiting right now.' => 'હાલમાં કોઈ TV રાહ જોતું નથી.',
     'No TV yet' => 'હજી TV નથી',
     'No rooms yet. Create the room below.' => 'હજી કોઈ રૂમ નથી. નીચે રૂમ બનાવો.',

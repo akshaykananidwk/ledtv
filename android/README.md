@@ -588,7 +588,7 @@ front automatically.
 
 ## 10. Bulk provisioning (setup tool / adb)
 
-The PC setup tool (`tools/windows/HotelCast-Setup.ps1`) configures TVs over adb. Either open the
+The PC setup tool (`tools/windows/KrishnaCloud-Setup.ps1`) configures TVs over adb. Either open the
 setup screen with extras:
 
 ```bash

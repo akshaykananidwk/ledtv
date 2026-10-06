@@ -166,7 +166,7 @@ if (is_post()) {
                         if (!$emails && $wa === '') {
                             flash('warning', __('Enter an email address or WhatsApp URL first.'));
                         } else {
-                            $res = Notifier::send('HotelCast: ' . __('Test notification'), sprintf('[%s] %s (%s)', Settings::get('hotel_name', 'HotelCast'), __('This is a test message from HotelCast.'), date('d M H:i')));
+                            $res = Notifier::send(Branding::get()['product'] . ': ' . __('Test notification'), sprintf('[%s] %s (%s)', Settings::get('hotel_name', Branding::DEFAULT_PRODUCT), __('This is a test message from Krishna Cloud LED TV.'), date('d M H:i')));
                             $parts = [];
                             foreach ($res as $ch => $ok) {
                                 $parts[] = ($ch === 'email' ? __('Email') : 'WhatsApp') . ': ' . ($ok ? __('sent') : __('failed'));
@@ -438,7 +438,7 @@ $saveBtn = '<div class="sticky-actions"><button class="btn btn-primary btn-lg"><
           <?php
           $last = Settings::int('last_tick', 0);
           $sys = [
-              'HotelCast' => Version::current()['version'] . (Version::current()['commit'] ? ' (' . substr((string) Version::current()['commit'], 0, 7) . ')' : ''),
+              Branding::get()['product'] => Version::current()['version'] . (Version::current()['commit'] ? ' (' . substr((string) Version::current()['commit'], 0, 7) . ')' : ''),
               'PHP' => PHP_VERSION,
               'MySQL' => (string) DB::value('SELECT VERSION()'),
               __('Server time') => date('Y-m-d H:i:s T'),

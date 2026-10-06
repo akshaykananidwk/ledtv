@@ -637,7 +637,7 @@ require __DIR__ . '/partials/header.php';
     <div class="flex-grow-1">
       <strong><?= e(__('How to connect a new TV')) ?></strong>
       <ol class="mb-1 small ps-3">
-        <li><?= e(__('Install the HotelCast app on the TV and open it.')) ?></li>
+        <li><?= e(__('Install the Krishna Cloud LED TV app on the TV and open it.')) ?></li>
         <li><?= e(__('Enter the server address:')) ?> <code><?= e(base_url()) ?></code> <button type="button" class="btn btn-xs btn-light border" data-copy="<?= e(base_url()) ?>"><i class="bi bi-clipboard"></i></button></li>
         <?php if ($canManage && !$limited): ?>
           <li><?= e(__('Enter the registration key:')) ?> <code><?= e((string) Settings::get('registration_key', '') ?: __('(not set — open Settings → Devices)')) ?></code>
