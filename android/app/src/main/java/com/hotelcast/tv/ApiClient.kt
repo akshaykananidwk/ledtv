@@ -49,6 +49,9 @@ object ServerUrl {
         builder.addPathSegment("api").addPathSegment("")
         return builder.build().toString()
     }
+
+    /** Site root for display / storage: "https://hotel.com/hotelcast/api/" → "https://hotel.com/hotelcast/". */
+    fun root(apiBase: String): String = if (apiBase.endsWith("/api/")) apiBase.removeSuffix("api/") else apiBase
 }
 
 object ApiClient {
@@ -65,7 +68,7 @@ object ApiClient {
         if (req.header("Accept") == null) builder.header("Accept", "application/json")
         builder.header("User-Agent", "HotelCastTV/${BuildConfig.VERSION_NAME} (Android ${android.os.Build.VERSION.RELEASE})")
         val path = req.url.encodedPath
-        val isPublic = path.endsWith("/device/register") || path.endsWith("/health")
+        val isPublic = path.endsWith("/device/register") || path.endsWith("/health") || path.contains("/provision/")
         if (!isPublic && Prefs.isInitialized && apiHost != null && req.url.host.equals(apiHost, ignoreCase = true)) {
             builder.header("X-Device-Id", Prefs.deviceId)
             if (!token.isNullOrBlank() && req.header("Authorization") == null) {

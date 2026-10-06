@@ -56,4 +56,15 @@ interface ApiService {
 
     @GET("health")
     suspend fun health(): Response<ApiEnvelope<HealthResponse>>
+
+    // ---- 2.1 QR setup (public: no Authorization / X-Device-Id) ----
+
+    @POST("provision/start")
+    suspend fun provisionStart(@Body body: ProvisionStartRequest): Response<ApiEnvelope<ProvisionStartResponse>>
+
+    @GET("provision/status")
+    suspend fun provisionStatus(
+        @Query("code") code: String,
+        @Query("secret") secret: String,
+    ): Response<ApiEnvelope<ProvisionStatusResponse>>
 }

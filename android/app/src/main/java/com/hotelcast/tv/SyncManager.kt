@@ -307,6 +307,7 @@ object SyncManager : CommandActions {
         Prefs.currentHash = hash
         _content.value = normalized
         normalized.branding?.product?.takeIf { it.isNotBlank() }?.let { if (Prefs.brandProduct != it) Prefs.brandProduct = it }
+        normalized.branding?.color?.takeIf { it.isNotBlank() }?.let { if (Prefs.brandColor != it) Prefs.brandColor = it }
         normalized.hotel?.name?.takeIf { it.isNotBlank() }?.let { if (Prefs.hotelName != it) Prefs.hotelName = it }
         PowerController.evaluate(normalized)
         if (normalized.isEmergency && !wasEmergency) bringPlayerToFront() // e.g. guest is in Live TV / HDMI

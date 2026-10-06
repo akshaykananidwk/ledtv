@@ -17,6 +17,11 @@ fun signingValue(propKey: String, envKey: String): String? =
 val releaseStoreFile = signingValue("storeFile", "HOTELCAST_KEYSTORE")
 val hasReleaseSigning = releaseStoreFile != null && rootProject.file(releaseStoreFile).exists()
 
+// Built-in server used by QR setup when nothing is configured yet. Override per build with
+// `-PhotelcastDefaultServer=https://hotel.example.com/hotelcast/` or in gradle.properties.
+val defaultServerUrl: String = (findProperty("hotelcastDefaultServer") as String?)
+    ?.trim()?.takeIf { it.isNotEmpty() } ?: "https://ledtv.akdwk.in/"
+
 android {
     namespace = "com.hotelcast.tv"
     compileSdk = 34
@@ -25,10 +30,15 @@ android {
         applicationId = "com.hotelcast.tv"
         minSdk = 21
         targetSdk = 34
-        versionCode = 4
-        versionName = "2.0.0"
+        versionCode = 5
+        versionName = "2.1.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
+        buildConfigField(
+            "String",
+            "DEFAULT_SERVER_URL",
+            "\"" + defaultServerUrl.replace("\\", "\\\\").replace("\"", "\\\"") + "\"",
+        )
     }
 
     signingConfigs {

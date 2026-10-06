@@ -388,3 +388,31 @@ data class ContentItem(
         const val TYPE_CLOCK = "clock"
     }
 }
+
+// ---- 2.1: QR setup (POST provision/start, GET provision/status) ----
+
+data class ProvisionStartRequest(
+    @SerializedName("device_id") val deviceId: String,
+    @SerializedName("model") val model: String? = null,
+    @SerializedName("app_version") val appVersion: String? = null,
+)
+
+data class ProvisionStartResponse(
+    /** Short code shown on the TV (6 characters). */
+    @SerializedName("code") val code: String? = null,
+    /** Only the TV knows it; required to read the status. */
+    @SerializedName("secret") val secret: String? = null,
+    /** URL encoded in the QR code (opens the admin panel's claim page). */
+    @SerializedName("claim_url") val claimUrl: String? = null,
+    @SerializedName("expires_in") val expiresIn: Int? = null,
+    @SerializedName("poll_interval") val pollInterval: Int? = null,
+)
+
+data class ProvisionStatusResponse(
+    /** pending | claimed | expired | used */
+    @SerializedName("status") val status: String? = null,
+    @SerializedName("server_url") val serverUrl: String? = null,
+    @SerializedName("room_number") val roomNumber: String? = null,
+    @SerializedName("registration_key") val registrationKey: String? = null,
+    @SerializedName("hotel_name") val hotelName: String? = null,
+)

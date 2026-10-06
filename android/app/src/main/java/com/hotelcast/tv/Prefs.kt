@@ -137,6 +137,11 @@ object Prefs {
         get() = sp.getString(K_BRAND_PRODUCT, "") ?: ""
         set(v) = sp.edit().putString(K_BRAND_PRODUCT, v).apply()
 
+    /** Branding colour (#RRGGBB) from content.branding.color; used by the QR setup screen. */
+    var brandColor: String
+        get() = sp.getString(K_BRAND_COLOR, "") ?: ""
+        set(v) = sp.edit().putString(K_BRAND_COLOR, v).apply()
+
     /** Hotel name from the register response / content. */
     var hotelName: String
         get() = sp.getString(K_HOTEL_NAME, "") ?: ""
@@ -155,6 +160,7 @@ object Prefs {
         "room_id" to roomId,
         "hotel_name" to hotelName,
         "brand_product" to brandProduct,
+        "brand_color" to brandColor,
         "poll_interval" to pollIntervalSec,
         "heartbeat_interval" to heartbeatIntervalSec,
         "pin_hash_known" to !pinHash.isNullOrBlank(),
@@ -208,4 +214,5 @@ object Prefs {
     private const val K_VOLUME_STAY = "volume_stay_applied"
     private const val K_BRAND_PRODUCT = "brand_product"
     private const val K_HOTEL_NAME = "hotel_name"
+    private const val K_BRAND_COLOR = "brand_color"
 }
