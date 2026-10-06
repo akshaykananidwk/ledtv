@@ -28,7 +28,7 @@
     return s;
   };
   const L = (obj) => (obj && (obj[lang] || obj.en)) || '';
-  const money = (v) => (D.currency || '₹') + ' ' + Number(v || 0).toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+  const money = (v) => (D.currency || '₹') + '\u00a0' + Number(v || 0).toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
   const main = $('#gMain');
 
   // ------------------------------------------------------------------ API

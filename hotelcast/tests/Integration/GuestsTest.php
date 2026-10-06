@@ -495,10 +495,12 @@ final class GuestsTest extends TestCase
         // Feature flag: plan without "guests" → 403
         $plan = DB::insert('plans', ['name' => 'Guests test plan', 'price_per_tv_month' => 0, 'features' => json_encode(['services'])]);
         DB::query('UPDATE hotels SET plan_id = :p WHERE id = :h', ['p' => $plan, 'h' => self::$b['hotel']]);
+        Tenant::forget();
         [$s, $j] = self::pms('GET', 'rooms', null, $keyB);
         $this->assertSame(403, $s);
         $this->assertSame('FEATURE_DISABLED', $j['error']['code']);
         DB::query('UPDATE hotels SET plan_id = NULL WHERE id = :h', ['h' => self::$b['hotel']]);
+        Tenant::forget();
         Guests::checkOut($sid);
         foreach (Guests::activeStays() as $st) {
             Guests::checkOut((int) $st['id']);

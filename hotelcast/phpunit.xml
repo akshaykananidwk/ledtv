@@ -14,6 +14,8 @@
             <file>tests/Integration/DeviceApiTest.php</file>
             <file>tests/Integration/AdminPanelTest.php</file>
             <file>tests/Integration/InstallerTest.php</file>
+            <file>tests/Integration/GuestsTest.php</file>
+            <file>tests/Integration/GuestServicesTest.php</file>
             <file>tests/Integration/UpdaterTest.php</file>
             <file>tests/Integration/TenancyTest.php</file>
             <file>tests/Integration/PlatformTest.php</file>

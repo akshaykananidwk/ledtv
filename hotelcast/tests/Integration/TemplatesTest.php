@@ -35,6 +35,14 @@ final class TemplatesTest extends TestCase
         TestEnv::writeConfig(HC_ROOT, self::$url);
     }
 
+    public static function tearDownAfterClass(): void
+    {
+        // Static per-process caches must not leak hotel rows (plans / status) into later test classes.
+        Tenant::forget();
+        ContentResolver::resetExtensions();
+        Templates::reset();
+    }
+
     protected function setUp(): void
     {
         Tenant::set(1);

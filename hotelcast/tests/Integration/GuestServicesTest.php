@@ -435,6 +435,7 @@ final class GuestServicesTest extends TestCase
         // Hotel B without the services module → its links are dead, admin pages refused.
         $plan = DB::insert('plans', ['name' => 'Guests only', 'price_per_tv_month' => 0, 'features' => json_encode(['guests'])]);
         DB::query('UPDATE hotels SET plan_id = :p WHERE id = :h', ['p' => $plan, 'h' => self::$b['hotel']]);
+        Tenant::forget();
         [$s] = self::api('GET', self::$b['tok']);
         $this->assertSame(404, $s);
         $bb = new AdminSession(self::$url, 'sBossB');
@@ -449,6 +450,7 @@ final class GuestServicesTest extends TestCase
         $this->assertArrayNotHasKey('services', $c);
         $this->assertArrayHasKey('welcome', $c);
         DB::query('UPDATE hotels SET plan_id = NULL WHERE id = :h', ['h' => self::$b['hotel']]);
+        Tenant::forget();
 
         // Suspended hotel → links dead
         DB::query("UPDATE hotels SET status = 'suspended' WHERE id = :h", ['h' => self::$b['hotel']]);
