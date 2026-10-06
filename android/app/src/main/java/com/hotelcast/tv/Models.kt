@@ -1,7 +1,12 @@
 package com.hotelcast.tv
 
 import com.google.gson.JsonObject
+import com.google.gson.TypeAdapter
+import com.google.gson.annotations.JsonAdapter
 import com.google.gson.annotations.SerializedName
+import com.google.gson.stream.JsonReader
+import com.google.gson.stream.JsonToken
+import com.google.gson.stream.JsonWriter
 
 /*
  * Data model of the HotelCast device API (docs/API.md). Every field is nullable with a
@@ -327,11 +332,26 @@ data class Weather(
     @SerializedName("icon") val icon: String? = null,
 )
 
+/**
+ * Scrolling text bar (`content.overlay.ticker`, null = no bar). Older servers send only text, speed
+ * and colours; every other field falls back to a default in [TickerSpec.from]. Numbers are read as
+ * Double and the flag leniently so a server sending `26.0`, `"1"` or `1` can never break parsing.
+ */
 data class Ticker(
     @SerializedName("text") val text: String? = null,
+    @SerializedName("messages") val messages: List<String?>? = null,
     @SerializedName("speed") val speed: Int? = null,
     @SerializedName("bg_color") val bgColor: String? = null,
     @SerializedName("text_color") val textColor: String? = null,
+    /** sp, 14..72, default 26. */
+    @SerializedName("font_size") val fontSize: Double? = null,
+    /** dp, 32..200, default 56 (grows when the font needs more room). */
+    @SerializedName("height") val height: Double? = null,
+    /** "bottom" (default) or "top". */
+    @SerializedName("position") val position: String? = null,
+    /** true (default): the content area shrinks so the bar never covers the video. */
+    @JsonAdapter(LenientBooleanAdapter::class)
+    @SerializedName("reserve_space") val reserveSpace: Boolean? = null,
 )
 
 data class Emergency(
@@ -416,3 +436,31 @@ data class ProvisionStatusResponse(
     @SerializedName("registration_key") val registrationKey: String? = null,
     @SerializedName("hotel_name") val hotelName: String? = null,
 )
+
+/**
+ * Boolean that also accepts what PHP backends tend to send: 1 / 0, "1" / "0", "true" / "false",
+ * "yes" / "no". Anything unrecognised (or an object / array) reads as null, i.e. "use the default".
+ */
+class LenientBooleanAdapter : TypeAdapter<Boolean?>() {
+    override fun write(out: JsonWriter, value: Boolean?) {
+        if (value == null) out.nullValue() else out.value(value)
+    }
+
+    override fun read(input: JsonReader): Boolean? = when (input.peek()) {
+        JsonToken.BOOLEAN -> input.nextBoolean()
+        JsonToken.NUMBER -> input.nextDouble() != 0.0
+        JsonToken.STRING -> when (input.nextString().trim().lowercase()) {
+            "1", "true", "yes", "on" -> true
+            "0", "false", "no", "off", "" -> false
+            else -> null
+        }
+        JsonToken.NULL -> {
+            input.nextNull()
+            null
+        }
+        else -> {
+            input.skipValue()
+            null
+        }
+    }
+}

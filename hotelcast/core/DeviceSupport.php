@@ -196,6 +196,7 @@ final class DeviceSupport
         if (!$dev) {
             throw new InvalidArgumentException(__('Device not found.'));
         }
+        Access::requireDevice($deviceId); // users limited to some TVs (403)
         // Collapse duplicate pending requests (the admin clicked twice).
         DB::query("UPDATE device_commands SET status = 'expired' WHERE device_id = :d AND command = :c AND status = 'pending'", ['d' => $deviceId, 'c' => $command]);
         $id = DB::insert('device_commands', [
@@ -216,6 +217,7 @@ final class DeviceSupport
         if (!$dev) {
             throw new InvalidArgumentException(__('Device not found.'));
         }
+        Access::requireDevice($deviceId);
         $cmd = DB::one('SELECT id, command, status, message, created_at FROM device_commands WHERE id = :id AND device_id = :d', ['id' => $commandId, 'd' => $deviceId]);
         if (!$cmd) {
             throw new InvalidArgumentException(__('Not found.'));

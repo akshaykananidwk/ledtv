@@ -56,7 +56,7 @@ try {
             ajax_ok(hc_dashboard_stats() + [
                 'activity' => array_map(fn ($a) => [
                     'user' => $a['username'], 'action' => $a['action'], 'details' => $a['details'], 'ago' => time_ago($a['created_at']),
-                ], DB::all('SELECT * FROM activity_logs WHERE hotel_id = :hid ORDER BY id DESC LIMIT 10', hid())),
+                ], hc_recent_activity(10)),
             ]);
 
         case 'room_status':
@@ -161,7 +161,7 @@ function schedule_events(string $start, string $end): array
     );
     $colors = ['scheduled' => '#2563eb', 'active' => '#16a34a', 'completed' => '#6b7280'];
     $events = [];
-    foreach ($rows as $b) {
+    foreach (array_filter($rows, [Access::class, 'canBroadcast']) as $b) { // limited users: only their schedules
         $base = [
             'title' => $b['title'] . ' · ' . Broadcaster::describeTarget($b['target_type'], $b['target_ids']),
             'url' => admin_url('schedule.php', ['action' => 'edit', 'id' => $b['id']]),

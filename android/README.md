@@ -9,9 +9,13 @@ in [`../docs/API.md`](../docs/API.md).
 | | |
 |---|---|
 | Package / applicationId | `com.hotelcast.tv` |
-| Version | 2.1.0 (versionCode 5) |
+| Version | 2.2.0 (versionCode 7) |
 | Android | 5.0 (API 21) and newer, targetSdk 34 |
-| Signed release APK | `release/HotelCast-TV-2.1.0.apk` (same signing key as 1.x / 2.0, so OTA `UPDATE_APP` from older versions works) |
+| Signed release APK | `release/HotelCast-TV-2.2.0.apk` (same signing key as 1.x / 2.0 / 2.1, so OTA `UPDATE_APP` from older versions works) |
+
+What is new in 2.2: a separate **ticker bar** (bottom or top) whose text, colours, speed, font size
+and height come from the server per TV. By default the content area shrinks so the bar never cuts
+or covers the video (see [Ticker bar (2.2)](#ticker-bar-22)).
 
 What is new in 2.1: **QR setup** — a new TV shows a QR code and a 6-character code; staff scan it
 with a phone, pick the room in the admin panel and the TV registers itself. Nothing is typed on the
@@ -67,7 +71,7 @@ If that file does not exist, it falls back to environment variables (useful on C
 Check a signature with:
 
 ```bash
-$ANDROID_HOME/build-tools/34.0.0/apksigner verify --print-certs release/HotelCast-TV-2.1.0.apk
+$ANDROID_HOME/build-tools/34.0.0/apksigner verify --print-certs release/HotelCast-TV-2.2.0.apk
 ```
 
 ---
@@ -83,12 +87,12 @@ $ANDROID_HOME/build-tools/34.0.0/apksigner verify --print-certs release/HotelCas
 3. From a PC on the same network:
    ```bash
    adb connect 192.168.1.45:5555          # the TV's IP address
-   adb install -r HotelCast-TV-2.1.0.apk
+   adb install -r HotelCast-TV-2.2.0.apk
    ```
 
 ### b) With a USB pen drive and a file manager
 
-1. Copy `HotelCast-TV-2.1.0.apk` to a FAT32/exFAT pen drive and plug it into the TV.
+1. Copy `HotelCast-TV-2.2.0.apk` to a FAT32/exFAT pen drive and plug it into the TV.
 2. Install a file manager on the TV, such as *File Commander*, *X-plore* or *FX File Explorer*.
 3. Allow unknown sources:
    * Android 8 and newer: *Settings → Apps → Security & restrictions → Unknown sources* (or *Install
@@ -218,7 +222,7 @@ Device-owner mode enables these features:
 Setup: the TV must have **no Google or other accounts** (factory reset it if needed). Then run:
 
 ```bash
-adb install -r HotelCast-TV-2.1.0.apk
+adb install -r HotelCast-TV-2.2.0.apk
 adb shell dpm set-device-owner com.hotelcast.tv/.AdminReceiver
 adb shell am start -n com.hotelcast.tv/.MainActivity
 ```
@@ -361,7 +365,51 @@ after 60 s.
 | `off`, `screen_on:false`, or `SCREEN_OFF` command | TV goes to standby (see *TV power* below); black screen as fallback |
 | `suspended` (hotel suspended / licence expired) | Polite full-screen message (`suspended.title/message`, branding logo and support number); nothing plays |
 | `empty` (or no playable items) | Hotel logo (or branding logo), "Welcome to …", the room number and the product name |
-| anything else | Playlist plus overlay (logo top-left, clock and weather top-right, ticker bottom) |
+| anything else | Playlist plus overlay (logo top-left, clock and weather top-right) and the ticker bar (see below) |
+
+### Ticker bar (2.2)
+
+A scrolling text bar whose text, colours and size can differ per TV. The server sends it as
+`content.overlay.ticker` (`null` = no bar):
+
+```json
+{ "text": "msg1   ✦   msg2", "messages": ["msg1", "msg2"],
+  "speed": 5, "bg_color": "#000000", "text_color": "#FFD700",
+  "font_size": 26, "height": 56, "position": "bottom", "reserve_space": true }
+```
+
+| Field | Meaning | Default / range |
+|---|---|---|
+| `text` | Text that scrolls (one line; newlines become spaces). If blank, `messages` joined with `   ✦   ` is used | blank and no messages = no bar |
+| `speed` | 1 (slow) … 10 (fast); 30 + 25 × speed dp per second | 5, clamped 1–10 |
+| `bg_color` / `text_color` | `#RRGGBB` | black / accent |
+| `font_size` | sp | 26, clamped 14–72 |
+| `height` | dp; grows automatically when the font needs more room (font × 1.5 + 8 dp) | 56, clamped 32–200 |
+| `position` | `bottom` or `top` | `bottom` |
+| `reserve_space` | `true`: the content area shrinks so the bar never covers the video. `false`: the bar is drawn over the content | `true` (also for older servers that send only text, speed and colours) |
+
+Behaviour:
+
+- **reserve_space true** (default): the stage (video, images, web pages), the welcome screen and all
+  guest layers (welcome card, checkout reminder, messages, guest menu, full-screen details) get a
+  margin of the bar height on the bar's side. Video stays aspect-fit (`RESIZE_MODE_FIT`), images
+  `FIT_CENTER`, inside the smaller area, so nothing is cut or covered. Only the margins change, so a
+  playing video is just re-laid out, never restarted or re-buffered.
+- **reserve_space false**: the bar overlays the bottom (or top) of the content, as in 2.1.
+- The logo / clock / weather overlay is always kept clear of the bar (with `position: top` it moves
+  down below the bar).
+- The bar is never taller than about a third of the screen; if that cap makes it too small for
+  `font_size`, the text is drawn smaller instead of being clipped.
+- Shown in normal and welcome (empty playlist) modes and while guest layers are open. Hidden (and
+  the full screen given back to the content) during emergency, screen-off / black power-off,
+  suspended and "connecting" (no content yet). The emergency, screen-off and suspended layers sit
+  above the bar in `activity_main.xml` in any case.
+- Every sync re-applies the ticker; an identical configuration is a no-op, so the text does not
+  jump. A changed text restarts from the right edge; changed colours, speed or size keep the position.
+- Long texts are split at spaces into chunks measured once; each frame draws only the chunks on
+  screen, so a very long Gujarati / Hindi text scrolls as smoothly as a short one.
+- Logic and geometry: `TickerSpec` / `TickerLayout` (`TickerLayout.kt`, unit tested in
+  `TickerLayoutTest`); drawing: `MarqueeView`; wiring: `MainActivity.applyTicker`.
 
 ### Languages
 

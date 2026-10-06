@@ -63,6 +63,7 @@ if (($_GET['download'] ?? '') === 'all') {
     $download = hc_rooms();
 } elseif (is_post()) {
     $ids = Tenant::assertOwnsAll('rooms', int_ids($_POST['room_ids'] ?? []));
+    Access::requireTargetList('rooms', $ids); // users limited to some TVs: only their rooms (hc_rooms() is limited too)
     $download = array_values(array_filter(hc_rooms(), static fn ($r) => in_array((int) $r['id'], $ids, true)));
     if (!$download) {
         flash('warning', __('Select at least one room.'));

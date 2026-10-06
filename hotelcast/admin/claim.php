@@ -74,6 +74,8 @@ if (is_post()) {
     $room = null;
     $created = false;
     if ($roomSel === 'new') {
+        // Users limited to some TVs (core/Access.php) cannot add rooms.
+        Access::requireUnrestricted('room create (QR setup)');
         $number = req_str('new_room_number', $_POST, 40);
         $floor = req_str('new_floor', $_POST, 20);
         if ($number === '' || mb_strlen($number) > 20 || !preg_match('/^[\p{L}\p{N} _.-]+$/u', $number)) {
@@ -97,6 +99,9 @@ if (is_post()) {
         }
     } else {
         $room = ctype_digit($roomSel) ? Tenant::find('rooms', (int) $roomSel) : null;   // another hotel's id → 404
+        if ($room) {
+            Access::requireRoom((int) $room['id']);   // not one of the user's rooms → 403
+        }
     }
     if (!$room) {
         flash('danger', __('Choose a room for this TV.'));
@@ -160,8 +165,9 @@ $problems = [];
 $rooms = [];
 if ($prov && $hid) {
     $problems = Provisioning::hotelProblems($hid, (string) $prov['device_uid']);
-    $rooms = Provisioning::rooms($hid);
+    $rooms = Access::filterRooms(Provisioning::rooms($hid));
 }
+$limited = Access::restricted();
 $waiting = !$prov && !$done && Auth::role() === 'platform_admin' ? Provisioning::pendingRecent(15) : [];
 $doneRoom = $done && $done['room_id'] ? DB::one('SELECT room_number FROM rooms WHERE id = :id AND hotel_id = :h', ['id' => $done['room_id'], 'h' => (int) $done['hotel_id']]) : null;
 $hotelName = $hid ? (string) (Settings::getFor($hid, 'hotel_name', '') ?: (DB::value('SELECT name FROM hotels WHERE id = :id', ['id' => $hid]) ?: '')) : '';
@@ -313,12 +319,14 @@ require __DIR__ . '/partials/header.php';
           <?php if (!$rooms): ?>
             <div class="list-group-item text-muted"><?= e(__('No rooms yet. Create the room below.')) ?></div>
           <?php endif; ?>
+          <?php if (!$limited): ?>
           <label class="list-group-item qr-room">
             <input type="radio" class="form-check-input" name="room" value="new" id="qrNew" <?= !$rooms ? 'checked' : '' ?>>
             <span class="fw-bold"><i class="bi bi-plus-circle"></i> <?= e(__('Create new room')) ?></span>
           </label>
+          <?php endif; ?>
         </div>
-        <div class="card-body border-top <?= $rooms ? 'd-none' : '' ?>" id="qrNewFields">
+        <div class="card-body border-top <?= $rooms || $limited ? 'd-none' : '' ?>" id="qrNewFields">
           <div class="row g-2">
             <div class="col-7">
               <label class="form-label" for="qrNewNumber"><?= e(__('Room number')) ?> *</label>

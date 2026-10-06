@@ -16,6 +16,7 @@ if (is_post()) {
     try {
         switch ($op) {
             case 'save_volume':
+                Access::requireUnrestricted('tv volume policy');
                 $anchor = '#volume';
                 $errors = TvControls::saveVolume($_POST);
                 if ($errors) {
@@ -26,6 +27,7 @@ if (is_post()) {
                 }
                 break;
             case 'save_menu':
+                Access::requireUnrestricted('tv guest menu');
                 $anchor = '#menu';
                 $errors = TvControls::saveMenu($_POST);
                 if ($errors) {
@@ -52,6 +54,7 @@ if (is_post()) {
 }
 
 $s = static fn (string $k, string $d = '') => (string) Settings::get($k, $d);
+$limited = Access::restricted();
 $inputs = DeviceControlsExtension::inputs();
 $wifiFromGuests = is_file(HC_ROOT . '/admin/guests.php');
 $pageTitle = __('TV controls');
@@ -71,6 +74,7 @@ function tvc_target(string $uid, string $label, string $confirm): string
 </div>
 
 <div class="row g-3">
+  <?php if (!$limited): // volume rules + guest menu are hotel-wide: not for users limited to some TVs ?>
   <div class="col-xl-6">
     <form method="post" class="card mb-3" id="volume">
       <?= Csrf::field() ?><input type="hidden" name="op" value="save_volume">
@@ -144,6 +148,7 @@ function tvc_target(string $uid, string $label, string $confirm): string
       </div>
     </form>
   </div>
+  <?php endif; ?>
 
   <div class="col-xl-6" id="commands">
     <form method="post" class="card mb-3">

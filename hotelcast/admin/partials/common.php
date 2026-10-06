@@ -43,7 +43,15 @@ function hc_nav_sections(): array
                 continue;
             }
             $sections[$section] ??= [];
-            $sections[$section][$key] = [$key, $file, $perm, $icon, $label];
+            $entry = [$key, $file, $perm, $icon, $label];
+            $after = (string) ($flags['after'] ?? '');
+            if ($after !== '' && isset($sections[$section][$after]) && !isset($sections[$section][$key])) {
+                // Optional ['after' => 'broadcast']: place the item right after an earlier one.
+                $pos = array_search($after, array_keys($sections[$section]), true) + 1;
+                $sections[$section] = array_slice($sections[$section], 0, $pos, true) + [$key => $entry] + array_slice($sections[$section], $pos, null, true);
+                continue;
+            }
+            $sections[$section][$key] = $entry;
         }
     }
     return array_filter($sections);
@@ -121,23 +129,38 @@ function hid(): array
     return ['hid' => Tenant::id()];
 }
 
-/** All rooms of the current hotel, natural-ish order. */
+/**
+ * Rooms of the current hotel the user may see, natural-ish order. Users limited to some TVs
+ * (core/Access.php) get only their rooms; hc_groups() / hc_floors() / hc_devices_by_room() likewise.
+ */
 function hc_rooms(): array
 {
     static $rooms = [];
-    return $rooms[Tenant::id()] ??= DB::all('SELECT * FROM rooms WHERE hotel_id = :hid ORDER BY LENGTH(floor), floor, LENGTH(room_number), room_number', hid());
+    if (!isset($rooms[Tenant::id()])) {
+        [$acc, $ap] = Access::roomSql('id');
+        $rooms[Tenant::id()] = DB::all('SELECT * FROM rooms WHERE hotel_id = :hid' . $acc . ' ORDER BY LENGTH(floor), floor, LENGTH(room_number), room_number', hid() + $ap);
+    }
+    return $rooms[Tenant::id()];
 }
 
+/** Groups of the current hotel (users limited to some TVs: only their assigned groups). */
 function hc_groups(): array
 {
     static $groups = [];
-    return $groups[Tenant::id()] ??= DB::all('SELECT * FROM room_groups WHERE hotel_id = :hid ORDER BY type, name', hid());
+    return $groups[Tenant::id()] ??= array_values(array_filter(
+        DB::all('SELECT * FROM room_groups WHERE hotel_id = :hid ORDER BY type, name', hid()),
+        static fn ($g) => Access::canGroup((int) $g['id'])
+    ));
 }
 
+/** Floors of the current hotel (users limited to some TVs: only floors whose rooms are all theirs). */
 function hc_floors(): array
 {
     static $floors = [];
-    return $floors[Tenant::id()] ??= array_map('strval', DB::column("SELECT DISTINCT floor FROM rooms WHERE hotel_id = :hid AND floor IS NOT NULL AND floor <> '' ORDER BY LENGTH(floor), floor", hid()));
+    return $floors[Tenant::id()] ??= array_values(array_filter(
+        array_map('strval', DB::column("SELECT DISTINCT floor FROM rooms WHERE hotel_id = :hid AND floor IS NOT NULL AND floor <> '' ORDER BY LENGTH(floor), floor", hid())),
+        static fn ($f) => Access::canFloor($f)
+    ));
 }
 
 function hc_content_list(bool $activeOnly = false): array
@@ -236,6 +259,19 @@ function target_picker(string $uid, array $opts = []): string
     $groups = hc_groups();
     $floors = hc_floors();
     $types = ['all' => __('All rooms'), 'rooms' => __('Selected rooms'), 'groups' => __('Groups'), 'floors' => __('Floors')];
+    if (Access::restricted()) {
+        // Limited users never target the whole hotel; floors only when every room of the floor is theirs.
+        unset($types['all']);
+        if (!$floors) {
+            unset($types['floors']);
+        }
+        if (!$groups) {
+            unset($types['groups']);
+        }
+        if (!isset($types[$type])) {
+            $type = 'rooms';
+        }
+    }
 
     $h = '<div class="target-picker" data-target-picker>';
     $h .= '<div class="btn-group flex-wrap mb-2" role="group">';
@@ -300,7 +336,8 @@ function target_picker(string $uid, array $opts = []): string
 function hc_devices_by_room(): array
 {
     $map = [];
-    foreach (DB::all('SELECT * FROM devices WHERE hotel_id = :hid AND is_revoked = 0 AND room_id IS NOT NULL ORDER BY last_ping DESC', hid()) as $d) {
+    [$acc, $ap] = Access::roomSql('room_id');
+    foreach (DB::all('SELECT * FROM devices WHERE hotel_id = :hid AND is_revoked = 0 AND room_id IS NOT NULL' . $acc . ' ORDER BY last_ping DESC', hid() + $ap) as $d) {
         $map[(int) $d['room_id']][] = $d;
     }
     foreach ($map as &$list) {
@@ -368,6 +405,20 @@ function hc_room_status_list(): array
     return $out;
 }
 
+/** Active emergencies the user sees: all, or (limited users) those reaching at least one of their TVs. */
+function hc_visible_emergencies(): array
+{
+    return array_values(array_filter(Broadcaster::activeEmergencies(), [Access::class, 'touchesBroadcast']));
+}
+
+/** Activity log rows for the dashboard (limited users: only their own actions). */
+function hc_recent_activity(int $limit = 10): array
+{
+    $mine = Access::restricted() ? ' AND user_id = :me' : '';
+    $p = hid() + ($mine ? ['me' => (int) Auth::id()] : []);
+    return DB::all('SELECT * FROM activity_logs WHERE hotel_id = :hid' . $mine . ' ORDER BY id DESC LIMIT ' . max(1, $limit), $p);
+}
+
 function mode_label(string $mode): string
 {
     return match ($mode) {
@@ -386,22 +437,26 @@ function mode_label(string $mode): string
 /** Dashboard counters. */
 function hc_dashboard_stats(): array
 {
-    $total = (int) DB::value('SELECT COUNT(*) FROM rooms WHERE hotel_id = :hid', hid());
-    $devices = DB::all('SELECT status, last_ping FROM devices WHERE hotel_id = :hid AND is_revoked = 0 AND room_id IS NOT NULL', hid());
+    // Users limited to some TVs (core/Access.php): counts of their rooms / TVs only.
+    [$accR, $apR] = Access::roomSql('id');
+    [$accD, $apD] = Access::roomSql('room_id');
+    [$accN, $apN] = Access::roomSql('r.id');
+    $total = (int) DB::value('SELECT COUNT(*) FROM rooms WHERE hotel_id = :hid' . $accR, hid() + $apR);
+    $devices = DB::all('SELECT status, last_ping FROM devices WHERE hotel_id = :hid AND is_revoked = 0 AND room_id IS NOT NULL' . $accD, hid() + $apD);
     $online = 0;
     foreach ($devices as $d) {
         if (DeviceManager::isOnline($d)) {
             $online++;
         }
     }
-    $neverRegistered = (int) DB::value('SELECT COUNT(*) FROM rooms r WHERE r.hotel_id = :hid AND NOT EXISTS (SELECT 1 FROM devices d WHERE d.room_id = r.id AND d.is_revoked = 0)', hid());
+    $neverRegistered = (int) DB::value('SELECT COUNT(*) FROM rooms r WHERE r.hotel_id = :hid' . $accN . ' AND NOT EXISTS (SELECT 1 FROM devices d WHERE d.room_id = r.id AND d.is_revoked = 0)', hid() + $apN);
     $h = Tenant::id();
     $last = DB::value('SELECT GREATEST(
         COALESCE((SELECT MAX(updated_at) FROM content_items WHERE hotel_id = :h1), \'1970-01-01\'),
         COALESCE((SELECT MAX(updated_at) FROM content_playlists WHERE hotel_id = :h2), \'1970-01-01\'),
         COALESCE((SELECT MAX(created_at) FROM broadcast_commands WHERE hotel_id = :h3 AND command = \'SHOW_CONTENT\'), \'1970-01-01\'))', ['h1' => $h, 'h2' => $h, 'h3' => $h]);
     $last = ($last && !str_starts_with((string) $last, '1970')) ? (string) $last : null;
-    $emergencies = Broadcaster::activeEmergencies();
+    $emergencies = hc_visible_emergencies();
     return [
         'rooms' => $total,
         'devices' => count($devices),
@@ -563,6 +618,9 @@ function hc_preview_object(int $contentId, int $playlistId, int $roomId): ?array
 {
     if ($roomId) {
         $room = Tenant::find('rooms', $roomId);
+        if ($room) {
+            Access::requireRoom($roomId); // users limited to some TVs: 403 for other rooms
+        }
         return $room ? ContentResolver::build($room) : null;
     }
     $base = [
@@ -596,6 +654,8 @@ function hc_preview_object(int $contentId, int $playlistId, int $roomId): ?array
     } else {
         return null;
     }
+    // Hotel-wide ticker bar (room previews get the room's own via ContentResolver / TickerExtension).
+    $base['overlay']['ticker'] = Tickers::forTarget('all');
     $base['hash'] = sha1(json_out($base));
     $base['generated_at'] = date('c');
     return $base;

@@ -10,6 +10,8 @@ import android.os.Looper
 import android.os.SystemClock
 import android.provider.Settings
 import android.util.Log
+import android.util.TypedValue
+import android.view.Gravity
 import android.view.KeyEvent
 import android.view.MotionEvent
 import android.view.PixelCopy
@@ -36,8 +38,9 @@ import java.util.Locale
 import kotlin.math.roundToInt
 
 /**
- * Kiosk display. Shows the room's content full screen with the overlay (logo, clock, weather,
- * ticker), the emergency layer, the screen-off black layer and the welcome screen.
+ * Kiosk display. Shows the room's content full screen with the overlay (logo, clock, weather),
+ * the ticker bar (which shrinks the content area unless reserve_space is false), the emergency
+ * layer, the screen-off black layer and the welcome screen.
  *
  * Hidden settings gesture (opens the PIN dialog):
  *  - MENU key on the remote, or
@@ -62,7 +65,8 @@ class MainActivity : AppCompatActivity(), ContentPlayer.Listener, PlayerUi, Gues
     private lateinit var overlayTopRight: View
     private lateinit var overlayClock: TextView
     private lateinit var overlayWeather: TextView
-    private lateinit var overlayTicker: MarqueeView
+    private lateinit var tickerBar: MarqueeView
+    private lateinit var root: FrameLayout
     private lateinit var blackLayer: View
     private lateinit var emergencyLayer: LinearLayout
     private lateinit var emergencyTitle: TextView
@@ -76,6 +80,8 @@ class MainActivity : AppCompatActivity(), ContentPlayer.Listener, PlayerUi, Gues
     private lateinit var suspendedSupport: TextView
     private lateinit var guestUi: GuestUi
     private var suspendedLogoUrl: String? = null
+    /** Ticker currently shown (null = hidden); re-laid out when the root size changes. */
+    private var tickerSpec: TickerSpec? = null
     private var rendering = false
 
     private var player: ContentPlayer? = null
@@ -204,7 +210,14 @@ class MainActivity : AppCompatActivity(), ContentPlayer.Listener, PlayerUi, Gues
         overlayTopRight = findViewById(R.id.overlay_top_right)
         overlayClock = findViewById(R.id.overlay_clock)
         overlayWeather = findViewById(R.id.overlay_weather)
-        overlayTicker = findViewById(R.id.overlay_ticker)
+        tickerBar = findViewById(R.id.ticker_bar)
+        root = findViewById(R.id.root)
+        // The ticker height is capped to a share of the screen: recompute once the real size is known.
+        root.addOnLayoutChangeListener { _, _, top, _, bottom, _, oldTop, _, oldBottom ->
+            if (bottom - top != oldBottom - oldTop && tickerSpec != null) {
+                handler.post { tickerSpec?.let { showTicker(it) } }
+            }
+        }
         blackLayer = findViewById(R.id.black_layer)
         emergencyLayer = findViewById(R.id.emergency_layer)
         emergencyTitle = findViewById(R.id.emergency_title)
@@ -253,7 +266,7 @@ class MainActivity : AppCompatActivity(), ContentPlayer.Listener, PlayerUi, Gues
         setupLaunched = false
         UiBridge.clear(this)
         handler.removeCallbacks(overlayClockTicker)
-        overlayTicker.stop()
+        tickerBar.stop()
         player?.stop()
         // Leaving for Live TV / HDMI / settings: close the menu and any full-screen guest detail.
         try { guestUi.closeAll(notify = false) } catch (_: Throwable) {}
@@ -304,6 +317,7 @@ class MainActivity : AppCompatActivity(), ContentPlayer.Listener, PlayerUi, Gues
                 c != null && c.isEmergency -> {
                     guestUi.hideAll()
                     player?.stop()
+                    hideTicker()
                     suspendedLayer.visibility = View.GONE
                     setScreenAwake(true)
                     showEmergency(c)
@@ -312,6 +326,7 @@ class MainActivity : AppCompatActivity(), ContentPlayer.Listener, PlayerUi, Gues
                     guestUi.hideAll()
                     player?.stop()
                     hideOverlay()
+                    hideTicker()
                     welcomeLayer.visibility = View.GONE
                     emergencyLayer.visibility = View.GONE
                     suspendedLayer.visibility = View.GONE
@@ -321,6 +336,7 @@ class MainActivity : AppCompatActivity(), ContentPlayer.Listener, PlayerUi, Gues
                 }
                 c == null -> {
                     resetLayers()
+                    hideTicker()
                     showWelcome(null, getString(R.string.connecting))
                 }
                 c.isSuspended -> {
@@ -328,11 +344,14 @@ class MainActivity : AppCompatActivity(), ContentPlayer.Listener, PlayerUi, Gues
                     guestUi.hideAll()
                     player?.stop()
                     hideOverlay()
+                    hideTicker()
                     welcomeLayer.visibility = View.GONE
                     showSuspended(c)
                 }
                 else -> {
                     resetLayers()
+                    // Ticker first: with reserve_space the stage gets its final size before playback starts.
+                    applyTicker(c)
                     maybeShowWelcomeCard(c)
                     if (guestUi.blocksPlayback) {
                         // Welcome card / full-screen guest detail: no playback (and no ad impressions) behind it.
@@ -355,6 +374,7 @@ class MainActivity : AppCompatActivity(), ContentPlayer.Listener, PlayerUi, Gues
             ErrorLog.add("render", e.toString())
             try {
                 player?.stop()
+                hideTicker()
                 showWelcome(c, null)
             } catch (_: Throwable) {
             }
@@ -420,6 +440,7 @@ class MainActivity : AppCompatActivity(), ContentPlayer.Listener, PlayerUi, Gues
 
     private fun showEmergency(c: Content) {
         hideOverlay()
+        hideTicker()
         welcomeLayer.visibility = View.GONE
         blackLayer.visibility = View.GONE
         val e = c.emergency
@@ -507,27 +528,73 @@ class MainActivity : AppCompatActivity(), ContentPlayer.Listener, PlayerUi, Gues
             overlayWeather.visibility = View.GONE
         }
         overlayTopRight.visibility = if (overlayClock.visibility == View.VISIBLE || overlayWeather.visibility == View.VISIBLE) View.VISIBLE else View.GONE
-
-        // Ticker (bottom)
-        val t = o.ticker
-        if (t != null && !t.text.isNullOrBlank()) {
-            overlayTicker.configure(
-                text = t.text,
-                textColor = Utils.parseColor(t.textColor, ContextCompat.getColor(this, R.color.accent)),
-                bgColor = Utils.parseColor(t.bgColor, ContextCompat.getColor(this, R.color.black)),
-                speed = t.speed ?: 5,
-            )
-            overlayTicker.visibility = View.VISIBLE
-        } else {
-            overlayTicker.stop()
-            overlayTicker.visibility = View.GONE
-        }
     }
 
     private fun hideOverlay() {
         handler.removeCallbacks(overlayClockTicker)
-        overlayTicker.stop()
         overlayLayer.visibility = View.GONE
+    }
+
+    // ------------------------------------------------------------------ ticker bar
+
+    /**
+     * Normal and welcome modes: show the ticker from `overlay.ticker` (or hide it). Independent of
+     * the logo / clock overlay so it stays put while guest layers come and go.
+     */
+    private fun applyTicker(c: Content) {
+        val spec = TickerSpec.from(c.overlay?.ticker)
+        if (spec == null) hideTicker() else showTicker(spec)
+    }
+
+    private fun showTicker(spec: TickerSpec) {
+        tickerSpec = spec
+        val dm = resources.displayMetrics
+        val pxPerSp = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, 1f, dm)
+        val l = TickerLayout.compute(spec, dm.density, pxPerSp, root.height)
+        val lp = tickerBar.layoutParams as FrameLayout.LayoutParams
+        val gravity = if (l.atTop) Gravity.TOP else Gravity.BOTTOM
+        if (lp.height != l.heightPx || lp.gravity != gravity) {
+            lp.height = l.heightPx
+            lp.gravity = gravity
+            tickerBar.layoutParams = lp
+        }
+        // Identical config (every sync) → no-op inside MarqueeView, the scroll does not jump.
+        tickerBar.configurePx(
+            text = spec.text,
+            textColor = Utils.parseColor(spec.textColor, ContextCompat.getColor(this, R.color.accent)),
+            bgColor = Utils.parseColor(spec.bgColor, ContextCompat.getColor(this, R.color.black)),
+            speed = spec.speed,
+            textSizePx = l.textSizePx,
+        )
+        tickerBar.visibility = View.VISIBLE
+        applyTickerInsets(l)
+    }
+
+    /** Emergency, screen off / black power-off, suspended, no content: no bar, full-size content area. */
+    private fun hideTicker() {
+        tickerSpec = null
+        tickerBar.stop()
+        tickerBar.visibility = View.GONE
+        applyTickerInsets(TickerLayout.HIDDEN)
+    }
+
+    /**
+     * Moves the content area out of the bar's way. Only margins change, so the playing video is just
+     * re-laid out (aspect fit in the smaller area), never re-created or re-buffered.
+     */
+    private fun applyTickerInsets(l: TickerLayout) {
+        setVerticalMargins(stage, l.stageInsetTopPx, l.stageInsetBottomPx)
+        setVerticalMargins(welcomeLayer, l.stageInsetTopPx, l.stageInsetBottomPx)
+        setVerticalMargins(overlayLayer, l.overlayInsetTopPx, l.overlayInsetBottomPx)
+        guestUi.setContentInsets(l.stageInsetTopPx, l.stageInsetBottomPx)
+    }
+
+    private fun setVerticalMargins(v: View, top: Int, bottom: Int) {
+        val lp = v.layoutParams as? FrameLayout.LayoutParams ?: return
+        if (lp.topMargin == top && lp.bottomMargin == bottom) return
+        lp.topMargin = top
+        lp.bottomMargin = bottom
+        v.layoutParams = lp
     }
 
     // ------------------------------------------------------------------ ContentPlayer.Listener

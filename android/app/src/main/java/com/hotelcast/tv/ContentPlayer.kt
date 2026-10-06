@@ -574,7 +574,9 @@ class ContentPlayer(
         val dateFmt = SimpleDateFormat("EEEE, d MMMM yyyy", Locale.getDefault())
         if (item.style == "analog") {
             val clock = AnalogClockView(context).apply { color = fg }
-            val size = (context.resources.displayMetrics.heightPixels * 0.65f).toInt()
+            // Stage height, not screen height: the ticker bar may have taken part of the screen.
+            val areaH = stage.height.takeIf { it > 0 } ?: context.resources.displayMetrics.heightPixels
+            val size = (areaH * 0.65f).toInt()
             root.addView(clock, LinearLayout.LayoutParams(size, size))
             root.addView(date, LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { topMargin = dp(16) })
             root.setTag(TAG_CLOCK_UPDATER, { date.text = dateFmt.format(Date()) })

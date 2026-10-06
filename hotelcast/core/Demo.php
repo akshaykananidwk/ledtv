@@ -134,7 +134,13 @@ final class Demo
             DB::insert('playlist_items', ['playlist_id' => $pl, 'content_id' => $c[$k], 'sort_order' => $i]);
         }
         Settings::set('default_playlist_id', (string) $pl);
-        Settings::set('ticker_text', 'મંગળા આરતી સવારે 6:30 · Mangla Aarti 6:30 AM · Sandhya Aarti 7:30 PM · Checkout 10:00 AM');
+        // Ticker bar (2.2): one hotel-wide ticker (admin → Ticker bar).
+        DB::insert('tickers', [
+            'name' => 'Aarti timings', 'message' => 'મંગળા આરતી સવારે 6:30 · Mangla Aarti 6:30 AM · Sandhya Aarti 7:30 PM · Checkout 10:00 AM',
+            'target_type' => 'all', 'target_id' => null, 'text_color' => '#FFD700', 'bg_color' => '#000000', 'speed' => 5,
+            'font_size' => 26, 'height' => 56, 'position' => 'bottom', 'reserve_space' => 1, 'is_active' => 1,
+            'created_at' => now(), 'updated_at' => now(),
+        ]);
         $log[] = 'Created demo playlist and set it as default content';
         return ['log' => $log, 'rooms' => $rooms, 'groups' => $groups, 'content' => $c, 'playlist' => $pl];
     }

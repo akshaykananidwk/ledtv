@@ -14,6 +14,7 @@ if (is_post()) {
         flash('warning', __('Schedule not found.'));
         redirect(admin_url('schedule.php'));
     }
+    Access::requireBroadcast($b); // users limited to some TVs: only schedules for their TVs
     switch ($op) {
         case 'update':
             if (!in_array($b['status'], ['scheduled', 'active'], true)) {
@@ -89,6 +90,7 @@ if ($action === 'edit') {
         flash('warning', __('Schedule not found.'));
         redirect(admin_url('schedule.php'));
     }
+    Access::requireBroadcast($b);
     $editable = in_array($b['status'], ['scheduled', 'active'], true);
     $days = $b['repeat_days'] ? array_map('intval', explode(',', (string) $b['repeat_days'])) : [];
     $ids = json_decode((string) $b['target_ids'], true) ?: [];
@@ -178,6 +180,7 @@ $statusSql = match ($filter) {
 };
 $rows = DB::all("SELECT b.*, u.username FROM broadcast_commands b LEFT JOIN users u ON u.id = b.created_by
                  WHERE b.hotel_id = :hid AND mode IN ('once','window') AND is_emergency = 0 AND command = 'SHOW_CONTENT' $statusSql ORDER BY (status = 'active') DESC, start_at IS NULL, start_at DESC, id DESC LIMIT 200", hid());
+$rows = array_values(array_filter($rows, [Access::class, 'canBroadcast']));
 
 $extraScripts = ['vendor/fullcalendar/index.global.min.js'];
 require __DIR__ . '/partials/header.php';

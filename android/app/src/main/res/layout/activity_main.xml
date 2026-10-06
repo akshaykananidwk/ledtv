@@ -68,7 +68,7 @@
             tools:text="HotelCast" />
     </LinearLayout>
 
-    <!-- Overlay: logo, clock, weather, ticker -->
+    <!-- Overlay: logo, clock, weather (kept clear of the ticker bar by margins) -->
     <RelativeLayout
         android:id="@+id/overlay_layer"
         android:layout_width="match_parent"
@@ -123,14 +123,19 @@
                 android:visibility="gone"
                 tools:text="☀ 31°C Dwarka" />
         </LinearLayout>
-
-        <com.hotelcast.tv.MarqueeView
-            android:id="@+id/overlay_ticker"
-            android:layout_width="match_parent"
-            android:layout_height="56dp"
-            android:layout_alignParentBottom="true"
-            android:visibility="gone" />
     </RelativeLayout>
+
+    <!-- Ticker bar (content.overlay.ticker). Its own layer: above the content, the welcome screen
+         and the logo/clock overlay, below the suspended / screen-off / emergency layers which must
+         cover it. With reserve_space the stage, welcome layer and guest layers get a margin of
+         the bar height (see TickerLayout), so the bar never covers the video. Height, gravity and
+         text size are set at runtime. -->
+    <com.hotelcast.tv.MarqueeView
+        android:id="@+id/ticker_bar"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:layout_gravity="bottom"
+        android:visibility="gone" />
 
     <!-- Hotel suspended / licence expired (Content mode "suspended") -->
     <LinearLayout

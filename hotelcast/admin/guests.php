@@ -16,6 +16,14 @@ if (!Guests::enabled()) {
     exit;
 }
 
+/** Users limited to some TVs (core/Access.php): 403 for a stay in another room. */
+$stayRoom = static function (int $stayId): void {
+    $stay = Guests::findStay($stayId);
+    if ($stay) {
+        Access::requireRoom((int) $stay['room_id']);
+    }
+};
+
 if (is_post()) {
     $op = req_str('op', $_POST, 30);
     $back = admin_url('guests.php', array_filter(['tab' => req_str('tab', $_POST, 10)]));
@@ -23,6 +31,9 @@ if (is_post()) {
         switch ($op) {
             case 'checkin':
                 $roomId = req_int('room_id', $_POST);
+                if (Tenant::find('rooms', $roomId)) {
+                    Access::requireRoom($roomId);
+                }
                 $in = [
                     'salutation' => req_str('salutation', $_POST, 20),
                     'guest_name' => req_str('guest_name', $_POST, 200),
@@ -40,6 +51,7 @@ if (is_post()) {
 
             case 'checkout':
                 $stayId = req_int('stay_id', $_POST);
+                $stayRoom($stayId);
                 if (!Guests::findStay($stayId)) {
                     throw new InvalidArgumentException(__('Stay not found.'));
                 }
@@ -49,6 +61,7 @@ if (is_post()) {
 
             case 'update':
                 $stayId = req_int('stay_id', $_POST);
+                $stayRoom($stayId);
                 $in = [
                     'salutation' => req_str('salutation', $_POST, 20),
                     'guest_name' => req_str('guest_name', $_POST, 200),
@@ -69,6 +82,10 @@ if (is_post()) {
                 break;
 
             case 'move':
+                $stayRoom(req_int('stay_id', $_POST));
+                if (Tenant::find('rooms', req_int('to_room_id', $_POST))) {
+                    Access::requireRoom(req_int('to_room_id', $_POST));
+                }
                 Guests::move(req_int('stay_id', $_POST), req_int('to_room_id', $_POST));
                 flash('success', __('Guest moved. Both TVs are updated.'));
                 break;
@@ -76,6 +93,7 @@ if (is_post()) {
             case 'welcome':
                 $room = Tenant::find('rooms', req_int('room_id', $_POST));
                 if ($room) {
+                    Access::requireRoom((int) $room['id']);
                     $n = Broadcaster::queueForRooms([$room], 'SHOW_WELCOME');
                     flash('success', __('Welcome screen sent to :n TV(s).', ['n' => $n]));
                 }
@@ -84,6 +102,7 @@ if (is_post()) {
             case 'new_link':
                 $room = Tenant::find('rooms', req_int('room_id', $_POST));
                 if ($room) {
+                    Access::requireRoom((int) $room['id']);
                     $stay = Guests::activeStay((int) $room['id']);
                     Guests::rotateToken((int) $room['id'], $stay ? (int) $stay['id'] : null);
                     Guests::refreshRoom($room);
@@ -107,8 +126,11 @@ if (is_post()) {
 }
 
 $tab = ($_GET['tab'] ?? '') === 'history' ? 'history' : 'board';
-$rooms = hc_rooms();
+$rooms = hc_rooms(); // users limited to some TVs: only their rooms
 $stays = Guests::activeStays();
+if (Access::restricted()) {
+    $stays = array_intersect_key($stays, array_flip(array_map(static fn ($r) => (int) $r['id'], $rooms)));
+}
 $langs = I18n::GUEST_LANGUAGES;
 $today = date('Y-m-d');
 $canSetup = Auth::can('guests.setup');
@@ -132,6 +154,9 @@ $q = req_str('q', $_GET, 100);
 if ($tab === 'history') {
     $where = 's.hotel_id = :hid';
     $params = hid();
+    [$acc, $ap] = Access::roomSql('s.room_id');
+    $where .= $acc;
+    $params += $ap;
     if ($q !== '') {
         $where .= ' AND (s.guest_name LIKE :q OR r.room_number = :qr OR s.external_ref = :qe)';
         $params += ['q' => '%' . addcslashes($q, '%_\\') . '%', 'qr' => $q, 'qe' => $q];

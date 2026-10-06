@@ -30,7 +30,8 @@ html,body{margin:0;height:100%;background:#111;color:#fff;font-family:"Noto Sans
 .wrap{position:absolute;top:44px;left:0;right:0;bottom:0;display:flex;align-items:center;justify-content:center}
 body.embed .bar{display:none}body.embed .wrap{top:0}
 #stage{position:relative;background:#000;overflow:hidden;box-shadow:0 0 0 1px #333}
-.layer{position:absolute;inset:0;transition:opacity .8s ease,transform .8s ease}
+/* --tk-top / --tk-bottom: space reserved for the ticker bar (reserve_space) — the content shrinks, the bar never covers it */
+.layer{position:absolute;inset:var(--tk-top,0px) 0 var(--tk-bottom,0px) 0;transition:opacity .8s ease,transform .8s ease}
 .layer.fade-enter{opacity:0}.layer.slide-enter{transform:translateX(100%)}.layer.slide-leave{transform:translateX(-100%)}.layer.fade-leave{opacity:0}
 .layer img,.layer video{width:100%;height:100%;object-fit:contain;background:#000;display:block}
 .layer iframe{width:100%;height:100%;border:0;background:#fff;display:block}
@@ -56,8 +57,9 @@ body.embed .bar{display:none}body.embed .wrap{top:0}
 .ov-logo{top:3%;left:2.5%;height:11%}.ov-logo img{height:100%;max-width:20em;object-fit:contain;filter:drop-shadow(0 0 .3em rgba(0,0,0,.6))}
 .ov-tr{top:3%;right:2.5%;text-align:right;text-shadow:0 0 .3em #000,0 0 .1em #000}
 .ov-tr .c{font-size:3.4em;font-weight:700;font-variant-numeric:tabular-nums}.ov-tr .w{font-size:2em}
-.ov-tick{left:0;right:0;bottom:0;height:7%;display:flex;align-items:center;overflow:hidden;font-size:2.6em;font-weight:600}
-.ov-tick span{display:inline-block;white-space:nowrap;padding-left:100%;animation:mq linear infinite}
+.ov-tick{left:0;right:0;display:flex;align-items:center;overflow:hidden;font-weight:600;z-index:6}
+.ov-tick.pos-bottom{bottom:0}.ov-tick.pos-top{top:0}
+.ov-tick span{position:absolute;left:0;white-space:nowrap;will-change:transform}
 .empty-note{color:#64748b;font-size:2em}
 .badge-off{position:absolute;bottom:3%;right:3%;color:#334155;font-size:1.6em}
 .mutebtn{position:absolute;z-index:6;bottom:9%;right:2%;background:rgba(0,0,0,.6);color:#fff;border:0;border-radius:50%;width:3.4em;height:3.4em;font-size:1.4em;cursor:pointer}
@@ -230,22 +232,44 @@ body.embed .bar{display:none}body.embed .wrap{top:0}
     o.remove();
   }
 
+  // 1 dp on the TV (960 dp wide) = 0.2em of the stage (1em = 1/192 of its width).
+  const DP = 0.2;
+  function ticker(tk) {
+    const font = Math.max(14, Math.min(72, Number(tk.font_size) || 26));
+    const height = Math.max(32, Math.min(200, Number(tk.height) || 56), font * 1.4); // the bar grows with the font
+    const top = tk.position === 'top';
+    const reserve = tk.reserve_space !== false && tk.reserve_space !== 0;
+    stage.style.setProperty(top ? '--tk-top' : '--tk-bottom', reserve ? (height * DP) + 'em' : '0px');
+    const bar = document.createElement('div');
+    bar.className = 'ov ov-tick ' + (top ? 'pos-top' : 'pos-bottom');
+    bar.style.cssText = 'background:' + tk.bg_color + ';color:' + tk.text_color + ';height:' + (height * DP) + 'em;font-size:' + (font * DP) + 'em';
+    if (!reserve) bar.style.opacity = '.92';
+    const span = document.createElement('span');
+    span.textContent = Array.isArray(tk.messages) && tk.messages.length ? tk.messages.join('   ✦   ') : tk.text;
+    bar.appendChild(span);
+    stage.appendChild(bar);
+    // Same speed as the TV app: 30 + 25 × speed dp per second, from the right edge until the text has left.
+    const emPx = parseFloat(getComputedStyle(span).fontSize) || 1;
+    const widthEm = span.scrollWidth / emPx, stageEm = 192 / (font * DP);
+    const dpPerSec = 30 + Math.max(1, Math.min(10, Number(tk.speed) || 5)) * 25;
+    const dur = ((stageEm + widthEm) * font) / dpPerSec * 1000;
+    if (span.animate) span.animate([{ transform: 'translateX(' + stageEm + 'em)' }, { transform: 'translateX(' + (-widthEm) + 'em)' }], { duration: Math.max(1000, dur), iterations: Infinity });
+  }
+
   function overlays() {
     const ov = content.overlay || {};
     const frag = document.createElement('div');
-    frag.className = 'ov'; frag.style.inset = '0';
+    frag.className = 'ov';
+    frag.style.cssText = 'left:0;right:0;top:var(--tk-top,0px);bottom:var(--tk-bottom,0px)';
     let html = '';
     if (ov.logo && content.hotel && content.hotel.logo_url) html += '<div class="ov ov-logo"><img alt="" src="' + esc(content.hotel.logo_url) + '"></div>';
     if (ov.clock || (ov.weather && ov.weather.enabled)) {
       html += '<div class="ov ov-tr">' + (ov.clock ? '<div class="c" data-clock></div>' : '')
         + (ov.weather && ov.weather.enabled ? '<div class="w">' + esc(ov.weather.icon || '') + ' ' + esc(ov.weather.temp_c) + '°C ' + esc(ov.weather.city || '') + '</div>' : '') + '</div>';
     }
-    if (ov.ticker && ov.ticker.text) {
-      const dur = Math.max(6, ov.ticker.text.length * (11 - (ov.ticker.speed || 5)) * 0.06 + 8);
-      html += '<div class="ov ov-tick" style="background:' + esc(ov.ticker.bg_color) + ';color:' + esc(ov.ticker.text_color) + '"><span style="animation-duration:' + dur + 's">' + esc(ov.ticker.text) + '</span></div>';
-    }
     frag.innerHTML = html;
     stage.appendChild(frag);
+    if (ov.ticker && (ov.ticker.text || (ov.ticker.messages || []).length)) ticker(ov.ticker);
     const c = frag.querySelector('[data-clock]');
     if (c) every(1000, () => { c.textContent = fmtTime(new Date(), ov.clock_format); });
   }
@@ -254,6 +278,7 @@ body.embed .bar{display:none}body.embed .wrap{top:0}
     clearTimers();
     hlsList.forEach((h) => { try { h.destroy(); } catch (e) { /* ignore */ } }); hlsList = [];
     stage.innerHTML = '';
+    stage.style.removeProperty('--tk-top'); stage.style.removeProperty('--tk-bottom');
     stage.classList.toggle('emergency', content.mode === 'emergency');
     const badge = document.getElementById('modeBadge');
     badge.textContent = T.modes[content.mode] || content.mode;

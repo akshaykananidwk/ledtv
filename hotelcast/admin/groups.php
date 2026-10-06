@@ -7,6 +7,8 @@ $user = Auth::require('groups.manage');
 Csrf::check();
 
 const GROUP_TYPES = ['floor', 'zone', 'custom'];
+// Users limited to some TVs (core/Access.php): only their assigned groups, no create / delete / auto floors.
+$limited = Access::restricted();
 
 if (is_post()) {
     $op = req_str('op', $_POST, 30);
@@ -14,6 +16,7 @@ if (is_post()) {
         case 'save':
             $id = req_int('id', $_POST);
             $existing = $id ? Tenant::find('room_groups', $id) : null;
+            $existing ? Access::requireGroup($id) : Access::requireUnrestricted('group create');
             $name = req_str('name', $_POST, 200);
             $type = in_array($_POST['type'] ?? '', GROUP_TYPES, true) ? $_POST['type'] : 'custom';
             $errors = [];
@@ -32,6 +35,7 @@ if (is_post()) {
             [$cid, $pid] = parse_source($_POST['source'] ?? '');
             $data = ['name' => $name, 'type' => $type, 'description' => req_str('description', $_POST, 500) ?: null, 'content_id' => $cid, 'playlist_id' => $pid];
             $members = Tenant::assertOwnsAll('rooms', int_ids($_POST['members'] ?? []));
+            Access::requireTargetList('rooms', $members); // a limited user cannot pull other rooms into their group
             DB::transaction(function () use (&$id, $existing, $data, $members) {
                 if ($existing) {
                     DB::update('room_groups', $data, 'id = :id', ['id' => $id]);
@@ -55,6 +59,7 @@ if (is_post()) {
         case 'delete':
             $id = req_int('id', $_POST);
             $g = Tenant::find('room_groups', $id);
+            Access::requireUnrestricted('group delete');
             if ($g) {
                 $rooms = Broadcaster::targetRooms('groups', [$id]);
                 DB::delete('room_groups', 'id = :id', ['id' => $id]);
@@ -66,6 +71,7 @@ if (is_post()) {
             redirect(admin_url('groups.php'));
 
         case 'auto_floors':
+            Access::requireUnrestricted('group auto floors');
             $created = 0;
             $assigned = 0;
             DB::transaction(function () use (&$created, &$assigned) {
@@ -95,6 +101,9 @@ $action = req_str('action', $_GET, 20);
 $pageTitle = __('Groups');
 $activeNav = 'groups';
 
+if ($action === 'new') {
+    Access::requireUnrestricted('group create');
+}
 if ($action === 'new' || $action === 'edit') {
     $g = ['id' => 0, 'name' => '', 'type' => 'custom', 'description' => '', 'content_id' => null, 'playlist_id' => null];
     $members = [];
@@ -104,6 +113,7 @@ if ($action === 'new' || $action === 'edit') {
             flash('warning', __('Group not found.'));
             redirect(admin_url('groups.php'));
         }
+        Access::requireGroup((int) $g['id']);
         $members = array_map('intval', DB::column('SELECT room_id FROM room_group_members WHERE group_id = :g', ['g' => $g['id']]));
     }
     $byFloor = [];
@@ -183,7 +193,10 @@ if ($action === 'new' || $action === 'edit') {
     exit;
 }
 
-$groups = DB::all('SELECT g.*, (SELECT COUNT(*) FROM room_group_members m WHERE m.group_id = g.id) AS members FROM room_groups g WHERE g.hotel_id = :hid ORDER BY g.type, g.name', hid());
+$groups = array_values(array_filter(
+    DB::all('SELECT g.*, (SELECT COUNT(*) FROM room_group_members m WHERE m.group_id = g.id) AS members FROM room_groups g WHERE g.hotel_id = :hid ORDER BY g.type, g.name', hid()),
+    static fn ($g) => Access::canGroup((int) $g['id'])
+));
 require __DIR__ . '/partials/header.php';
 ?>
 <div class="page-head">
@@ -191,6 +204,7 @@ require __DIR__ . '/partials/header.php';
     <h1><?= e(__('Groups')) ?></h1>
     <p class="lead-sm"><?= e(__('Group rooms by floor, zone or any way you like, then send content to a whole group at once.')) ?></p>
   </div>
+  <?php if (!$limited): ?>
   <div class="d-flex flex-wrap gap-2">
     <a class="btn btn-primary" href="<?= e(admin_url('groups.php', ['action' => 'new'])) ?>"><i class="bi bi-plus-lg"></i> <?= e(__('New group')) ?></a>
     <form method="post" data-confirm="<?= e(__('Create one group per floor and add each room to its floor group?')) ?>" data-confirm-safe="1">
@@ -198,6 +212,7 @@ require __DIR__ . '/partials/header.php';
       <button class="btn btn-outline-primary"><i class="bi bi-magic"></i> <?= e(__('Auto-create floor groups')) ?></button>
     </form>
   </div>
+  <?php endif; ?>
 </div>
 <div class="card">
 <?php if (!$groups): ?>
@@ -219,10 +234,12 @@ require __DIR__ . '/partials/header.php';
           <td class="small"><?= e(source_label($g['content_id'], $g['playlist_id']) ?: __('Hotel default')) ?></td>
           <td class="text-end text-nowrap">
             <a class="btn btn-sm btn-primary" href="<?= e(admin_url('groups.php', ['action' => 'edit', 'id' => $g['id']])) ?>"><i class="bi bi-pencil"></i> <span class="d-none d-sm-inline"><?= e(__('Edit')) ?></span></a>
+            <?php if (!$limited): ?>
             <form method="post" class="d-inline" data-confirm="<?= e(__('Delete group ":n"? The rooms themselves are not deleted.', ['n' => $g['name']])) ?>">
               <?= Csrf::field() ?><input type="hidden" name="op" value="delete"><input type="hidden" name="id" value="<?= (int) $g['id'] ?>">
               <button class="btn btn-sm btn-outline-danger" title="<?= e(__('Delete')) ?>"><i class="bi bi-trash"></i></button>
             </form>
+            <?php endif; ?>
           </td>
         </tr>
       <?php endforeach; ?>

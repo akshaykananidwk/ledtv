@@ -220,7 +220,32 @@ class GuestUi(
 
     private fun addLayer(v: View, lp: FrameLayout.LayoutParams) {
         val idx = root.indexOfChild(emergencyLayer).let { if (it < 0) root.childCount else it }
+        // Remember the layer's own margins so the ticker insets can be added / changed later.
+        v.setTag(R.id.tag_base_margins, intArrayOf(lp.topMargin, lp.bottomMargin))
+        lp.topMargin += insetTop
+        lp.bottomMargin += insetBottom
         root.addView(v, idx, lp)
+    }
+
+    private var insetTop = 0
+    private var insetBottom = 0
+
+    /**
+     * Space taken by the ticker bar (px) when it reserves room: every guest layer (welcome card,
+     * reminder banner, message card, menu panel, full-screen details) is laid out in the remaining
+     * area so it never hides behind the bar. Existing layers are moved immediately (relayout only).
+     */
+    fun setContentInsets(top: Int, bottom: Int) {
+        if (top == insetTop && bottom == insetBottom) return
+        insetTop = top
+        insetBottom = bottom
+        for (v in listOfNotNull(welcomeView, reminderView, messageView, menuView, detailView)) {
+            val base = v.getTag(R.id.tag_base_margins) as? IntArray ?: continue
+            val lp = v.layoutParams as? FrameLayout.LayoutParams ?: continue
+            lp.topMargin = base[0] + top
+            lp.bottomMargin = base[1] + bottom
+            v.layoutParams = lp
+        }
     }
 
     private fun removeLayer(v: View?) {

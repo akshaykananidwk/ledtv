@@ -238,10 +238,13 @@ final class ContentResolver
         return true;
     }
 
-    /** Overlay settings (clock, logo, weather, ticker) — public so admin previews can reuse it. */
+    /**
+     * Overlay settings (clock, logo, weather) — public so admin previews can reuse it. `ticker` is
+     * always null here: TickerExtension fills it per room (Tickers::forRoom, incl. the legacy
+     * ticker_text setting), so it is never emitted twice.
+     */
     public static function overlay(): array
     {
-        $ticker = trim((string) Settings::get('ticker_text', ''));
         $weather = ['enabled' => false];
         if (Settings::bool('overlay_weather')) {
             $w = Weather::current();
@@ -251,12 +254,7 @@ final class ContentResolver
             'clock' => Settings::bool('overlay_clock'),
             'clock_format' => (string) Settings::get('overlay_clock_format', 'hh:mm a'),
             'weather' => $weather,
-            'ticker' => $ticker === '' ? null : [
-                'text' => $ticker,
-                'speed' => max(1, min(10, Settings::int('ticker_speed', 5))),
-                'bg_color' => clean_color((string) Settings::get('ticker_bg_color'), '#000000'),
-                'text_color' => clean_color((string) Settings::get('ticker_text_color'), '#FFD700'),
-            ],
+            'ticker' => null,
             'logo' => Settings::bool('overlay_logo'),
         ];
     }

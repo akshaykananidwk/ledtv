@@ -97,11 +97,16 @@ if (is_post()) {
 
 $canSchedule = Auth::can('schedule.manage');
 $canCmd = Auth::can('broadcast.device_commands');
-$emergencies = Broadcaster::activeEmergencies();
+$emergencies = hc_visible_emergencies();
+$limited = Access::restricted();
 $history = DB::all(
-    'SELECT b.*, u.username FROM broadcast_commands b LEFT JOIN users u ON u.id = b.created_by WHERE b.hotel_id = :hid ORDER BY b.id DESC LIMIT 30',
+    'SELECT b.*, u.username FROM broadcast_commands b LEFT JOIN users u ON u.id = b.created_by WHERE b.hotel_id = :hid ORDER BY b.id DESC LIMIT ' . ($limited ? 300 : 30),
     hid()
 );
+if ($limited) {
+    // Users limited to some TVs see only broadcasts to their TVs.
+    $history = array_slice(array_values(array_filter($history, [Access::class, 'canBroadcast'])), 0, 30);
+}
 $stats = [];
 if ($history) {
     [$in, $p] = DB::in(array_map(fn ($b) => (int) $b['id'], $history), 'b');
@@ -236,10 +241,14 @@ require __DIR__ . '/partials/header.php';
                   <strong><?= e($em['title']) ?></strong>
                   <div class="small"><?= e(Broadcaster::describeTarget($em['target_type'], $em['target_ids'])) ?> · <?= e(time_ago($em['start_at'])) ?></div>
                 </div>
+                <?php if (Access::canBroadcast($em)): ?>
                 <form method="post">
                   <?= Csrf::field() ?><input type="hidden" name="op" value="emergency_stop"><input type="hidden" name="id" value="<?= (int) $em['id'] ?>">
                   <button class="btn btn-danger btn-sm"><i class="bi bi-stop-circle"></i> <?= e(__('Stop')) ?></button>
                 </form>
+                <?php else: ?>
+                <span class="small text-muted" title="<?= e(__('Only an admin can stop an emergency that also shows on TVs that are not assigned to you.')) ?>"><i class="bi bi-lock"></i></span>
+                <?php endif; ?>
               </div>
             <?php endforeach; ?>
           </div>

@@ -46,7 +46,8 @@ final class Broadcaster
 
     /**
      * Normalise target input from forms: returns [type, ids]. Room / group ids of another hotel are
-     * refused (Tenant::deny → 404); ids that do not exist are dropped.
+     * refused (Tenant::deny → 404); ids that do not exist are dropped. A user limited to some TVs
+     * (core/Access.php) may only target their rooms / assigned groups, never 'all' (403).
      */
     public static function parseTarget(array $in): array
     {
@@ -66,6 +67,7 @@ final class Broadcaster
             $owned = Tenant::assertOwnsAll('room_groups', $ids);
             $ids = array_values(array_filter($ids, fn ($i) => in_array($i, $owned, true)));
         }
+        Access::requireTargetList($type, $ids);
         return [$type, $ids];
     }
 
@@ -142,6 +144,7 @@ final class Broadcaster
         if (!$contentId && !$playlistId) {
             throw new InvalidArgumentException(__('Select content or a playlist.'));
         }
+        Access::requireTargetList($targetType, $ids);
         $rooms = self::targetRooms($targetType, $ids);
         if (!$rooms) {
             throw new InvalidArgumentException(__('No rooms match the selected target.'));
@@ -344,6 +347,7 @@ final class Broadcaster
         if (!$b) {
             return;
         }
+        Access::requireBroadcast($b);
         DB::update('broadcast_commands', ['status' => $enabled ? 'scheduled' : 'cancelled'], 'id = :id', ['id' => $id]);
         Settings::bumpContentVersion();
         self::queueForRooms(self::targetRooms($b['target_type'], json_decode((string) $b['target_ids'], true) ?: []), 'SHOW_CONTENT', [], $id);
@@ -355,6 +359,7 @@ final class Broadcaster
     /** Start an emergency broadcast that overrides all content on targeted TVs. */
     public static function emergencyStart(string $title, string $message, string $targetType, array $ids, ?int $userId = null, string $bg = '#B00020', string $fg = '#FFFFFF'): int
     {
+        Access::requireTargetList($targetType, $ids);
         $title = trim($title) ?: __('Emergency');
         $bid = DB::insert('broadcast_commands', [
             'title' => mb_substr($title, 0, 190),
@@ -374,14 +379,21 @@ final class Broadcaster
         return $bid;
     }
 
-    /** Stop one (or all) emergency broadcasts. */
+    /**
+     * Stop one (or all) emergency broadcasts. A user limited to some TVs may stop only emergencies
+     * that target nothing but their TVs (403 for one id; "stop all" stops only those).
+     */
     public static function emergencyStop(?int $id = null): int
     {
         if ($id) {
             $row = Tenant::find('broadcast_commands', $id, "is_emergency = 1 AND status = 'active'");
+            if ($row) {
+                Access::requireBroadcast($row);
+            }
             $rows = $row ? [$row] : [];
         } else {
             $rows = DB::all("SELECT * FROM broadcast_commands WHERE hotel_id = :hid AND is_emergency = 1 AND status = 'active'", ['hid' => Tenant::id()]);
+            $rows = array_values(array_filter($rows, [Access::class, 'canBroadcast']));
         }
         foreach ($rows as $b) {
             DB::update('broadcast_commands', ['status' => 'completed', 'end_at' => now()], 'id = :id', ['id' => $b['id']]);
@@ -402,6 +414,7 @@ final class Broadcaster
         if (!in_array($command, self::DEVICE_COMMANDS, true)) {
             throw new InvalidArgumentException('Unknown command');
         }
+        Access::requireTargetList($targetType, $ids);
         $rooms = self::targetRooms($targetType, $ids);
         $bid = DB::insert('broadcast_commands', [
             'title' => $command,

@@ -21,6 +21,7 @@ if ($action === 'file') {
         http_response_code(404);
         exit('Not found');
     }
+    Access::requireDevice((int) $row['device_id']); // users limited to some TVs
     session_write_close();
     $isImg = $row['kind'] === 'screenshot';
     $name = $row['kind'] . '-' . $row['device_id'] . '-' . date('Ymd-His', (int) strtotime($row['created_at'])) . ($isImg ? '.jpg' : '.txt');
@@ -40,6 +41,7 @@ if ($deviceId) {
         flash('warning', __('Device not found.'));
         redirect(admin_url('support.php'));
     }
+    Access::requireDevice($deviceId);
     if (is_post() && req_str('op', $_POST, 20) === 'delete_file') {
         $row = Tenant::find('device_support_files', req_int('file_id', $_POST), 'device_id = :d', ['d' => $deviceId]);
         if ($row) {
@@ -213,9 +215,9 @@ $rows = DB::all(
         (SELECT COUNT(*) FROM device_support_files f WHERE f.hotel_id = d.hotel_id AND f.device_id = d.id AND f.kind = 'logs') AS logs,
         (SELECT COUNT(*) FROM device_support_files f WHERE f.hotel_id = d.hotel_id AND f.device_id = d.id AND f.kind = 'crash' AND f.created_at >= :week) AS crashes
      FROM devices d LEFT JOIN rooms r ON r.id = d.room_id AND r.hotel_id = d.hotel_id
-     WHERE d.hotel_id = :hid AND d.is_revoked = 0 AND d.room_id IS NOT NULL
+     WHERE d.hotel_id = :hid AND d.is_revoked = 0 AND d.room_id IS NOT NULL" . Access::roomSql('d.room_id')[0] . "
      ORDER BY crashes DESC, LENGTH(r.room_number), r.room_number",
-    ['week' => date('Y-m-d H:i:s', time() - 7 * 86400)] + hid()
+    ['week' => date('Y-m-d H:i:s', time() - 7 * 86400)] + hid() + Access::roomSql('d.room_id')[1]
 );
 $newest = DB::one('SELECT version_code, version_name FROM apk_releases WHERE hotel_id = :hid ORDER BY version_code DESC LIMIT 1', hid());
 $pageTitle = __('TV support');

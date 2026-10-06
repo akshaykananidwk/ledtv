@@ -27,6 +27,7 @@ if (is_post()) {
                 break;
 
             case 'mode':
+                Access::requireUnrestricted('power off mode'); // hotel-wide setting
                 $mode = ($_POST['power_off_mode'] ?? '') === 'black' ? 'black' : 'standby';
                 Settings::set('power_off_mode', $mode);
                 Settings::bumpContentVersion();
@@ -58,6 +59,7 @@ if (is_post()) {
                 $id = req_int('id', $_POST);
                 $b = Tenant::find('broadcast_commands', $id, "command = 'SCREEN_OFF' AND mode = 'window'");
                 if ($b) {
+                    Access::requireBroadcast($b);
                     DB::delete('broadcast_commands', 'id = :id', ['id' => $id]);
                     Settings::bumpContentVersion();
                     Broadcaster::queueForRooms(Broadcaster::targetRooms($b['target_type'], json_decode((string) $b['target_ids'], true) ?: []), 'SHOW_CONTENT');
@@ -81,14 +83,17 @@ $schedules = DB::all(
      WHERE b.hotel_id = :hid AND b.command = 'SCREEN_OFF' AND b.mode = 'window' ORDER BY b.status = 'cancelled', b.id DESC",
     hid()
 );
-$roomsOff = (int) DB::value('SELECT COUNT(*) FROM rooms WHERE hotel_id = :hid AND is_enabled = 0', hid());
+$limited = Access::restricted();
+$schedules = array_values(array_filter($schedules, [Access::class, 'canBroadcast'])); // limited users: only their TVs
+[$accR, $apR] = Access::roomSql('id');
+$roomsOff = (int) DB::value('SELECT COUNT(*) FROM rooms WHERE hotel_id = :hid AND is_enabled = 0' . $accR, hid() + $apR);
 $activeNow = array_values(array_filter($schedules, fn ($b) => $b['status'] !== 'cancelled' && ContentResolver::windowActive($b)));
 $days = day_names();
 $powerLog = DB::all(
     "SELECT dc.command, dc.status, dc.message, dc.created_at, dc.acked_at, r.room_number
      FROM device_commands dc JOIN devices d ON d.id = dc.device_id LEFT JOIN rooms r ON r.id = d.room_id
-     WHERE d.hotel_id = :hid AND dc.command IN ('SCREEN_ON','SCREEN_OFF') ORDER BY dc.id DESC LIMIT 15",
-    hid()
+     WHERE d.hotel_id = :hid AND dc.command IN ('SCREEN_ON','SCREEN_OFF')" . Access::roomSql('d.room_id')[0] . " ORDER BY dc.id DESC LIMIT 15",
+    hid() + Access::roomSql('d.room_id')[1]
 );
 
 $pageTitle = __('TV Power');
@@ -135,6 +140,7 @@ require __DIR__ . '/partials/header.php';
       </div>
     </div>
 
+    <?php if (!$limited): ?>
     <div class="card mb-3">
       <div class="card-header"><i class="bi bi-gear"></i> <?= e(__('How should "OFF" work?')) ?></div>
       <div class="card-body">
@@ -155,6 +161,7 @@ require __DIR__ . '/partials/header.php';
         </form>
       </div>
     </div>
+    <?php endif; ?>
 
     <div class="card mb-3">
       <div class="card-header"><i class="bi bi-alarm"></i> <?= e(__('New daily schedule')) ?></div>

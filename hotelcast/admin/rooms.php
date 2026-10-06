@@ -43,8 +43,23 @@ function save_room_groups(int $roomId, array $groupIds): void
     if (!Tenant::find('rooms', $roomId)) {
         return;
     }
-    DB::delete('room_group_members', 'room_id = :r', ['r' => $roomId]);
     $valid = $groupIds ? Tenant::assertOwnsAll('room_groups', $groupIds) : [];
+    if (Access::restricted()) {
+        // Users limited to some TVs change only the membership of their assigned groups.
+        foreach ($valid as $gid) {
+            Access::requireGroup((int) $gid);
+        }
+        foreach (DB::column('SELECT group_id FROM room_group_members WHERE room_id = :r', ['r' => $roomId]) as $gid) {
+            if (Access::canGroup((int) $gid)) {
+                DB::delete('room_group_members', 'room_id = :r AND group_id = :g', ['r' => $roomId, 'g' => (int) $gid]);
+            }
+        }
+        foreach ($valid as $gid) {
+            DB::query('INSERT IGNORE INTO room_group_members (room_id, group_id) VALUES (:r, :g)', ['r' => $roomId, 'g' => (int) $gid]);
+        }
+        return;
+    }
+    DB::delete('room_group_members', 'room_id = :r', ['r' => $roomId]);
     foreach ($valid as $gid) {
         DB::insert('room_group_members', ['room_id' => $roomId, 'group_id' => (int) $gid]);
     }
@@ -62,6 +77,8 @@ if (is_post()) {
                 if ($id && !$existing) {
                     throw new InvalidArgumentException(__('Room not found.'));
                 }
+                // Users limited to some TVs edit only their rooms and never add rooms.
+                $existing ? Access::requireRoom($id) : Access::requireUnrestricted('room create');
                 $number = req_str('room_number', $_POST, 40);
                 $pin = req_str('settings_pin', $_POST, 10);
                 $errors = [];
@@ -107,6 +124,7 @@ if (is_post()) {
                 require_can('rooms.manage');
                 $id = req_int('id', $_POST);
                 $room = Tenant::find('rooms', $id);
+                Access::requireUnrestricted('room delete');
                 if ($room) {
                     DB::delete('rooms', 'id = :id', ['id' => $id]);
                     Settings::bumpContentVersion();
@@ -117,6 +135,7 @@ if (is_post()) {
 
             case 'bulk_add':
                 require_can('rooms.manage');
+                Access::requireUnrestricted('room bulk add');
                 $numbers = parse_room_numbers(req_str('numbers', $_POST, 2000));
                 if (!$numbers) {
                     flash('danger', __('Enter room numbers, e.g. 101-120 or 101, 102, 105.'));
@@ -152,6 +171,7 @@ if (is_post()) {
 
             case 'bulk':
                 $ids = Tenant::assertOwnsAll('rooms', int_ids($_POST['room_ids'] ?? []));
+                Access::requireTargetList('rooms', $ids);
                 $do = req_str('bulk_action', $_POST, 30);
                 if (!$ids) {
                     flash('warning', __('Select at least one room first.'));
@@ -197,6 +217,7 @@ if (is_post()) {
                         break;
                     case 'delete':
                         require_can('rooms.manage');
+                        Access::requireUnrestricted('room bulk delete');
                         [$in, $p] = DB::in($ids, 'r');
                         $nums = DB::column("SELECT room_number FROM rooms WHERE hotel_id = :hid AND id IN $in", $p + hid());
                         DB::query("DELETE FROM rooms WHERE hotel_id = :hid AND id IN $in", $p + hid());
@@ -213,6 +234,7 @@ if (is_post()) {
                 require_can('rooms.manage');
                 $did = req_int('device_id', $_POST);
                 $dev = Tenant::find('devices', $did);
+                Access::requireDevice($did);
                 if ($dev) {
                     DB::update('devices', ['is_revoked' => 1, 'status' => 'offline', 'token_hash' => hash('sha256', random_token(32))], 'id = :id', ['id' => $did]);
                     ActivityLog::add('device_revoke', 'device', $did, 'Revoked device ' . $dev['device_uid']);
@@ -224,6 +246,7 @@ if (is_post()) {
                 require_can('rooms.manage');
                 $did = req_int('device_id', $_POST);
                 $dev = Tenant::find('devices', $did, 'is_revoked = 1');
+                Access::requireDevice($did);
                 if ($dev) {
                     DB::delete('devices', 'id = :id', ['id' => $did]);
                     ActivityLog::add('device_delete', 'device', $did, 'Deleted device ' . $dev['device_uid']);
@@ -242,10 +265,14 @@ if (is_post()) {
 // ---------------------------------------------------------------- Views
 $action = req_str('action', $_GET, 20);
 $canManage = Auth::can('rooms.manage');
+$limited = Access::restricted(); // user limited to some TVs: no room create / delete
 $groupsAll = hc_groups();
 
 if (in_array($action, ['new', 'edit', 'bulk_add'], true)) {
     require_can('rooms.manage');
+    if ($action !== 'edit') {
+        Access::requireUnrestricted('room create');
+    }
 }
 
 $pageTitle = __('Rooms & TVs');
@@ -254,6 +281,9 @@ $activeNav = 'rooms';
 // ---- Device detail
 if ($action === 'device') {
     $did = req_int('id', $_GET);
+    if (Tenant::find('devices', $did)) {
+        Access::requireDevice($did);
+    }
     $dev = Tenant::find('devices', $did) ? DB::one('SELECT d.*, r.room_number, r.name AS room_name FROM devices d LEFT JOIN rooms r ON r.id = d.room_id WHERE d.id = :id AND d.hotel_id = :hid', ['id' => $did] + hid()) : null;
     if (!$dev) {
         flash('warning', __('Device not found.'));
@@ -356,6 +386,7 @@ if ($action === 'new' || $action === 'edit') {
             flash('warning', __('Room not found.'));
             redirect(admin_url('rooms.php'));
         }
+        Access::requireRoom((int) $room['id']);
         $memberOf = array_map('intval', DB::column('SELECT group_id FROM room_group_members WHERE room_id = :r', ['r' => $room['id']]));
         $devices = DB::all('SELECT * FROM devices WHERE hotel_id = :hid AND room_id = :r ORDER BY is_revoked, last_ping DESC', ['r' => $room['id']] + hid());
     }
@@ -439,7 +470,7 @@ if ($action === 'new' || $action === 'edit') {
         <a href="<?= e(admin_url('rooms.php')) ?>" class="btn btn-light border btn-lg"><?= e(__('Cancel')) ?></a>
       </div>
     </form>
-    <?php if ($room['id']): ?>
+    <?php if ($room['id'] && !$limited): ?>
       <form method="post" class="mt-4" data-confirm="<?= e(__('Delete room :n? Its TV will stop receiving content until the room is added again.', ['n' => $room['room_number']])) ?>">
         <?= Csrf::field() ?><input type="hidden" name="op" value="delete"><input type="hidden" name="id" value="<?= (int) $room['id'] ?>">
         <button class="btn btn-outline-danger btn-sm"><i class="bi bi-trash"></i> <?= e(__('Delete this room')) ?></button>
@@ -497,7 +528,8 @@ if ($action === 'bulk_add') {
 
 // ---- Revoked devices list
 if ($action === 'devices') {
-    $revoked = DB::all('SELECT d.*, r.room_number FROM devices d LEFT JOIN rooms r ON r.id = d.room_id WHERE d.hotel_id = :hid AND (d.is_revoked = 1 OR d.room_id IS NULL) ORDER BY d.updated_at DESC', hid());
+    [$acc, $ap] = Access::roomSql('d.room_id');
+    $revoked = DB::all('SELECT d.*, r.room_number FROM devices d LEFT JOIN rooms r ON r.id = d.room_id WHERE d.hotel_id = :hid AND (d.is_revoked = 1 OR d.room_id IS NULL)' . $acc . ' ORDER BY d.updated_at DESC', hid() + $ap);
     $pageTitle = __('Revoked & unassigned TVs');
     require __DIR__ . '/partials/header.php';
     ?>
@@ -542,6 +574,11 @@ $fStatus = req_str('status', $_GET, 10);
 
 $where = ['r.hotel_id = :hid'];
 $params = hid();
+[$acc, $ap] = Access::roomSql('r.id');
+if ($acc !== '') {
+    $where[] = substr($acc, 5); // " AND r.id IN (…)" → "r.id IN (…)"
+    $params += $ap;
+}
 if ($q !== '') {
     $where[] = '(r.room_number LIKE :q1 OR r.name LIKE :q2 OR r.notes LIKE :q3)';
     $params += ['q1' => "%$q%", 'q2' => "%$q%", 'q3' => "%$q%"];
@@ -563,8 +600,10 @@ foreach (DB::all('SELECT m.room_id, g.name FROM room_group_members m JOIN room_g
 if (in_array($fStatus, ['online', 'offline', 'none'], true)) {
     $rooms = array_values(array_filter($rooms, fn ($r) => hc_room_status($devMap[(int) $r['id']] ?? []) === $fStatus));
 }
-$totalRooms = (int) DB::value('SELECT COUNT(*) FROM rooms WHERE hotel_id = :hid', hid());
-$revokedCount = (int) DB::value('SELECT COUNT(*) FROM devices WHERE hotel_id = :hid AND (is_revoked = 1 OR room_id IS NULL)', hid());
+[$accR, $apR] = Access::roomSql('id');
+[$accD, $apD] = Access::roomSql('room_id');
+$totalRooms = (int) DB::value('SELECT COUNT(*) FROM rooms WHERE hotel_id = :hid' . $accR, hid() + $apR);
+$revokedCount = (int) DB::value('SELECT COUNT(*) FROM devices WHERE hotel_id = :hid AND (is_revoked = 1 OR room_id IS NULL)' . $accD, hid() + $apD);
 $canCmd = Auth::can('broadcast.device_commands');
 
 require __DIR__ . '/partials/header.php';
@@ -577,8 +616,10 @@ require __DIR__ . '/partials/header.php';
   <?php if ($canManage): ?>
   <div class="d-flex flex-wrap gap-2">
     <?php if (is_file(__DIR__ . '/claim.php')): ?><a href="<?= e(admin_url('claim.php')) ?>" class="btn btn-success"><i class="bi bi-qr-code-scan"></i> <?= e(__('Add TV with QR')) ?></a><?php endif; ?>
+    <?php if (!$limited): ?>
     <a href="<?= e(admin_url('rooms.php', ['action' => 'new'])) ?>" class="btn btn-primary"><i class="bi bi-plus-lg"></i> <?= e(__('Add room')) ?></a>
     <a href="<?= e(admin_url('rooms.php', ['action' => 'bulk_add'])) ?>" class="btn btn-outline-primary"><i class="bi bi-plus-square-dotted"></i> <?= e(__('Add many rooms')) ?></a>
+    <?php endif; ?>
     <?php if ($revokedCount): ?><a href="<?= e(admin_url('rooms.php', ['action' => 'devices'])) ?>" class="btn btn-light border"><i class="bi bi-slash-circle"></i> <?= e(__('Revoked TVs')) ?> (<?= $revokedCount ?>)</a><?php endif; ?>
     <?php if (Auth::can('devices.setup')): ?><a href="<?= e(admin_url('setup_file.php')) ?>" class="btn btn-light border"><i class="bi bi-filetype-csv"></i> <?= e(__('Download setup file')) ?></a><?php endif; ?>
   </div>
@@ -593,7 +634,7 @@ require __DIR__ . '/partials/header.php';
       <ol class="mb-1 small ps-3">
         <li><?= e(__('Install the HotelCast app on the TV and open it.')) ?></li>
         <li><?= e(__('Enter the server address:')) ?> <code><?= e(base_url()) ?></code> <button type="button" class="btn btn-xs btn-light border" data-copy="<?= e(base_url()) ?>"><i class="bi bi-clipboard"></i></button></li>
-        <?php if ($canManage): ?>
+        <?php if ($canManage && !$limited): ?>
           <li><?= e(__('Enter the registration key:')) ?> <code><?= e((string) Settings::get('registration_key', '') ?: __('(not set — open Settings → Devices)')) ?></code>
             <?php if (Settings::get('registration_key', '')): ?><button type="button" class="btn btn-xs btn-light border" data-copy="<?= e((string) Settings::get('registration_key')) ?>"><i class="bi bi-clipboard"></i></button><?php endif; ?></li>
         <?php else: ?>
@@ -647,7 +688,7 @@ require __DIR__ . '/partials/header.php';
     <?php if ($totalRooms === 0): ?>
       <p class="mb-1"><strong><?= e(__('No rooms yet')) ?></strong></p>
       <p class="text-muted"><?= e(__('Add rooms, or let TVs auto-register: open the app on a TV and type its room number.')) ?></p>
-      <?php if ($canManage): ?>
+      <?php if ($canManage && !$limited): ?>
         <a class="btn btn-primary" href="<?= e(admin_url('rooms.php', ['action' => 'bulk_add'])) ?>"><i class="bi bi-plus-lg"></i> <?= e(__('Add rooms')) ?></a>
       <?php endif; ?>
     <?php else: ?>
@@ -739,7 +780,7 @@ require __DIR__ . '/partials/header.php';
             <option value="RELOAD"><?= e(__('Restart app')) ?></option>
             <option value="PING"><?= e(__('Ping (test)')) ?></option>
           <?php endif; ?>
-          <?php if ($canManage): ?><option value="delete"><?= e(__('Delete rooms')) ?></option><?php endif; ?>
+          <?php if ($canManage && !$limited): ?><option value="delete"><?= e(__('Delete rooms')) ?></option><?php endif; ?>
         </select>
       </div>
       <div class="col-12 col-md-4" id="bulkSource" hidden>

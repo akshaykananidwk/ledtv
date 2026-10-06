@@ -8,9 +8,11 @@ Csrf::check();
 Scheduler::tick();
 
 $stats = hc_dashboard_stats();
-$activity = DB::all('SELECT * FROM activity_logs WHERE hotel_id = :hid ORDER BY id DESC LIMIT 10', hid());
+$activity = hc_recent_activity(10);
 $roomStatus = hc_room_status_list();
-$emergencies = Broadcaster::activeEmergencies();
+$emergencies = hc_visible_emergencies();
+$limited = Access::restricted(); // user limited to some TVs (core/Access.php)
+$canStopEmergency = (bool) array_filter($emergencies, [Access::class, 'canBroadcast']);
 
 $pageTitle = __('Dashboard');
 $activeNav = 'index';
@@ -32,8 +34,8 @@ $cards = [
   </div>
   <div class="d-flex flex-wrap gap-2">
     <?php if (Auth::can('broadcast.send')): ?>
-      <a href="<?= e(admin_url('broadcast.php')) ?>" class="btn btn-primary"><i class="bi bi-broadcast-pin"></i> <?= e(__('Broadcast to all')) ?></a>
-      <button type="button" class="btn btn-outline-primary" id="btnRefreshAll"><i class="bi bi-arrow-clockwise"></i> <?= e(__('Refresh all TVs')) ?></button>
+      <a href="<?= e(admin_url('broadcast.php')) ?>" class="btn btn-primary"><i class="bi bi-broadcast-pin"></i> <?= e($limited ? __('Broadcast') : __('Broadcast to all')) ?></a>
+      <?php if (!$limited): ?><button type="button" class="btn btn-outline-primary" id="btnRefreshAll"><i class="bi bi-arrow-clockwise"></i> <?= e(__('Refresh all TVs')) ?></button><?php endif; ?>
     <?php endif; ?>
     <?php if (Auth::can('broadcast.emergency')): ?>
       <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#emergencyModal"><i class="bi bi-exclamation-triangle-fill"></i> <?= e(__('Emergency message')) ?></button>
@@ -65,7 +67,7 @@ $cards = [
       <div><strong><?= e($em['title']) ?></strong> — <?= e(Broadcaster::describeTarget($em['target_type'], $em['target_ids'])) ?> · <?= e(time_ago($em['start_at'])) ?></div>
     <?php endforeach; ?>
   </div>
-  <?php if (Auth::can('broadcast.emergency')): ?>
+  <?php if (Auth::can('broadcast.emergency') && $canStopEmergency): ?>
     <button class="btn btn-danger js-emergency-stop" data-id="0"><i class="bi bi-stop-circle"></i> <?= e(__('Stop emergency')) ?></button>
   <?php endif; ?>
 </div>

@@ -102,10 +102,6 @@ if (is_post()) {
                         'weather_city' => req_str('weather_city', $_POST, 80),
                         'weather_lat' => $lat,
                         'weather_lon' => $lon,
-                        'ticker_text' => req_str('ticker_text', $_POST, 1000),
-                        'ticker_bg_color' => clean_color($_POST['ticker_bg_color'] ?? null, '#000000'),
-                        'ticker_text_color' => clean_color($_POST['ticker_text_color'] ?? null, '#FFD700'),
-                        'ticker_speed' => int_in_range('ticker_speed', 1, 10, 5),
                     ]);
                     Cache::clear('weather');
                     $tvAffecting = true;
@@ -309,12 +305,9 @@ $saveBtn = '<div class="sticky-actions"><button class="btn btn-primary btn-lg"><
         <div class="col-6 col-sm-4"><label class="form-label" for="wlat"><?= e(__('Latitude')) ?></label><input class="form-control" id="wlat" name="weather_lat" value="<?= e($S['weather_lat']) ?>" inputmode="decimal"></div>
         <div class="col-6 col-sm-4"><label class="form-label" for="wlon"><?= e(__('Longitude')) ?></label><input class="form-control" id="wlon" name="weather_lon" value="<?= e($S['weather_lon']) ?>" inputmode="decimal"></div>
       </div></div>
-      <div class="card mb-3"><div class="card-header"><?= e(__('Scrolling ticker')) ?></div><div class="card-body row g-3">
-        <div class="col-12"><label class="form-label" for="tt"><?= e(__('Ticker text (empty = no ticker)')) ?></label>
-          <textarea class="form-control" id="tt" name="ticker_text" rows="2" maxlength="1000" placeholder="<?= e(__('e.g. Mangla Aarti at 6:00 AM | Breakfast 7–10 AM')) ?>"><?= e($S['ticker_text']) ?></textarea></div>
-        <div class="col-4"><label class="form-label" for="tbg"><?= e(__('Background')) ?></label><input type="color" class="form-control form-control-color w-100" id="tbg" name="ticker_bg_color" value="<?= e(clean_color($S['ticker_bg_color'], '#000000')) ?>"></div>
-        <div class="col-4"><label class="form-label" for="tfg"><?= e(__('Text')) ?></label><input type="color" class="form-control form-control-color w-100" id="tfg" name="ticker_text_color" value="<?= e(clean_color($S['ticker_text_color'], '#FFD700')) ?>"></div>
-        <div class="col-4"><label class="form-label" for="tsp"><?= e(__('Speed')) ?></label><input type="range" class="form-range" id="tsp" name="ticker_speed" min="1" max="10" value="<?= (int) $S['ticker_speed'] ?>"></div>
+      <div class="card mb-3"><div class="card-header"><?= e(__('Scrolling ticker')) ?></div><div class="card-body">
+        <p class="small text-muted mb-2"><?= e(__('Ticker bars now have their own page: different text per TV, group or all TVs, colours, speed, size, position and time windows. The video shrinks so the bar never covers it.')) ?></p>
+        <?php if (Auth::can('tickers.manage')): ?><a class="btn btn-sm btn-outline-primary" href="<?= e(admin_url('tickers.php')) ?>"><i class="bi bi-text-paragraph"></i> <?= e(__('Open Ticker bar')) ?></a><?php endif; ?>
       </div></div>
     </div>
   </div>

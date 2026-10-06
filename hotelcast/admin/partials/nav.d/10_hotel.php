@@ -1,7 +1,7 @@
 <?php
 /**
  * Admin sidebar items — hotel section. Every admin/partials/nav.d/*.php returns a list of
- *   [key, file, permission, icon, label, section]  (+ optional 7th element: ['saas' => true])
+ *   [key, file, permission, icon, label, section]  (+ optional 7th element: ['saas' => true, 'after' => 'broadcast'])
  * section: 'hotel' (needs a hotel context) | 'reseller' | 'platform'.
  * Files are loaded in name order; a module adds its menu entry by adding its own file here.
  */
