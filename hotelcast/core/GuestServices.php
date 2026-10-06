@@ -598,6 +598,7 @@ final class GuestServices
         if (!$o) {
             throw new InvalidArgumentException(__('Order not found.'));
         }
+        Access::requireRoom((int) $o['room_id']); // staff limited to some TVs / rooms (core/Access.php)
         if (!in_array($status, self::ORDER_STATUSES, true) || ($status !== $o['status'] && !in_array($status, self::ORDER_FLOW[$o['status']], true))) {
             throw new InvalidArgumentException(__('This status change is not allowed.'));
         }
@@ -638,6 +639,7 @@ final class GuestServices
         if (!$r) {
             throw new InvalidArgumentException(__('Request not found.'));
         }
+        Access::requireRoom((int) $r['room_id']);
         if (!in_array($status, self::REQUEST_STATUSES, true)) {
             throw new InvalidArgumentException(__('This status change is not allowed.'));
         }
@@ -671,13 +673,15 @@ final class GuestServices
     {
         $hid = ['hid' => Tenant::id()];
         $since = date('Y-m-d H:i:s', strtotime('today'));
+        [$accO, $apO] = Access::roomSql('o.room_id', 'aro');
+        [$accQ, $apQ] = Access::roomSql('q.room_id', 'arq');
         $orders = DB::all(
             "SELECT o.*, r.room_number, s.guest_name, s.salutation FROM guest_orders o
              LEFT JOIN rooms r ON r.id = o.room_id AND r.hotel_id = o.hotel_id
              LEFT JOIN guest_stays s ON s.id = o.stay_id AND s.hotel_id = o.hotel_id
-             WHERE o.hotel_id = :hid AND (o.status IN ('new','accepted','preparing') OR o.updated_at >= :since)
+             WHERE o.hotel_id = :hid AND (o.status IN ('new','accepted','preparing') OR o.updated_at >= :since)$accO
              ORDER BY o.id DESC LIMIT 200",
-            $hid + ['since' => $since]
+            $hid + ['since' => $since] + $apO
         );
         $items = self::itemsFor(array_map(fn ($o) => (int) $o['id'], $orders));
         $requests = DB::all(
@@ -685,9 +689,9 @@ final class GuestServices
              LEFT JOIN rooms r ON r.id = q.room_id AND r.hotel_id = q.hotel_id
              LEFT JOIN guest_stays s ON s.id = q.stay_id AND s.hotel_id = q.hotel_id
              LEFT JOIN guest_request_types t ON t.id = q.type_id AND t.hotel_id = q.hotel_id
-             WHERE q.hotel_id = :hid AND (q.status = 'open' OR q.done_at >= :since)
+             WHERE q.hotel_id = :hid AND (q.status = 'open' OR q.done_at >= :since)$accQ
              ORDER BY q.status = 'open' DESC, q.id DESC LIMIT 200",
-            $hid + ['since' => $since]
+            $hid + ['since' => $since] + $apQ
         );
         return [
             'orders' => array_map(fn ($o) => [
@@ -711,13 +715,15 @@ final class GuestServices
     /** Counters for the live alerts poll. */
     public static function alertCounts(): array
     {
-        $hid = ['hid' => Tenant::id()];
+        // Staff limited to some rooms (core/Access.php) count only their rooms.
+        [$acc, $ap] = Access::roomSql('room_id');
+        $hid = ['hid' => Tenant::id()] + $ap;
         return [
-            'new_orders' => (int) DB::value("SELECT COUNT(*) FROM guest_orders WHERE hotel_id = :hid AND status = 'new'", $hid),
-            'open_orders' => (int) DB::value("SELECT COUNT(*) FROM guest_orders WHERE hotel_id = :hid AND status IN ('new','accepted','preparing')", $hid),
-            'open_requests' => (int) DB::value("SELECT COUNT(*) FROM guest_requests WHERE hotel_id = :hid AND status = 'open'", $hid),
-            'last_order_id' => (int) DB::value('SELECT COALESCE(MAX(id), 0) FROM guest_orders WHERE hotel_id = :hid', $hid),
-            'last_request_id' => (int) DB::value('SELECT COALESCE(MAX(id), 0) FROM guest_requests WHERE hotel_id = :hid', $hid),
+            'new_orders' => (int) DB::value("SELECT COUNT(*) FROM guest_orders WHERE hotel_id = :hid AND status = 'new'$acc", $hid),
+            'open_orders' => (int) DB::value("SELECT COUNT(*) FROM guest_orders WHERE hotel_id = :hid AND status IN ('new','accepted','preparing')$acc", $hid),
+            'open_requests' => (int) DB::value("SELECT COUNT(*) FROM guest_requests WHERE hotel_id = :hid AND status = 'open'$acc", $hid),
+            'last_order_id' => (int) DB::value('SELECT COALESCE(MAX(id), 0) FROM guest_orders WHERE hotel_id = :hid' . $acc, $hid),
+            'last_request_id' => (int) DB::value('SELECT COALESCE(MAX(id), 0) FROM guest_requests WHERE hotel_id = :hid' . $acc, $hid),
         ];
     }
 
@@ -725,15 +731,17 @@ final class GuestServices
     public static function newSince(int $orderId, int $requestId): array
     {
         $hid = ['hid' => Tenant::id()];
+        [$accO, $apO] = Access::roomSql('o.room_id', 'aro');
+        [$accQ, $apQ] = Access::roomSql('q.room_id', 'arq');
         $o = DB::all(
             'SELECT o.id, o.total, o.item_count, r.room_number FROM guest_orders o LEFT JOIN rooms r ON r.id = o.room_id AND r.hotel_id = o.hotel_id
-             WHERE o.hotel_id = :hid AND o.id > :id ORDER BY o.id DESC LIMIT 5',
-            $hid + ['id' => $orderId]
+             WHERE o.hotel_id = :hid AND o.id > :id' . $accO . ' ORDER BY o.id DESC LIMIT 5',
+            $hid + ['id' => $orderId] + $apO
         );
         $q = DB::all(
             'SELECT q.id, q.type_name, q.requested_time, r.room_number FROM guest_requests q LEFT JOIN rooms r ON r.id = q.room_id AND r.hotel_id = q.hotel_id
-             WHERE q.hotel_id = :hid AND q.id > :id ORDER BY q.id DESC LIMIT 5',
-            $hid + ['id' => $requestId]
+             WHERE q.hotel_id = :hid AND q.id > :id' . $accQ . ' ORDER BY q.id DESC LIMIT 5',
+            $hid + ['id' => $requestId] + $apQ
         );
         return [
             'orders' => array_map(fn ($x) => ['id' => (int) $x['id'], 'room' => (string) ($x['room_number'] ?? '-'), 'items' => (int) $x['item_count'], 'total' => money($x['total'], 'INR')], $o),

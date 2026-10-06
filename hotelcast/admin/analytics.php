@@ -38,8 +38,13 @@ if (is_post()) {
 [$from, $to] = Analytics::range($_GET['from'] ?? null, $_GET['to'] ?? null);
 $days = Analytics::byDay($from, $to);
 $content = Analytics::byContent($from, $to);
-$rooms = Analytics::byRoom($from, $to);
+// Users limited to some TVs (core/Access.php): per-room / per-TV tables show only their TVs
+// (hotel-wide totals per day / per content stay hotel-wide).
+$rooms = Access::filterRooms(Analytics::byRoom($from, $to), 'room_id');
 $tvs = Analytics::byTv($from, $to);
+if (Access::restricted()) {
+    $tvs = array_values(array_filter($tvs, static fn ($t) => Access::canDevice((int) $t['device_id'])));
+}
 $tvSum = Analytics::tvSummary($tvs);
 $tvRows = Analytics::publicTvRows($tvs);
 $occ = Analytics::occupancy($from, $to);

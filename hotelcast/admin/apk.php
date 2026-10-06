@@ -99,8 +99,8 @@ $devices = DB::all(
             (SELECT c.created_at FROM device_commands c WHERE c.device_id = d.id AND c.command = 'UPDATE_APP' ORDER BY c.id DESC LIMIT 1) AS upd_at,
             (SELECT c.message FROM device_commands c WHERE c.device_id = d.id AND c.command = 'UPDATE_APP' ORDER BY c.id DESC LIMIT 1) AS upd_msg
      FROM devices d LEFT JOIN rooms r ON r.id = d.room_id
-     WHERE d.hotel_id = :hid AND d.is_revoked = 0 ORDER BY LENGTH(r.room_number), r.room_number",
-    hid()
+     WHERE d.hotel_id = :hid AND d.is_revoked = 0" . Access::roomSql('d.room_id')[0] . " ORDER BY LENGTH(r.room_number), r.room_number",
+    hid() + Access::roomSql('d.room_id')[1]
 );
 $pageTitle = __('APK Manager');
 $activeNav = 'apk';

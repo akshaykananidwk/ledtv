@@ -1,0 +1,42 @@
+<?php
+/**
+ * Hindi translations — per-user TV access (core/Access.php, admin/users.php), SaaS role names
+ * and the platform feature switch for hotel chains. Merged automatically with lang/hi.php by I18n.
+ */
+return [
+    ':n groups' => ':n ग्रुप',
+    ':n rooms' => ':n कमरे',
+    '1 group' => '1 ग्रुप',
+    '1 room' => '1 कमरा',
+    'A limited user cannot add or delete rooms and groups, cannot send to "All rooms" and can stop only emergencies shown on their TVs. Content library and playlists stay shared.' => 'सीमित यूज़र कमरे और ग्रुप जोड़ या हटा नहीं सकते, "सभी कमरे" पर नहीं भेज सकते और केवल अपने TV पर दिख रही इमरजेंसी ही बंद कर सकते हैं। कंटेंट लाइब्रेरी और प्लेलिस्ट सबके लिए साझा रहती हैं।',
+    'Admin' => 'एडमिन',
+    'all rooms in the group, also rooms added later' => 'ग्रुप के सभी कमरे, बाद में जोड़े गए कमरे भी',
+    'All TVs' => 'सभी TV',
+    'Broadcast' => 'ब्रॉडकास्ट',
+    'Chain Admin' => 'चेन एडमिन',
+    'Choose at least one group or room, or select "All TVs".' => 'कम से कम एक ग्रुप या कमरा चुनें, या "सभी TV" चुनें।',
+    'Features' => 'फ़ीचर',
+    'Groups' => 'ग्रुप',
+    'Groups of hotels with one owner (chain dashboard, chain content, chain broadcast, chain admins). Off: the chain menus and pages are hidden and chain admins cannot enter hotels. Existing chain data is kept and comes back when you switch it on again.' => 'एक मालिक के होटलों के समूह (चेन डैशबोर्ड, चेन कंटेंट, चेन ब्रॉडकास्ट, चेन एडमिन)। बंद: चेन के मेनू और पेज छिप जाते हैं और चेन एडमिन होटल में नहीं जा सकते। मौजूदा चेन डेटा बना रहता है और फिर से चालू करने पर वापस आ जाता है।',
+    'Hotel chains' => 'होटल चेन',
+    'Limit a Manager, Staff or Reception user to some rooms or groups. They then see and control only those TVs (rooms, dashboard, broadcasts, power, schedules, emergency, guests). Admins always have all TVs.' => 'मैनेजर, स्टाफ़ या रिसेप्शन यूज़र को कुछ कमरों या ग्रुप तक सीमित करें। फिर वे केवल वही TV देखते और चलाते हैं (कमरे, डैशबोर्ड, ब्रॉडकास्ट, पावर, शेड्यूल, इमरजेंसी, मेहमान)। एडमिन के पास हमेशा सभी TV होते हैं।',
+    'Manager' => 'मैनेजर',
+    'Managers, Staff and Reception can be limited to some TVs (groups or rooms) when you add or edit them. Then they see and control only those TVs.' => 'मैनेजर, स्टाफ़ और रिसेप्शन को जोड़ते या बदलते समय कुछ TV (ग्रुप या कमरे) तक सीमित किया जा सकता है। फिर वे केवल वही TV देखते और चलाते हैं।',
+    'No groups yet. Create groups on the Groups page.' => 'अभी कोई ग्रुप नहीं। ग्रुप पेज पर ग्रुप बनाएँ।',
+    'No rooms yet.' => 'अभी कोई कमरा नहीं।',
+    'one customer (this hotel): everything here, including users, settings and billing. Admins always control all TVs.' => 'एक ग्राहक (यह होटल): यहाँ सब कुछ, यूज़र, सेटिंग्स और बिलिंग सहित। एडमिन हमेशा सभी TV चला सकते हैं।',
+    'Only an admin can stop an emergency that also shows on TVs that are not assigned to you.' => 'जो इमरजेंसी आपको न सौंपे गए TV पर भी दिख रही है, उसे केवल एडमिन बंद कर सकते हैं।',
+    'Only these TVs' => 'केवल ये TV',
+    'Reseller' => 'रीसेलर',
+    'Rooms' => 'कमरे',
+    'Search rooms or groups…' => 'कमरे या ग्रुप खोजें…',
+    'Super Admin (Platform)' => 'सुपर एडमिन (प्लेटफ़ॉर्म)',
+    'the platform owner: creates customers (hotels), plans, invoices and licenses. Not shown in this list.' => 'प्लेटफ़ॉर्म के मालिक: ग्राहक (होटल), प्लान, इनवॉइस और लाइसेंस बनाते हैं। इस सूची में नहीं दिखते।',
+    'There must always be at least one active Admin.' => 'कम से कम एक सक्रिय एडमिन हमेशा होना चाहिए।',
+    'This feature is not available.' => 'यह फ़ीचर उपलब्ध नहीं है।',
+    'TVs' => 'TV',
+    'Which TVs can this user control?' => 'यह यूज़र कौन से TV चला सकता है?',
+    'Who can do what' => 'कौन क्या कर सकता है',
+    'You can only control the TVs assigned to you.' => 'आप केवल आपको सौंपे गए TV ही चला सकते हैं।',
+    'Your account does not have permission to open this page. Ask your Admin if you need access.' => 'आपके खाते को यह पेज खोलने की अनुमति नहीं है। ज़रूरत हो तो अपने एडमिन से पूछें।',
+];

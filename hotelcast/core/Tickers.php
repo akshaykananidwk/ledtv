@@ -50,8 +50,8 @@ final class Tickers
 
     /**
      * Validate admin input. Returns [data, errors]. Ids of groups / rooms are checked with
-     * Tenant::find (another hotel's id → Tenant::deny) and Access (TVs the user may not control →
-     * Tenant::deny). A restricted user cannot target all TVs.
+     * Tenant::find (another hotel's id → Tenant::deny, 404) and Access (TVs the user may not
+     * control → Access::deny, 403). A restricted user cannot target all TVs (validation error).
      */
     public static function validate(array $in): array
     {

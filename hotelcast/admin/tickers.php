@@ -26,11 +26,11 @@ $scope = Access::scope();
 $formGroups = array_filter(hc_groups(), static fn ($g) => $scope === null || in_array((int) $g['id'], $scope['groups'], true));
 $formRooms = array_filter(hc_rooms(), static fn ($r) => $allowedRooms === null || in_array((int) $r['id'], $allowedRooms, true));
 
-/** Ticker of this hotel the user may edit; foreign id → 404 (Tenant::find), not allowed → 404. */
+/** Ticker of this hotel the user may edit; another hotel's id → 404 (Tenant::find), not one of the user's TVs → 403. */
 $loadTicker = static function (int $id): ?array {
     $t = Tenant::find('tickers', $id);
     if ($t && !Tickers::visible($t)) {
-        Tenant::deny('ticker ' . $id);
+        Access::deny('ticker ' . $id);
     }
     return $t;
 };

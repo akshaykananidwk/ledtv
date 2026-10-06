@@ -20,12 +20,7 @@
         "weather": {
             "enabled": false
         },
-        "ticker": {
-            "text": "મંગળા આરતી સવારે 6:30 · Mangla Aarti 6:30 AM · Sandhya Aarti 7:30 PM · Checkout 10:00 AM",
-            "speed": 5,
-            "bg_color": "#000000",
-            "text_color": "#FFD700"
-        },
+        "ticker": null,
         "logo": true
     },
     "emergency": null,
@@ -66,6 +61,6 @@
             "text": "Connect your phone to the Wi-Fi 'Hotel-Guest', open YouTube or another app with the Cast icon, tap Cast and choose this TV. Wi-Fi password: pa;ss:wo\"rd"
         }
     ],
-    "hash": "82f4302c4630960e5187556405ffa277126f7fb7",
-    "generated_at": "2026-10-06T17:58:46+05:30"
+    "hash": "5b2965ff31820953d63b85424060a3f07b2d867a",
+    "generated_at": "2026-10-06T18:10:29+05:30"
 }

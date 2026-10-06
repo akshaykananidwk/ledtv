@@ -94,10 +94,18 @@
             "enabled": false
         },
         "ticker": {
-            "text": "મંગળા આરતી સવારે 6:30 · Mangla Aarti 6:30 AM · Sandhya Aarti 7:30 PM · Checkout 10:00 AM",
-            "speed": 5,
-            "bg_color": "#000000",
-            "text_color": "#FFD700"
+            "text": "Room 101: ચેક-આઉટ 10:00 AM   ✦   મંગળા આરતી સવારે 6:30 · Mangla Aarti 6:30 AM · Sandhya Aarti 7:30 PM · Checkout 10:00 AM",
+            "messages": [
+                "Room 101: ચેક-આઉટ 10:00 AM",
+                "મંગળા આરતી સવારે 6:30 · Mangla Aarti 6:30 AM · Sandhya Aarti 7:30 PM · Checkout 10:00 AM"
+            ],
+            "speed": 6,
+            "bg_color": "#7B1FA2",
+            "text_color": "#FFFFFF",
+            "font_size": 30,
+            "height": 64,
+            "position": "bottom",
+            "reserve_space": true
         },
         "logo": true
     },
@@ -113,7 +121,7 @@
         "name": "શ્રી Shah",
         "first_name": "Rajesh",
         "language": "gu",
-        "checkin_at": "2026-10-06T17:58:46+05:30",
+        "checkin_at": "2026-10-06T18:10:29+05:30",
         "checkout_at": "2026-10-06T23:59:00+05:30"
     },
     "welcome": {
@@ -134,7 +142,7 @@
     },
     "services": {
         "enabled": true,
-        "url": "http://127.0.0.1/g/bqU4K9tzyxrQuA8qR9VR",
+        "url": "http://127.0.0.1/g/EFcbtdzWgkiFMAUYrNqZ",
         "label": "રૂમ સર્વિસ માટે સ્કેન કરો"
     },
     "guest_menu": [
@@ -143,21 +151,21 @@
             "type": "qr",
             "title": "રૂમ સર્વિસ",
             "icon": "food",
-            "url": "http://127.0.0.1/g/bqU4K9tzyxrQuA8qR9VR"
+            "url": "http://127.0.0.1/g/EFcbtdzWgkiFMAUYrNqZ"
         },
         {
             "id": "requests",
             "type": "qr",
             "title": "વિનંતીઓ",
             "icon": "bell",
-            "url": "http://127.0.0.1/g/bqU4K9tzyxrQuA8qR9VR#requests"
+            "url": "http://127.0.0.1/g/EFcbtdzWgkiFMAUYrNqZ#requests"
         },
         {
             "id": "feedback",
             "type": "qr",
             "title": "પ્રતિભાવ",
             "icon": "star",
-            "url": "http://127.0.0.1/g/bqU4K9tzyxrQuA8qR9VR#feedback"
+            "url": "http://127.0.0.1/g/EFcbtdzWgkiFMAUYrNqZ#feedback"
         },
         {
             "id": "guide",
@@ -203,6 +211,6 @@
         "night_from": "22:00",
         "night_to": "06:00"
     },
-    "hash": "abab16e322e6ab0fb213e654f55ffccf853a797a",
-    "generated_at": "2026-10-06T17:58:46+05:30"
+    "hash": "aaaf90be6676e5ec656f96afd2c00b1a5b346a22",
+    "generated_at": "2026-10-06T18:10:29+05:30"
 }

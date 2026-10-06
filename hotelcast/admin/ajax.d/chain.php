@@ -8,6 +8,7 @@ declare(strict_types=1);
 
 if ($action === 'chain_overview') {
     require_can('chain.view');
+    Chains::requireEnabled();
     $chain = Chains::current(req_int('chain', $_GET));
     $ov = Chains::overview((int) $chain['id']);
     ajax_ok([

@@ -120,7 +120,9 @@ final class MigrationUpgradeTest extends TestCase
         $this->assertSame('https://github.com/x/hotelcast', DB::value("SELECT setting_value FROM system_settings WHERE hotel_id = 0 AND setting_key = 'github_repo'"));
         $this->assertSame('12345', DB::value("SELECT setting_value FROM system_settings WHERE hotel_id = 0 AND setting_key = 'last_tick'"));
         $this->assertSame('7', DB::value("SELECT setting_value FROM system_settings WHERE hotel_id = 0 AND setting_key = 'backup_keep'"));
-        $this->assertSame('Legacy ticker', DB::value("SELECT setting_value FROM system_settings WHERE hotel_id = 1 AND setting_key = 'ticker_text'"));
+        // 2.2: the old ticker setting became a hotel-wide row in `tickers` (010_tickers_access_upgrade.php).
+        $this->assertSame('', DB::value("SELECT setting_value FROM system_settings WHERE hotel_id = 1 AND setting_key = 'ticker_text'"));
+        $this->assertSame([['hotel_id' => 1, 'message' => 'Legacy ticker', 'target_type' => 'all']], DB::all('SELECT hotel_id, message, target_type FROM tickers'));
         $this->assertSame(0, (int) DB::value("SELECT COUNT(*) FROM system_settings WHERE hotel_id = 1 AND setting_key IN ('github_repo','last_tick','backup_keep')"));
         // Roles: the first super admin is platform admin (still in hotel 1); the second stays super admin.
         $this->assertSame(['platform_admin', 1], [DB::value('SELECT role FROM users WHERE id = :id', ['id' => self::$ids['owner']]), (int) DB::value('SELECT hotel_id FROM users WHERE id = :id', ['id' => self::$ids['owner']])]);
@@ -142,7 +144,7 @@ final class MigrationUpgradeTest extends TestCase
     {
         self::useMigDb();
         Tenant::set(1);
-        $this->assertSame('Legacy ticker', Settings::get('ticker_text'));
+        $this->assertSame('', Settings::get('ticker_text'));
         $this->assertSame('9876', Settings::get('tv_settings_pin'));
         $this->assertSame('https://github.com/x/hotelcast', Settings::get('github_repo'), 'platform key read from hotel 0');
         $room = DB::one('SELECT * FROM rooms WHERE id = :id', ['id' => self::$ids['room']]);
@@ -151,6 +153,7 @@ final class MigrationUpgradeTest extends TestCase
         $this->assertSame('Legacy loop', $c['playlist']['name']);
         $this->assertStringEndsWith('uploads/media/2026/09/legacy.jpg', $c['items'][0]['url'], 'old media paths still valid');
         $this->assertSame('Legacy Palace દ્વારકા', $c['hotel']['name']);
+        $this->assertSame(['Legacy ticker'], $c['overlay']['ticker']['messages'] ?? null, 'same ticker on the TV after the upgrade');
         $this->assertSame('HotelCast', $c['branding']['product']);
         $this->assertSame([], Migrator::pending());
         $this->assertSame([], Migrator::migrate(), 'idempotent');

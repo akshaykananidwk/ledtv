@@ -242,7 +242,8 @@ body.embed .bar{display:none}body.embed .wrap{top:0}
     stage.style.setProperty(top ? '--tk-top' : '--tk-bottom', reserve ? (height * DP) + 'em' : '0px');
     const bar = document.createElement('div');
     bar.className = 'ov ov-tick ' + (top ? 'pos-top' : 'pos-bottom');
-    bar.style.cssText = 'background:' + tk.bg_color + ';color:' + tk.text_color + ';height:' + (height * DP) + 'em;font-size:' + (font * DP) + 'em';
+    const col = (c, d) => (/^#[0-9a-f]{6}$/i.test(String(c)) ? c : d);
+    bar.style.cssText = 'background:' + col(tk.bg_color, '#000000') + ';color:' + col(tk.text_color, '#FFD700') + ';height:' + (height * DP) + 'em;font-size:' + (font * DP) + 'em';
     if (!reserve) bar.style.opacity = '.92';
     const span = document.createElement('span');
     span.textContent = Array.isArray(tk.messages) && tk.messages.length ? tk.messages.join('   ✦   ') : tk.text;

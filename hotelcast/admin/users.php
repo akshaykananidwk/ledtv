@@ -7,6 +7,69 @@ $user = Auth::require('users.manage');
 Csrf::check();
 
 const ROLES = Auth::HOTEL_ROLES;
+/** Roles that can be limited to some TVs (core/Access.php). */
+const LIMITABLE_ROLES = ['manager', 'staff', 'reception'];
+
+/**
+ * TV access from the form: [targets [['group', id] | ['room', id]], errors]. "all" → [].
+ * Ids of another hotel are refused (Tenant::find → 404, logged); unknown ids are dropped.
+ */
+function access_from_post(string $role): array
+{
+    if (!in_array($role, LIMITABLE_ROLES, true) || ($_POST['tv_access'] ?? 'all') !== 'some') {
+        return [[], []];
+    }
+    $targets = [];
+    foreach (int_ids($_POST['access_groups'] ?? []) as $gid) {
+        if (Tenant::find('room_groups', $gid)) {
+            $targets[] = ['group', $gid];
+        }
+    }
+    foreach (int_ids($_POST['access_rooms'] ?? []) as $rid) {
+        if (Tenant::find('rooms', $rid)) {
+            $targets[] = ['room', $rid];
+        }
+    }
+    return [$targets, $targets ? [] : [__('Choose at least one group or room, or select "All TVs".')]];
+}
+
+/** "All TVs" / "3 rooms, 1 group" for a user (current hotel). */
+function access_summary(array $u): string
+{
+    if (!in_array($u['role'], LIMITABLE_ROLES, true)) {
+        return __('All TVs');
+    }
+    $rows = Access::forUser((int) $u['id']);
+    if (!$rows) {
+        return __('All TVs');
+    }
+    $g = count(array_filter($rows, fn ($r) => $r['type'] === 'group'));
+    $r = count($rows) - $g;
+    $parts = [];
+    if ($r) {
+        $parts[] = $r === 1 ? __('1 room') : __(':n rooms', ['n' => $r]);
+    }
+    if ($g) {
+        $parts[] = $g === 1 ? __('1 group') : __(':n groups', ['n' => $g]);
+    }
+    return implode(', ', $parts);
+}
+
+/** Text for the activity log: "all" or "groups 3,4; rooms 12". */
+function access_log_text(array $targets): string
+{
+    if (!$targets) {
+        return 'all TVs';
+    }
+    $by = ['group' => [], 'room' => []];
+    foreach ($targets as $t) {
+        [$type, $id] = isset($t['type']) ? [$t['type'], $t['id']] : $t;
+        $by[$type][] = (int) $id;
+    }
+    sort($by['group']);
+    sort($by['room']);
+    return trim(($by['group'] ? 'groups ' . implode(',', $by['group']) : '') . ($by['group'] && $by['room'] ? '; ' : '') . ($by['room'] ? 'rooms ' . implode(',', $by['room']) : ''));
+}
 
 function other_active_super_admins(int $exceptId): int
 {
@@ -73,8 +136,10 @@ if (is_post()) {
                 $errors[] = __('You cannot disable your own account or change your own role.');
             }
             if ($target && $target['role'] === 'super_admin' && ($role !== 'super_admin' || !$active) && other_active_super_admins((int) $target['id']) === 0) {
-                $errors[] = __('There must always be at least one active Super Admin.');
+                $errors[] = __('There must always be at least one active Admin.');
             }
+            [$access, $accessErrors] = access_from_post($role);
+            $errors = array_merge($errors, $accessErrors);
             if ($errors) {
                 flash_errors($errors);
                 redirect(admin_url('users.php', $id ? ['action' => 'edit', 'id' => $id] : ['action' => 'new']));
@@ -93,6 +158,13 @@ if (is_post()) {
                 $id = DB::insert('users', $data + ['hotel_id' => Tenant::id(), 'created_at' => now()]);
                 ActivityLog::add('user_create', 'user', $id, $username . ' (' . $role . ')');
             }
+            // TV access (manager / staff / reception): all TVs or only some groups / rooms.
+            $before = access_log_text(Access::forUser($id));
+            Access::setForUser($id, $access);
+            $after = access_log_text($access);
+            if ($before !== $after) {
+                ActivityLog::add('user_access', 'user', $id, $username . ': ' . $before . ' → ' . $after);
+            }
             flash('success', __('User :u saved.', ['u' => $username]));
             redirect(admin_url('users.php'));
 
@@ -103,9 +175,10 @@ if (is_post()) {
             if ((int) $target['id'] === $me) {
                 flash('danger', __('You cannot delete your own account.'));
             } elseif ($target['role'] === 'super_admin' && other_active_super_admins((int) $target['id']) === 0) {
-                flash('danger', __('There must always be at least one active Super Admin.'));
+                flash('danger', __('There must always be at least one active Admin.'));
             } else {
                 DB::delete('users', 'id = :id AND hotel_id = :hid', ['id' => $id] + hid());
+                DB::query('DELETE FROM user_access WHERE user_id = :u AND hotel_id = :hid', ['u' => $id] + hid());
                 ActivityLog::add('user_delete', 'user', $id, $target['username']);
                 flash('success', __('User :u deleted.', ['u' => $target['username']]));
             }
@@ -165,6 +238,12 @@ if ($action === 'new' || $action === 'edit') {
         }
     }
     $isSelf = (int) $u['id'] === (int) $user['id'];
+    $assigned = $u['id'] ? Access::forUser((int) $u['id']) : [];
+    $selGroups = array_map(fn ($r) => $r['id'], array_filter($assigned, fn ($r) => $r['type'] === 'group'));
+    $selRooms = array_map(fn ($r) => $r['id'], array_filter($assigned, fn ($r) => $r['type'] === 'room'));
+    $accGroups = DB::all('SELECT g.id, g.name, g.type, (SELECT COUNT(*) FROM room_group_members m JOIN rooms r ON r.id = m.room_id AND r.hotel_id = g.hotel_id WHERE m.group_id = g.id) AS members
+                          FROM room_groups g WHERE g.hotel_id = :hid ORDER BY g.type, g.name', hid());
+    $accRooms = DB::all('SELECT id, room_number, name, floor FROM rooms WHERE hotel_id = :hid ORDER BY LENGTH(floor), floor, LENGTH(room_number), room_number', hid());
     $pageTitle = $u['id'] ? __('Edit user') : __('Add user');
     require __DIR__ . '/partials/header.php';
     ?>
@@ -201,10 +280,50 @@ if ($action === 'new' || $action === 'edit') {
           </select>
         </div>
         <div class="col-12 small text-muted">
-          <strong><?= e(__('Super Admin')) ?></strong>: <?= e(__('everything in this hotel, including users, settings and billing.')) ?>
-          <strong><?= e(__('Manager')) ?></strong>: <?= e(__('rooms, content, playlists, schedules, TV commands, APK, logs.')) ?>
-          <strong><?= e(__('Staff')) ?></strong>: <?= e(__('view rooms and content, send content and emergency messages.')) ?>
-          <strong><?= e(__('Reception')) ?></strong>: <?= e(__('front desk: guests check-in/out, service orders and requests, view rooms.')) ?>
+          <strong><?= e(role_label('super_admin')) ?></strong>: <?= e(__('everything in this hotel, including users, settings and billing.')) ?>
+          <strong><?= e(role_label('manager')) ?></strong>: <?= e(__('rooms, content, playlists, schedules, TV commands, APK, logs.')) ?>
+          <strong><?= e(role_label('staff')) ?></strong>: <?= e(__('view rooms and content, send content and emergency messages.')) ?>
+          <strong><?= e(role_label('reception')) ?></strong>: <?= e(__('front desk: guests check-in/out, service orders and requests, view rooms.')) ?>
+        </div>
+        <div class="col-12" id="tvAccess"<?= in_array($u['role'], LIMITABLE_ROLES, true) ? '' : ' hidden' ?>>
+          <div class="border rounded p-3">
+            <label class="form-label fw-semibold mb-1"><i class="bi bi-tv"></i> <?= e(__('Which TVs can this user control?')) ?></label>
+            <div class="form-text mt-0 mb-2"><?= e(__('Limit a Manager, Staff or Reception user to some rooms or groups. They then see and control only those TVs (rooms, dashboard, broadcasts, power, schedules, emergency, guests). Admins always have all TVs.')) ?></div>
+            <div class="d-flex flex-wrap gap-3 mb-2">
+              <div class="form-check"><input class="form-check-input" type="radio" name="tv_access" value="all" id="ta_all"<?= $assigned ? '' : ' checked' ?>><label class="form-check-label" for="ta_all"><?= e(__('All TVs')) ?></label></div>
+              <div class="form-check"><input class="form-check-input" type="radio" name="tv_access" value="some" id="ta_some"<?= $assigned ? ' checked' : '' ?>><label class="form-check-label" for="ta_some"><?= e(__('Only these TVs')) ?></label></div>
+            </div>
+            <div id="tvAccessPick"<?= $assigned ? '' : ' hidden' ?>>
+              <input type="search" class="form-control form-control-sm mb-2" id="taSearch" placeholder="<?= e(__('Search rooms or groups…')) ?>" aria-label="<?= e(__('Search rooms or groups…')) ?>" autocomplete="off">
+              <div class="row g-2">
+                <div class="col-md-5">
+                  <div class="small fw-semibold text-muted mb-1"><?= e(__('Groups')) ?> <span class="fw-normal">(<?= e(__('all rooms in the group, also rooms added later')) ?>)</span></div>
+                  <div class="border rounded p-2" style="max-height:260px;overflow:auto">
+                    <?php if (!$accGroups): ?><div class="text-muted small"><?= e(__('No groups yet. Create groups on the Groups page.')) ?></div><?php endif; ?>
+                    <?php foreach ($accGroups as $g): ?>
+                      <div class="form-check ta-item" data-search="<?= e(mb_strtolower($g['name'])) ?>">
+                        <input class="form-check-input" type="checkbox" name="access_groups[]" value="<?= (int) $g['id'] ?>" id="tag<?= (int) $g['id'] ?>"<?= in_array((int) $g['id'], $selGroups, true) ? ' checked' : '' ?>>
+                        <label class="form-check-label" for="tag<?= (int) $g['id'] ?>"><?= e($g['name']) ?> <span class="text-muted small">(<?= e((int) $g['members'] === 1 ? __('1 room') : __(':n rooms', ['n' => (int) $g['members']])) ?>)</span></label>
+                      </div>
+                    <?php endforeach; ?>
+                  </div>
+                </div>
+                <div class="col-md-7">
+                  <div class="small fw-semibold text-muted mb-1"><?= e(__('Rooms')) ?></div>
+                  <div class="border rounded p-2" style="max-height:260px;overflow:auto">
+                    <?php if (!$accRooms): ?><div class="text-muted small"><?= e(__('No rooms yet.')) ?></div><?php endif; ?>
+                    <?php foreach ($accRooms as $r): ?>
+                      <div class="form-check form-check-inline ta-item" data-search="<?= e(mb_strtolower($r['room_number'] . ' ' . ($r['name'] ?? '') . ' ' . ($r['floor'] ?? ''))) ?>">
+                        <input class="form-check-input" type="checkbox" name="access_rooms[]" value="<?= (int) $r['id'] ?>" id="tar<?= (int) $r['id'] ?>"<?= in_array((int) $r['id'], $selRooms, true) ? ' checked' : '' ?>>
+                        <label class="form-check-label" for="tar<?= (int) $r['id'] ?>"><?= e($r['room_number']) ?></label>
+                      </div>
+                    <?php endforeach; ?>
+                  </div>
+                </div>
+              </div>
+              <div class="form-text"><?= e(__('A limited user cannot add or delete rooms and groups, cannot send to "All rooms" and can stop only emergencies shown on their TVs. Content library and playlists stay shared.')) ?></div>
+            </div>
+          </div>
         </div>
         <div class="col-md-6">
           <label class="form-label" for="pw"><?= e($u['id'] ? __('New password (leave empty to keep)') : __('Password')) ?><?= $u['id'] ? '' : ' *' ?></label>
@@ -226,6 +345,24 @@ if ($action === 'new' || $action === 'edit') {
         <div class="col-12"><button class="btn btn-primary btn-lg"><i class="bi bi-check-lg"></i> <?= e(__('Save user')) ?></button></div>
       </div>
     </form>
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const limitable = <?= json_embed(LIMITABLE_ROLES) ?>;
+      const role = document.getElementById('role');
+      const box = document.getElementById('tvAccess');
+      const pick = document.getElementById('tvAccessPick');
+      const sync = () => {
+        box.hidden = !limitable.includes(role.value);
+        pick.hidden = !document.getElementById('ta_some').checked;
+      };
+      role.addEventListener('change', sync);
+      document.querySelectorAll('input[name=tv_access]').forEach((r) => r.addEventListener('change', sync));
+      document.getElementById('taSearch').addEventListener('input', (ev) => {
+        const q = ev.target.value.trim().toLowerCase();
+        document.querySelectorAll('.ta-item').forEach((el) => { el.hidden = q !== '' && !el.dataset.search.includes(q); });
+      });
+    });
+    </script>
     <?php
     require __DIR__ . '/partials/footer.php';
     exit;
@@ -243,7 +380,7 @@ if ($action === 'view') {
     require __DIR__ . '/partials/header.php';
     ?>
     <div class="page-head">
-      <div><h1><i class="bi bi-person"></i> <?= e($u['full_name'] ?: $u['username']) ?></h1><p class="lead-sm"><?= e($u['username']) ?> · <?= e($u['email']) ?> · <?= e(role_label($u['role'])) ?></p></div>
+      <div><h1><i class="bi bi-person"></i> <?= e($u['full_name'] ?: $u['username']) ?></h1><p class="lead-sm"><?= e($u['username']) ?> · <?= e($u['email']) ?> · <?= e(role_label($u['role'])) ?> · <i class="bi bi-tv"></i> <?= e(access_summary($u)) ?></p></div>
       <div class="d-flex gap-2">
         <a href="<?= e(admin_url('users.php', ['action' => 'edit', 'id' => $u['id']])) ?>" class="btn btn-primary"><i class="bi bi-pencil"></i> <?= e(__('Edit')) ?></a>
         <a href="<?= e(admin_url('users.php')) ?>" class="btn btn-light border"><i class="bi bi-arrow-left"></i> <?= e(__('Back')) ?></a>
@@ -314,13 +451,14 @@ require __DIR__ . '/partials/header.php';
     <div class="card">
       <div class="table-responsive">
         <table class="table table-hc table-hover">
-          <thead><tr><th><?= e(__('User')) ?></th><th><?= e(__('Role')) ?></th><th class="d-none d-md-table-cell"><?= e(__('Last login')) ?></th><th><?= e(__('Status')) ?></th><th class="text-end"><?= e(__('Actions')) ?></th></tr></thead>
+          <thead><tr><th><?= e(__('User')) ?></th><th><?= e(__('Role')) ?></th><th><?= e(__('TVs')) ?></th><th class="d-none d-md-table-cell"><?= e(__('Last login')) ?></th><th><?= e(__('Status')) ?></th><th class="text-end"><?= e(__('Actions')) ?></th></tr></thead>
           <tbody>
           <?php foreach ($users as $u): $locked = $u['locked_until'] && strtotime($u['locked_until']) > time(); ?>
             <tr>
               <td><a href="<?= e(admin_url('users.php', ['action' => 'view', 'id' => $u['id']])) ?>" class="fw-semibold text-decoration-none"><?= e($u['full_name'] ?: $u['username']) ?></a>
                 <div class="small text-muted"><?= e($u['username']) ?> · <?= e($u['email']) ?></div></td>
               <td><span class="badge <?= $u['role'] === 'super_admin' ? 'text-bg-dark' : ($u['role'] === 'manager' ? 'text-bg-primary' : ($u['role'] === 'reception' ? 'text-bg-info' : 'text-bg-secondary')) ?>"><?= e(role_label($u['role'])) ?></span></td>
+              <td class="small"><?php $acc = access_summary($u); ?><span class="<?= $acc === __('All TVs') ? 'text-muted' : 'badge text-bg-warning' ?>"><?= e($acc) ?></span></td>
               <td class="d-none d-md-table-cell small"><?= e(time_ago($u['last_login_at'])) ?><?php if ($u['last_login_ip']): ?><div class="text-muted"><?= e($u['last_login_ip']) ?></div><?php endif; ?></td>
               <td>
                 <?php if ($locked): ?><span class="badge text-bg-warning"><i class="bi bi-lock"></i> <?= e(__('Locked')) ?></span>
@@ -349,6 +487,19 @@ require __DIR__ . '/partials/header.php';
     </div>
   </div>
   <div class="col-xl-4">
+    <div class="card mb-3">
+      <div class="card-header"><i class="bi bi-diagram-3"></i> <?= e(__('Who can do what')) ?></div>
+      <div class="card-body small">
+        <ol class="ps-3 mb-2">
+          <li class="mb-1"><strong><?= e(role_label('platform_admin')) ?></strong> — <?= e(__('the platform owner: creates customers (hotels), plans, invoices and licenses. Not shown in this list.')) ?></li>
+          <li class="mb-1"><strong><?= e(role_label('super_admin')) ?></strong> — <?= e(__('one customer (this hotel): everything here, including users, settings and billing. Admins always control all TVs.')) ?></li>
+          <li class="mb-1"><strong><?= e(role_label('manager')) ?></strong> — <?= e(__('rooms, content, playlists, schedules, TV commands, APK, logs.')) ?></li>
+          <li class="mb-1"><strong><?= e(role_label('staff')) ?></strong> — <?= e(__('view rooms and content, send content and emergency messages.')) ?></li>
+          <li class="mb-1"><strong><?= e(role_label('reception')) ?></strong> — <?= e(__('front desk: guests check-in/out, service orders and requests, view rooms.')) ?></li>
+        </ol>
+        <p class="mb-0 text-muted"><i class="bi bi-tv"></i> <?= e(__('Managers, Staff and Reception can be limited to some TVs (groups or rooms) when you add or edit them. Then they see and control only those TVs.')) ?></p>
+      </div>
+    </div>
     <div class="card">
       <div class="card-header"><i class="bi bi-key"></i> <?= e(__('TV settings PIN')) ?></div>
       <div class="card-body">

@@ -25,6 +25,9 @@ final class ChainsTest extends TestCase
     public static function setUpBeforeClass(): void
     {
         TestEnv::resetDatabase();
+        // The chains feature is off by default (platform setting, see UserAccessTest for the switched-off case).
+        Settings::setPlatform('feature_chains', '1');
+        Settings::flush();
         Chains::actAs(null);
         $pw = Auth::hash('Passw0rd!');
         Tenant::set(1);

@@ -13,8 +13,10 @@ $__sOn = GuestServices::enabled();
 if (!$__gOn && !$__sOn) {
     return;
 }
-$__occ = $__gOn ? count(Guests::activeStays()) : null;
-$__rooms = (int) DB::value('SELECT COUNT(*) FROM rooms WHERE hotel_id = :hid', ['hid' => Tenant::id()]);
+// Users limited to some TVs (core/Access.php): their rooms only.
+$__ids = Access::roomIds();
+$__occ = $__gOn ? count($__ids === null ? Guests::activeStays() : array_intersect_key(Guests::activeStays(), array_flip($__ids))) : null;
+$__rooms = $__ids === null ? (int) DB::value('SELECT COUNT(*) FROM rooms WHERE hotel_id = :hid', ['hid' => Tenant::id()]) : count($__ids);
 $__c = $__sOn ? GuestServices::alertCounts() : null;
 $__fb = $__sOn && Auth::can('guests.feedback') ? GuestServices::feedbackStats(date('Y-m-d', strtotime('-29 days')), date('Y-m-d')) : null;
 ?>

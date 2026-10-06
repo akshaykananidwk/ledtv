@@ -23,10 +23,12 @@ $lang = I18n::lang();
 $navSections = $user ? hc_nav_sections() : [];
 $sectionTitles = ['hotel' => $hotelName, 'reseller' => __('Reseller'), 'platform' => __('Platform'), 'chain' => __('Hotel chain')];
 
-$hdrEmergencies = $user && $inHotel ? Broadcaster::activeEmergencies() : [];
+// Users limited to some TVs (core/Access.php): their emergencies / TVs only.
+$hdrEmergencies = $user && $inHotel ? hc_visible_emergencies() : [];
 $hdrStats = ['online' => 0, 'devices' => 0];
 if ($user && $inHotel) {
-    foreach (DB::all('SELECT status, last_ping FROM devices WHERE hotel_id = :hid AND is_revoked = 0 AND room_id IS NOT NULL', ['hid' => Tenant::id()]) as $d) {
+    [$hdrAcc, $hdrAp] = Access::roomSql('room_id');
+    foreach (DB::all('SELECT status, last_ping FROM devices WHERE hotel_id = :hid AND is_revoked = 0 AND room_id IS NOT NULL' . $hdrAcc, ['hid' => Tenant::id()] + $hdrAp) as $d) {
         $hdrStats['devices']++;
         if (DeviceManager::isOnline($d)) {
             $hdrStats['online']++;
@@ -173,7 +175,7 @@ foreach (glob(__DIR__ . '/head.d/*.php') ?: [] as $__hd) { include $__hd; } unse
         <strong><?= e(__('EMERGENCY MESSAGE IS ON')) ?>:</strong>
         <?= e(implode(' · ', array_map(fn ($b) => $b['title'], $hdrEmergencies))) ?>
       </div>
-      <?php if (Auth::can('broadcast.emergency')): ?>
+      <?php if (Auth::can('broadcast.emergency') && array_filter($hdrEmergencies, [Access::class, 'canBroadcast'])): ?>
         <button type="button" class="btn btn-light btn-sm fw-bold js-emergency-stop" data-id="0"><i class="bi bi-stop-circle"></i> <?= e(__('Stop')) ?></button>
       <?php endif; ?>
     </div>

@@ -45,6 +45,14 @@ function log_filters(string $dateCol, ?string $roomCol, string $from, string $to
         $w[] = "$roomCol = :room";
         $p['room'] = $room;
     }
+    if ($roomCol) {
+        // Users limited to some TVs (core/Access.php): only rows of their rooms.
+        [$acc, $ap] = Access::roomSql($roomCol);
+        if ($acc !== '') {
+            $w[] = substr($acc, 5);
+            $p += $ap;
+        }
+    }
     return [$w ? 'WHERE ' . implode(' AND ', $w) : '', $p];
 }
 
@@ -80,7 +88,10 @@ switch ($tab) {
     case 'broadcasts':
         $detail = req_int('id', $_GET);
         if ($detail) {
-            Tenant::find('broadcast_commands', $detail); // 404 for another hotel's broadcast
+            $bcRow = Tenant::find('broadcast_commands', $detail); // 404 for another hotel's broadcast
+            if ($bcRow) {
+                Access::requireBroadcast($bcRow); // 403: not only the user's TVs
+            }
             $bc = DB::one('SELECT b.*, u.username FROM broadcast_commands b LEFT JOIN users u ON u.id = b.created_by WHERE b.id = :id AND b.hotel_id = :hid', ['id' => $detail] + hid());
             $total = (int) DB::value('SELECT COUNT(*) FROM broadcast_logs WHERE hotel_id = :hid AND broadcast_id = :b', ['b' => $detail] + hid());
             $rows = DB::all('SELECT l.*, r.room_number FROM broadcast_logs l LEFT JOIN rooms r ON r.id = l.room_id WHERE l.hotel_id = :hid AND l.broadcast_id = :b ORDER BY l.id DESC' . $limitSql, ['b' => $detail] + hid());
@@ -91,7 +102,14 @@ switch ($tab) {
         }
         [$where, $p] = log_filters('b.created_at', null, $fFrom, $fTo, 0);
         $total = (int) DB::value("SELECT COUNT(*) FROM broadcast_commands b $where", $p);
-        $rows = DB::all("SELECT b.*, u.username FROM broadcast_commands b LEFT JOIN users u ON u.id = b.created_by $where ORDER BY b.id DESC" . $limitSql, $p);
+        if (Access::restricted()) {
+            // Limited users: only broadcasts to their TVs (filtered in PHP, newest 2000).
+            $rows = array_values(array_filter(DB::all("SELECT b.*, u.username FROM broadcast_commands b LEFT JOIN users u ON u.id = b.created_by $where ORDER BY b.id DESC LIMIT 2000", $p), [Access::class, 'canBroadcast']));
+            $total = count($rows);
+            $rows = $export ? $rows : array_slice($rows, $offset, PER_PAGE);
+        } else {
+            $rows = DB::all("SELECT b.*, u.username FROM broadcast_commands b LEFT JOIN users u ON u.id = b.created_by $where ORDER BY b.id DESC" . $limitSql, $p);
+        }
         $stats = [];
         if ($rows) {
             [$in, $ip] = DB::in(array_map(fn ($b) => (int) $b['id'], $rows), 'b');
@@ -107,6 +125,9 @@ switch ($tab) {
         break;
     case 'activity':
         [$where, $p] = log_filters('a.created_at', null, $fFrom, $fTo, 0);
+        if (Access::restricted()) {
+            $fUser = (int) Auth::id(); // limited users see their own activity only
+        }
         if ($fUser) {
             $where = ($where ? $where . ' AND' : 'WHERE') . ' a.user_id = :uid';
             $p['uid'] = $fUser;

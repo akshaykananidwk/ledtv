@@ -208,13 +208,18 @@ function clean_color(?string $color, string $default = '#000000'): string
     return preg_match('/^#[0-9a-fA-F]{6}$/', $color) ? strtoupper($color) : $default;
 }
 
+/**
+ * Display name of a role (SaaS hierarchy). The DB role keys stay unchanged:
+ * platform_admin = "Super Admin (Platform)" (platform owner) → super_admin = "Admin" (one customer /
+ * hotel) → manager / staff / reception (optionally limited to some TVs, core/Access.php).
+ */
 function role_label(string $role): string
 {
     return match ($role) {
-        'platform_admin' => __('Platform Admin'),
+        'platform_admin' => __('Super Admin (Platform)'),
         'reseller' => __('Reseller'),
         'chain_admin' => __('Chain Admin'),
-        'super_admin' => __('Super Admin'),
+        'super_admin' => __('Admin'),
         'manager' => __('Manager'),
         'reception' => __('Reception'),
         default => __('Staff'),

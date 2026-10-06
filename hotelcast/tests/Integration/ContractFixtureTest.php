@@ -41,6 +41,13 @@ final class ContractFixtureTest extends TestCase
         $this->assertSame([], $err);
         Ads::saveCampaign(null, $camp);
 
+        // Ticker bar (2.2): the demo's hotel-wide ticker + a room ticker with every style field.
+        [$tk, $err] = Tickers::validate(['message' => 'Room 101: ચેક-આઉટ 10:00 AM', 'target_type' => 'room', 'room_id' => (string) $room['id'],
+            'bg_color' => '#7B1FA2', 'text_color' => '#FFFFFF', 'speed' => '6', 'font_size' => '30', 'height' => '64', 'position' => 'bottom',
+            'reserve_space' => '1', 'priority' => '1', 'is_active' => '1']);
+        $this->assertSame([], $err);
+        Tickers::save(null, $tk);
+
         // Guest checks in (checkout today so the reminder is active)
         $stayId = Guests::checkIn((int) $room['id'], [
             'guest_name' => 'Rajesh Shah', 'salutation' => 'Mr', 'language' => 'gu',
@@ -66,6 +73,9 @@ final class ContractFixtureTest extends TestCase
         $this->assertSame(25, $c['volume']['night_max'] ?? null);
         $this->assertNotEmpty(array_filter($c['items'], fn ($i) => isset($i['ad_campaign_id'])), 'Sponsor ad inserted');
         $this->assertArrayHasKey('branding', $c);
+        $this->assertSame(['text', 'messages', 'speed', 'bg_color', 'text_color', 'font_size', 'height', 'position', 'reserve_space'], array_keys($c['overlay']['ticker']));
+        $this->assertCount(2, $c['overlay']['ticker']['messages'], 'room ticker + hotel-wide demo ticker');
+        $this->assertSame([30, 64, 'bottom', true], [$c['overlay']['ticker']['font_size'], $c['overlay']['ticker']['height'], $c['overlay']['ticker']['position'], $c['overlay']['ticker']['reserve_space']]);
 
         $vacant = ContentResolver::build($vacantRoom);
         $this->assertSame('off', $vacant['mode']);

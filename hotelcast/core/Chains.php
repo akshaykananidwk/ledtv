@@ -152,6 +152,45 @@ final class Chains
             && (int) DB::value('SELECT chain_id FROM hotels WHERE id = :h', ['h' => (int) $u['hotel_id']]) === (int) $u['chain_id'];
     }
 
+    /**
+     * Platform feature switch (platform setting feature_chains, default off): when off the chain
+     * pages / menus / AJAX answer 404, chain admins and chain grants cannot enter hotels and the
+     * platform cannot create chains. Existing chain data stays untouched.
+     */
+    public static function enabled(): bool
+    {
+        try {
+            return (string) Settings::platform('feature_chains', '0') === '1';
+        } catch (Throwable) {
+            return false;
+        }
+    }
+
+    /** 404 (not found) when the chains feature is switched off. */
+    public static function requireEnabled(): void
+    {
+        if (self::enabled()) {
+            return;
+        }
+        if (PHP_SAPI === 'cli') {
+            throw new TenantException('Hotel chains are switched off');
+        }
+        if (!headers_sent()) {
+            http_response_code(404);
+        }
+        if (Auth::isAjax()) {
+            if (!headers_sent()) {
+                header('Content-Type: application/json; charset=utf-8');
+            }
+            echo json_out(['ok' => false, 'error' => ['code' => 'NOT_FOUND', 'message' => 'Not found']]);
+            exit;
+        }
+        echo '<!DOCTYPE html><meta charset="utf-8"><title>404</title><body style="font-family:sans-serif;padding:40px">'
+            . '<h1>' . e(__('Not found')) . '</h1><p>' . e(__('This feature is not available.')) . '</p>'
+            . '<p><a href="' . e(admin_url(Auth::user() ? Auth::homePage() : 'login.php')) . '">' . e(__('Back to dashboard')) . '</a></p></body>';
+        exit;
+    }
+
     /** chain_admin, or hotel super admin with a valid chain grant. */
     public static function isChainUser(?array $u = null): bool
     {
@@ -177,7 +216,7 @@ final class Chains
     public static function userCanEnter(array $u, int $hotelId): bool
     {
         $chain = (int) ($u['chain_id'] ?? 0);
-        if ($chain <= 0 || $hotelId <= 0) {
+        if ($chain <= 0 || $hotelId <= 0 || !self::enabled()) {
             return false;
         }
         try {
@@ -276,6 +315,7 @@ final class Chains
             Auth::leaveHotel();
             redirect(admin_url($back === 'chain.php' && self::userChainIds() ? 'chain.php' : Auth::homePage()));
         }
+        self::requireEnabled();
         if (!Auth::can('chain.view')) {
             http_response_code(403);
             require HC_ROOT . '/admin/partials/forbidden.php';

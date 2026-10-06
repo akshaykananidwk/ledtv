@@ -200,7 +200,12 @@ Returns the Content object currently scheduled for a room. A device may only rea
     "clock": true,
     "clock_format": "hh:mm a",
     "weather": { "enabled": true, "city": "Dwarka", "temp_c": 31, "condition": "Clear", "icon": "☀" },
-    "ticker": { "text": "Mangla Aarti at 6:00 AM | મંગળા આરતી સવારે ૬:૦૦", "speed": 5, "bg_color": "#000000", "text_color": "#FFD700" },
+    "ticker": {
+      "text": "Mangla Aarti at 6:00 AM   ✦   મંગળા આરતી સવારે ૬:૦૦",
+      "messages": ["Mangla Aarti at 6:00 AM", "મંગળા આરતી સવારે ૬:૦૦"],
+      "speed": 5, "bg_color": "#000000", "text_color": "#FFD700",
+      "font_size": 26, "height": 56, "position": "bottom", "reserve_space": true
+    },
     "logo": true
   },
   "emergency": null
@@ -221,6 +226,14 @@ Returns the Content object currently scheduled for a room. A device may only rea
 | `empty`     | nothing to show — show the hotel logo / welcome screen |
 
 When `emergency` is not null it is: `{ "id": 9, "title": "...", "message": "...", "bg_color": "#B00020", "text_color": "#FFFFFF" }`.
+
+`overlay.ticker` (2.2, see docs/modules/ticker_bar.md) is `null` when no ticker bar is active for the room,
+otherwise: `text` (all active messages joined with `"   ✦   "`; 2.1 apps only use `text`, `speed` and the
+colours), `messages` (the messages in display order), `speed` (1–10; 30 + 25 × speed dp/s), `bg_color` /
+`text_color` (`#RRGGBB`), `font_size` (14–72 sp, default 26), `height` (32–200 dp, default 56),
+`position` (`"bottom"` | `"top"`) and `reserve_space` (bool; `true` = shrink the content area by the bar
+height so the bar never covers the video, `false` = draw the bar over the content). It is `null` in modes
+`suspended`, `off` and `emergency`.
 
 `branding` (always present) is the white-label branding of the hotel: platform settings, overridden by
 the hotel's reseller and then by the hotel itself — `product` (name), `logo_url` (or null), `color`

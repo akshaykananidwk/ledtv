@@ -51,7 +51,10 @@ if (is_post()) {
         if ($id && !Ads::findCampaign($id)) {
             redirect(admin_url('ads.php'));
         }
-        [$data, $errors] = Ads::validateCampaign($_POST);
+        if ($id) {
+            Access::requireBroadcast(Ads::findCampaign($id)); // users limited to some TVs: only campaigns on their TVs
+        }
+        [$data, $errors] = Ads::validateCampaign($_POST); // target checked by Broadcaster::parseTarget
         if ($errors) {
             flash('danger', implode("\n", $errors));
             redirect(admin_url('ads.php', ['action' => 'campaign', 'id' => $id ?: null, 'sponsor_id' => req_int('sponsor_id', $_POST) ?: null]));
@@ -65,6 +68,7 @@ if (is_post()) {
         $id = req_int('id', $_POST);
         $c = Ads::findCampaign($id);
         if ($c) {
+            Access::requireBroadcast($c);
             $new = $c['status'] === 'active' ? 'paused' : 'active';
             Ads::setStatus($id, $new);
             ActivityLog::add('ad_campaign_status', 'ad_campaign', $id, $c['name'] . ' → ' . $new);
@@ -76,6 +80,7 @@ if (is_post()) {
         $id = req_int('id', $_POST);
         $c = Ads::findCampaign($id);
         if ($c) {
+            Access::requireBroadcast($c);
             Ads::deleteCampaign($id);
             ActivityLog::add('ad_campaign_delete', 'ad_campaign', $id, $c['name']);
             flash('success', __('":t" deleted.', ['t' => $c['name']]));

@@ -23,6 +23,7 @@ if (($kotId = req_int('kot', $_GET)) > 0) {
         http_response_code(404);
         exit(e(__('Order not found.')));
     }
+    Access::requireRoom((int) $order['room_id']); // staff limited to some rooms (core/Access.php)
     $room = $order['room_id'] ? DB::one('SELECT room_number FROM rooms WHERE id = :id AND hotel_id = :hid', ['id' => $order['room_id']] + hid()) : null;
     $stay = $order['stay_id'] ? DB::one('SELECT salutation, guest_name FROM guest_stays WHERE id = :id AND hotel_id = :hid', ['id' => $order['stay_id']] + hid()) : null;
     $foodMark = ['veg' => '🟢', 'nonveg' => '🔴', 'egg' => '🟡', 'none' => ''];

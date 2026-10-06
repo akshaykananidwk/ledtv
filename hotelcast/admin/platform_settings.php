@@ -16,6 +16,7 @@ if ($saas) {
     $tabs['billing'] = [__('Billing'), 'bi-receipt'];
 }
 $tabs['notify'] = [__('Notifications'), 'bi-bell'];
+$tabs['features'] = [__('Features'), 'bi-toggles'];
 $tabs['admins'] = [__('Platform admins'), 'bi-shield-lock'];
 $tabs['license'] = [__('License'), 'bi-key'];
 $tab = isset($tabs[$_GET['tab'] ?? $_POST['tab'] ?? '']) ? (string) ($_GET['tab'] ?? $_POST['tab']) : 'branding';
@@ -120,6 +121,16 @@ if (is_post()) {
             }
             break;
 
+        case 'features':
+            // Optional platform features. Hotel chains are off by default; switching off hides the
+            // chain pages / menus (404) but keeps all chain data.
+            $on = !empty($_POST['feature_chains']) ? '1' : '0';
+            if ((string) Settings::platform('feature_chains', '0') !== $on) {
+                Settings::setPlatform('feature_chains', $on);
+                ActivityLog::add('platform_feature', 'settings', null, 'feature_chains = ' . $on);
+            }
+            break;
+
         case 'toggle_admin':
             $uid = req_int('user_id', $_POST);
             $u = DB::one("SELECT * FROM users WHERE id = :id AND role = 'platform_admin'", ['id' => $uid]);
@@ -203,6 +214,19 @@ require __DIR__ . '/partials/header.php';
   <div class="col-12"><label class="form-label" for="n_to"><?= e(__('Platform admin email(s)')) ?></label><input class="form-control" id="n_to" name="platform_notify_email" value="<?= $val('platform_notify_email') ?>" placeholder="owner@example.com, accounts@example.com">
     <div class="form-text"><?= e(__('Receives platform alerts, e.g. hotels auto-suspended for non-payment.')) ?></div></div>
   <div class="col-12"><label class="form-label" for="n_from"><?= e(__('Sender address for invoices and reminders')) ?></label><input class="form-control" type="email" id="n_from" name="platform_from_email" value="<?= $val('platform_from_email') ?>" placeholder="billing@example.com"></div>
+  <div class="col-12"><button class="btn btn-primary"><i class="bi bi-check-lg"></i> <?= e(__('Save settings')) ?></button></div>
+</div></form>
+
+<?php elseif ($tab === 'features'): ?>
+<form method="post" class="card" style="max-width:760px"><div class="card-body row g-3">
+  <?= Csrf::field() ?><input type="hidden" name="op" value="features"><input type="hidden" name="tab" value="features">
+  <div class="col-12">
+    <div class="form-check form-switch">
+      <input class="form-check-input" type="checkbox" role="switch" id="f_chains" name="feature_chains" value="1"<?= $chk('feature_chains') ?>>
+      <label class="form-check-label fw-semibold" for="f_chains"><?= e(__('Hotel chains')) ?></label>
+    </div>
+    <div class="form-text"><?= e(__('Groups of hotels with one owner (chain dashboard, chain content, chain broadcast, chain admins). Off: the chain menus and pages are hidden and chain admins cannot enter hotels. Existing chain data is kept and comes back when you switch it on again.')) ?></div>
+  </div>
   <div class="col-12"><button class="btn btn-primary"><i class="bi bi-check-lg"></i> <?= e(__('Save settings')) ?></button></div>
 </div></form>
 

@@ -96,6 +96,7 @@ final class Settings
         'billing_currency', 'billing_tax_percent', 'billing_tax_label', 'invoice_prefix', 'invoice_due_days', 'invoice_auto_generate',
         'invoice_seller_details', 'auto_suspend_days', 'reminder_email', 'reminder_whatsapp', 'reminder_every_days',
         'billing_whatsapp_url', 'platform_notify_email', 'platform_from_email', 'license_rate_per_min', 'license_state',
+        'feature_chains',
     ];
 
     public static function isPlatformKey(string $key): bool

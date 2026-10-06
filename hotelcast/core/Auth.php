@@ -502,7 +502,7 @@ final class Auth
             return match ($role) {
                 'platform_admin' => 'platform_hotels.php',
                 'reseller' => 'reseller.php',
-                'chain_admin' => 'chain.php',
+                'chain_admin' => Chains::enabled() ? 'chain.php' : 'profile.php',
                 default => 'profile.php',
             };
         }

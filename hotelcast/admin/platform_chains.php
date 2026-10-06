@@ -8,6 +8,7 @@ require __DIR__ . '/../core/bootstrap.php';
 require_once __DIR__ . '/partials/platform.php';
 
 $user = Auth::require('chains.manage');
+Chains::requireEnabled(); // platform setting feature_chains (Platform settings → Features)
 Csrf::check();
 $isReseller = $user['role'] === 'reseller';
 $rid = $isReseller ? (int) $user['reseller_id'] : null;

@@ -7,6 +7,10 @@
 declare(strict_types=1);
 
 $__chainNav = [];
+if (!Chains::enabled()) {
+    // Feature switched off by the platform (Platform settings → Features): no chain menus.
+    return $__chainNav;
+}
 if (Auth::isPlatformUser()) {
     $__chainNav[] = ['platform_chains', 'platform_chains.php', 'chains.manage', 'bi-diagram-3', __('Hotel chains'), Auth::role() === 'reseller' ? 'reseller' : 'platform'];
 } elseif (Chains::isChainUser() && Chains::userChainIds()) {

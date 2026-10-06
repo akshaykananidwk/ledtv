@@ -54,7 +54,8 @@ if (is_post()) {
                 redirect(admin_url('platform_hotels.php', ['action' => 'view', 'id' => $id]));
 
             case 'set_chain':
-                // Hotel chains (#20): assign / remove the hotel's chain.
+                // Hotel chains (#20): assign / remove the hotel's chain (only while the feature is on).
+                Chains::requireEnabled();
                 $chainId = req_int('chain_id', $_POST);
                 if ($hotel['chain_id'] && (int) $hotel['chain_id'] !== $chainId) {
                     Chains::assignHotel((int) $hotel['chain_id'], $id, false);
@@ -213,7 +214,7 @@ if ($action === 'view') {
             <?php endforeach; ?>
           </ul>
         </div>
-        <?php $hcChains = Chains::all(); if ($hcChains || $h['chain_id']): ?>
+        <?php $hcChains = Chains::enabled() ? Chains::all() : []; if (Chains::enabled() && ($hcChains || $h['chain_id'])): ?>
         <div class="card mb-3"><div class="card-header"><i class="bi bi-diagram-3"></i> <?= e(__('Hotel chain')) ?></div><div class="card-body">
           <form method="post" class="d-flex gap-2"><?= Csrf::field() ?><input type="hidden" name="op" value="set_chain"><input type="hidden" name="id" value="<?= $hid ?>">
             <select class="form-select" name="chain_id" aria-label="<?= e(__('Hotel chain')) ?>"><option value="0"><?= e(__('— Not in a chain —')) ?></option>

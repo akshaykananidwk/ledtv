@@ -29,6 +29,7 @@
             <file>tests/Integration/ExtensionPointsTest.php</file>
             <file>tests/Integration/MigrationUpgradeTest.php</file>
             <file>tests/Integration/PwaSupportDevicesTest.php</file>
+            <file>tests/Integration/TickersTest.php</file>
         </testsuite>
     </testsuites>
 </phpunit>
