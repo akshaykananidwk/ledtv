@@ -396,7 +396,7 @@ require __DIR__ . '/partials/header.php';
         <?php if ($isPlatform && $hid): ?><input type="hidden" name="hotel" value="<?= (int) $hid ?>"><?php endif; ?>
         <label class="visually-hidden" for="qrCodeInput"><?= e(__('Setup code')) ?></label>
         <input class="form-control form-control-lg qr-code-input" id="qrCodeInput" name="code" value="<?= e($codeRaw) ?>" maxlength="7" minlength="6" required
-               autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="K7P2QX" pattern="[A-Za-z0-9 -]{6,7}">
+               autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="······" pattern="[A-Za-z0-9 -]{6,7}">
         <button class="btn btn-primary btn-lg"><i class="bi bi-search"></i> <?= e(__('Find TV')) ?></button>
       </form>
     </div>
