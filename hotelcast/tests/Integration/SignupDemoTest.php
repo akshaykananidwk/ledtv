@@ -658,7 +658,9 @@ final class SignupDemoTest extends TestCase
                 }
             }
         }
-        // PUT / DELETE too.
+        // Directory index (admin/) and PUT / DELETE too.
+        [$s] = TestEnv::http('POST', self::$url . 'admin/', null, [], $jar, ['_csrf' => $demo->csrf, 'op' => 'save']);
+        $this->assertContains($s, [303, 403], 'POST admin/');
         foreach (['rooms.php', 'content.php'] as $page) {
             [$s] = TestEnv::http('DELETE', self::$url . 'admin/' . $page, null, ['X-CSRF-Token: ' . $demo->csrf], $jar);
             $this->assertContains($s, [303, 403]);

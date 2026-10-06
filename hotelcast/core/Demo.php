@@ -387,9 +387,18 @@ final class Demo
      */
     public static function guard(): void
     {
+        if (empty($_COOKIE['HCSESSID'])) {
+            return;
+        }
         $file = realpath((string) ($_SERVER['SCRIPT_FILENAME'] ?? '')) ?: '';
         $adminDir = realpath(HC_ROOT . '/admin') ?: HC_ROOT . '/admin';
-        if ($file === '' || !str_starts_with($file, $adminDir . DIRECTORY_SEPARATOR) || empty($_COOKIE['HCSESSID'])) {
+        $name = (string) ($_SERVER['SCRIPT_NAME'] ?? '');
+        $adminPath = (string) parse_url(admin_url(), PHP_URL_PATH);
+        if ($file !== '' && str_starts_with($file, $adminDir . DIRECTORY_SEPARATOR)) {
+            $script = basename($file);
+        } elseif ($adminPath !== '' && str_starts_with($name, $adminPath)) {
+            $script = basename($name) ?: 'index.php'; // directory index through a front router
+        } else {
             return;
         }
         $user = Auth::user();
@@ -401,7 +410,6 @@ final class Demo
         if (in_array($method, ['GET', 'HEAD', 'OPTIONS'], true)) {
             return;
         }
-        $script = basename($file);
         $action = is_string($_GET['action'] ?? null) ? $_GET['action'] : '';
         if (in_array($script, ['login.php', 'logout.php'], true) || ($script === 'ajax.php' && $action === 'set_language')) {
             return;
