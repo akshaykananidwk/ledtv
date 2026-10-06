@@ -135,6 +135,7 @@
     <string name="qr_use_default">Use default</string>
     <string name="qr_wifi_unavailable">Wi-Fi settings cannot be opened on this TV.</string>
     <string name="qr_done_icon" translatable="false">✔</string>
+    <string name="qr_code_placeholder" translatable="false">— — —</string>
     <string name="back_to_qr">Back to QR setup</string>
     <string name="resetup_qr">Re-setup with QR (move to another room)</string>
     <string name="resetup_confirm_title">Re-setup this TV with QR?</string>

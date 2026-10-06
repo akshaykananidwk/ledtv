@@ -360,7 +360,7 @@ class QrSetupActivity : AppCompatActivity() {
             qrImage.setImageDrawable(null)
             renderedQrUrl = null
             qrProgress.visibility = if (s is QrSetupState.Starting || s is QrSetupState.Claimed) View.VISIBLE else View.GONE
-            codeView.text = if (s is QrSetupState.Claimed) "" else "— — —"
+            codeView.text = if (s is QrSetupState.Claimed) "" else getString(R.string.qr_code_placeholder)
             codeView.visibility = View.VISIBLE
             codeCaption.visibility = View.INVISIBLE
         }

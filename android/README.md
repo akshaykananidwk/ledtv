@@ -9,9 +9,14 @@ in [`../docs/API.md`](../docs/API.md).
 | | |
 |---|---|
 | Package / applicationId | `com.hotelcast.tv` |
-| Version | 2.0.0 (versionCode 4) |
+| Version | 2.1.0 (versionCode 5) |
 | Android | 5.0 (API 21) and newer, targetSdk 34 |
-| Signed release APK | `release/HotelCast-TV-2.0.0.apk` (same signing key as 1.x, so OTA `UPDATE_APP` from 1.x works) |
+| Signed release APK | `release/HotelCast-TV-2.1.0.apk` (same signing key as 1.x / 2.0, so OTA `UPDATE_APP` from older versions works) |
+
+What is new in 2.1: **QR setup** — a new TV shows a QR code and a 6-character code; staff scan it
+with a phone, pick the room in the admin panel and the TV registers itself. Nothing is typed on the
+TV (see [QR setup (no typing)](#qr-setup-no-typing)). Settings has **Re-setup with QR** for moving a
+TV to another room.
 
 What is new in 2.0 (client side of `docs/V2_SPEC.md`): guest menu on the OK key (room-service /
 feedback QR codes, Live TV, HDMI inputs, cast instructions, local guide), personal welcome card,
@@ -62,7 +67,7 @@ If that file does not exist, it falls back to environment variables (useful on C
 Check a signature with:
 
 ```bash
-$ANDROID_HOME/build-tools/34.0.0/apksigner verify --print-certs release/HotelCast-TV-2.0.0.apk
+$ANDROID_HOME/build-tools/34.0.0/apksigner verify --print-certs release/HotelCast-TV-2.1.0.apk
 ```
 
 ---
@@ -78,12 +83,12 @@ $ANDROID_HOME/build-tools/34.0.0/apksigner verify --print-certs release/HotelCas
 3. From a PC on the same network:
    ```bash
    adb connect 192.168.1.45:5555          # the TV's IP address
-   adb install -r HotelCast-TV-2.0.0.apk
+   adb install -r HotelCast-TV-2.1.0.apk
    ```
 
 ### b) With a USB pen drive and a file manager
 
-1. Copy `HotelCast-TV-2.0.0.apk` to a FAT32/exFAT pen drive and plug it into the TV.
+1. Copy `HotelCast-TV-2.1.0.apk` to a FAT32/exFAT pen drive and plug it into the TV.
 2. Install a file manager on the TV, such as *File Commander*, *X-plore* or *FX File Explorer*.
 3. Allow unknown sources:
    * Android 8 and newer: *Settings → Apps → Security & restrictions → Unknown sources* (or *Install
@@ -93,17 +98,83 @@ $ANDROID_HOME/build-tools/34.0.0/apksigner verify --print-certs release/HotelCas
 
 ### First run
 
-With no registration yet, the app opens the **setup screen** directly, without a PIN. Enter these
-three values, then select **Save & Register**:
+With no registration yet, the app opens the **QR setup screen** directly, without a PIN — see
+[QR setup (no typing)](#qr-setup-no-typing). From there, **Enter details manually** opens the classic
+setup form (still without a PIN before the first registration). Enter these three values, then
+select **Save & Register**:
 
 * **Server URL**: the HotelCast install address, for example `https://hotel.com/hotelcast` or
-  `http://192.168.1.10/hotelcast`. The app appends `/api/` itself. Scheme-less input is accepted:
+  `http://192.168.1.10/hotelcast`. Pre-filled with the built-in server (`https://ledtv.akdwk.in/`)
+  when nothing is configured. The app appends `/api/` itself. Scheme-less input is accepted:
   LAN IPs get `http://` and domain names get `https://`. If you paste a URL that already ends in
   `/api`, `/admin` or `index.php`, the app strips it.
 * **Room number**, for example `101`.
 * **Registration key**, from *Admin → Settings → Devices*.
 
 **Test Connection** calls `GET /api/health` and shows the server version and database status.
+**Back to QR setup** returns to the QR screen.
+
+### QR setup (no typing)
+
+**English**
+
+1. Install the APK (pen drive or adb, §2) and open **HotelCast TV**. A new TV shows a big QR code and
+   a 6-character code (e.g. `AB3 K9Z`).
+2. If the TV is not on the network yet, select **Open Wi-Fi settings**, connect, and press BACK —
+   the screen shows the network state and retries by itself.
+3. On your phone, **scan the QR code** with the camera.
+4. **Log in to the admin panel** (if you are not already).
+5. **Choose the room** and confirm. Within a few seconds the TV shows *Assigned to room 101 –
+   connecting…*, then *Registered ✔* and opens the player.
+
+No camera? Enter the code shown on the TV in the admin panel instead. The code is valid for the
+time shown on screen (countdown); an expired code is replaced automatically.
+
+Buttons on the QR screen (D-pad): **Enter details manually** (classic form), **Change server** (only
+the server URL — for hotels running their own HotelCast server; the QR flow then continues against
+that server; **Use default** goes back to the built-in one), **Open Wi-Fi settings**, and **Try again**
+after a failed registration (e.g. `LICENSE_LIMIT`, `HOTEL_SUSPENDED`, `INVALID_REGISTRATION_KEY` are
+explained on screen).
+
+**ગુજરાતી**
+
+1. APK ઇન્સ્ટોલ કરો (પેન ડ્રાઇવ અથવા adb, §2) અને **HotelCast TV** ખોલો. નવું ટીવી મોટો QR કોડ અને
+   6 અક્ષરનો કોડ (દા.ત. `AB3 K9Z`) બતાવશે.
+2. ટીવી હજી નેટવર્ક પર ન હોય તો **Wi-Fi સેટિંગ્સ ખોલો** પસંદ કરો, Wi-Fi જોડો અને BACK દબાવો — સ્ક્રીન
+   નેટવર્કની સ્થિતિ બતાવે છે અને જાતે ફરી પ્રયાસ કરે છે.
+3. તમારા ફોનના કૅમેરાથી **QR કોડ સ્કેન કરો**.
+4. **એડમિન પેનલમાં લૉગ ઇન કરો** (જો પહેલેથી ન હોય તો).
+5. **રૂમ પસંદ કરો** અને પુષ્ટિ કરો. થોડી સેકન્ડમાં ટીવી *રૂમ 101 સોંપાયો – જોડાઈ રહ્યા છીએ…*,
+   પછી *નોંધણી થઈ ગઈ ✔* બતાવે છે અને પ્લેયર ખોલે છે.
+
+કૅમેરા નથી? ટીવી પર દેખાતો કોડ એડમિન પેનલમાં દાખલ કરો. કોડ સ્ક્રીન પરના સમય (કાઉન્ટડાઉન) સુધી માન્ય
+છે; સમય પૂરો થાય તો નવો કોડ આપમેળે આવે છે. ટીવી પર રિમોટથી કંઈ ટાઇપ કરવાની જરૂર નથી.
+
+**Still needed once per TV** (QR setup does not replace these):
+
+* **Installing the APK** itself still needs a pen drive + file manager or adb (§2).
+* **Device-owner mode** (full kiosk, real standby, silent OTA updates, remote reboot — §4) still
+  needs the one-time `adb shell dpm set-device-owner …` command or the Windows bulk tool (§10).
+  QR setup only registers the TV with the server.
+
+**How it works.** The TV calls `POST {api}/provision/start` with `device_id`, `model` and
+`app_version` (no auth headers) and gets `code`, `secret`, `claim_url`, `expires_in` and
+`poll_interval`. It draws `claim_url` as the QR code and polls `GET {api}/provision/status?code=…&secret=…`
+every `poll_interval` seconds: `pending` → keep waiting; `claimed` → the answer carries `server_url`,
+`room_number`, `registration_key` and `hotel_name`, which are validated like the bulk-tool extras,
+saved, and registered through the normal `device/register` path (logged to `HotelCastSetup` as
+`REGISTERED room=…` / `FAILED …`); `expired` / `used` / HTTP 404 → a new code is requested. Network
+errors back off 2 → 4 → … → 60 s while the code stays on screen ("Offline – check Wi-Fi");
+`429 RATE_LIMITED` waits for `Retry-After`. A server without the `provision/` endpoints shows
+"This server does not offer QR setup" and the manual form remains available.
+
+The built-in server comes from the Gradle property `hotelcastDefaultServer` (`gradle.properties`,
+default `https://ledtv.akdwk.in/`) → `BuildConfig.DEFAULT_SERVER_URL`; it is used whenever the TV
+has no server URL configured. Build for another default with
+`./gradlew assembleRelease -PhotelcastDefaultServer=https://hotel.example.com/hotelcast/`.
+
+Bulk provisioning still wins: if the setup tool's extras / `PROVISION` broadcast register the TV
+while the QR screen is open, the QR screen closes and the player opens.
 
 ---
 
@@ -147,7 +218,7 @@ Device-owner mode enables these features:
 Setup: the TV must have **no Google or other accounts** (factory reset it if needed). Then run:
 
 ```bash
-adb install -r HotelCast-TV-2.0.0.apk
+adb install -r HotelCast-TV-2.1.0.apk
 adb shell dpm set-device-owner com.hotelcast.tv/.AdminReceiver
 adb shell am start -n com.hotelcast.tv/.MainActivity
 ```
@@ -215,6 +286,8 @@ The screen works with the D-pad: large, focusable fields and buttons with a yell
 * **Exit kiosk / Android settings**: stops lock-task for **10 minutes** and opens Android settings.
   The player then returns to the front by itself.
 * **Back to player** (or MENU / BACK).
+* **Re-setup with QR (move to another room)**: after a confirmation, unregisters the TV and opens the
+  QR setup screen, so the TV can be assigned to a different room from a phone.
 * Device information: device ID, IP, network, app and Android version, model, registered room,
   connection status, last poll time, and device-owner state.
 

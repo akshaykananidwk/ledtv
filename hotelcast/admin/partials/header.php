@@ -21,7 +21,7 @@ $lang = I18n::lang();
 
 // Sidebar from the navigation registry (admin/partials/nav.d/*.php).
 $navSections = $user ? hc_nav_sections() : [];
-$sectionTitles = ['hotel' => $hotelName, 'reseller' => __('Reseller'), 'platform' => __('Platform')];
+$sectionTitles = ['hotel' => $hotelName, 'reseller' => __('Reseller'), 'platform' => __('Platform'), 'chain' => __('Hotel chain')];
 
 $hdrEmergencies = $user && $inHotel ? Broadcaster::activeEmergencies() : [];
 $hdrStats = ['online' => 0, 'devices' => 0];
@@ -147,9 +147,10 @@ foreach (glob(__DIR__ . '/head.d/*.php') ?: [] as $__hd) { include $__hd; } unse
     <div class="hc-context-banner" role="status">
       <i class="bi bi-building-gear"></i>
       <div class="flex-grow-1 min-w-0 text-truncate"><?= e(__('You are managing hotel')) ?> <strong><?= e($hotelName) ?></strong></div>
-      <form method="post" action="<?= e(admin_url(Auth::role() === 'reseller' ? 'reseller.php' : 'platform_hotels.php')) ?>" class="m-0">
+      <?php $hdrBack = Auth::backPage(); ?>
+      <form method="post" action="<?= e(admin_url($hdrBack)) ?>" class="m-0">
         <?= Csrf::field() ?><input type="hidden" name="op" value="leave">
-        <button class="btn btn-sm btn-light"><i class="bi bi-arrow-left"></i> <?= e(Auth::role() === 'reseller' ? __('Back to my hotels') : __('Back to platform')) ?></button>
+        <button class="btn btn-sm btn-light"><i class="bi bi-arrow-left"></i> <?= e($hdrBack === 'chain.php' ? __('Back to chain') : (Auth::role() === 'reseller' ? __('Back to my hotels') : __('Back to platform'))) ?></button>
       </form>
     </div>
     <?php endif; ?>

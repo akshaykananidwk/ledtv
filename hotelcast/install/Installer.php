@@ -186,99 +186,18 @@ final class Installer
         return $log;
     }
 
-    /** Demo rooms, groups, content and playlist (English + Gujarati). */
+    /**
+     * Demo rooms, groups, content and playlist (English + Gujarati). The data itself lives in
+     * Demo::sampleContent() (core/Demo.php) so the public sign-up and the demo hotels reuse it after
+     * the installer folder has been deleted.
+     */
     public static function demoData(): array
     {
         Tenant::set(Tenant::current() ?? 1);
         if ((int) DB::value('SELECT COUNT(*) FROM rooms WHERE hotel_id = :h', ['h' => Tenant::id()]) > 0) {
             return ['Demo data skipped (rooms already exist)'];
         }
-        $log = [];
-        $groups = [];
-        foreach ([1, 2] as $floor) {
-            $groups[$floor] = DB::insert('room_groups', ['name' => 'Floor ' . $floor, 'type' => 'floor', 'description' => 'All rooms on floor ' . $floor, 'created_at' => now()]);
-        }
-        $vip = DB::insert('room_groups', ['name' => 'Suites (VIP)', 'type' => 'zone', 'description' => 'Premium suites', 'created_at' => now()]);
-        $n = 0;
-        foreach ([1, 2] as $floor) {
-            for ($i = 1; $i <= 10; $i++) {
-                $num = $floor . str_pad((string) $i, 2, '0', STR_PAD_LEFT);
-                $rid = DB::insert('rooms', ['room_number' => $num, 'name' => ($i >= 9 ? 'Suite ' : 'Deluxe ') . $num, 'floor' => (string) $floor, 'created_at' => now()]);
-                DB::insert('room_group_members', ['room_id' => $rid, 'group_id' => $groups[$floor]]);
-                if ($i >= 9) {
-                    DB::insert('room_group_members', ['room_id' => $rid, 'group_id' => $vip]);
-                }
-                $n++;
-            }
-        }
-        $log[] = "Created $n demo rooms in 3 groups";
-
-        $c = [];
-        $c['timetable'] = DB::insert('content_items', [
-            'title' => 'Dwarkadhish Darshan Timings / દ્વારકાધીશ દર્શન સમય',
-            'type' => 'timetable',
-            'duration' => 20,
-            'body' => json_out([
-                'heading' => 'શ્રી દ્વારકાધીશ મંદિર — દર્શન સમય',
-                'subheading' => 'Shri Dwarkadhish Temple — Darshan Timings',
-                'columns' => ['Time / સમય', 'Darshan / દર્શન'],
-                'rows' => [
-                    ['06:30 - 07:00', 'Mangla Aarti / મંગળા આરતી'],
-                    ['07:00 - 08:00', 'Mangla Darshan / મંગળા દર્શન'],
-                    ['08:00 - 09:00', 'Abhishek Puja (Snan) / અભિષેક'],
-                    ['09:00 - 09:30', 'Shringar Darshan / શૃંગાર દર્શન'],
-                    ['10:30 - 11:00', 'Gwal Bhog / ગ્વાલ ભોગ'],
-                    ['11:30 - 12:00', 'Rajbhog / રાજભોગ'],
-                    ['12:00 - 13:00', 'Anosar (Temple closed) / અનોસર'],
-                    ['17:00 - 17:30', 'Uthappan Darshan / ઉત્થાપન'],
-                    ['17:30 - 19:15', 'Darshan / દર્શન'],
-                    ['19:30 - 19:45', 'Sandhya Aarti / સંધ્યા આરતી'],
-                    ['20:00 - 20:30', 'Shayan Aarti / શયન આરતી'],
-                    ['21:30', 'Darshan closes / દર્શન બંધ'],
-                ],
-                'footer' => 'Timings may change on festivals. / તહેવારોમાં સમય બદલાઈ શકે છે.',
-                'bg_color' => '#4A0E0E', 'text_color' => '#FFF8E1', 'accent_color' => '#FFB300',
-            ]),
-            'settings' => json_out(['refresh_sec' => 60]),
-            'created_at' => now(),
-        ]);
-        $c['welcome'] = DB::insert('content_items', [
-            'title' => 'Welcome message / સ્વાગત',
-            'type' => 'announcement',
-            'duration' => 12,
-            'body' => 'જય દ્વારકાધીશ! Welcome to our hotel',
-            'settings' => json_out(['subtitle' => 'Breakfast 7:00–10:30 AM · Wi-Fi: Hotel-Guest', 'style' => 'fullscreen', 'bg_color' => '#0D47A1', 'text_color' => '#FFFFFF', 'font_size' => 56]),
-            'created_at' => now(),
-        ]);
-        $c['offer'] = DB::insert('content_items', [
-            'title' => 'Restaurant offer',
-            'type' => 'announcement',
-            'duration' => 10,
-            'body' => 'Gujarati Thali — 20% off for in-house guests! ગુજરાતી થાળી પર 20% છૂટ',
-            'settings' => json_out(['subtitle' => 'Ground floor restaurant · 12:00–3:00 PM, 7:00–10:30 PM', 'style' => 'fullscreen', 'bg_color' => '#1B5E20', 'text_color' => '#FFFFFF', 'font_size' => 52]),
-            'created_at' => now(),
-        ]);
-        $c['clock'] = DB::insert('content_items', [
-            'title' => 'Big clock', 'type' => 'clock', 'duration' => 8,
-            'settings' => json_out(['style' => 'digital', 'bg_color' => '#000000', 'text_color' => '#FFD54F']),
-            'created_at' => now(),
-        ]);
-        $c['stream'] = DB::insert('content_items', [
-            'title' => 'Live Darshan (demo stream — replace URL)', 'type' => 'stream', 'duration' => 0,
-            'url' => 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8',
-            'settings' => json_out(['mute' => false]),
-            'created_at' => now(),
-        ]);
-        $log[] = 'Created ' . count($c) . ' demo content items';
-
-        $pl = DB::insert('content_playlists', ['name' => 'Welcome loop / સ્વાગત', 'description' => 'Default loop for all rooms', 'transition' => 'fade', 'created_at' => now()]);
-        foreach (['welcome', 'timetable', 'offer', 'clock'] as $i => $k) {
-            DB::insert('playlist_items', ['playlist_id' => $pl, 'content_id' => $c[$k], 'sort_order' => $i]);
-        }
-        Settings::set('default_playlist_id', (string) $pl);
-        Settings::set('ticker_text', 'મંગળા આરતી સવારે 6:30 · Mangla Aarti 6:30 AM · Sandhya Aarti 7:30 PM · Checkout 10:00 AM');
-        $log[] = 'Created demo playlist and set it as default content';
-        return $log;
+        return Demo::sampleContent([1 => 10, 2 => 10]);
     }
 
     /**

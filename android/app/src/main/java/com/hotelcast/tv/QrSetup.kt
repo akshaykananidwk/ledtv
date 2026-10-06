@@ -240,7 +240,7 @@ class QrSetupFlow(
                             emit(QrSetupState.RateLimited(server, null, clock() + w * 1000L))
                             w
                         }
-                        e.httpStatus == 404 || e.httpStatus == 405 || !e.fromServer -> {
+                        e.httpStatus == 404 || e.httpStatus == 405 -> {
                             val w = QrSetupLogic.UNSUPPORTED_RETRY_SEC
                             emit(QrSetupState.Unsupported(server, describe(e), clock() + w * 1000L))
                             w
@@ -302,8 +302,8 @@ class QrSetupFlow(
                 }
             } catch (e: ApiException) {
                 when {
-                    e.httpStatus == 404 && e.fromServer -> {
-                        session = null // unknown code / wrong secret → start again
+                    e.httpStatus == 404 -> {
+                        session = null // unknown code / wrong secret → start again (start() detects a missing endpoint)
                         0
                     }
                     e.httpStatus == 429 -> {

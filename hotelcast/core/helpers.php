@@ -213,6 +213,7 @@ function role_label(string $role): string
     return match ($role) {
         'platform_admin' => __('Platform Admin'),
         'reseller' => __('Reseller'),
+        'chain_admin' => __('Chain Admin'),
         'super_admin' => __('Super Admin'),
         'manager' => __('Manager'),
         'reception' => __('Reception'),

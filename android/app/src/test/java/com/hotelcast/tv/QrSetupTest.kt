@@ -17,6 +17,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.io.IOException
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class QrSetupTest {
 
     // ------------------------------------------------------------------ JSON parsing
@@ -192,7 +193,6 @@ class QrSetupTest {
         isRegistered = registered,
     )
 
-    @OptIn(ExperimentalCoroutinesApi::class)
     @Test fun pendingThenClaimedReturnsConfig() = runTest {
         val b = FakeBackend()
         b.statusAnswers.add { ProvisionStatusResponse("pending") }
@@ -211,7 +211,6 @@ class QrSetupTest {
         assertTrue(states.last() is QrSetupState.Claimed)
     }
 
-    @OptIn(ExperimentalCoroutinesApi::class)
     @Test fun expiredOrUsedStatusStartsANewCode() = runTest {
         val b = FakeBackend()
         b.statusAnswers.add { ProvisionStatusResponse("expired") }
@@ -226,7 +225,6 @@ class QrSetupTest {
         job.cancel()
     }
 
-    @OptIn(ExperimentalCoroutinesApi::class)
     @Test fun localExpiryRestartsEvenWithoutServerSayingSo() = runTest {
         val b = FakeBackend()
         b.startAnswers.add { ProvisionStartResponse("A1", "s", "u", 30, 10) }
@@ -241,7 +239,6 @@ class QrSetupTest {
         job.cancel()
     }
 
-    @OptIn(ExperimentalCoroutinesApi::class)
     @Test fun status404StartsAgain() = runTest {
         val b = FakeBackend()
         b.statusAnswers.add { throw ApiException(404, "NOT_FOUND", "bad secret", fromServer = true) }
@@ -252,7 +249,6 @@ class QrSetupTest {
         job.cancel()
     }
 
-    @OptIn(ExperimentalCoroutinesApi::class)
     @Test fun networkErrorsBackOffAndKeepTheCode() = runTest {
         val b = FakeBackend()
         repeat(2) { b.statusAnswers.add { throw IOException("no route") } }
@@ -275,7 +271,6 @@ class QrSetupTest {
         job.cancel()
     }
 
-    @OptIn(ExperimentalCoroutinesApi::class)
     @Test fun startOfflineThenRecovers() = runTest {
         val b = FakeBackend()
         b.startAnswers.add { throw IOException("Unable to resolve host") }
@@ -292,7 +287,6 @@ class QrSetupTest {
         job.cancel()
     }
 
-    @OptIn(ExperimentalCoroutinesApi::class)
     @Test fun rateLimitedHonoursRetryAfter() = runTest {
         val b = FakeBackend()
         b.startAnswers.add { throw ApiException(429, "RATE_LIMITED", "slow down", retryAfterSec = 20, fromServer = true) }
@@ -309,7 +303,6 @@ class QrSetupTest {
         job.cancel()
     }
 
-    @OptIn(ExperimentalCoroutinesApi::class)
     @Test fun serverWithoutProvisionEndpointsIsUnsupported() = runTest {
         val b = FakeBackend()
         b.startAnswers.add { throw ApiException(404, null, "HTTP 404", fromServer = false) }
@@ -320,7 +313,6 @@ class QrSetupTest {
         job.cancel()
     }
 
-    @OptIn(ExperimentalCoroutinesApi::class)
     @Test fun resumeKeepsAValidSession() = runTest {
         val b = FakeBackend()
         val keep = QrSession("KEEP01", "s", "u", expiresAtMs = 100_000, pollIntervalSec = 3)

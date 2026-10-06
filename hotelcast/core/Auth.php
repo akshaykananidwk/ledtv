@@ -17,7 +17,9 @@ final class Auth
     /** Roles that are not bound to one hotel. */
     public const PLATFORM_ROLES = ['platform_admin', 'reseller'];
     public const HOTEL_ROLES = ['super_admin', 'manager', 'staff', 'reception'];
-    public const ALL_ROLES = ['platform_admin', 'reseller', 'super_admin', 'manager', 'staff', 'reception'];
+    /** Hotel chains (#20): owner-side user of one chain (users.chain_id, hotel_id NULL), see core/Chains.php. */
+    public const CHAIN_ROLES = ['chain_admin'];
+    public const ALL_ROLES = ['platform_admin', 'reseller', 'super_admin', 'manager', 'staff', 'reception', 'chain_admin'];
 
     /**
      * Platform permissions: allowed roles (checked against the real role, no hotel needed).
@@ -137,6 +139,10 @@ final class Auth
             self::recordAttempt($username, $ip, false);
             return [false, __('This account is not linked to a hotel.')];
         }
+        if ($user['role'] === 'chain_admin' && (empty($user['chain_id']) || !DB::value('SELECT id FROM hotel_chains WHERE id = :id', ['id' => $user['chain_id']]))) {
+            self::recordAttempt($username, $ip, false);
+            return [false, __('This account is not linked to a hotel chain.')];
+        }
 
         if (password_needs_rehash($user['password_hash'], PASSWORD_BCRYPT, ['cost' => 12])) {
             DB::update('users', ['password_hash' => self::hash($password)], 'id = :id', ['id' => $user['id']]);
@@ -251,7 +257,9 @@ final class Auth
      * Select the hotel context for the logged-in user:
      *  - hotel roles: always their own hotel (users.hotel_id), never from the session;
      *  - platform_admin: the hotel "entered" (session) or their own hotel_id (may be none);
-     *  - reseller: an entered hotel only if it belongs to the reseller.
+     *  - reseller: an entered hotel only if it belongs to the reseller;
+     *  - chain_admin: an entered hotel only if it belongs to their chain (Chains::userCanEnter);
+     *    a hotel super_admin with chain access may also enter the other hotels of the chain.
      */
     private static function resolveTenant(): void
     {
@@ -263,6 +271,13 @@ final class Auth
         $entered = isset($_SESSION['hc_hotel']) ? (int) $_SESSION['hc_hotel'] : 0;
         if (in_array($u['role'], self::HOTEL_ROLES, true)) {
             $hid = $u['hotel_id'] ? (int) $u['hotel_id'] : null;
+            if ($entered && $entered !== $hid && !empty($u['chain_id']) && Chains::userCanEnter($u, $entered)) {
+                $hid = $entered;
+            }
+        } elseif ($u['role'] === 'chain_admin') {
+            if ($entered && Chains::userCanEnter($u, $entered)) {
+                $hid = $entered;
+            }
         } elseif ($u['role'] === 'platform_admin') {
             if ($entered && DB::value('SELECT id FROM hotels WHERE id = :id', ['id' => $entered])) {
                 $hid = $entered;
@@ -297,15 +312,33 @@ final class Auth
     public static function leaveHotel(): void
     {
         self::startSession();
-        unset($_SESSION['hc_hotel']);
+        unset($_SESSION['hc_hotel'], $_SESSION['hc_back']);
         $u = self::user();
-        Tenant::set($u && $u['role'] === 'platform_admin' && $u['hotel_id'] ? (int) $u['hotel_id'] : null);
+        $own = $u && $u['hotel_id'] && ($u['role'] === 'platform_admin' || in_array($u['role'], self::HOTEL_ROLES, true));
+        Tenant::set($own ? (int) $u['hotel_id'] : null);
     }
 
-    /** True when a platform admin / reseller is currently inside a hotel they "entered". */
+    /** True when a platform admin / reseller / chain user is currently inside a hotel they "entered". */
     public static function inEnteredHotel(): bool
     {
-        return !empty($_SESSION['hc_hotel']) && self::isPlatformUser();
+        if (empty($_SESSION['hc_hotel'])) {
+            return false;
+        }
+        return self::isPlatformUser() || (self::user() && Chains::isChainUser()
+            && (int) $_SESSION['hc_hotel'] !== (int) (self::user()['hotel_id'] ?? 0));
+    }
+
+    /** Page with the "leave hotel" action for the entered-hotel banner (reseller / chain / platform). */
+    public static function backPage(): string
+    {
+        $role = self::role();
+        if ($role === 'reseller') {
+            return ($_SESSION['hc_back'] ?? '') === 'chain.php' ? 'chain.php' : 'reseller.php';
+        }
+        if ($role === 'platform_admin') {
+            return ($_SESSION['hc_back'] ?? '') === 'chain.php' ? 'chain.php' : 'platform_hotels.php';
+        }
+        return 'chain.php';
     }
 
     public static function isPlatformUser(): bool
@@ -326,7 +359,10 @@ final class Auth
         if ($u['role'] === 'reseller') {
             return $u['reseller_id'] && (int) DB::value('SELECT reseller_id FROM hotels WHERE id = :id', ['id' => $hotelId]) === (int) $u['reseller_id'];
         }
-        return (int) $u['hotel_id'] === $hotelId;
+        if ($u['role'] === 'chain_admin') {
+            return Chains::userCanEnter($u, $hotelId);
+        }
+        return (int) $u['hotel_id'] === $hotelId || (!empty($u['chain_id']) && Chains::userCanEnter($u, $hotelId));
     }
 
     public static function id(): ?int
@@ -346,7 +382,8 @@ final class Auth
     public static function hotelRole(): string
     {
         $role = self::role();
-        if (in_array($role, self::PLATFORM_ROLES, true)) {
+        if (in_array($role, self::PLATFORM_ROLES, true) || in_array($role, self::CHAIN_ROLES, true)) {
+            // Chain admins act as super_admin inside a hotel of their chain (only such a hotel can be entered).
             return Tenant::has() ? 'super_admin' : '';
         }
         return Tenant::has() ? $role : '';
@@ -379,7 +416,7 @@ final class Auth
         if (is_array($rule)) {
             return in_array($role, $rule, true);
         }
-        $level = in_array($role, self::PLATFORM_ROLES, true) ? self::ROLE_LEVEL['super_admin'] : (self::ROLE_LEVEL[$role] ?? 0);
+        $level = in_array($role, self::PLATFORM_ROLES, true) || in_array($role, self::CHAIN_ROLES, true) ? self::ROLE_LEVEL['super_admin'] : (self::ROLE_LEVEL[$role] ?? 0);
         return $level > 0 && $level >= (self::ROLE_LEVEL[$rule] ?? 99);
     }
 
@@ -416,7 +453,7 @@ final class Auth
             redirect(admin_url('login.php', $back ? ['next' => $back] : []));
         }
         // Hotel pages need a hotel context; platform users without one go to their home page.
-        if ($permission !== null && !self::isPlatformPermission($permission) && !Tenant::has() && self::isPlatformUser()) {
+        if ($permission !== null && !self::isPlatformPermission($permission) && !Tenant::has() && (self::isPlatformUser() || self::role() === 'chain_admin')) {
             if (self::isAjax()) {
                 http_response_code(409);
                 header('Content-Type: application/json; charset=utf-8');
@@ -464,6 +501,7 @@ final class Auth
             return match ($role) {
                 'platform_admin' => 'platform_hotels.php',
                 'reseller' => 'reseller.php',
+                'chain_admin' => 'chain.php',
                 default => 'profile.php',
             };
         }

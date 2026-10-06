@@ -113,7 +113,7 @@
         "name": "શ્રી Shah",
         "first_name": "Rajesh",
         "language": "gu",
-        "checkin_at": "2026-10-06T15:04:35+05:30",
+        "checkin_at": "2026-10-06T15:08:47+05:30",
         "checkout_at": "2026-10-06T23:59:00+05:30"
     },
     "welcome": {
@@ -134,7 +134,7 @@
     },
     "services": {
         "enabled": true,
-        "url": "http://127.0.0.1/g/jPupzivpFao8jBgbJNwN",
+        "url": "http://127.0.0.1/g/QEexZ5NPYX8vgwy4wADd",
         "label": "રૂમ સર્વિસ માટે સ્કેન કરો"
     },
     "guest_menu": [
@@ -143,21 +143,21 @@
             "type": "qr",
             "title": "રૂમ સર્વિસ",
             "icon": "food",
-            "url": "http://127.0.0.1/g/jPupzivpFao8jBgbJNwN"
+            "url": "http://127.0.0.1/g/QEexZ5NPYX8vgwy4wADd"
         },
         {
             "id": "requests",
             "type": "qr",
             "title": "વિનંતીઓ",
             "icon": "bell",
-            "url": "http://127.0.0.1/g/jPupzivpFao8jBgbJNwN#requests"
+            "url": "http://127.0.0.1/g/QEexZ5NPYX8vgwy4wADd#requests"
         },
         {
             "id": "feedback",
             "type": "qr",
             "title": "પ્રતિભાવ",
             "icon": "star",
-            "url": "http://127.0.0.1/g/jPupzivpFao8jBgbJNwN#feedback"
+            "url": "http://127.0.0.1/g/QEexZ5NPYX8vgwy4wADd#feedback"
         },
         {
             "id": "guide",
@@ -203,6 +203,6 @@
         "night_from": "22:00",
         "night_to": "06:00"
     },
-    "hash": "a025de21aeda5e75bf4c8a9fc4352cde8ccaed00",
-    "generated_at": "2026-10-06T15:04:35+05:30"
+    "hash": "7d9a674e9ad9a18407117ef34af91900cba9814f",
+    "generated_at": "2026-10-06T15:08:47+05:30"
 }
