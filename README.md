@@ -25,6 +25,16 @@ schedule karo, emergency message moklo, TV reboot/update karo.*
 | Android TV app | [`android/`](android) | Kotlin, ExoPlayer 2.19, Retrofit, OkHttp, Glide, WorkManager — min SDK 21, target 34 |
 | Documentation | [`docs/`](docs) | Install guide, TV setup, admin guide, API, developer guide (tenancy + extension points), security, test report |
 
+## What's new in 2.2
+
+| Feature | Where |
+|---|---|
+| **Ticker bar per TV / group / all**: own text, colours, speed, font size, height, top or bottom, date/time windows. The video shrinks so the bar never covers it | Admin → **Ticker** · [docs/modules/ticker_bar.md](docs/modules/ticker_bar.md) |
+| **Per-user TV access**: the Admin gives each Manager / Staff / Reception user "All TVs" or only chosen groups / rooms | Admin → **Users** · [docs/modules/user_access.md](docs/modules/user_access.md) |
+| **SaaS role names**: Super Admin (Platform) → Admin (per customer) → Manager / Staff / Reception | everywhere |
+| **Hotel chains hidden by default** (Platform settings → Features to turn them on) | Platform settings |
+| TV app 2.1.1: QR setup works on old TVs (bundled root certificates, wrong-clock handling, connection diagnostics) | TV app |
+
 ## Features
 
 **TV app** — auto-start on boot · full-screen kiosk (HOME launcher, lock-task when device-owner) · image

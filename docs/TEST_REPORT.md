@@ -1,3 +1,16 @@
+# HotelCast 2.2.0 — Test summary (2026-10-06)
+
+| Area | Result |
+|------|--------|
+| PHPUnit full suite | ✅ **367 tests, 11,071 assertions, 0 failures** |
+| Ticker bar (TickersTest): all / group / room, override, priority, date range, daily + overnight windows, days, legacy setting + upgrade migration, exact TV contract, hash change, page CRUD / XSS / CSRF, tenancy, restricted users | ✅ |
+| Per-user TV access (UserAccessTest): limited staff / manager see only their TVs; 50+ refused actions return 403 with data unchanged; allowed actions work; users form; role names; chains switch; crawl of every page without PHP warnings | ✅ |
+| Android unit tests (ticker layout: reserve space top/bottom, clamping, old-server ticker, server fixture) | ✅ **142 tests, 0 failures**; lint 0 errors; APK 2.2.0 (code 7) signed with the same key |
+
+Not verified here: the ticker on a physical TV (no emulator): re-layout without re-buffering, scroll smoothness with Gujarati text.
+
+---
+
 # HotelCast TV app 2.1.1 — QR setup fix for old TVs (2026-10-06)
 
 Problem: on some TVs the setup screen stayed on "Offline – check Wi-Fi" with an empty white box although
