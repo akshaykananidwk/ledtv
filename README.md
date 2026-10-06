@@ -46,11 +46,27 @@ commission reports, license keys for self-hosted installs · white-label brandin
 hotel) on login, admin panel, invoices and TVs · roles Platform Admin / Reseller / Super Admin /
 Manager / Staff / Reception · extension points for modules ([docs/DEVELOPER.md](docs/DEVELOPER.md)).
 
+## What's new in 2.0
+
+| # | Feature | Where |
+|---|---------|-------|
+| 18–22 | Multi-hotel SaaS, platform & reseller panels, plans/TV limits, license keys for self-hosted installs, manual invoices with auto-suspend, white-label branding | Admin → Platform, `docs/ADMIN_GUIDE.md`, `docs/INSTALL.md` |
+| 1, 6, 9, 10 | Guest front desk, check-in mode (vacant TVs off), personal welcome card, checkout reminder, PMS API + webhook | Admin → Front desk, `docs/modules/guests_services.md` |
+| 2, 3, 8 | Guest phone web app via TV QR: room service, requests, feedback (Google review) + live staff alerts | `/g/<token>`, Admin → Orders |
+| 11, 17 | Sponsor ads with impression reports, analytics (plays, uptime, hours ON, electricity, services) | Admin → Ads, Analytics, `docs/modules/ads_analytics_templates.md` |
+| 7, 12 | 28 ready-made templates (festivals, notices, temple, local guide) — replaces #13 AI for now | Admin → Templates |
+| 4, 5, 15, 16 | TV guest menu (QR, Live TV, HDMI, cast), volume + night limit, screenshots, messages | Admin → TV controls, `docs/modules/pwa_support_devices.md` |
+| 14 | Admin as installable phone app (PWA) with web-push notifications | Admin → Notifications |
+| 23 | Windows bulk TV setup tool | `tools/windows/`, Admin → Rooms → Download setup file |
+| 24 | Support: TV logs, crash reports, platform support dashboard | Admin → Support |
+
+Developer extension points: `docs/DEVELOPER.md`. Full 2.0 contract: `docs/V2_SPEC.md`.
+
 ## Quick start
 
-1. **Server** — upload `dist/hotelcast-1.2.0.zip` to your hosting, extract, open
+1. **Server** — upload `dist/hotelcast-2.0.0.zip` to your hosting, extract, open
    `https://your-domain/hotelcast/install/` and follow the 7-step wizard → [docs/INSTALL.md](docs/INSTALL.md)
-2. **TVs** — install `android/release/HotelCast-TV-1.2.0.apk` on each TV (USB pen-drive or `adb`), open it,
+2. **TVs** — install `android/release/HotelCast-TV-2.0.0.apk` on each TV (USB pen-drive or `adb`), open it,
    enter server address + room number + registration key → [android/README.md](android/README.md)
 3. **Use it** — Admin → Content → add content → Broadcast → choose rooms → *Push now* → [docs/ADMIN_GUIDE.md](docs/ADMIN_GUIDE.md)
 
@@ -85,7 +101,7 @@ hotelcast/            Server application (this is what you upload)
   uploads/ backups/ logs/ storage/   runtime data (protected, never overwritten)
   tests/              PHPUnit unit + integration tests, load test
   version.json        {"version":"1.0.0","commit":"…","date":"…"}
-android/              Android Studio project (Kotlin) + release/HotelCast-TV-1.2.0.apk
+android/              Android Studio project (Kotlin) + release/HotelCast-TV-2.0.0.apk
 docs/                 INSTALL, ADMIN_GUIDE, API, SECURITY, TEST_REPORT
 tools/build-release.sh  builds dist/hotelcast-<version>.zip
 ```

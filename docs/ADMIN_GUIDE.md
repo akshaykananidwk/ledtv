@@ -227,3 +227,13 @@ check (its TVs show the *service paused* screen). The list shows the last check,
 **Support** (menu placeholder) lists hotels with offline TVs; the full support dashboard follows in a
 later release.
 
+
+
+## 2.0 modules
+
+Step-by-step guides for the new pages are in:
+
+* Front desk, check-in mode, PMS, room service, requests, feedback: [modules/guests_services.md](modules/guests_services.md)
+* Ads & sponsor reports, analytics, templates & local guide: [modules/ads_analytics_templates.md](modules/ads_analytics_templates.md)
+* TV controls (volume, inputs, messages), support tools, phone app & notifications, setup file: [modules/pwa_support_devices.md](modules/pwa_support_devices.md)
+* Bulk TV setup on Windows: [../tools/windows/README.md](../tools/windows/README.md)

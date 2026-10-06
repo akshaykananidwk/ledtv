@@ -324,3 +324,10 @@ hotel), `HOTEL_SUSPENDED` (403 — the hotel is suspended: the admin panel is re
 
 Roles inside a hotel: `super_admin` > `manager` > `staff` > `reception`. Platform roles:
 `platform_admin` (whole platform; acts as super admin inside any hotel) and `reseller` (own hotels).
+
+
+## 2.0 module APIs
+
+* Guests, PMS and guest web app: [modules/guests_services.md](modules/guests_services.md)
+* Ads, analytics, templates: [modules/ads_analytics_templates.md](modules/ads_analytics_templates.md)
+* Device support (screenshot, logs, crash, events), web push: [modules/pwa_support_devices.md](modules/pwa_support_devices.md)

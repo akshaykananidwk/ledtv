@@ -1,3 +1,26 @@
+# HotelCast 2.0.0 — Test summary (2026-10-06)
+
+| Area | Result |
+|------|--------|
+| PHP lint, every file | ✅ 0 errors |
+| PHPUnit full suite (unit + HTTP integration) | ✅ **289 tests, 7,163 assertions, 0 failures** |
+| Multi-hotel isolation (TenancyTest): every page / AJAX / API with another hotel's ids | ✅ 403/404, data unchanged |
+| Upgrade of a live 1.2.0 database to 2.0 (MigrationUpgradeTest) incl. resume after interruption | ✅ data kept, old TV token + login still work |
+| Platform: plans, TV limits, suspension, invoices, payments, auto-suspend, resellers, license server/client | ✅ (PlatformTest) |
+| Guests / PMS / guest web app / orders / feedback | ✅ (GuestsTest, GuestServicesTest) |
+| Ads, sponsor report, analytics, 28 templates (XSS-escaped fields) | ✅ (AdsAnalyticsTest, TemplatesTest) |
+| PWA, web push (RFC 8291 Appendix A vector matches exactly), support uploads, TV controls, setup file | ✅ (PwaSupportDevicesTest, WebPushTest) |
+| Server → TV contract: real server Content (all modules on) parsed by the app's own models | ✅ (ContractFixtureTest → ServerContractTest) |
+| Android unit tests | ✅ **91 tests, 0 failures**; lint 0 errors; signed with the 1.x key (OTA update works) |
+| Windows bulk setup tool | ✅ parses (PowerShell 7) and full flow verified with a simulated adb |
+| Release zip | ✅ identical to source (minus tests), installer opens, /core blocked |
+
+Not verified here (needs real hardware / browsers): Live TV / HDMI switching, PixelCopy screenshots and
+volume on specific TV models, wake from standby per model, real web-push delivery to a phone, email/WhatsApp
+delivery, Apache .htaccess on the target host.
+
+---
+
 # HotelCast 1.0.0 — Test Report
 
 Date: 2026-10-05 · Environment: PHP 8.3.6 (CLI + built-in server), MariaDB 10.11, Ubuntu 24.04,
