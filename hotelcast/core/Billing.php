@@ -181,6 +181,10 @@ final class Billing
     /** Auto-reactivate a hotel suspended for non-payment once nothing is seriously overdue. */
     public static function reactivateIfPaid(int $hotelId): bool
     {
+        // Free trial (#17): a paid upgrade invoice converts the trial hotel to its paid plan.
+        if (class_exists('Signup') && Signup::activatePaidUpgrade($hotelId)) {
+            return true;
+        }
         $h = DB::one('SELECT status, suspend_reason FROM hotels WHERE id = :id', ['id' => $hotelId]);
         if ($h && $h['status'] === 'suspended' && $h['suspend_reason'] === 'billing' && self::seriouslyOverdue($hotelId) === 0) {
             Hotels::setStatus($hotelId, 'active');

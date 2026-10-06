@@ -7,6 +7,18 @@ require_once __DIR__ . '/partials/common.php';
 $user = Auth::require('billing.view');
 Csrf::check();
 
+// Module hook: admin/partials/billing.d/*.php may handle their own POST (op) and return a callable
+// that prints a card on this page (e.g. the free-trial upgrade). billing.php stays POST-able for
+// suspended / expired hotels (Auth::SUSPENDED_ALLOWED_SCRIPTS).
+$billingCards = [];
+foreach (glob(__DIR__ . '/partials/billing.d/*.php') ?: [] as $__bf) {
+    $__card = require $__bf;
+    if (is_callable($__card)) {
+        $billingCards[] = $__card;
+    }
+}
+unset($__bf, $__card);
+
 $hotel = Tenant::hotel();
 $invoices = DB::all('SELECT * FROM invoices WHERE hotel_id = :hid AND status <> \'cancelled\' ORDER BY id DESC LIMIT 200', hid());
 $unpaid = array_filter($invoices, fn ($i) => $i['status'] === 'unpaid');
@@ -23,6 +35,7 @@ require __DIR__ . '/partials/header.php';
   <div class="col-md-4"><div class="card h-100"><div class="stat-card"><div class="stat-icon <?= $overdue ? 'bg-soft-danger' : 'bg-soft-warning' ?>"><i class="bi bi-hourglass-split"></i></div><div><div class="stat-value"><?= e(money($due)) ?></div><div class="stat-label"><?= e(__('Amount due')) ?><?= $overdue ? ' · ' . e(__(':n overdue', ['n' => count($overdue)])) : '' ?></div></div></div></div></div>
   <div class="col-md-4"><div class="card h-100"><div class="stat-card"><div class="stat-icon bg-soft-info"><i class="bi bi-tv"></i></div><div><div class="stat-value"><?= (int) Tenant::tvCount() ?></div><div class="stat-label"><?= e(__('Active TVs (billed per TV)')) ?></div></div></div></div></div>
 </div>
+<?php foreach ($billingCards as $__card) { $__card(); } ?>
 <?php if ($brand['support_phone'] !== '' || $brand['support_email'] !== ''): ?>
   <div class="alert alert-info small"><i class="bi bi-headset"></i> <?= e(__('Questions about an invoice or payment? Contact :c.', ['c' => trim($brand['support_phone'] . ' ' . $brand['support_email'])])) ?></div>
 <?php endif; ?>
