@@ -80,7 +80,7 @@ if ($print) {
     <thead><tr><th><?= e(__('Date')) ?></th><th class="text-end"><?= e(__('Impressions')) ?></th><th class="text-end"><?= e(__('Screen time')) ?></th><th class="text-end"><?= e(__('Rooms')) ?></th></tr></thead>
     <tbody>
     <?php foreach ($h['days'] as $day => $d): ?>
-      <tr><td><?= e(date('d M Y', (int) strtotime($day))) ?></td><td class="text-end"><?= number_format($d['impressions']) ?></td><td class="text-end"><?= e(Ads::duration($d['seconds'])) ?></td><td class="text-end"><?= (int) $d['rooms'] ?></td></tr>
+      <tr><td class="text-nowrap"><?= e(date('d M y', (int) strtotime($day))) ?></td><td class="text-end"><?= number_format($d['impressions']) ?></td><td class="text-end"><?= e(Ads::duration($d['seconds'])) ?></td><td class="text-end"><?= (int) $d['rooms'] ?></td></tr>
     <?php endforeach; ?>
     </tbody>
   </table></div>

@@ -52,7 +52,7 @@ if (is_post()) {
                 $domains = implode("\n", array_slice(array_values(array_unique(array_filter(array_map(
                     fn ($d) => strtolower(trim($d)),
                     preg_split('/[\s,;]+/', (string) ($_POST['signup_blocked_domains'] ?? '')) ?: []
-                ), fn ($d) => (bool) preg_match('/^[a-z0-9.-]{3,190}$/', $d)))), 0, 500));
+                ), fn ($d) => strlen($d) <= 190 && (bool) preg_match('/^[a-z0-9-]+(\.[a-z0-9-]+)+$/', $d)))), 0, 500));
                 if ($errors) {
                     flash_errors($errors);
                     redirect(admin_url('platform_signups.php', ['tab' => 'settings']));

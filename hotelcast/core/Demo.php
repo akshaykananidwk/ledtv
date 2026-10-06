@@ -522,9 +522,9 @@ final class Demo
         }
         foreach (array_chunk($plays, 200) as $chunk) {
             $vals = [];
-            $p = ['h' => $hid];
+            $p = [];
             foreach ($chunk as $i => [$dev, $room, $cid, $dur, $at]) {
-                $vals[] = "(:h, :d$i, :r$i, :c$i, 'played', :s$i, :t$i)";
+                $vals[] = '(' . (int) $hid . ", :d$i, :r$i, :c$i, 'played', :s$i, :t$i)";
                 $p += ["d$i" => $dev, "r$i" => $room, "c$i" => $cid, "s$i" => $dur, "t$i" => $at];
             }
             DB::query('INSERT INTO broadcast_logs (hotel_id, device_id, room_id, content_id, event, duration_sec, created_at) VALUES ' . implode(',', $vals), $p);

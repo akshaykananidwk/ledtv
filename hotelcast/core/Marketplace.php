@@ -545,13 +545,14 @@ final class Marketplace
      *  - per_day: days × TVs × price per TV per day (per hotel line)
      *  - cpm:     impressions ÷ 1000 × price per 1000 impressions (per hotel line)
      * Tax (platform setting) on the subtotal. Unavailable hotels are reported in 'errors' and left out.
-     * @return array{lines: array, subtotal: string, tax_percent: string, tax: string, total: string, errors: string[], days: int}
+     * @return array{lines: array, subtotal: string, tax_percent: string, tax: string, total: string, errors: string[], unavailable: array<int, string>, days: int}
      */
     public static function quote(array $hotelIds, string $model, string $start, string $end, ?int $impressions, string $category, int $excludeBookingId = 0): array
     {
         $days = self::days($start, $end);
         $lines = [];
         $errors = [];
+        $unavailable = [];
         $sub = 0;
         foreach (array_values(array_unique(array_map('intval', $hotelIds))) as $hid) {
             $pub = self::publicHotel($hid);
@@ -560,16 +561,17 @@ final class Marketplace
                 continue;
             }
             $s = self::hotelSettings($hid);
+            $why = null;
             if (!self::supportsModel($s, $model)) {
-                $errors[] = __(':h does not offer this price model.', ['h' => $pub['name']]);
-                continue;
+                $why = __(':h does not offer this price model.', ['h' => $pub['name']]);
+            } elseif (!self::acceptsCategory($s, $category)) {
+                $why = __(':h does not accept ads of this category.', ['h' => $pub['name']]);
+            } elseif (self::slotsTaken($hid, $start, $end, $excludeBookingId) >= (int) $s['max_ads_per_loop']) {
+                $why = __(':h is fully booked for these dates.', ['h' => $pub['name']]);
             }
-            if (!self::acceptsCategory($s, $category)) {
-                $errors[] = __(':h does not accept ads of this category.', ['h' => $pub['name']]);
-                continue;
-            }
-            if (self::slotsTaken($hid, $start, $end, $excludeBookingId) >= (int) $s['max_ads_per_loop']) {
-                $errors[] = __(':h is fully booked for these dates.', ['h' => $pub['name']]);
+            if ($why !== null) {
+                $errors[] = $why;
+                $unavailable[$hid] = $why;
                 continue;
             }
             if ($model === 'cpm') {
@@ -589,7 +591,7 @@ final class Marketplace
         $taxPct = self::taxPct();
         $tax = (int) round($sub * $taxPct / 100);
         return ['lines' => $lines, 'subtotal' => self::fromPaise($sub), 'tax_percent' => number_format($taxPct, 2, '.', ''), 'tax' => self::fromPaise($tax),
-            'total' => self::fromPaise($sub + $tax), 'errors' => $errors, 'days' => $days];
+            'total' => self::fromPaise($sub + $tax), 'errors' => $errors, 'unavailable' => $unavailable, 'days' => $days];
     }
 
     // ================================================================== creatives
@@ -865,6 +867,13 @@ final class Marketplace
                     'unit_price' => $l['unit_price'], 'impressions' => $l['impressions'], 'amount' => $l['amount'],
                     'hotel_share_pct' => number_format(self::hotelSharePct(), 2, '.', ''), 'status' => 'pending', 'created_at' => now(),
                 ]);
+            }
+            // Hotels that sell ad space but are not available right now (full, category, model) stay in the
+            // draft with amount 0, so submit() reports why instead of silently dropping them.
+            foreach (array_keys($q['unavailable']) as $hid) {
+                if (self::publicHotel($hid)) {
+                    DB::insert('mkt_booking_hotels', ['booking_id' => $bookingId, 'hotel_id' => $hid, 'status' => 'pending', 'created_at' => now()]);
+                }
             }
             return $bookingId;
         });

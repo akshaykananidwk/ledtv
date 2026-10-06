@@ -21,6 +21,8 @@
             <file>tests/Integration/ContractFixtureTest.php</file>
             <file>tests/Integration/ProvisioningTest.php</file>
             <file>tests/Integration/ChainsTest.php</file>
+            <file>tests/Integration/MarketplaceTest.php</file>
+            <file>tests/Integration/SignupDemoTest.php</file>
             <file>tests/Integration/UpdaterTest.php</file>
             <file>tests/Integration/TenancyTest.php</file>
             <file>tests/Integration/PlatformTest.php</file>

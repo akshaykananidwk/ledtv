@@ -67,9 +67,12 @@ $tab = in_array($_GET['tab'] ?? '', ['requests', 'bookings', 'earnings', 'settin
 if (in_array($tab, ['earnings', 'settings'], true) && !$canSettings) {
     $tab = 'requests';
 }
-$s = Marketplace::hotelSettings();
+$mkt = Marketplace::hotelSettings();
 $pending = Marketplace::hotelLines(['pending'], ['paid', 'scheduled', 'running']);
 $upcoming = Marketplace::hotelLines(['pending'], ['submitted', 'awaiting_payment']);
+
+// Statement of this hotel (another hotel's id → 404 before any output).
+$payout = $tab === 'earnings' && req_int('payout', $_GET) ? Tenant::find('mkt_payouts', req_int('payout', $_GET)) : null;
 
 /** Creative preview (TV frame) for a line row. */
 $preview = static function (array $l): string {
@@ -85,7 +88,7 @@ require __DIR__ . '/partials/header.php';
 <div class="page-head">
   <div><h1><i class="bi bi-shop-window"></i> <?= e(__('Ad marketplace')) ?></h1>
     <p class="text-muted mb-0"><?= e(__('Local businesses book ads on your TVs; you earn :p% of every paid booking.', ['p' => rtrim(rtrim(number_format(Marketplace::hotelSharePct(), 2, '.', ''), '0'), '.')])) ?></p></div>
-  <?= $s['enabled'] ? '<span class="badge text-bg-success fs-6">' . e(__('Selling ad space')) . '</span>' : '<span class="badge text-bg-secondary fs-6">' . e(__('Not selling ad space')) . '</span>' ?>
+  <?= $mkt['enabled'] ? '<span class="badge text-bg-success fs-6">' . e(__('Selling ad space')) . '</span>' : '<span class="badge text-bg-secondary fs-6">' . e(__('Not selling ad space')) . '</span>' ?>
 </div>
 
 <ul class="nav nav-tabs mb-3">
@@ -98,7 +101,7 @@ require __DIR__ . '/partials/header.php';
 </ul>
 
 <?php if ($tab === 'requests'): ?>
-  <?php if (!$s['enabled'] && !$pending): ?>
+  <?php if (!$mkt['enabled'] && !$pending): ?>
     <div class="hint-box mb-3"><i class="bi bi-info-circle"></i> <?= e(__('Turn on "Sell ad space" in Settings to appear in the advertiser marketplace.')) ?></div>
   <?php endif; ?>
   <?php if (!$pending): ?><p class="text-muted"><?= e(__('No requests waiting for approval.')) ?></p><?php endif; ?>
@@ -159,7 +162,6 @@ require __DIR__ . '/partials/header.php';
   [$from, $to] = Analytics::range($_GET['from'] ?? date('Y-m-01'), $_GET['to'] ?? date('Y-m-d'));
   $earn = Marketplace::hotelEarnings($from, $to);
   $payouts = Marketplace::hotelPayouts();
-  $payout = req_int('payout', $_GET) ? Tenant::find('mkt_payouts', req_int('payout', $_GET)) : null;
   ?>
   <form class="row g-2 align-items-end mb-3" method="get"><input type="hidden" name="tab" value="earnings">
     <div class="col-6 col-md-3"><label class="form-label" for="e_from"><?= e(__('From')) ?></label><input class="form-control" type="date" id="e_from" name="from" value="<?= e($from) ?>"></div>
@@ -195,27 +197,27 @@ require __DIR__ . '/partials/header.php';
   <?php endif; ?>
 
 <?php else: ?>
-  <?php $allowed = json_decode((string) $s['allowed_categories'], true) ?: []; $blocked = json_decode((string) $s['blocked_categories'], true) ?: []; ?>
+  <?php $allowed = json_decode((string) $mkt['allowed_categories'], true) ?: []; $blocked = json_decode((string) $mkt['blocked_categories'], true) ?: []; ?>
   <form method="post" class="card" style="max-width:860px"><div class="card-body row g-3">
     <?= Csrf::field() ?><input type="hidden" name="op" value="settings_save">
-    <div class="col-12"><div class="form-check form-switch fs-5"><input class="form-check-input" type="checkbox" role="switch" id="m_en" name="enabled" value="1"<?= $s['enabled'] ? ' checked' : '' ?>>
+    <div class="col-12"><div class="form-check form-switch fs-5"><input class="form-check-input" type="checkbox" role="switch" id="m_en" name="enabled" value="1"<?= $mkt['enabled'] ? ' checked' : '' ?>>
       <label class="form-check-label" for="m_en"><?= e(__('Sell ad space')) ?></label></div>
       <div class="form-text"><?= e(__('Your hotel appears in the advertiser marketplace with its name, city, number of TVs and rooms and your prices. Contacts and room numbers are never shown.')) ?></div></div>
     <div class="col-md-4"><label class="form-label" for="m_model"><?= e(__('Price model')) ?></label>
       <select class="form-select" id="m_model" name="pricing_model">
-        <?php foreach (['per_day', 'cpm', 'both'] as $m): ?><option value="<?= e($m) ?>"<?= $s['pricing_model'] === $m ? ' selected' : '' ?>><?= e(Marketplace::modelLabel($m)) ?></option><?php endforeach; ?>
+        <?php foreach (['per_day', 'cpm', 'both'] as $m): ?><option value="<?= e($m) ?>"<?= $mkt['pricing_model'] === $m ? ' selected' : '' ?>><?= e(Marketplace::modelLabel($m)) ?></option><?php endforeach; ?>
       </select></div>
     <div class="col-6 col-md-4"><label class="form-label" for="m_pd"><?= e(__('Price per TV per day')) ?></label>
-      <input class="form-control" id="m_pd" type="number" step="0.01" min="0" name="price_per_tv_day" value="<?= e((string) $s['price_per_tv_day']) ?>"></div>
+      <input class="form-control" id="m_pd" type="number" step="0.01" min="0" name="price_per_tv_day" value="<?= e((string) $mkt['price_per_tv_day']) ?>"></div>
     <div class="col-6 col-md-4"><label class="form-label" for="m_cpm"><?= e(__('Price per 1000 impressions')) ?></label>
-      <input class="form-control" id="m_cpm" type="number" step="0.01" min="0" name="price_cpm" value="<?= e((string) $s['price_cpm']) ?>"></div>
+      <input class="form-control" id="m_cpm" type="number" step="0.01" min="0" name="price_cpm" value="<?= e((string) $mkt['price_cpm']) ?>"></div>
     <div class="col-6 col-md-4"><label class="form-label" for="m_max"><?= e(__('Max marketplace ads per loop')) ?></label>
-      <input class="form-control" id="m_max" type="number" min="1" max="<?= Marketplace::MAX_ADS_PER_LOOP ?>" name="max_ads_per_loop" value="<?= (int) $s['max_ads_per_loop'] ?>">
+      <input class="form-control" id="m_max" type="number" min="1" max="<?= Marketplace::MAX_ADS_PER_LOOP ?>" name="max_ads_per_loop" value="<?= (int) $mkt['max_ads_per_loop'] ?>">
       <div class="form-text"><?= e(__('How many marketplace ads may run at the same time.')) ?></div></div>
     <div class="col-6 col-md-4"><label class="form-label" for="m_appr"><?= e(__('Approval')) ?></label>
       <select class="form-select" id="m_appr" name="approval">
-        <option value="manual"<?= $s['approval'] === 'manual' ? ' selected' : '' ?>><?= e(__('I approve every ad')) ?></option>
-        <option value="auto"<?= $s['approval'] === 'auto' ? ' selected' : '' ?>><?= e(__('Approve automatically after payment')) ?></option>
+        <option value="manual"<?= $mkt['approval'] === 'manual' ? ' selected' : '' ?>><?= e(__('I approve every ad')) ?></option>
+        <option value="auto"<?= $mkt['approval'] === 'auto' ? ' selected' : '' ?>><?= e(__('Approve automatically after payment')) ?></option>
       </select></div>
     <div class="col-md-4"><label class="form-label"><?= e(__('Revenue share')) ?></label>
       <div class="form-control-plaintext"><?= e(__('You :h% · platform :p%', ['h' => rtrim(rtrim(number_format(Marketplace::hotelSharePct(), 2, '.', ''), '0'), '.'), 'p' => rtrim(rtrim(number_format(100 - Marketplace::hotelSharePct(), 2, '.', ''), '0'), '.')])) ?></div></div>
@@ -226,7 +228,7 @@ require __DIR__ . '/partials/header.php';
       <?php foreach (Marketplace::categories() as $c): ?><div class="form-check form-check-inline"><input class="form-check-input" type="checkbox" name="blocked_categories[]" id="mb_<?= e($c) ?>" value="<?= e($c) ?>"<?= in_array($c, $blocked, true) ? ' checked' : '' ?>><label class="form-check-label" for="mb_<?= e($c) ?>"><?= e(Marketplace::categoryLabel($c)) ?></label></div><?php endforeach; ?>
     </fieldset></div>
     <div class="col-12"><label class="form-label" for="m_desc"><?= e(__('Short description for advertisers')) ?></label>
-      <textarea class="form-control" id="m_desc" name="description" rows="2" maxlength="500" placeholder="<?= e(__('e.g. 40 rooms near the temple, pilgrims and families')) ?>"><?= e((string) $s['description']) ?></textarea></div>
+      <textarea class="form-control" id="m_desc" name="description" rows="2" maxlength="500" placeholder="<?= e(__('e.g. 40 rooms near the temple, pilgrims and families')) ?>"><?= e((string) $mkt['description']) ?></textarea></div>
     <div class="col-12"><div class="hint-box small"><i class="bi bi-info-circle"></i> <?= e(__('Approved ads become normal campaigns in Ads & Sponsors (all rooms, after every 3 items). Ad rules for advertisers:')) ?>
       <div class="mt-1"><?= nl2br(e(Marketplace::setting('platform_mkt_rules'))) ?></div></div></div>
     <div class="col-12"><button class="btn btn-primary btn-lg"><i class="bi bi-check-lg"></i> <?= e(__('Save')) ?></button></div>

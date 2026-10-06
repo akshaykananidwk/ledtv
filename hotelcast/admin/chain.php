@@ -145,9 +145,9 @@ $delta = static function ($cur, $old): string {
   </div>
 </div>
 
-<?php $enterBtn = static function (array $h, string $cls = 'btn-sm btn-primary') use ($cid): string {
+<?php $enterBtn = static function (array $h, string $cls = 'btn-sm btn-primary', bool $label = false) use ($cid): string {
     return '<form method="post" class="d-inline m-0">' . Csrf::field() . '<input type="hidden" name="op" value="enter"><input type="hidden" name="chain" value="' . $cid . '">'
-        . '<input type="hidden" name="hotel_id" value="' . (int) $h['id'] . '"><button class="btn ' . e($cls) . '" title="' . e(__('Enter hotel')) . '"><i class="bi bi-box-arrow-in-right"></i> <span class="d-none d-sm-inline">' . e(__('Enter')) . '</span></button></form>';
+        . '<input type="hidden" name="hotel_id" value="' . (int) $h['id'] . '"><button class="btn ' . e($cls) . '" title="' . e(__('Enter hotel')) . '"><i class="bi bi-box-arrow-in-right"></i> <span class="' . ($label ? '' : 'd-none d-sm-inline') . '">' . e(__('Enter hotel')) . '</span></button></form>';
 }; ?>
 
 <div class="card" data-chain-panel="table">
@@ -201,7 +201,7 @@ $delta = static function ($cur, $old): string {
     <div class="col-sm-6 col-xl-4" data-hotel-row data-name="<?= e(mb_strtolower($h['name'] . ' ' . $h['city'])) ?>">
       <div class="card h-100"><div class="card-body">
         <div class="d-flex align-items-start gap-2 mb-2">
-          <div class="flex-grow-1 min-w-0"><h2 class="h6 mb-0 text-truncate"><?= e($h['name']) ?></h2><div class="small text-muted"><?= e($h['city']) ?> · <?= e($h['plan'] ?: __('No plan')) ?></div></div>
+          <div class="flex-grow-1 min-w-0"><h2 class="h6 mb-0 text-truncate"><?= e($h['name']) ?></h2><div class="small text-muted"><?= e(trim($h['city'] . ' · ' . ($h['plan'] ?: __('No plan')), ' ·')) ?></div></div>
           <?= $stateLabel($h['state']) ?>
         </div>
         <div class="row g-2 small text-center mb-2">
@@ -219,7 +219,7 @@ $delta = static function ($cur, $old): string {
           <?php if (!empty($emerg[$h['id']])): ?><span class="badge text-bg-danger"><?= e(__('Emergency')) ?></span><?php endif; ?>
           <?php if ($h['expires_at']): ?><span class="badge text-bg-light border <?= $h['days_left'] !== null && $h['days_left'] < 15 ? 'text-danger' : '' ?>"><?= e(__('until :d', ['d' => date('d M Y', (int) strtotime((string) $h['expires_at']))])) ?></span><?php endif; ?>
         </div>
-        <?= $enterBtn($h, 'btn-sm btn-primary w-100') ?>
+        <?= $enterBtn($h, 'btn-sm btn-primary w-100', true) ?>
       </div></div>
     </div>
   <?php endforeach; ?>
