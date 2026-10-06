@@ -46,6 +46,16 @@ commission reports, license keys for self-hosted installs · white-label brandin
 hotel) on login, admin panel, invoices and TVs · roles Platform Admin / Reseller / Super Admin /
 Manager / Staff / Reception · extension points for modules ([docs/DEVELOPER.md](docs/DEVELOPER.md)).
 
+## What's new in 2.1
+
+| # | Feature | Where |
+|---|---------|-------|
+| QR | Add a TV with a QR code — the TV shows a QR, staff scan it with a phone, pick the room, done (no typing on the TV) | Admin → Add TV (QR), `docs/modules/qr_setup.md` |
+| 17 | Online sign-up with 14-day free trial, reminders, upgrade → invoice | `signup.php`, Platform → Sign-ups, `docs/modules/signup_demo.md` |
+| 21 | Public demo hotel + TV simulator, private client demos (7 days) | `demo.php`, Platform → Demo |
+| 19 | Ad marketplace: local businesses book TV ads, UPI/bank payment, hotel revenue share, proof-of-play | `/advertise/`, Admin → Marketplace, `docs/modules/ad_marketplace.md` |
+| 20 | Hotel chain dashboard: all hotels in one view, publish content & broadcast to many hotels | Admin → Chain, `docs/modules/hotel_chains.md` |
+
 ## What's new in 2.0
 
 | # | Feature | Where |
@@ -64,9 +74,9 @@ Developer extension points: `docs/DEVELOPER.md`. Full 2.0 contract: `docs/V2_SPE
 
 ## Quick start
 
-1. **Server** — upload `dist/hotelcast-2.0.0.zip` to your hosting, extract, open
+1. **Server** — upload `dist/hotelcast-2.1.0.zip` to your hosting, extract, open
    `https://your-domain/hotelcast/install/` and follow the 7-step wizard → [docs/INSTALL.md](docs/INSTALL.md)
-2. **TVs** — install `android/release/HotelCast-TV-2.0.0.apk` on each TV (USB pen-drive or `adb`), open it,
+2. **TVs** — install `android/release/HotelCast-TV-2.1.0.apk` on each TV (USB pen-drive or `adb`), open it,
    enter server address + room number + registration key → [android/README.md](android/README.md)
 3. **Use it** — Admin → Content → add content → Broadcast → choose rooms → *Push now* → [docs/ADMIN_GUIDE.md](docs/ADMIN_GUIDE.md)
 
@@ -101,7 +111,7 @@ hotelcast/            Server application (this is what you upload)
   uploads/ backups/ logs/ storage/   runtime data (protected, never overwritten)
   tests/              PHPUnit unit + integration tests, load test
   version.json        {"version":"1.0.0","commit":"…","date":"…"}
-android/              Android Studio project (Kotlin) + release/HotelCast-TV-2.0.0.apk
+android/              Android Studio project (Kotlin) + release/HotelCast-TV-2.1.0.apk
 docs/                 INSTALL, ADMIN_GUIDE, API, SECURITY, TEST_REPORT
 tools/build-release.sh  builds dist/hotelcast-<version>.zip
 ```

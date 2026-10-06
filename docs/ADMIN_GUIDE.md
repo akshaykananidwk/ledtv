@@ -237,3 +237,8 @@ Step-by-step guides for the new pages are in:
 * Ads & sponsor reports, analytics, templates & local guide: [modules/ads_analytics_templates.md](modules/ads_analytics_templates.md)
 * TV controls (volume, inputs, messages), support tools, phone app & notifications, setup file: [modules/pwa_support_devices.md](modules/pwa_support_devices.md)
 * Bulk TV setup on Windows: [../tools/windows/README.md](../tools/windows/README.md)
+
+* Add TVs with a QR code (no typing on the TV): [modules/qr_setup.md](modules/qr_setup.md)
+* Online sign-up, free trial and demo hotel: [modules/signup_demo.md](modules/signup_demo.md)
+* Ad marketplace (local businesses book ads, revenue share): [modules/ad_marketplace.md](modules/ad_marketplace.md)
+* Hotel chain dashboard: [modules/hotel_chains.md](modules/hotel_chains.md)

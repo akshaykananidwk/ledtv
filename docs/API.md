@@ -331,3 +331,8 @@ Roles inside a hotel: `super_admin` > `manager` > `staff` > `reception`. Platfor
 * Guests, PMS and guest web app: [modules/guests_services.md](modules/guests_services.md)
 * Ads, analytics, templates: [modules/ads_analytics_templates.md](modules/ads_analytics_templates.md)
 * Device support (screenshot, logs, crash, events), web push: [modules/pwa_support_devices.md](modules/pwa_support_devices.md)
+
+* QR TV setup (provision start/status): [modules/qr_setup.md](modules/qr_setup.md)
+* Ad marketplace (advertiser portal): [modules/ad_marketplace.md](modules/ad_marketplace.md)
+* Sign-up, trial, demo: [modules/signup_demo.md](modules/signup_demo.md)
+* Hotel chains: [modules/hotel_chains.md](modules/hotel_chains.md)

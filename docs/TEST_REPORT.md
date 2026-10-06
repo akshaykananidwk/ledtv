@@ -1,3 +1,18 @@
+# HotelCast 2.1.0 — Test summary (2026-10-06)
+
+| Area | Result |
+|------|--------|
+| PHPUnit full suite | ✅ **348 tests, 10,168 assertions, 0 failures** |
+| QR TV setup (ProvisioningTest): start → claim on phone → TV registers → used; expiry, rate limits, cross-hotel | ✅ |
+| Sign-up / trial / demo (SignupDemoTest): OTP, abuse limits, trial expiry → paused TVs, upgrade → paid, demo write-block on every admin POST/AJAX | ✅ |
+| Ad marketplace (MarketplaceTest): pricing math, booking lifecycle, ad only on booked hotels, reports, payouts, advertiser/admin session separation | ✅ |
+| Hotel chains (ChainsTest): aggregates, publish with media copy, chain broadcast only inside the chain, isolation | ✅ |
+| Android unit tests (incl. QR setup state machine, server contract) | ✅ **117 tests, 0 failures**; APK 2.1.0 signed with the 1.x key |
+
+Not verified here: real TVs/phones (QR scan → TV registration on a live network), OTP email delivery, UPI payment apps.
+
+---
+
 # HotelCast 2.0.0 — Test summary (2026-10-06)
 
 | Area | Result |
