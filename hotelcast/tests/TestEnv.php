@@ -68,6 +68,9 @@ final class TestEnv
         }
         $pdo->exec('SET FOREIGN_KEY_CHECKS=1');
         Settings::flush();
+        if (class_exists('Tenant')) {
+            Tenant::forget();
+        }
         Installer::setupDatabase(false);
         Settings::set('registration_key', 'TESTKEY123456789');
         Settings::flush();

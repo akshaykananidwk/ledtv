@@ -523,6 +523,14 @@ function command_label(string $cmd): string
         'SCREEN_ON' => __('Screen on'),
         'RELOAD' => __('Restart app'),
         'PING' => __('Ping (test)'),
+        'SET_VOLUME' => __('Set volume'),
+        'MUTE' => __('Mute'),
+        'UNMUTE' => __('Unmute'),
+        'SCREENSHOT' => __('Take screenshot'),
+        'UPLOAD_LOGS' => __('Upload logs'),
+        'OPEN_INPUT' => __('Switch TV input'),
+        'SHOW_WELCOME' => __('Show welcome again'),
+        'SHOW_MESSAGE' => __('Show message'),
         default => $cmd,
     };
 }

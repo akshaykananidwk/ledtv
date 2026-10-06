@@ -1,0 +1,71 @@
+{
+    "mode": "off",
+    "screen_on": false,
+    "room": {
+        "id": 2,
+        "number": "102",
+        "name": "Deluxe 102",
+        "floor": "1"
+    },
+    "hotel": {
+        "id": 1,
+        "name": "HotelCast Hotel",
+        "logo_url": null
+    },
+    "playlist": null,
+    "items": [],
+    "overlay": {
+        "clock": true,
+        "clock_format": "hh:mm a",
+        "weather": {
+            "enabled": false
+        },
+        "ticker": {
+            "text": "મંગળા આરતી સવારે 6:30 · Mangla Aarti 6:30 AM · Sandhya Aarti 7:30 PM · Checkout 10:00 AM",
+            "speed": 5,
+            "bg_color": "#000000",
+            "text_color": "#FFD700"
+        },
+        "logo": true
+    },
+    "emergency": null,
+    "power_off_mode": "standby",
+    "branding": {
+        "product": "HotelCast",
+        "logo_url": null,
+        "color": "#7B1FA2",
+        "support": null
+    },
+    "off_reason": "vacant",
+    "volume": {
+        "default": 30,
+        "max": 90,
+        "night_max": 25,
+        "night_from": "22:00",
+        "night_to": "06:00"
+    },
+    "guest_menu": [
+        {
+            "id": "live_tv",
+            "type": "live_tv",
+            "title": "Live TV",
+            "icon": "tv"
+        },
+        {
+            "id": "hdmi1",
+            "type": "input",
+            "title": "Set-top box",
+            "icon": "hdmi",
+            "input": "hdmi1"
+        },
+        {
+            "id": "cast",
+            "type": "cast",
+            "title": "Cast from phone",
+            "icon": "cast",
+            "text": "Connect your phone to the Wi-Fi 'Hotel-Guest', open YouTube or another app with the Cast icon, tap Cast and choose this TV. Wi-Fi password: pa;ss:wo\"rd"
+        }
+    ],
+    "hash": "82f4302c4630960e5187556405ffa277126f7fb7",
+    "generated_at": "2026-10-06T05:47:24+05:30"
+}

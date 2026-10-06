@@ -50,7 +50,8 @@ final class Broadcaster
      */
     public static function parseTarget(array $in): array
     {
-        $type = in_array($in['target_type'] ?? 'all', self::TARGET_TYPES, true) ? $in['target_type'] : 'all';
+        $t = (string) ($in['target_type'] ?? 'all');
+        $type = in_array($t, self::TARGET_TYPES, true) ? $t : 'all';
         $ids = match ($type) {
             'rooms' => array_map('intval', (array) ($in['room_ids'] ?? $in['target_ids'] ?? [])),
             'groups' => array_map('intval', (array) ($in['group_ids'] ?? $in['target_ids'] ?? [])),

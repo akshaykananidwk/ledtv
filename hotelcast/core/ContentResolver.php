@@ -272,6 +272,7 @@ final class ContentResolver
                 Logger::error('Content extension ' . get_class($ext) . ' failed: ' . $e->getMessage());
             }
         }
+        self::sortGuestMenu($content);
         $content['hash'] = sha1(json_out($content));
         $content['generated_at'] = date('c');
         return $content;
@@ -302,8 +303,36 @@ final class ContentResolver
                     self::$extensions[] = new $class();
                 }
             }
+            // Optional `public const PRIORITY` (lower runs first, default 100): the guests module sets
+            // the guest language that later extensions use for their labels.
+            usort(self::$extensions, static fn ($a, $b) => self::priority($a) <=> self::priority($b));
         }
         return self::$extensions;
+    }
+
+    private static function priority(object $ext): int
+    {
+        $c = get_class($ext) . '::PRIORITY';
+        return defined($c) ? (int) constant($c) : 100;
+    }
+
+    /** Fixed guest-menu order on the TV: room services first, then guide, TV inputs, cast. */
+    public static function sortGuestMenu(array &$content): void
+    {
+        if (empty($content['guest_menu']) || !is_array($content['guest_menu'])) {
+            return;
+        }
+        $rank = static function (array $m): int {
+            $id = (string) ($m['id'] ?? '');
+            return match (true) {
+                $id === 'services' => 10, $id === 'requests' => 20, $id === 'feedback' => 30,
+                $id === 'guide' => 40, $id === 'live_tv' => 50, str_starts_with($id, 'hdmi') => 60,
+                $id === 'cast' => 70, default => 80,
+            };
+        };
+        $menu = array_values(array_filter($content['guest_menu'], 'is_array'));
+        usort($menu, static fn ($a, $b) => $rank($a) <=> $rank($b)); // stable in PHP 8
+        $content['guest_menu'] = $menu;
     }
 
     /** Short human description of what a room is showing, for the admin panel. */

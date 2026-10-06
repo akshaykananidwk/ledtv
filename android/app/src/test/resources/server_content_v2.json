@@ -1,0 +1,208 @@
+{
+    "mode": "default",
+    "screen_on": true,
+    "room": {
+        "id": 1,
+        "number": "101",
+        "name": "Deluxe 101",
+        "floor": "1"
+    },
+    "hotel": {
+        "id": 1,
+        "name": "HotelCast Hotel",
+        "logo_url": null
+    },
+    "playlist": {
+        "id": 1,
+        "name": "Welcome loop / સ્વાગત",
+        "transition": "fade",
+        "loop": true
+    },
+    "items": [
+        {
+            "id": 2,
+            "type": "announcement",
+            "title": "Welcome message / સ્વાગત",
+            "duration": 12,
+            "text": "જય દ્વારકાધીશ! Welcome to our hotel",
+            "subtitle": "Breakfast 7:00–10:30 AM · Wi-Fi: Hotel-Guest",
+            "style": "fullscreen",
+            "bg_color": "#0D47A1",
+            "text_color": "#FFFFFF",
+            "font_size": 56
+        },
+        {
+            "id": 1,
+            "type": "timetable",
+            "title": "Dwarkadhish Darshan Timings / દ્વારકાધીશ દર્શન સમય",
+            "duration": 20,
+            "html": "<!DOCTYPE html><html><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">\n<style>\n*{box-sizing:border-box}html,body{margin:0;height:100%;background:#4A0E0E;color:#FFF8E1;font-family:\"Noto Sans Gujarati\",\"Noto Sans\",Arial,sans-serif}\n.wrap{display:flex;flex-direction:column;height:100%;padding:3vh 5vw}\nh1{margin:0;text-align:center;font-size:6vh;color:#FFB300;letter-spacing:.05em}\nh2{margin:.5vh 0 2vh;text-align:center;font-size:3.2vh;font-weight:400;opacity:.85}\ntable{width:100%;border-collapse:collapse;font-size:3.6vh;flex:1}\nth{text-align:left;color:#FFB300;border-bottom:3px solid #FFB300;padding:1vh 2vw;font-size:3vh;text-transform:uppercase}\ntd{padding:1.1vh 2vw;border-bottom:1px solid rgba(255,255,255,.15)}\ntd.t{white-space:nowrap;font-weight:700;width:30%}\ntr.now{background:#FFB300;color:#000}tr.now td{font-weight:700}\ntr.past{opacity:.45}\n.foot{display:flex;justify-content:space-between;margin-top:2vh;font-size:2.6vh;opacity:.85}\n</style></head><body><div class=\"wrap\">\n<h1>શ્રી દ્વારકાધીશ મંદિર — દર્શન સમય</h1><h2>Shri Dwarkadhish Temple — Darshan Timings</h2>\n<table><thead><tr><th>Time / સમય</th><th>Darshan / દર્શન</th></tr></thead><tbody><tr data-time=\"06:30 - 07:00\"><td class=\"t\">06:30 - 07:00</td><td>Mangla Aarti / મંગળા આરતી</td></tr><tr data-time=\"07:00 - 08:00\"><td class=\"t\">07:00 - 08:00</td><td>Mangla Darshan / મંગળા દર્શન</td></tr><tr data-time=\"08:00 - 09:00\"><td class=\"t\">08:00 - 09:00</td><td>Abhishek Puja (Snan) / અભિષેક</td></tr><tr data-time=\"09:00 - 09:30\"><td class=\"t\">09:00 - 09:30</td><td>Shringar Darshan / શૃંગાર દર્શન</td></tr><tr data-time=\"10:30 - 11:00\"><td class=\"t\">10:30 - 11:00</td><td>Gwal Bhog / ગ્વાલ ભોગ</td></tr><tr data-time=\"11:30 - 12:00\"><td class=\"t\">11:30 - 12:00</td><td>Rajbhog / રાજભોગ</td></tr><tr data-time=\"12:00 - 13:00\"><td class=\"t\">12:00 - 13:00</td><td>Anosar (Temple closed) / અનોસર</td></tr><tr data-time=\"17:00 - 17:30\"><td class=\"t\">17:00 - 17:30</td><td>Uthappan Darshan / ઉત્થાપન</td></tr><tr data-time=\"17:30 - 19:15\"><td class=\"t\">17:30 - 19:15</td><td>Darshan / દર્શન</td></tr><tr data-time=\"19:30 - 19:45\"><td class=\"t\">19:30 - 19:45</td><td>Sandhya Aarti / સંધ્યા આરતી</td></tr><tr data-time=\"20:00 - 20:30\"><td class=\"t\">20:00 - 20:30</td><td>Shayan Aarti / શયન આરતી</td></tr><tr data-time=\"21:30\"><td class=\"t\">21:30</td><td>Darshan closes / દર્શન બંધ</td></tr></tbody></table>\n<div class=\"foot\"><span>Timings may change on festivals. / તહેવારોમાં સમય બદલાઈ શકે છે.</span><span>HotelCast Hotel · <b id=\"clk\"></b></span></div>\n</div>\n<script>\nfunction mins(s){var m=/(\\d{1,2})[:.](\\d{2})\\s*(am|pm|AM|PM)?/.exec(s||'');if(!m)return null;var h=+m[1],mi=+m[2],ap=(m[3]||'').toLowerCase();if(ap==='pm'&&h<12)h+=12;if(ap==='am'&&h===12)h=0;return h*60+mi;}\nfunction upd(){var d=new Date(),n=d.getHours()*60+d.getMinutes();var rows=[].slice.call(document.querySelectorAll('tbody tr'));var cur=-1;\nrows.forEach(function(r,i){var t=r.getAttribute('data-time');var parts=t.split(/\\s*[-–]\\s*/);var s=mins(parts[0]),e=parts[1]?mins(parts[1]):null;r.className='';\nif(s===null)return;if(e!==null){if(n>=s&&n<e)cur=i;else if(n>=e)r.className='past';}else{if(n>=s)cur=i;}});\nrows.forEach(function(r,i){if(i<cur&&!r.className)r.className='past';});if(cur>=0)rows[cur].className='now';\nvar h=d.getHours(),m=d.getMinutes(),ap=h>=12?'PM':'AM';h=h%12||12;document.getElementById('clk').textContent=h+':'+(m<10?'0':'')+m+' '+ap;}\nupd();setInterval(upd,30000);\n</script></body></html>",
+            "refresh_sec": 60
+        },
+        {
+            "id": 7,
+            "type": "announcement",
+            "title": "Sponsor ad",
+            "duration": 10,
+            "text": "Visit Shree Sweets",
+            "subtitle": "",
+            "style": "fullscreen",
+            "bg_color": "#1A237E",
+            "text_color": "#FFFFFF",
+            "font_size": 48,
+            "ad_campaign_id": 1
+        },
+        {
+            "id": 3,
+            "type": "announcement",
+            "title": "Restaurant offer",
+            "duration": 10,
+            "text": "Gujarati Thali — 20% off for in-house guests! ગુજરાતી થાળી પર 20% છૂટ",
+            "subtitle": "Ground floor restaurant · 12:00–3:00 PM, 7:00–10:30 PM",
+            "style": "fullscreen",
+            "bg_color": "#1B5E20",
+            "text_color": "#FFFFFF",
+            "font_size": 52
+        },
+        {
+            "id": 4,
+            "type": "clock",
+            "title": "Big clock",
+            "duration": 8,
+            "style": "digital",
+            "bg_color": "#000000",
+            "text_color": "#FFD54F"
+        },
+        {
+            "id": 7,
+            "type": "announcement",
+            "title": "Sponsor ad",
+            "duration": 10,
+            "text": "Visit Shree Sweets",
+            "subtitle": "",
+            "style": "fullscreen",
+            "bg_color": "#1A237E",
+            "text_color": "#FFFFFF",
+            "font_size": 48,
+            "ad_campaign_id": 1
+        }
+    ],
+    "overlay": {
+        "clock": true,
+        "clock_format": "hh:mm a",
+        "weather": {
+            "enabled": false
+        },
+        "ticker": {
+            "text": "મંગળા આરતી સવારે 6:30 · Mangla Aarti 6:30 AM · Sandhya Aarti 7:30 PM · Checkout 10:00 AM",
+            "speed": 5,
+            "bg_color": "#000000",
+            "text_color": "#FFD700"
+        },
+        "logo": true
+    },
+    "emergency": null,
+    "power_off_mode": "standby",
+    "branding": {
+        "product": "HotelCast",
+        "logo_url": null,
+        "color": "#7B1FA2",
+        "support": null
+    },
+    "guest": {
+        "name": "શ્રી Shah",
+        "first_name": "Rajesh",
+        "language": "gu",
+        "checkin_at": "2026-10-06T05:47:24+05:30",
+        "checkout_at": "2026-10-06T23:59:00+05:30"
+    },
+    "welcome": {
+        "show": true,
+        "id": "stay-1",
+        "title": "સ્વાગત છે શ્રી Rajesh Shah 🙏",
+        "message": "HotelCast Hotel માં આપનું હાર્દિક સ્વાગત છે. રૂમ 101 માં આપનું રોકાણ આનંદદાયક રહે!",
+        "wifi": {
+            "ssid": "Hotel-Guest",
+            "password": "pa;ss:wo\"rd"
+        },
+        "duration_sec": 20
+    },
+    "checkout_reminder": {
+        "show": true,
+        "id": "co-1-2026-10-06",
+        "text": "આજે ચેક-આઉટ 11:59 PM વાગ્યે છે. મોડું ચેક-આઉટ જોઈએ છે? રિસેપ્શનને ફોન કરો અથવા QR કોડ સ્કેન કરો."
+    },
+    "services": {
+        "enabled": true,
+        "url": "http://127.0.0.1/g/DoAjq7SuU46WaaSqELXh",
+        "label": "રૂમ સર્વિસ માટે સ્કેન કરો"
+    },
+    "guest_menu": [
+        {
+            "id": "services",
+            "type": "qr",
+            "title": "રૂમ સર્વિસ",
+            "icon": "food",
+            "url": "http://127.0.0.1/g/DoAjq7SuU46WaaSqELXh"
+        },
+        {
+            "id": "requests",
+            "type": "qr",
+            "title": "વિનંતીઓ",
+            "icon": "bell",
+            "url": "http://127.0.0.1/g/DoAjq7SuU46WaaSqELXh#requests"
+        },
+        {
+            "id": "feedback",
+            "type": "qr",
+            "title": "પ્રતિભાવ",
+            "icon": "star",
+            "url": "http://127.0.0.1/g/DoAjq7SuU46WaaSqELXh#feedback"
+        },
+        {
+            "id": "guide",
+            "type": "content",
+            "title": "સ્થાનિક માર્ગદર્શિકા",
+            "icon": "map",
+            "content": {
+                "id": 6,
+                "type": "html",
+                "title": "Dwarka guide",
+                "duration": 0,
+                "html": "<!DOCTYPE html><html><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><style>html,body{margin:0;padding:0;background:#000;color:#fff;font-family:\"Noto Sans Gujarati\",\"Noto Sans\",Arial,sans-serif}</style></head><body><h1>Dwarka</h1></body></html>"
+            }
+        },
+        {
+            "id": "live_tv",
+            "type": "live_tv",
+            "title": "લાઇવ TV",
+            "icon": "tv"
+        },
+        {
+            "id": "hdmi1",
+            "type": "input",
+            "title": "Set-top box",
+            "icon": "hdmi",
+            "input": "hdmi1"
+        },
+        {
+            "id": "cast",
+            "type": "cast",
+            "title": "ફોનથી કાસ્ટ કરો",
+            "icon": "cast",
+            "text": "તમારો ફોન Wi-Fi 'Hotel-Guest' સાથે જોડો, YouTube અથવા Cast આઇકનવાળી બીજી એપ ખોલો, Cast દબાવો અને આ TV પસંદ કરો. Wi-Fi પાસવર્ડ: pa;ss:wo\"rd"
+        }
+    ],
+    "ads": [
+        1
+    ],
+    "volume": {
+        "default": 30,
+        "max": 90,
+        "night_max": 25,
+        "night_from": "22:00",
+        "night_to": "06:00"
+    },
+    "hash": "640d295e9c858cbf09de4e890266122b6e6ae4c6",
+    "generated_at": "2026-10-06T05:47:24+05:30"
+}

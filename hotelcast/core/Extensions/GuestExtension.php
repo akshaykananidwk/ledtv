@@ -10,6 +10,9 @@ declare(strict_types=1);
  */
 final class GuestExtension implements ContentExtension
 {
+    /** Runs first: sets the guest (and language) that other extensions use for labels. */
+    public const PRIORITY = 10;
+
     public function apply(array &$content, array $room): void
     {
         $mode = (string) ($content['mode'] ?? '');
