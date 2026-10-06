@@ -73,7 +73,7 @@ final class ContractFixtureTest extends TestCase
         $this->assertSame(25, $c['volume']['night_max'] ?? null);
         $this->assertNotEmpty(array_filter($c['items'], fn ($i) => isset($i['ad_campaign_id'])), 'Sponsor ad inserted');
         $this->assertArrayHasKey('branding', $c);
-        $this->assertSame(['text', 'messages', 'speed', 'bg_color', 'text_color', 'font_size', 'height', 'position', 'reserve_space'], array_keys($c['overlay']['ticker']));
+        $this->assertSame(['text', 'messages', 'speed', 'bg_color', 'text_color', 'font_size', 'height', 'position', 'reserve_space', 'video_scale'], array_keys($c['overlay']['ticker']));
         $this->assertCount(2, $c['overlay']['ticker']['messages'], 'room ticker + hotel-wide demo ticker');
         $this->assertSame([30, 64, 'bottom', true], [$c['overlay']['ticker']['font_size'], $c['overlay']['ticker']['height'], $c['overlay']['ticker']['position'], $c['overlay']['ticker']['reserve_space']]);
 

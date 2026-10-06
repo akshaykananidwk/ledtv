@@ -20,6 +20,7 @@ data class TickerSpec(
     val reserveSpace: Boolean = true,
     val bgColor: String? = null,
     val textColor: String? = null,
+    val videoScale: ScaleMode = ScaleMode.FILL,
 ) {
     companion object {
         const val DEFAULT_SPEED = 5
@@ -47,6 +48,7 @@ data class TickerSpec(
                 reserveSpace = t.reserveSpace ?: true,
                 bgColor = t.bgColor?.trim()?.takeIf { it.isNotEmpty() },
                 textColor = t.textColor?.trim()?.takeIf { it.isNotEmpty() },
+                videoScale = ScaleMode.parse(t.videoScale),
             )
         }
 
@@ -153,6 +155,25 @@ data class TickerLayout(
                 overlayInsetTopPx = if (spec.atTop) height else 0,
                 overlayInsetBottomPx = if (spec.atTop) 0 else height,
             )
+        }
+    }
+}
+
+/** How content fills the stage (see `overlay.ticker.video_scale`). */
+enum class ScaleMode {
+    /** Aspect ratio kept, black bars where it does not match (normal full-screen behaviour). */
+    FIT,
+    /** Stretched to the whole area: no black bars, nothing cut (slightly squeezed next to a ticker). */
+    FILL,
+    /** Aspect ratio kept, fills the area, edges cropped. */
+    ZOOM;
+
+    companion object {
+        /** Default FILL: a reserved ticker must not leave black bars at the sides of the video. */
+        fun parse(v: String?): ScaleMode = when (v?.trim()?.lowercase()) {
+            "fit" -> FIT
+            "zoom", "crop" -> ZOOM
+            else -> FILL
         }
     }
 }

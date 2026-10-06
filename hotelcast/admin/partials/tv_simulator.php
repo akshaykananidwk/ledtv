@@ -33,7 +33,7 @@ body.embed .bar{display:none}body.embed .wrap{top:0}
 /* --tk-top / --tk-bottom: space reserved for the ticker bar (reserve_space) — the content shrinks, the bar never covers it */
 .layer{position:absolute;inset:var(--tk-top,0px) 0 var(--tk-bottom,0px) 0;transition:opacity .8s ease,transform .8s ease}
 .layer.fade-enter{opacity:0}.layer.slide-enter{transform:translateX(100%)}.layer.slide-leave{transform:translateX(-100%)}.layer.fade-leave{opacity:0}
-.layer img,.layer video{width:100%;height:100%;object-fit:contain;background:#000;display:block}
+.layer img,.layer video{width:100%;height:100%;object-fit:var(--tk-fit,contain);background:#000;display:block}
 .layer iframe{width:100%;height:100%;border:0;background:#fff;display:block}
 .ann{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:4%}
 .ann .t{font-weight:700;line-height:1.2;white-space:pre-wrap;word-break:break-word}
@@ -240,6 +240,7 @@ body.embed .bar{display:none}body.embed .wrap{top:0}
     const top = tk.position === 'top';
     const reserve = tk.reserve_space !== false && tk.reserve_space !== 0;
     stage.style.setProperty(top ? '--tk-top' : '--tk-bottom', reserve ? (height * DP) + 'em' : '0px');
+    stage.style.setProperty('--tk-fit', reserve ? ({ fit: 'contain', zoom: 'cover' }[tk.video_scale] || 'fill') : 'contain');
     const bar = document.createElement('div');
     bar.className = 'ov ov-tick ' + (top ? 'pos-top' : 'pos-bottom');
     const col = (c, d) => (/^#[0-9a-f]{6}$/i.test(String(c)) ? c : d);
@@ -279,7 +280,7 @@ body.embed .bar{display:none}body.embed .wrap{top:0}
     clearTimers();
     hlsList.forEach((h) => { try { h.destroy(); } catch (e) { /* ignore */ } }); hlsList = [];
     stage.innerHTML = '';
-    stage.style.removeProperty('--tk-top'); stage.style.removeProperty('--tk-bottom');
+    stage.style.removeProperty('--tk-top'); stage.style.removeProperty('--tk-bottom'); stage.style.removeProperty('--tk-fit');
     stage.classList.toggle('emergency', content.mode === 'emergency');
     const badge = document.getElementById('modeBadge');
     badge.textContent = T.modes[content.mode] || content.mode;

@@ -78,4 +78,8 @@ return [
     // Settings page note
     'Ticker bars now have their own page: different text per TV, group or all TVs, colours, speed, size, position and time windows. The video shrinks so the bar never covers it.' => 'टिकर पट्टी का अब अलग पेज है: हर टीवी, ग्रुप या सभी टीवी के लिए अलग पाठ, रंग, गति, आकार, स्थान और समय। वीडियो छोटा हो जाता है ताकि पट्टी उसे कभी न ढके।',
     'Open Ticker bar' => 'टिकर पट्टी खोलें',
+    'Video in the smaller area' => 'छोटी जगह में वीडियो',
+    'Fill the screen – no black side bars (recommended)' => 'पूरी स्क्रीन भरें – किनारों पर काली पट्टी नहीं (सुझाया गया)',
+    'Keep shape – black bars at the sides' => 'आकार रखें – किनारों पर काली पट्टी',
+    'Zoom – fills, edges are cut' => 'Zoom – पूरा भरे, किनारे कटें',
 ];

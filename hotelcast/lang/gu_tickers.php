@@ -76,4 +76,8 @@ return [
     // Settings page note
     'Ticker bars now have their own page: different text per TV, group or all TVs, colours, speed, size, position and time windows. The video shrinks so the bar never covers it.' => 'ટીકર પટ્ટીનું હવે અલગ પાનું છે: દરેક ટીવી, ગ્રુપ અથવા બધા ટીવી માટે અલગ લખાણ, રંગ, ઝડપ, કદ, સ્થાન અને સમય. વિડિયો નાનો થાય છે જેથી પટ્ટી તેને ક્યારેય ઢાંકે નહીં.',
     'Open Ticker bar' => 'ટીકર પટ્ટી ખોલો',
+    'Video in the smaller area' => 'વિડિયો નાની જગ્યામાં',
+    'Fill the screen – no black side bars (recommended)' => 'આખી screen ભરો – બાજુમાં કાળી પટ્ટી નહીં (ભલામણ)',
+    'Keep shape – black bars at the sides' => 'આકાર જાળવો – બાજુમાં કાળી પટ્ટી',
+    'Zoom – fills, edges are cut' => 'Zoom – આખું ભરાય, કિનારી કપાય',
 ];

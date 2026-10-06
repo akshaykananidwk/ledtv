@@ -82,6 +82,33 @@ class ContentPlayer(
     private var transition = "fade"
     private var loopPlaylist = true
 
+    /**
+     * How video and images fill the stage. FIT on a full screen; the activity switches to the
+     * ticker's mode (default FILL) while a bar reserves space, so the smaller area has no black
+     * side bars. Applied to the playing view at once (no re-buffering) and to every new view.
+     */
+    var scaleMode: ScaleMode = ScaleMode.FIT
+        set(value) {
+            if (field == value) return
+            field = value
+            currentView?.let { applyScale(it) }
+        }
+
+    private fun applyScale(v: View) {
+        when (v) {
+            is StyledPlayerView -> v.resizeMode = when (scaleMode) {
+                ScaleMode.FIT -> AspectRatioFrameLayout.RESIZE_MODE_FIT
+                ScaleMode.FILL -> AspectRatioFrameLayout.RESIZE_MODE_FILL
+                ScaleMode.ZOOM -> AspectRatioFrameLayout.RESIZE_MODE_ZOOM
+            }
+            is ImageView -> v.scaleType = when (scaleMode) {
+                ScaleMode.FIT -> ImageView.ScaleType.FIT_CENTER
+                ScaleMode.FILL -> ImageView.ScaleType.FIT_XY
+                ScaleMode.ZOOM -> ImageView.ScaleType.CENTER_CROP
+            }
+        }
+    }
+
     val currentHash: String? get() = content?.hash
     val isActive: Boolean get() = content != null
     val currentItemId: Long? get() = currentItem?.id
@@ -304,6 +331,7 @@ class ContentPlayer(
             scaleType = ImageView.ScaleType.FIT_CENTER
             setBackgroundColor(Color.BLACK)
         }
+        applyScale(iv)
         val url = item.url!!
         val local = cache.cachedFile(url)
         Glide.with(context.applicationContext)
@@ -406,7 +434,7 @@ class ContentPlayer(
             resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIT
             isFocusable = false
             this.player = exo
-        }
+        }.also { applyScale(it) }
     }
 
     private fun scheduleStreamRetry(exo: ExoPlayer, mediaItem: MediaItem) {

@@ -15,7 +15,7 @@ final class TickersTest extends TestCase
     /** @var array<string, int> */
     private static array $id = [];
     private const XSS = '<script>alert(1)</script>"\'><img src=x onerror=alert(2)>';
-    private const KEYS = ['text', 'messages', 'speed', 'bg_color', 'text_color', 'font_size', 'height', 'position', 'reserve_space'];
+    private const KEYS = ['text', 'messages', 'speed', 'bg_color', 'text_color', 'font_size', 'height', 'position', 'reserve_space', 'video_scale'];
 
     public static function setUpBeforeClass(): void
     {
@@ -106,12 +106,13 @@ final class TickersTest extends TestCase
         $this->assertSame('#111111', $t['bg_color']);
         $this->assertSame(3, $t['speed']);
 
-        self::add('GRP-B', 'group', 'g1', ['bg_color' => '#222222', 'font_size' => 40, 'height' => 90, 'position' => 'top', 'reserve_space' => 0]);
+        self::add('GRP-B', 'group', 'g1', ['bg_color' => '#222222', 'font_size' => 40, 'height' => 90, 'position' => 'top', 'reserve_space' => 0, 'video_scale' => 'zoom']);
         $t = Tickers::forRoom(self::room('101'));
         $this->assertSame(['GRP-B', 'ALL-A'], $t['messages']);
         $this->assertSame('GRP-B' . Tickers::SEPARATOR . 'ALL-A', $t['text']);
         $this->assertSame('GRP-B   ✦   ALL-A', $t['text']);
         $this->assertSame(['#222222', 40, 90, 'top', false], [$t['bg_color'], $t['font_size'], $t['height'], $t['position'], $t['reserve_space']], 'style of the most specific');
+        $this->assertSame('zoom', $t['video_scale'], 'video scale of the most specific');
         $this->assertSame(['ALL-A'], self::msgs('201'));
 
         self::add('ROOM-C', 'room', 'r101', ['bg_color' => '#333333']);
@@ -216,7 +217,7 @@ final class TickersTest extends TestCase
         $t = Tickers::forRoom(self::room('201'));
         $this->assertSame([
             'text' => 'LEGACY-TEXT', 'messages' => ['LEGACY-TEXT'], 'speed' => 8, 'bg_color' => '#123456', 'text_color' => '#ABCDEF',
-            'font_size' => 26, 'height' => 56, 'position' => 'bottom', 'reserve_space' => true,
+            'font_size' => 26, 'height' => 56, 'position' => 'bottom', 'reserve_space' => true, 'video_scale' => 'fill',
         ], $t);
         // Real tickers come first (legacy has priority -1000), even an 'all' ticker with the lowest priority.
         self::add('NEW-ALL', 'all', null, ['priority' => -999, 'bg_color' => '#000001']);
@@ -311,7 +312,7 @@ final class TickersTest extends TestCase
         $w = $poll('tv-ticker-201-0001', '201');
         $this->assertSame('empty', $w['mode']);
         $this->assertSame(['text' => 'સ્વાગત છે · Welcome', 'messages' => ['સ્વાગત છે · Welcome'], 'speed' => 6, 'bg_color' => '#102030', 'text_color' => '#FAFAFA',
-            'font_size' => 30, 'height' => 64, 'position' => 'top', 'reserve_space' => true], $w['overlay']['ticker']);
+            'font_size' => 30, 'height' => 64, 'position' => 'top', 'reserve_space' => true, 'video_scale' => 'fill'], $w['overlay']['ticker']);
         $this->assertIsBool($w['overlay']['ticker']['reserve_space']);
         $this->assertIsInt($w['overlay']['ticker']['font_size']);
 

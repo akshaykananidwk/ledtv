@@ -121,3 +121,15 @@ Other helpers: `Tickers::forTarget('all'|'group'|'room', $id)` (previews: "all" 
 reserve_space on), sets `ticker_text` to `''` and bumps `content_version` — in one transaction per hotel, so
 an interrupted run can simply be re-run. The `ticker_*` keys keep working as the legacy fallback (chain
 templates still write them).
+
+## Video scale next to the bar (2.2.2)
+
+`video_scale` in the ticker object (admin: *Video in the smaller area*). It only applies while `reserve_space` is true:
+
+| Value | TV | Look |
+|---|---|---|
+| `fill` (default) | ExoPlayer `RESIZE_MODE_FILL`, images `FIT_XY` | whole area, no black side bars, nothing cut, slightly squeezed vertically |
+| `fit` | `RESIZE_MODE_FIT`, `FIT_CENTER` | shape kept, black bars at the sides |
+| `zoom` | `RESIZE_MODE_ZOOM`, `CENTER_CROP` | shape kept, fills, edges cut |
+
+Older apps ignore the field (they behave like `fit`).

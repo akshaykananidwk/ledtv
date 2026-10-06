@@ -568,6 +568,8 @@ class MainActivity : AppCompatActivity(), ContentPlayer.Listener, PlayerUi, Gues
         )
         tickerBar.visibility = View.VISIBLE
         applyTickerInsets(l)
+        // Smaller area next to the bar: fill it (default) instead of black bars at the sides.
+        player?.scaleMode = if (spec.reserveSpace) spec.videoScale else ScaleMode.FIT
     }
 
     /** Emergency, screen off / black power-off, suspended, no content: no bar, full-size content area. */
@@ -576,6 +578,7 @@ class MainActivity : AppCompatActivity(), ContentPlayer.Listener, PlayerUi, Gues
         tickerBar.stop()
         tickerBar.visibility = View.GONE
         applyTickerInsets(TickerLayout.HIDDEN)
+        player?.scaleMode = ScaleMode.FIT
     }
 
     /**

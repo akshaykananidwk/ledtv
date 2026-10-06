@@ -208,3 +208,17 @@ class TickerLayoutTest {
         assertTrue("text ${l.textSizePx}px fits in ${l.heightPx}px", needed <= l.heightPx + 0.01f)
     }
 }
+
+class TickerScaleModeTest {
+    @org.junit.Test
+    fun defaultIsFillSoNoBlackSideBars() {
+        org.junit.Assert.assertEquals(ScaleMode.FILL, ScaleMode.parse(null))
+        org.junit.Assert.assertEquals(ScaleMode.FILL, ScaleMode.parse("fill"))
+        org.junit.Assert.assertEquals(ScaleMode.FIT, ScaleMode.parse(" FIT "))
+        org.junit.Assert.assertEquals(ScaleMode.ZOOM, ScaleMode.parse("zoom"))
+        org.junit.Assert.assertEquals(ScaleMode.FILL, ScaleMode.parse("weird"))
+        val spec = TickerSpec.from(Ticker(text = "x", videoScale = "fit"))!!
+        org.junit.Assert.assertEquals(ScaleMode.FIT, spec.videoScale)
+        org.junit.Assert.assertEquals(ScaleMode.FILL, TickerSpec.from(Ticker(text = "x"))!!.videoScale)
+    }
+}

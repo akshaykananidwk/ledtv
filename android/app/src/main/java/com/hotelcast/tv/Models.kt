@@ -352,6 +352,12 @@ data class Ticker(
     /** true (default): the content area shrinks so the bar never covers the video. */
     @JsonAdapter(LenientBooleanAdapter::class)
     @SerializedName("reserve_space") val reserveSpace: Boolean? = null,
+    /**
+     * How video / images fill the smaller area while the bar reserves space: "fill" (default: whole
+     * width and height, no black side bars, slightly squeezed), "fit" (aspect kept, black bars),
+     * "zoom" (aspect kept, edges cropped).
+     */
+    @SerializedName("video_scale") val videoScale: String? = null,
 )
 
 data class Emergency(

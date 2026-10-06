@@ -23,6 +23,8 @@ final class Tickers
     public const SEPARATOR = '   ✦   ';
     public const TARGETS = ['all', 'group', 'room'];
     public const POSITIONS = ['bottom', 'top'];
+    /** fill = no black side bars (default), fit = aspect kept with bars, zoom = cropped. */
+    public const VIDEO_SCALES = ['fill', 'fit', 'zoom'];
     public const SPECIFICITY = ['room' => 3, 'group' => 2, 'all' => 1];
     public const LEGACY_PRIORITY = -1000;
     public const MAX_MESSAGE = 1000;
@@ -30,7 +32,7 @@ final class Tickers
     public const DEFAULTS = [
         'id' => 0, 'name' => '', 'message' => '', 'target_type' => 'all', 'target_id' => null,
         'text_color' => '#FFD700', 'bg_color' => '#000000', 'speed' => 5, 'font_size' => 26, 'height' => 56,
-        'position' => 'bottom', 'reserve_space' => 1, 'override_lower' => 0, 'priority' => 0,
+        'position' => 'bottom', 'reserve_space' => 1, 'video_scale' => 'fill', 'override_lower' => 0, 'priority' => 0,
         'starts_at' => null, 'ends_at' => null, 'time_from' => null, 'time_to' => null, 'days' => null, 'is_active' => 1,
     ];
 
@@ -146,6 +148,7 @@ final class Tickers
             'height' => $int('height', 32, 200, 56),
             'position' => in_array($in['position'] ?? '', self::POSITIONS, true) ? (string) $in['position'] : 'bottom',
             'reserve_space' => $flag('reserve_space'),
+            'video_scale' => in_array($in['video_scale'] ?? '', self::VIDEO_SCALES, true) ? (string) $in['video_scale'] : 'fill',
             'override_lower' => $flag('override_lower'),
             'priority' => $int('priority', -999, 999, 0),
             'starts_at' => $startsAt,
@@ -330,7 +333,7 @@ final class Tickers
             'text_color' => clean_color((string) Settings::get('ticker_text_color'), '#FFD700'),
             'bg_color' => clean_color((string) Settings::get('ticker_bg_color'), '#000000'),
             'speed' => max(1, min(10, Settings::int('ticker_speed', 5))),
-            'font_size' => 26, 'height' => 56, 'position' => 'bottom', 'reserve_space' => 1,
+            'font_size' => 26, 'height' => 56, 'position' => 'bottom', 'reserve_space' => 1, 'video_scale' => 'fill',
             'override_lower' => 0, 'priority' => self::LEGACY_PRIORITY, 'is_active' => 1,
         ];
     }
@@ -391,6 +394,7 @@ final class Tickers
             'height' => max(32, min(200, (int) ($style['height'] ?? 56) ?: 56)),
             'position' => ($style['position'] ?? 'bottom') === 'top' ? 'top' : 'bottom',
             'reserve_space' => (bool) (int) ($style['reserve_space'] ?? 1),
+            'video_scale' => in_array($style['video_scale'] ?? 'fill', self::VIDEO_SCALES, true) ? (string) ($style['video_scale'] ?? 'fill') : 'fill',
         ];
     }
 

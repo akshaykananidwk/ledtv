@@ -276,6 +276,14 @@ if ($action === 'new' || $action === 'edit' || $formTicker !== null) {
               <label class="form-check-label" for="tk_reserve"><?= e(__('Do not cover the video (video shrinks)')) ?></label>
             </div>
           </div>
+          <div class="col-12">
+            <label class="form-label" for="tk_scale"><?= e(__('Video in the smaller area')) ?></label>
+            <select class="form-select" id="tk_scale" name="video_scale">
+              <?php foreach (['fill' => __('Fill the screen – no black side bars (recommended)'), 'fit' => __('Keep shape – black bars at the sides'), 'zoom' => __('Zoom – fills, edges are cut')] as $sv => $sl): ?>
+                <option value="<?= e($sv) ?>"<?= ($t['video_scale'] ?? 'fill') === $sv ? ' selected' : '' ?>><?= e($sl) ?></option>
+              <?php endforeach; ?>
+            </select>
+          </div>
         </div></div>
 
         <div class="card mb-3 position-sticky" style="top:1rem"><div class="card-header"><?= e(__('Live preview')) ?></div><div class="card-body">
