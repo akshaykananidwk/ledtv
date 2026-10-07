@@ -77,7 +77,7 @@ final class ClassScheduleApp extends DisplayApp
     {
         return self::input('heading', __('Heading'), $config['heading'], 'text', ['maxlength' => 120, 'placeholder' => __('Class schedule')])
             . self::input('subheading', __('Sub-heading'), $config['subheading'], 'text', ['maxlength' => 190])
-            . self::select('view', __('View'), ['today' => __('Today (NOW / NEXT)'), 'week' => __('Whole week')], $config['view'], '', 'col-md-4')
+            . self::select('view', __('Show as'), ['today' => __('Today (NOW / NEXT)'), 'week' => __('Whole week')], $config['view'], '', 'col-md-4')
             . self::input('trainer_label', __('Name for "Trainer"'), $config['trainer_label'], 'text', ['maxlength' => 40, 'placeholder' => __('Trainer')], __('e.g. Doctor, Teacher, Instructor'), 'col-md-4')
             . self::input('room_label', __('Name for "Studio"'), $config['room_label'], 'text', ['maxlength' => 40, 'placeholder' => __('Studio')], __('e.g. Room, Hall, Cabin'), 'col-md-4')
             . self::input('rows_per_page', __('Rows per page (today view)'), $config['rows_per_page'], 'number', ['min' => 3, 'max' => 10], '', 'col-md-4')

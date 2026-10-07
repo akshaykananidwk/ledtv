@@ -271,7 +271,7 @@ final class Queue
      */
     public static function next(array $counter): ?array
     {
-        return DB::transaction(static function () use ($counter): ?array {
+        return self::atomic(static function () use ($counter): ?array {
             self::closeOpen($counter, 'done');
             $sql = "UPDATE queue_tokens SET status = 'called', counter_id = :c, called_at = :t, recall_count = 0
                     WHERE hotel_id = :h AND token_date = :d AND status = 'waiting'";
@@ -318,7 +318,7 @@ final class Queue
                 break;
             }
         }
-        return DB::transaction(static function () use ($counter, $pick): ?array {
+        return self::atomic(static function () use ($counter, $pick): ?array {
             self::closeOpen($counter, 'done');
             $n = DB::query(
                 "UPDATE queue_tokens SET status = 'called', counter_id = :c, called_at = :t, recall_count = 0, done_at = NULL
@@ -327,6 +327,27 @@ final class Queue
             )->rowCount();
             return $n === 1 ? self::current($counter) : null;
         });
+    }
+
+    /**
+     * Run a claiming transaction in READ COMMITTED (no gap locks, UPDATE skips rows another counter
+     * claimed meanwhile) and retry on a deadlock / lock wait timeout (MySQL 1213 / 1205).
+     */
+    private static function atomic(callable $fn): mixed
+    {
+        for ($try = 1; ; $try++) {
+            try {
+                if (!DB::pdo()->inTransaction()) {
+                    DB::pdo()->exec('SET TRANSACTION ISOLATION LEVEL READ COMMITTED');
+                }
+                return DB::transaction($fn);
+            } catch (PDOException $e) {
+                if ($try >= 4 || !in_array((int) ($e->errorInfo[1] ?? 0), [1205, 1213], true)) {
+                    throw $e;
+                }
+                usleep(20000 * $try);
+            }
+        }
     }
 
     /** Call the current token again (TV blinks + chime again). */

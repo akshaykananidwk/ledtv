@@ -60,6 +60,9 @@ final class DataFeeds
         'nifty', 'sensex', 'banknifty',
     ];
 
+    /** Market symbol: NSEI, RELIANCE:NSE, EUR/USD, BSE.BANK (no "//", one exchange suffix). */
+    public const SYMBOL_RE = '/^[A-Z0-9][A-Z0-9._-]{0,15}(\/[A-Z0-9._-]{1,10})?(:[A-Z0-9_-]{1,10})?$/';
+
     private const ACTIVE_FOR = 86400;      // a feed is refreshed while it was used in the last 24 h
     private const FORGET_AFTER = 30 * 86400;
     private const DEMAND_WRITE_EVERY = 300;
@@ -217,7 +220,7 @@ final class DataFeeds
         }
         foreach (self::INDICES as $k => [$label, $def]) {
             $v = strtoupper($str('feed_idx_' . $k, 30));
-            if ($v !== '' && !preg_match('/^[A-Z0-9][A-Z0-9.:\/_-]{0,24}$/', $v)) {
+            if ($v !== '' && !preg_match(self::SYMBOL_RE, $v)) {
                 $errors[] = __(':i: invalid symbol.', ['i' => $label]);
                 continue;
             }
@@ -238,7 +241,7 @@ final class DataFeeds
                 $syms = [];
                 foreach ((array) ($params['symbols'] ?? []) as $s) {
                     $s = strtoupper(trim((string) $s));
-                    if (!preg_match('/^[A-Z0-9][A-Z0-9.:\/_-]{0,24}$/', $s)) {
+                    if (!preg_match(self::SYMBOL_RE, $s)) {
                         return null;
                     }
                     $syms[$s] = $s;
@@ -653,7 +656,7 @@ final class DataFeeds
         return true;
     }
 
-    /** Fetch one feed row now (budget permitting) and store the result. Returns the updated row. */
+    /** Fetch one feed row now (budget permitting) and store the result. Returns the updated row, '_result' = ok | failed | budget. */
     public static function refreshRow(array $row, ?string $key = null): array
     {
         $p = (string) $row['provider'];
@@ -668,7 +671,7 @@ final class DataFeeds
         if (self::PROVIDERS[$p]['key'] && $key === '') {
             $upd = ['attempted_at' => $now, 'error' => 'No API key', 'error_count' => (int) $row['error_count'] + 1, 'retry_at' => $now + 3600];
         } elseif (!self::budget($p, $owner)) {
-            return $row; // over budget: try again on a later run
+            return ['_result' => 'budget'] + $row; // over budget: try again on a later run
         } else {
             $params = json_decode((string) $row['params'], true);
             $r = self::fetch($p, is_array($params) ? $params : [], $key);
@@ -683,7 +686,7 @@ final class DataFeeds
         }
         DB::update('data_feeds', $upd, 'id = :id', ['id' => $row['id']]);
         self::$phMemo = [];
-        return array_merge($row, $upd);
+        return array_merge($row, $upd, ['_result' => $upd['error'] === null ? 'ok' : 'failed']);
     }
 
     /**
@@ -710,10 +713,9 @@ final class DataFeeds
                 $out['skipped']++;
                 continue;
             }
-            $before = $row['attempted_at'];
             $new = self::refreshRow($row);
-            if ($new['attempted_at'] === $before) {
-                $out['skipped']++; // over budget
+            if (($new['_result'] ?? '') === 'budget') {
+                $out['skipped']++;
             } elseif ($new['error'] === null) {
                 $out['refreshed']++;
             } else {
@@ -745,7 +747,7 @@ final class DataFeeds
     {
         $def = self::INDICES[$index][1] ?? '';
         $v = strtoupper(trim((string) Settings::platform('platform_feed_idx_' . $index, $def)));
-        return preg_match('/^[A-Z0-9][A-Z0-9.:\/_-]{0,24}$/', $v) ? $v : $def;
+        return preg_match(self::SYMBOL_RE, $v) ? $v : $def;
     }
 
     /**
@@ -843,13 +845,13 @@ final class DataFeeds
         return $v === null ? '' : ($v > 0 ? '+' : ($v < 0 ? '−' : '')) . number_format(abs($v), 2) . '%';
     }
 
-    /** "as of" label in the hotel time zone, e.g. "7 Oct, 6:05 PM". */
+    /** "as of" label in the hotel time zone, e.g. "7 October, 6:05 PM" (translated month). */
     public static function asOf(?int $ts): string
     {
         if (!$ts) {
             return '';
         }
-        return date('j', $ts) . ' ' . __(date('M', $ts)) . ', ' . date('g:i', $ts) . ' ' . __(date('A', $ts));
+        return date('j', $ts) . ' ' . __(date('F', $ts)) . ', ' . date('g:i', $ts) . ' ' . __(date('A', $ts));
     }
 
     /** Emoji flag of a country code (EU = 🇪🇺). */

@@ -1,0 +1,80 @@
+<?php
+declare(strict_types=1);
+
+/**
+ * Gujarati translations — Departures board app (#7): core/Apps/DeparturesApp.php, core/Departures.php,
+ * admin/departures.php. Placeholders like :t / :n stay unchanged.
+ */
+return [
+    // Statuses, kinds, column names
+    'On time' => 'સમયસર',
+    'Delayed' => 'મોડું',
+    'Boarding' => 'બોર્ડિંગ',
+    'Departed' => 'ઉપડી ગઈ',
+    'Arrived' => 'આવી ગઈ',
+    'Departure' => 'પ્રસ્થાન',
+    'Arrival' => 'આગમન',
+    'Gate' => 'ગેટ',
+    'Stand' => 'સ્ટેન્ડ',
+    'Bay' => 'બે',
+    'Counter' => 'કાઉન્ટર',
+
+    // Validation
+    'Enter a valid time.' => 'માન્ય સમય લખો.',
+    'The destination is required.' => 'ગંતવ્ય જરૂરી છે.',
+    'The destination can have at most 120 characters.' => 'ગંતવ્યમાં વધુમાં વધુ 120 અક્ષર હોઈ શકે.',
+    'Choose a date or tick "Runs every day".' => 'તારીખ પસંદ કરો અથવા "દરરોજ ચાલે છે" પર ટિક કરો.',
+
+    // App
+    'Origin' => 'ક્યાંથી',
+    'Bus, train or flight departures and arrivals on an airport-style board with live status: delayed, boarding, cancelled.' => 'બસ, ટ્રેન કે ફ્લાઇટના પ્રસ્થાન અને આગમન એરપોર્ટ જેવા બોર્ડ પર, લાઇવ સ્થિતિ સાથે: મોડું, બોર્ડિંગ, રદ.',
+    'Departures' => 'પ્રસ્થાન',
+    'Arrivals' => 'આગમન',
+    'Departures and arrivals' => 'પ્રસ્થાન અને આગમન',
+    'Column name' => 'કૉલમનું નામ',
+    'Rows per page' => 'પાના દીઠ લાઇન',
+    'Hide past entries after (minutes)' => 'વીતેલી એન્ટ્રી છુપાવો પછી (મિનિટ)',
+    'Show the next (hours)' => 'આગળના બતાવો (કલાક)',
+    'e.g. Enquiry: 1800 123 456' => 'દા.ત. પૂછપરછ: 1800 123 456',
+    'Also show the English name below Gujarati / Hindi' => 'ગુજરાતી / હિન્દી નીચે અંગ્રેજી નામ પણ બતાવો',
+    'Destination' => 'ગંતવ્ય',
+    'No.' => 'નં.',
+    'No arrivals right now.' => 'હમણાં કોઈ આગમન નથી.',
+    'No departures right now.' => 'હમણાં કોઈ પ્રસ્થાન નથી.',
+    'Add entries on the Departures board page.' => 'પ્રસ્થાન બોર્ડ પેજ પર એન્ટ્રી ઉમેરો.',
+    'Delayed :n min' => ':n મિનિટ મોડું',
+    'Expected :t' => 'અપેક્ષિત :t',
+    'ARR' => 'આગ.',
+    'DEP' => 'પ્રસ્થા.',
+    'Tomorrow' => 'આવતીકાલે',
+
+    // admin/departures.php
+    'Entry not found.' => 'એન્ટ્રી મળી નહીં.',
+    'Entry ":t" saved.' => 'એન્ટ્રી ":t" સાચવી.',
+    'Entry ":t" is shown again.' => 'એન્ટ્રી ":t" ફરી બતાવાય છે.',
+    'Entry ":t" is hidden.' => 'એન્ટ્રી ":t" છુપાવી.',
+    'Entry ":t" deleted.' => 'એન્ટ્રી ":t" કાઢી નાખી.',
+    'Edit entry' => 'એન્ટ્રી બદલો',
+    'New entry' => 'નવી એન્ટ્રી',
+    'A bus, train or flight on the board. TVs update within 15 seconds.' => 'બોર્ડ પર એક બસ, ટ્રેન કે ફ્લાઇટ. ટીવી 15 સેકન્ડમાં અપડેટ થાય છે.',
+    'Number / route' => 'નંબર / રૂટ',
+    'Platform / gate' => 'પ્લેટફોર્મ / ગેટ',
+    'Destination (English)' => 'ગંતવ્ય (અંગ્રેજી)',
+    'For arrivals: where it comes from.' => 'આગમન માટે: ક્યાંથી આવે છે.',
+    'Destination in Gujarati' => 'ગંતવ્ય ગુજરાતીમાં',
+    'Destination in Hindi' => 'ગંતવ્ય હિન્દીમાં',
+    'Runs every day' => 'દરરોજ ચાલે છે',
+    'Date (when not daily)' => 'તારીખ (દરરોજ ન હોય ત્યારે)',
+    'Delay (min)' => 'વિલંબ (મિનિટ)',
+    'Remark' => 'નોંધ',
+    'e.g. Via Nadiad, AC sleeper' => 'દા.ત. નડિયાદ થઈને, AC સ્લીપર',
+    'Tap a button to change the status on every board at once.' => 'બધા બોર્ડ પર એકસાથે સ્થિતિ બદલવા બટન દબાવો.',
+    'Board screens (:n)' => 'બોર્ડ સ્ક્રીન (:n)',
+    'Create a board screen' => 'બોર્ડ સ્ક્રીન બનાવો',
+    'On the board now' => 'હમણાં બોર્ડ પર',
+    'Nothing in the next 24 hours.' => 'આગામી 24 કલાકમાં કંઈ નથી.',
+    'No entries yet. Add the first one.' => 'હજી કોઈ એન્ટ્રી નથી. પહેલી ઉમેરો.',
+    'Delayed +15' => 'મોડું +15',
+    'All entries' => 'બધી એન્ટ્રી',
+    'Delete entry ":t"?' => 'એન્ટ્રી ":t" કાઢી નાખવી છે?',
+];

@@ -61,7 +61,7 @@ final class MarketApp extends DataFeedApp
             $parts = array_map('trim', explode('|', $line, 2));
             $sym = strtoupper($parts[1] ?? $parts[0]);
             $label = $parts[0] !== '' ? mb_substr($parts[0], 0, 30) : $sym;
-            if (!preg_match('/^[A-Z0-9][A-Z0-9.:\/_-]{0,24}$/', $sym)) {
+            if (!preg_match(DataFeeds::SYMBOL_RE, $sym)) {
                 $errors[] = __('Line :n: enter "Label | SYMBOL", e.g. "Reliance | RELIANCE:NSE".', ['n' => $i + 1]);
                 continue;
             }

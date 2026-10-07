@@ -138,7 +138,7 @@ final class DeparturesApp extends DisplayApp
         $lang = (string) $ctx['lang'];
         $h24 = (bool) $config['h24'];
         $mode = $config['mode'];
-        $destHead = $mode === 'arrival' ? __('From') : ($mode === 'departure' ? __('To') : __('Destination'));
+        $destHead = $mode === 'arrival' ? __('Origin') : __('Destination');
         $h = '<div class="df-board"><div class="df-head"><div class="df-c df-c-time">' . e(__('Time')) . '</div><div class="df-c df-c-no">' . e(__('No.')) . '</div>'
             . '<div class="df-c df-c-dest">' . e($destHead) . '</div><div class="df-c df-c-plat">' . e(__(self::PLATFORM_LABELS[$config['platform_label']] ?? 'Platform')) . '</div>'
             . '<div class="df-c df-c-status">' . e(__('Status')) . '</div></div>';

@@ -18,6 +18,10 @@ if (post_too_large()) {
 Csrf::check();
 
 $ajax = Auth::isAjax();
+$itemDefaults = ['id' => 0, 'category_id' => 0, 'name_en' => '', 'name_gu' => '', 'name_hi' => '', 'description_en' => '', 'description_gu' => '', 'description_hi' => '',
+    'price' => '', 'price_old' => '', 'food_type' => 'veg', 'badge' => '', 'available_from' => null, 'available_to' => null, 'is_active' => 1, 'is_sold_out' => 0,
+    'is_special' => 0, 'show_on_board' => 1, 'photo_path' => null];
+$catDefaults = ['id' => 0, 'name_en' => '', 'name_gu' => '', 'name_hi' => '', 'is_active' => 1, 'show_on_board' => 1, 'board_from' => null, 'board_to' => null];
 $formItem = null;
 $formCat = null;
 $formErrors = [];
@@ -75,7 +79,7 @@ if (is_post()) {
                     Uploader::delete($photo['path'], $photo['thumb'] ?? null);
                 }
                 http_response_code(422);
-                $formItem = array_merge($existing ?? [], array_intersect_key($_POST, array_flip(['category_id', 'name_en', 'name_gu', 'name_hi', 'description_en', 'description_gu', 'description_hi', 'price', 'price_old', 'food_type', 'badge', 'available_from', 'available_to'])), [
+                $formItem = array_merge($itemDefaults, $existing ?? [], array_intersect_key($_POST, array_flip(['category_id', 'name_en', 'name_gu', 'name_hi', 'description_en', 'description_gu', 'description_hi', 'price', 'price_old', 'food_type', 'badge', 'available_from', 'available_to'])), [
                     'id' => $existing ? $id : 0,
                     'is_active' => !empty($_POST['is_active']) ? 1 : 0, 'is_sold_out' => !empty($_POST['is_sold_out']) ? 1 : 0,
                     'is_special' => !empty($_POST['is_special']) ? 1 : 0, 'show_on_board' => !empty($_POST['show_on_board']) ? 1 : 0,
@@ -121,7 +125,7 @@ if (is_post()) {
             [$newId, $formErrors] = MenuBoard::saveCategory($in, $existing ? $id : null);
             if ($formErrors) {
                 http_response_code(422);
-                $formCat = array_merge($existing ?? [], array_intersect_key($_POST, array_flip(['name_en', 'name_gu', 'name_hi', 'board_from', 'board_to'])), [
+                $formCat = array_merge($catDefaults, $existing ?? [], array_intersect_key($_POST, array_flip(['name_en', 'name_gu', 'name_hi', 'board_from', 'board_to'])), [
                     'id' => $existing ? $id : 0, 'is_active' => !empty($_POST['is_active']) ? 1 : 0, 'show_on_board' => !empty($_POST['show_on_board']) ? 1 : 0,
                 ]);
                 break;
@@ -157,7 +161,7 @@ $foodDot = static fn (string $f): string => isset(MenuBoard::FOOD_COLORS[$f]) ? 
 // ---------------------------------------------------------------- category form
 if ($formCat !== null || $action === 'cat') {
     if ($formCat === null) {
-        $formCat = ['id' => 0, 'name_en' => '', 'name_gu' => '', 'name_hi' => '', 'is_active' => 1, 'show_on_board' => 1, 'board_from' => null, 'board_to' => null];
+        $formCat = $catDefaults;
         if (req_int('id', $_GET)) {
             $formCat = MenuBoard::findCategory(req_int('id', $_GET)) ?? redirect(admin_url('menu_board.php'));
         }
@@ -191,9 +195,7 @@ if ($formCat !== null || $action === 'cat') {
 // ---------------------------------------------------------------- dish form
 if ($formItem !== null || $action === 'item') {
     if ($formItem === null) {
-        $formItem = ['id' => 0, 'category_id' => req_int('category', $_GET), 'name_en' => '', 'name_gu' => '', 'name_hi' => '', 'description_en' => '', 'description_gu' => '', 'description_hi' => '',
-            'price' => '', 'price_old' => '', 'food_type' => 'veg', 'badge' => '', 'available_from' => null, 'available_to' => null, 'is_active' => 1, 'is_sold_out' => 0,
-            'is_special' => 0, 'show_on_board' => 1, 'photo_path' => null];
+        $formItem = ['category_id' => req_int('category', $_GET)] + $itemDefaults;
         if (req_int('id', $_GET)) {
             $formItem = MenuBoard::findItem(req_int('id', $_GET)) ?? redirect(admin_url('menu_board.php'));
         }

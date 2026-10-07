@@ -1,0 +1,9 @@
+/* Social wall (#16) — core/Apps/SocialWallApp.php. Embeds are 500 CSS px wide; social_wall.js scales them. */
+.sw-wrap{display:-webkit-flex;display:flex;-webkit-flex-direction:column;flex-direction:column;height:100%}
+.sw-body{display:-webkit-flex;display:flex}
+.sw-page{width:32%;margin-right:1.5rem;position:relative;display:-webkit-flex;display:flex}
+.sw-posts{-webkit-flex:1;flex:1;min-width:0;display:-webkit-flex;display:flex;-webkit-justify-content:space-around;justify-content:space-around}
+.sw-card{position:relative;-webkit-flex:1;flex:1;min-width:0;height:100%;overflow:hidden;margin:0 .6rem;border-radius:.8rem;background:#fff}
+.sw-page .sw-card{margin:0}
+.sw-scale{width:500px;height:880px;-webkit-transform-origin:0 0;transform-origin:0 0}
+.sw-scale iframe{display:block;width:500px;height:880px;border:0;background:#fff}
