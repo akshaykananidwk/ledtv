@@ -120,6 +120,7 @@ return [
     'Please enter a title.' => 'कृपया शीर्षक लिखें।',
     'The slide image is too large (maximum 8 MB). Use smaller pictures.' => 'स्लाइड का चित्र बहुत बड़ा है (अधिकतम 8 MB)। छोटे चित्र इस्तेमाल करें।',
     'The design is too large (maximum :m MB). Use fewer or smaller pictures.' => 'डिज़ाइन बहुत बड़ा है (अधिकतम :m MB)। कम या छोटे चित्र इस्तेमाल करें।',
+    'The slide image (:n) is larger than the server upload limit (:s). Use fewer photos, or ask your hosting provider to raise upload_max_filesize and post_max_size to 10M.' => 'स्लाइड का चित्र (:n) सर्वर की अपलोड सीमा (:s) से बड़ा है। कम फ़ोटो इस्तेमाल करें, या अपने होस्टिंग प्रदाता से upload_max_filesize और post_max_size को 10M करने के लिए कहें।',
     'Replace the current design with this template?' => 'मौजूदा डिज़ाइन को इस टेम्पलेट से बदलना है?',
     'No hotel logo yet. Upload it in Settings.' => 'अभी होटल का लोगो नहीं है। सेटिंग्स में अपलोड करें।',
     'No images in your content library yet. Use "Upload image".' => 'आपकी सामग्री लाइब्रेरी में अभी कोई चित्र नहीं है। "चित्र अपलोड करें" इस्तेमाल करें।',

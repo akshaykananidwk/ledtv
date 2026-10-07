@@ -96,7 +96,10 @@ final class Designer
         if (!is_array($file) || !isset($file['error'], $file['tmp_name'], $file['size']) || is_array($file['error'])) {
             throw new RuntimeException(__('No image was received.'), 422);
         }
-        if ($file['error'] === UPLOAD_ERR_INI_SIZE || $file['error'] === UPLOAD_ERR_FORM_SIZE || (int) $file['size'] > self::MAX_IMAGE_BYTES) {
+        if ($file['error'] === UPLOAD_ERR_INI_SIZE || $file['error'] === UPLOAD_ERR_FORM_SIZE) {
+            throw new RuntimeException(__('The file is larger than the server upload limit (:s).', ['s' => (string) ini_get('upload_max_filesize')]), 413);
+        }
+        if ((int) $file['size'] > self::MAX_IMAGE_BYTES) {
             throw new RuntimeException(__('The image is too large. Maximum is :m MB.', ['m' => self::MAX_IMAGE_BYTES / 1024 / 1024]), 413);
         }
         if ($file['error'] !== UPLOAD_ERR_OK || !is_file((string) $file['tmp_name'])) {

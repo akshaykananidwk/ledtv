@@ -742,10 +742,12 @@ final class MarketplaceTest extends TestCase
         $line = DB::one('SELECT * FROM mkt_booking_hotels WHERE booking_id = :b', ['b' => $cpm]);
         $this->assertSame('approved', $line['status']);
         Tenant::run(2, function () use ($line) {
+            // PHP time, not MySQL NOW(): the test connection's session time zone may differ from PHP's.
+            $now = DB::pdo()->quote(date('Y-m-d H:i:s'));
             for ($i = 0; $i < 1000; $i += 250) {
                 $rows = [];
                 for ($k = 0; $k < 250; $k++) {
-                    $rows[] = '(2, ' . (int) $line['campaign_id'] . ", 'played', 15, NOW())";
+                    $rows[] = '(2, ' . (int) $line['campaign_id'] . ", 'played', 15, $now)";
                 }
                 DB::query('INSERT INTO broadcast_logs (hotel_id, ad_campaign_id, event, duration_sec, created_at) VALUES ' . implode(',', $rows));
             }

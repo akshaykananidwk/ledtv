@@ -68,7 +68,7 @@ final class DisplayAppsTest extends TestCase
     /** Base form fields of an app item. */
     private static function form(string $app, array $cfg, array $extra = []): array
     {
-        $f = ['op' => 'save', 'id' => 0, 'app' => $app, 'title' => 'My ' . $app, 'duration' => 20, 'is_active' => 1, 'theme' => 'diwali', 'font' => 'gujarati', 'lang' => 'gu'] + $extra;
+        $f = $extra + ['op' => 'save', 'id' => 0, 'app' => $app, 'title' => 'My ' . $app, 'duration' => 20, 'is_active' => 1, 'theme' => 'diwali', 'font' => 'gujarati', 'lang' => 'gu'];
         foreach ($cfg as $k => $v) {
             if (is_array($v)) {
                 foreach (array_values($v) as $i => $x) {

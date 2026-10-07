@@ -12,6 +12,8 @@ file (and the license texts linked below) with every copy you distribute.
 | SortableJS | 1.15.2 | MIT — https://github.com/SortableJS/Sortable/blob/master/LICENSE |
 | FullCalendar | 6.1.15 | MIT — https://github.com/fullcalendar/fullcalendar/blob/main/LICENSE.md |
 | hls.js | 1.5.15 | Apache-2.0 — https://github.com/video-dev/hls.js/blob/master/LICENSE |
+| fabric.js (`vendor/fabric`, slide designer) | 6.9.1 | MIT — `assets/vendor/fabric/LICENSE` |
+| PDF.js / pdfjs-dist legacy build (`vendor/pdfjs`, PDF import; `pdf.min.mjs` / `pdf.worker.min.mjs` renamed to `.js`) | 4.10.38 | Apache-2.0 — `assets/vendor/pdfjs/LICENSE` |
 | Noto Sans Gujarati (Google Fonts, loaded at runtime) | — | SIL Open Font License 1.1 |
 
 ## Android TV app (Gradle dependencies)

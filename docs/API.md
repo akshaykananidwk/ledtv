@@ -259,7 +259,7 @@ Common fields: `id`, `type`, `title`, `duration` (seconds the item stays on scre
 | `timetable`    | `html` (complete HTML document, render in WebView), `refresh_sec` |
 | `announcement` | `text`, `subtitle`, `style` (`fullscreen` \| `marquee`), `bg_color`, `text_color`, `font_size` (sp) |
 | `html`         | `html` (complete HTML document) |
-| `url`          | `url` (open in WebView) |
+| `url`          | `url` (open in WebView); display apps (2.3, content type `app`) arrive as `url` items with a signed `…/display/?c=&s=&v=` page, plus `app` (app key) and `refresh_sec: 0` — the page refreshes its own data (docs/modules/display_apps.md) |
 | `youtube`      | `url` (original), `embed_url` (open in WebView, autoplay) |
 | `clock`        | `style` (`digital` \| `analog`), `bg_color`, `text_color` |
 | `layout`       | `layout` = `{ bg_color, zones: [Zone, …] }` — split screen (2.3, app version code ≥ 10), see below |

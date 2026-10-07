@@ -715,6 +715,7 @@
         const png = await new Promise((resolve) => out.toBlob(resolve, 'image/png'));
         if (!png) throw new Error(HC.t.error);
         if (png.size > cfg.maxImage) throw new Error(L.too_big);
+        if (cfg.uploadLimit && png.size + jsonBlob.size + 4096 > cfg.uploadLimit) throw new Error(L.server_limit.replace('{n}', (png.size / 1048576).toFixed(1) + ' MB'));
         const fd = new FormData();
         fd.append('id', String(cfg.id || 0));
         fd.append('title', title);

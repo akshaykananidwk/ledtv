@@ -247,6 +247,9 @@ Parallel modules: pick a distinct name (`003_guests.sql`, `004_services.sql` …
 * `Demo::sampleContent([floor => rooms])` — sample rooms / content / playlist for the current hotel (installer,
   sign-up, demo hotels). Demo hotels (`hotels.demo_kind`) are write-protected by `Demo::guard()`; see
   `docs/modules/signup_demo.md`.
+* **Display apps (2.3)** — `core/Apps/<Name>App.php` (extends `DisplayApp`, auto-discovered like
+  `core/Tasks`): server-rendered TV screens (content type `app`, signed `/display/` page, themes, live
+  data). Guide: `docs/modules/display_apps.md`.
 
 ---------------------------------------------------------------------------------------------------
 ## 3. Platform model (reference)

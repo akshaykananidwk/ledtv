@@ -65,6 +65,7 @@ $config = [
     'height' => Designer::HEIGHT,
     'maxImage' => Designer::MAX_IMAGE_BYTES,
     'maxJson' => Designer::MAX_JSON_BYTES,
+    'uploadLimit' => upload_limit(),
     'contentUrl' => admin_url('content.php'),
     'i18n' => [
         'heading' => __('Your heading'),
@@ -74,6 +75,7 @@ $config = [
         'saved' => __('Slide saved. It is in your content library.'),
         'title_required' => __('Please enter a title.'),
         'too_big' => __('The slide image is too large (maximum 8 MB). Use smaller pictures.'),
+        'server_limit' => __('The slide image (:n) is larger than the server upload limit (:s). Use fewer photos, or ask your hosting provider to raise upload_max_filesize and post_max_size to 10M.', ['n' => '{n}', 's' => human_bytes(upload_limit())]),
         'json_too_big' => __('The design is too large (maximum :m MB). Use fewer or smaller pictures.', ['m' => 1]),
         'replace' => __('Replace the current design with this template?'),
         'template_name' => __('Template name'),
