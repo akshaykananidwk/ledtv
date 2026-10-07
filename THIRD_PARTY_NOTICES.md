@@ -14,7 +14,7 @@ file (and the license texts linked below) with every copy you distribute.
 | hls.js | 1.5.15 | Apache-2.0 — https://github.com/video-dev/hls.js/blob/master/LICENSE |
 | fabric.js (`vendor/fabric`, slide designer) | 6.9.1 | MIT — `assets/vendor/fabric/LICENSE` |
 | PDF.js / pdfjs-dist legacy build (`vendor/pdfjs`, PDF import; `pdf.min.mjs` / `pdf.worker.min.mjs` renamed to `.js`) | 4.10.38 | Apache-2.0 — `assets/vendor/pdfjs/LICENSE` |
-| Noto Sans Gujarati (Google Fonts, loaded at runtime) | — | SIL Open Font License 1.1 |
+| Noto Sans, Noto Sans Gujarati, Noto Sans Devanagari (woff2 via @fontsource, `assets/fonts`, display apps + designer) | 400/700 | SIL Open Font License 1.1 — `assets/fonts/OFL.txt` |
 
 ## Android TV app (Gradle dependencies)
 

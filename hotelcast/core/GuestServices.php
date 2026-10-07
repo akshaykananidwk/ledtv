@@ -85,6 +85,9 @@ final class GuestServices
     /** Is an item orderable at $ts (available hours, overnight windows allowed)? */
     public static function availableNow(array $item, ?int $ts = null): bool
     {
+        if (!empty($item['is_sold_out'])) {
+            return false; // menu board "sold out" switch (migration 016, core/MenuBoard.php)
+        }
         if (empty($item['available_from']) || empty($item['available_to'])) {
             return true;
         }
