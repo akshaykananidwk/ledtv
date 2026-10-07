@@ -1,0 +1,39 @@
+/* KPI dashboard (#8) — core/Apps/KpiDashboardApp.php. Grid of tiles (.kp-cols-N / .kp-rows-N), ticker. */
+.kp-shift{font-size:1.4rem;font-weight:700;padding:.4rem 1.1rem;border-radius:2rem;background:var(--hc-accent);color:var(--hc-accent-fg);
+  white-space:nowrap;margin-left:1.2rem}
+.kp-pages{height:100%}
+.kp-page{display:-webkit-flex;display:flex;-webkit-flex-wrap:wrap;flex-wrap:wrap;-webkit-align-content:stretch;align-content:stretch}
+.kp-tile{position:relative;margin:0 1.5% 1.5% 0;display:-webkit-flex;display:flex;-webkit-flex-direction:column;flex-direction:column;
+  -webkit-justify-content:center;justify-content:center;overflow:hidden;border-top:.4rem solid var(--hc-border)}
+.kp-cols-1 .kp-tile{width:100%}
+.kp-cols-2 .kp-tile{width:49.25%}
+.kp-cols-3 .kp-tile{width:32.33%}
+.kp-cols-4 .kp-tile{width:23.875%}
+.kp-cols-1 .kp-tile:nth-child(1n),.kp-cols-2 .kp-tile:nth-child(2n),.kp-cols-3 .kp-tile:nth-child(3n),.kp-cols-4 .kp-tile:nth-child(4n){margin-right:0}
+.kp-rows-1 .kp-tile{height:100%}
+.kp-rows-2 .kp-tile{height:48.5%}
+.kp-rows-3 .kp-tile{height:32%}
+.kp-label{font-size:1.4rem;color:var(--hc-muted);font-weight:700;line-height:1.2;overflow:hidden;max-height:3.4rem}
+.kp-value{white-space:nowrap;overflow:hidden;line-height:1.05;margin:.3rem 0}
+.kp-value b{font-size:4.6rem;font-variant-numeric:tabular-nums}
+.kp-unit{font-size:1.6rem;margin-left:.5rem;color:var(--hc-muted)}
+.kp-sub{font-size:1.1rem;color:var(--hc-muted);margin-top:-.2rem}
+.kp-t-text .kp-value{white-space:normal}
+.kp-t-text .kp-value b{font-size:3rem}
+.kp-bar{height:.8rem;border-radius:.4rem;background:rgba(127,127,127,.25);overflow:hidden;margin-top:.6rem}
+.kp-bar i{display:block;height:100%;background:var(--hc-accent);border-radius:.4rem;-webkit-transition:width 1s ease;transition:width 1s ease}
+.kp-target{font-size:1rem;color:var(--hc-muted);margin-top:.4rem}
+.kp-good{border-top-color:#2E7D32}.kp-good .kp-value b{color:#66BB6A}.kp-good .kp-bar i{background:#43A047}
+.kp-warn{border-top-color:#F9A825}.kp-warn .kp-value b{color:#FFCA28}.kp-warn .kp-bar i{background:#F9A825}
+.kp-bad{border-top-color:#C62828}.kp-bad .kp-value b{color:#EF5350}.kp-bad .kp-bar i{background:#E53935}
+.hc-theme-light .kp-good .kp-value b{color:#2E7D32}.hc-theme-light .kp-warn .kp-value b{color:#B26A00}.hc-theme-light .kp-bad .kp-value b{color:#C62828}
+/* Smaller text when 3 rows or 4 columns. */
+.kp-rows-3 .kp-value b,.kp-cols-4 .kp-value b{font-size:3.2rem}
+.kp-rows-3 .kp-label,.kp-cols-4 .kp-label{font-size:1.1rem}
+.kp-rows-3 .kp-tile,.kp-cols-4 .kp-tile{padding:.8rem 1.1rem}
+.kp-cols-1.kp-rows-1 .kp-value b,.kp-cols-2.kp-rows-1 .kp-value b{font-size:7rem}
+/* Safety messages ticker. */
+.kp-ticker{margin:1rem -2.8rem -2.2rem;padding:.6rem 0;background:#C62828;color:#fff;font-size:1.5rem;font-weight:700;overflow:hidden;white-space:nowrap}
+.kp-ticker-in{display:inline-block;padding-left:100%;-webkit-animation:kp-scroll 30s linear infinite;animation:kp-scroll 30s linear infinite}
+@-webkit-keyframes kp-scroll{0%{-webkit-transform:translateX(0)}100%{-webkit-transform:translateX(-100%)}}
+@keyframes kp-scroll{0%{transform:translateX(0)}100%{transform:translateX(-100%)}}

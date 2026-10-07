@@ -1,0 +1,9 @@
+/* Photo album (#19) — core/Apps/PhotoAlbumApp.php; slideshow styles in lib-slides.css. */
+.hc-app-photo_album .hc-stage{padding:0}
+.pa-show{position:absolute;top:0;left:0;right:0;bottom:0}
+.pa-show .hcs-empty{z-index:3}
+.pa-heading{position:absolute;top:1.6rem;left:2.4rem;z-index:5;font-family:var(--hc-heading-font);font-size:2rem;font-weight:700;color:#fff;
+  padding:.4rem 1.2rem;border-radius:.6rem;background:rgba(0,0,0,.45);text-shadow:0 .1rem .3rem rgba(0,0,0,.5)}
+.pa-qr{position:absolute;right:1.6rem;bottom:1.6rem;z-index:5;background:#fff;color:#111;border-radius:.8rem;padding:.6rem;text-align:center;width:9.5rem}
+.pa-qr-box svg{display:block;width:100%;height:auto}
+.pa-qr-text{font-size:.85rem;font-weight:700;margin-top:.2rem}

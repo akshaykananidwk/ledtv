@@ -1,0 +1,14 @@
+/* Google Sheet table (#14) — core/Apps/SheetTableApp.php */
+.st-wrap{display:-webkit-flex;display:flex;-webkit-flex-direction:column;flex-direction:column;height:100%}
+.st-body{overflow:hidden}
+.st-table{width:100%;border-collapse:separate;border-spacing:0;font-size:1.3rem;background:var(--hc-card);color:var(--hc-card-fg);border-radius:.8rem;overflow:hidden}
+.st-font-s .st-table{font-size:1rem}
+.st-font-l .st-table{font-size:1.7rem}
+.st-font-xl .st-table{font-size:2.2rem}
+.st-table th{background:var(--hc-accent);color:var(--hc-accent-fg);text-align:left;font-weight:700;padding:.55em .8em;white-space:nowrap}
+.st-table td{padding:.5em .8em;border-top:.06rem solid var(--hc-border);vertical-align:top}
+.st-table tbody tr:nth-child(even) td{background:rgba(255,255,255,.035)}
+.st-table .st-num{text-align:right;white-space:nowrap}
+.st-table tr.st-today td{background:var(--hc-accent);color:var(--hc-accent-fg);font-weight:700}
+.st-footer span{margin-right:1.5rem}
+.st-error{color:#FFB74D}

@@ -1,0 +1,77 @@
+/*
+ * Data feed widgets (2.3, #21–#25): gold & silver board, market tiles / strip, cricket scorecard,
+ * currency table, travel status board. rem units + theme variables (docs/modules/display_apps.md §5).
+ * Old WebViews: -webkit- flexbox, no gap.
+ */
+.df-body{display:-webkit-flex;display:flex;-webkit-flex-direction:column;flex-direction:column}
+.df-foot{margin-top:auto;padding-top:.8rem;font-size:.95rem;color:var(--hc-muted);display:-webkit-flex;display:flex;-webkit-flex-wrap:wrap;flex-wrap:wrap;-webkit-align-items:center;align-items:center}
+.df-foot>span{margin-right:.5rem}
+.df-sep{opacity:.6}
+.df-tag{display:inline-block;padding:.1rem .6rem;border-radius:2rem;border:.08rem solid var(--hc-border);font-weight:700;text-transform:uppercase;font-size:.8rem;letter-spacing:.03em}
+.df-stale{background:#B45309;border-color:#B45309;color:#fff}
+.df-up{color:#22C55E}
+.df-down{color:#EF4444}
+.df-flat{color:var(--hc-muted)}
+
+/* Gold & silver (#21) */
+.gr-board{-webkit-flex:1;flex:1;display:-webkit-flex;display:flex;-webkit-flex-direction:column;flex-direction:column;-webkit-justify-content:center;justify-content:center}
+.gr-row{display:-webkit-flex;display:flex;-webkit-align-items:center;align-items:center;-webkit-justify-content:space-between;justify-content:space-between;margin-bottom:1rem;padding:1.2rem 2rem;border-left:.5rem solid var(--hc-accent)}
+.gr-silver{border-left-color:#B0BEC5}
+.gr-name b{display:block;font-size:2.4rem;line-height:1.1}
+.gr-name span{font-size:1.1rem;color:var(--hc-muted)}
+.gr-price{font-size:3.6rem;font-weight:700;color:var(--hc-accent);white-space:nowrap;font-variant-numeric:tabular-nums}
+.gr-silver .gr-price{color:var(--hc-card-fg)}
+.gr-price span{font-size:2rem;vertical-align:middle}
+.gr-note{font-size:1.3rem;text-align:center;color:var(--hc-fg);margin-top:.3rem}
+
+/* Market (#22) */
+.mk-grid{-webkit-flex:1;flex:1;display:-webkit-flex;display:flex;-webkit-flex-wrap:wrap;flex-wrap:wrap;-webkit-align-content:center;align-content:center;margin:0 -.6rem}
+.mk-grid .mk-item{width:-webkit-calc(33.333% - 1.2rem);width:calc(33.333% - 1.2rem);margin:.6rem;text-align:center}
+.mk-label{font-size:1.4rem;color:var(--hc-muted);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mk-price{font-size:2.8rem;font-weight:700;font-variant-numeric:tabular-nums}
+.mk-change{font-size:1.6rem;font-weight:700}
+.mk-item.df-up .mk-change{color:#22C55E}
+.mk-item.df-down .mk-change{color:#EF4444}
+.mk-item.df-up{border-bottom:.35rem solid #22C55E}
+.mk-item.df-down{border-bottom:.35rem solid #EF4444}
+.mk-strip{-webkit-flex:1;flex:1;overflow:hidden;position:relative;display:-webkit-flex;display:flex;-webkit-align-items:center;align-items:center}
+.mk-track{display:-webkit-flex;display:flex;white-space:nowrap;-webkit-animation:mk-scroll 40s linear infinite;animation:mk-scroll 40s linear infinite}
+.mk-track .mk-item{-webkit-flex:0 0 auto;flex:0 0 auto;margin-right:1.5rem;min-width:16rem;text-align:center}
+@-webkit-keyframes mk-scroll{from{-webkit-transform:translateX(0)}to{-webkit-transform:translateX(-50%)}}
+@keyframes mk-scroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+
+/* Cricket (#23) */
+.ck-meta{font-size:1.3rem;margin-bottom:1rem;color:var(--hc-muted)}
+.ck-live{background:#DC2626;color:#fff}
+.ck-board{display:-webkit-flex;display:flex;-webkit-flex-direction:column;flex-direction:column}
+.ck-team{display:-webkit-flex;display:flex;-webkit-justify-content:space-between;justify-content:space-between;-webkit-align-items:center;align-items:center;margin-bottom:1rem;padding:1.4rem 2rem}
+.ck-name{font-size:2.6rem;font-weight:700}
+.ck-name span{display:block;font-size:1.1rem;font-weight:400;color:var(--hc-muted)}
+.ck-score{font-size:3.2rem;font-weight:700;color:var(--hc-accent);font-variant-numeric:tabular-nums;text-align:right}
+.ck-score small{font-size:1.4rem;color:var(--hc-muted)}
+.ck-chase{font-size:1.6rem;font-weight:700;text-align:center;margin:.4rem 0}
+.ck-status{font-size:1.6rem;text-align:center;color:var(--hc-accent)}
+.ck-venue{font-size:1.1rem;text-align:center;margin-top:.3rem}
+
+/* Currency (#24) */
+.cx-table{-webkit-flex:1;flex:1;min-height:0;overflow:hidden}
+.cx-row{display:-webkit-flex;display:flex;-webkit-align-items:center;align-items:center;margin-bottom:.6rem;padding:.7rem 1.5rem}
+.cx-row>div{-webkit-flex:1;flex:1;text-align:right;font-size:2rem;font-weight:700;font-variant-numeric:tabular-nums}
+.cx-row>.cx-cur{-webkit-flex:1.3;flex:1.3;text-align:left}
+.cx-head{padding:.2rem 1.5rem;margin-bottom:.3rem}
+.cx-head>div{font-size:1.1rem;color:var(--hc-muted);text-transform:uppercase;letter-spacing:.04em}
+.cx-flag{font-size:2.2rem;margin-right:.7rem;vertical-align:middle}
+.cx-cur span.hc-muted{font-size:1.2rem;font-weight:400}
+
+/* Travel status (#25) */
+.tv-board{-webkit-flex:1;flex:1;min-height:0;overflow:hidden}
+.tv-row{display:-webkit-flex;display:flex;-webkit-align-items:center;align-items:center;margin-bottom:.5rem;padding:.6rem 1.2rem}
+.tv-row>div{-webkit-flex:1;flex:1;font-size:1.45rem;padding-right:.6rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tv-row>div:nth-child(2){-webkit-flex:2;flex:2}
+.tv-head{padding:.2rem 1.2rem}
+.tv-head>div{font-size:1rem;color:var(--hc-muted);text-transform:uppercase;letter-spacing:.04em}
+.tv-num{font-weight:700;color:var(--hc-accent)}
+.tv-status{font-weight:700}
+.tv-ok{color:#22C55E}
+.tv-warn{color:#F59E0B}
+.tv-bad{color:#EF4444}

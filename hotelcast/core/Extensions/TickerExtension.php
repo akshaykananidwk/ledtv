@@ -24,6 +24,7 @@ final class TickerExtension implements ContentExtension
             $content['overlay']['ticker'] = null;
             return;
         }
-        $content['overlay']['ticker'] = Tickers::forRoom($room);
+        // Data feed placeholders ({gold_24k}, {usd_inr}, {nifty} …) are resolved here (DataFeeds).
+        $content['overlay']['ticker'] = DataFeeds::applyToTicker(Tickers::forRoom($room));
     }
 }

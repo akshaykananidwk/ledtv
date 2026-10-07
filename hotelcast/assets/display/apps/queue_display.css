@@ -1,0 +1,50 @@
+/* Token display — core/Apps/QueueDisplayApp.php, assets/display/apps/queue_display.js. rem units, theme variables. */
+.qd-body{display:-webkit-flex;display:flex;overflow:hidden}
+.qd-main{-webkit-flex:1;flex:1;min-width:0;height:100%}
+.qd-counters{display:-webkit-flex;display:flex;-webkit-flex-wrap:wrap;flex-wrap:wrap;-webkit-align-content:flex-start;align-content:flex-start;height:100%}
+.qd-counter{width:48.5%;margin:0 3% 1.4rem 0;text-align:center;padding:1.2rem 1rem 1.3rem;position:relative}
+.qd-counter:nth-child(2n){margin-right:0}
+.qd-n1 .qd-counter{width:100%;margin-right:0}
+.qd-n1 .qd-token{font-size:11rem}
+.qd-n5 .qd-counter,.qd-n6 .qd-counter,.qd-n7 .qd-counter,.qd-n8 .qd-counter,.qd-n9 .qd-counter,
+.qd-n10 .qd-counter,.qd-n11 .qd-counter,.qd-n12 .qd-counter{width:31.3%;margin-right:3%;padding:.8rem}
+.qd-n5 .qd-counter:nth-child(2n),.qd-n6 .qd-counter:nth-child(2n),.qd-n7 .qd-counter:nth-child(2n),.qd-n8 .qd-counter:nth-child(2n),
+.qd-n9 .qd-counter:nth-child(2n),.qd-n10 .qd-counter:nth-child(2n),.qd-n11 .qd-counter:nth-child(2n),.qd-n12 .qd-counter:nth-child(2n){margin-right:3%}
+.qd-n5 .qd-counter:nth-child(3n),.qd-n6 .qd-counter:nth-child(3n),.qd-n7 .qd-counter:nth-child(3n),.qd-n8 .qd-counter:nth-child(3n),
+.qd-n9 .qd-counter:nth-child(3n),.qd-n10 .qd-counter:nth-child(3n),.qd-n11 .qd-counter:nth-child(3n),.qd-n12 .qd-counter:nth-child(3n){margin-right:0}
+.qd-n5 .qd-token,.qd-n6 .qd-token,.qd-n7 .qd-token,.qd-n8 .qd-token,.qd-n9 .qd-token{font-size:4.2rem}
+.qd-n10 .qd-token,.qd-n11 .qd-token,.qd-n12 .qd-token{font-size:3.2rem}
+.qd-cname{font-size:1.6rem;font-weight:700;color:var(--hc-muted);text-transform:uppercase;letter-spacing:.05em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.qd-token{font-size:6rem;font-weight:800;line-height:1.05;color:var(--hc-accent);letter-spacing:.03em;white-space:nowrap;font-variant-numeric:tabular-nums}
+.qd-counter:not(.has-token) .qd-token{color:var(--hc-muted);opacity:.5}
+.qd-csub{font-size:1.1rem;color:var(--hc-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-height:1.4rem}
+.qd-blink{-webkit-animation:qd-blink .5s step-start infinite;animation:qd-blink .5s step-start infinite;border-color:var(--hc-accent)}
+@-webkit-keyframes qd-blink{50%{background:var(--hc-accent);color:var(--hc-accent-fg)}}
+@keyframes qd-blink{50%{background:var(--hc-accent);color:var(--hc-accent-fg)}}
+.qd-blink .qd-token,.qd-blink .qd-cname,.qd-blink .qd-csub{color:inherit}
+
+.qd-side{width:30%;margin-left:1.8rem;display:-webkit-flex;display:flex;-webkit-flex-direction:column;flex-direction:column;overflow:hidden}
+.qd-panel{margin-bottom:1.2rem;padding:1rem 1.3rem}
+.qd-ptitle{font-size:1.1rem;font-weight:700;color:var(--hc-accent);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.5rem}
+.qd-row{display:-webkit-flex;display:flex;-webkit-justify-content:space-between;justify-content:space-between;-webkit-align-items:baseline;align-items:baseline;
+  font-size:1.35rem;padding:.25rem 0;border-bottom:.06rem solid var(--hc-border)}
+.qd-row:last-child{border-bottom:0}
+.qd-row span{color:var(--hc-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;margin-right:.8rem}
+.qd-row b{white-space:nowrap}
+#qdRecent .qd-row span{margin:0 0 0 .8rem}
+.qd-qr{display:-webkit-flex;display:flex;-webkit-align-items:center;align-items:center}
+.qd-qr-img{width:7.5rem;height:7.5rem;-webkit-flex:none;flex:none;background:#fff;padding:.3rem;border-radius:.4rem;margin-right:1rem}
+.qd-qr-img svg{width:100%;height:100%;display:block}
+.qd-qr-text{font-size:1.05rem;min-width:0}
+.qd-qr-text span{display:block;color:var(--hc-muted);margin-top:.3rem}
+
+/* Big banner on a new call */
+.qd-flash{position:absolute;left:4rem;right:4rem;top:50%;margin-top:-8rem;height:16rem;z-index:20;border-radius:1.4rem;
+  background:var(--hc-accent);color:var(--hc-accent-fg);display:-webkit-flex;display:flex;-webkit-align-items:center;align-items:center;
+  -webkit-justify-content:center;justify-content:center;box-shadow:0 1rem 4rem rgba(0,0,0,.5);
+  -webkit-animation:qd-pop .35s ease-out;animation:qd-pop .35s ease-out}
+.qd-flash-token{font-size:8.5rem;font-weight:800;letter-spacing:.03em}
+.qd-flash-arrow{font-size:5rem;margin:0 2.5rem;opacity:.8}
+.qd-flash-counter{font-size:5rem;font-weight:700;max-width:45%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@-webkit-keyframes qd-pop{from{-webkit-transform:scale(.85);opacity:0}to{-webkit-transform:scale(1);opacity:1}}
+@keyframes qd-pop{from{transform:scale(.85);opacity:0}to{transform:scale(1);opacity:1}}

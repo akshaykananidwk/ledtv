@@ -152,6 +152,7 @@ if ($action === 'new' || $action === 'edit' || $formTicker !== null) {
             <textarea class="form-control" id="tk_message" name="message" rows="3" maxlength="<?= Tickers::MAX_MESSAGE ?>" required lang="gu"
               placeholder="<?= e(__('e.g. Mangla Aarti at 6:00 AM | Breakfast 7–10 AM')) ?>"><?= e($t['message']) ?></textarea>
             <div class="form-text"><?= e(__('Gujarati, Hindi and English work. Several tickers on the same TV are joined with ✦.')) ?></div>
+            <div class="form-text"><?= e(__('Live values (data feeds): :list — e.g. "Gold 24K today {gold_24k} per 10 g". Unknown values show —.', ['list' => '{' . implode('} {', DataFeeds::PLACEHOLDERS) . '}'])) ?></div>
           </div>
           <div class="col-md-6">
             <label class="form-label" for="tk_name"><?= e(__('Name (for you)')) ?></label>

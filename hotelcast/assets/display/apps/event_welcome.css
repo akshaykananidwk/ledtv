@@ -1,0 +1,45 @@
+/* Wedding / event welcome (#10) — core/Apps/EventWelcomeApp.php; slideshow styles in lib-slides.css. */
+.hc-app-event_welcome .hc-stage{padding:0}
+.ew-wrap{position:absolute;top:0;left:0;right:0;bottom:0;display:-webkit-flex;display:flex;-webkit-align-items:center;align-items:center;
+  padding:3.2rem 4rem;color:var(--hc-fg)}
+.ew-photo{position:relative;width:40%;height:100%;margin-right:3rem;border-radius:12rem 12rem 1.2rem 1.2rem;overflow:hidden;
+  border:.35rem solid var(--hc-accent);box-shadow:0 0 0 .5rem rgba(0,0,0,.15),0 1rem 3rem rgba(0,0,0,.45)}
+.ew-show{position:absolute;top:0;left:0;right:0;bottom:0}
+.ew-text{-webkit-flex:1;flex:1;min-width:0;height:100%;text-align:center;display:-webkit-flex;display:flex;-webkit-flex-direction:column;flex-direction:column;
+  -webkit-justify-content:center;justify-content:center;overflow:hidden;font-size:1rem;position:relative}
+.ew-clock{position:absolute;top:0;right:0;font-size:1.3em;font-weight:700;color:var(--hc-muted)}
+.ew-title{font-family:var(--hc-heading-font);font-size:3.4em;font-weight:700;color:var(--hc-accent);line-height:1.15}
+.ew-sep{color:var(--hc-accent);font-size:1.6em;margin:.3em 0;display:-webkit-flex;display:flex;-webkit-align-items:center;align-items:center;-webkit-justify-content:center;justify-content:center}
+.ew-sep span{display:inline-block;width:6em;height:.08em;background:var(--hc-accent);margin:0 .6em;opacity:.7}
+.ew-names{font-family:var(--hc-heading-font);font-size:3em;line-height:1.15}
+.ew-family{font-size:1.4em;color:var(--hc-muted);margin-top:.4em}
+.ew-meta{font-size:1.45em;margin-top:.6em;font-weight:700}
+.ew-schedule{list-style:none;margin:1.2em auto 0;padding:0;width:100%;max-width:38em;text-align:left}
+.ew-item{display:-webkit-flex;display:flex;-webkit-align-items:center;align-items:center;padding:.45em .9em;margin-bottom:.35em;border-radius:.6em;
+  background:var(--hc-card);border:.06rem solid var(--hc-border);font-size:1.25em}
+.ew-time{width:7.2em;font-weight:700;color:var(--hc-accent);-webkit-flex-shrink:0;flex-shrink:0}
+.ew-time small,.ew-label small{display:block;font-size:.7em;font-weight:400;color:var(--hc-muted)}
+.ew-label{-webkit-flex:1;flex:1;min-width:0}
+.ew-badge{margin-left:.6em;padding:.15em .6em;border-radius:1em;font-size:.75em;font-weight:700;background:var(--hc-accent);color:var(--hc-accent-fg)}
+.ew-past{opacity:.5}
+.ew-current{background:var(--hc-accent);color:var(--hc-accent-fg);border-color:var(--hc-accent);font-size:1.45em}
+.ew-current .ew-time,.ew-current small{color:var(--hc-accent-fg)}
+.ew-current .ew-badge{background:var(--hc-accent-fg);color:var(--hc-accent)}
+.ew-next{border-color:var(--hc-accent);border-width:.12rem}
+.ew-welcome{position:relative;height:2.6em;margin-top:1em;font-family:var(--hc-heading-font);font-size:1.7em;color:var(--hc-accent)}
+.ew-welcome .hc-slide{text-align:center}
+/* Frames */
+.ew-corner{position:absolute;width:9rem;height:9rem;color:var(--hc-accent);z-index:4;pointer-events:none}
+.ew-corner svg{width:100%;height:100%;display:block}
+.ew-tl{top:.4rem;left:.4rem}
+.ew-tr{top:.4rem;right:.4rem;-webkit-transform:scaleX(-1);transform:scaleX(-1)}
+.ew-bl{bottom:.4rem;left:.4rem;-webkit-transform:scaleY(-1);transform:scaleY(-1)}
+.ew-br{bottom:.4rem;right:.4rem;-webkit-transform:scale(-1,-1);transform:scale(-1,-1)}
+.ew-frame-floral:before,.ew-frame-mandala:before,.ew-frame-simple:before,.ew-frame-lights:before{content:"";position:absolute;top:1.1rem;left:1.1rem;right:1.1rem;bottom:1.1rem;
+  border:.18rem solid var(--hc-accent);border-radius:.8rem;pointer-events:none;opacity:.8}
+.ew-frame-simple:after,.ew-frame-mandala:after{content:"";position:absolute;top:1.6rem;left:1.6rem;right:1.6rem;bottom:1.6rem;border:.08rem solid var(--hc-accent);border-radius:.6rem;pointer-events:none;opacity:.6}
+.ew-lights{position:absolute;top:0;left:0;right:0;height:2.2rem;z-index:4;pointer-events:none;
+  background-image:radial-gradient(circle at 50% 70%,#FFE082 0,#FFB300 28%,rgba(255,179,0,.35) 42%,rgba(255,179,0,0) 60%);background-size:3.2rem 2.2rem;
+  -webkit-animation:ewTwinkle 2.4s ease-in-out infinite alternate;animation:ewTwinkle 2.4s ease-in-out infinite alternate}
+@-webkit-keyframes ewTwinkle{from{opacity:.55}to{opacity:1}}
+@keyframes ewTwinkle{from{opacity:.55}to{opacity:1}}

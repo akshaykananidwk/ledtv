@@ -180,6 +180,54 @@ final class DataFeeds
         return $def !== null && (!$def['key'] || self::keyFor($p, $hotelId)[0] !== '');
     }
 
+    /**
+     * Save the "Data feeds" tab of Platform settings ($in = POST). Keys: empty = keep, feedkey_clear_<p> =
+     * remove. Returns translated errors (nothing saved for an invalid key).
+     */
+    public static function savePlatformSettings(array $in): array
+    {
+        $errors = [];
+        $str = static fn (string $k, int $max = 200): string => is_scalar($in[$k] ?? null) ? mb_substr(trim((string) $in[$k]), 0, $max) : '';
+        $cp = $str('feed_currency_provider', 30);
+        Settings::setPlatform('platform_feed_currency_provider', in_array($cp, ['open_er_api', 'frankfurter'], true) ? $cp : 'open_er_api');
+        $pm = $str('feeds_per_min', 5);
+        Settings::setPlatform('platform_feeds_per_min', (string) max(1, min(600, ctype_digit($pm) ? (int) $pm : 20)));
+        foreach (self::PROVIDERS as $p => $def) {
+            $ttl = $str('feed_ttl_' . $p, 7);
+            if ($ttl !== '') {
+                Settings::setPlatform('platform_feed_ttl_' . $p, (string) max($def['min_ttl'], min(7 * 86400, ctype_digit($ttl) ? (int) $ttl : $def['ttl'])));
+            }
+            if (!$def['key']) {
+                continue;
+            }
+            $cap = $str('feed_cap_' . $p, 7);
+            if ($cap !== '') {
+                Settings::setPlatform('platform_feed_cap_' . $p, (string) max(0, min(1000000, ctype_digit($cap) ? (int) $cap : $def['cap'])));
+            }
+            $key = $str('feedkey_' . $p, 250);
+            if (!empty($in['feedkey_clear_' . $p])) {
+                self::setPlatformKey($p, '');
+            } elseif ($key !== '') {
+                if (!self::validKey($key)) {
+                    $errors[] = __(':p: the API key looks wrong (8–200 characters, no spaces).', ['p' => $def['name']]);
+                } else {
+                    self::setPlatformKey($p, $key);
+                }
+            }
+        }
+        foreach (self::INDICES as $k => [$label, $def]) {
+            $v = strtoupper($str('feed_idx_' . $k, 30));
+            if ($v !== '' && !preg_match('/^[A-Z0-9][A-Z0-9.:\/_-]{0,24}$/', $v)) {
+                $errors[] = __(':i: invalid symbol.', ['i' => $label]);
+                continue;
+            }
+            Settings::setPlatform('platform_feed_idx_' . $k, $v !== '' ? $v : $def);
+        }
+        Settings::setPlatform('platform_feed_aviationstack_http', !empty($in['feed_aviationstack_http']) ? '1' : '0');
+        self::flush();
+        return $errors;
+    }
+
     // ------------------------------------------------------------------ params & URLs (fixed hosts)
 
     /** Validated params of a provider, or null when invalid. */

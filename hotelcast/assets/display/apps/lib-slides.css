@@ -1,5 +1,6 @@
 /* Shared photo slideshow (assets/display/apps/lib-slides.js) for photo_album, showcase, event_welcome. */
-.hcs{position:relative;overflow:hidden;background:#000}
+/* The container must be positioned (relative / absolute) and sized by the app. */
+.hcs{overflow:hidden;background:#000}
 .hcs-layer{position:absolute;top:0;left:0;right:0;bottom:0;opacity:0;-webkit-transition:opacity 1.2s ease;transition:opacity 1.2s ease;overflow:hidden}
 .hcs-layer.is-active{opacity:1}
 .hcs-bg{position:absolute;top:-5%;left:-5%;right:-5%;bottom:-5%;background-size:cover;background-position:center;display:none;-webkit-filter:blur(1.2rem) brightness(.55);filter:blur(1.2rem) brightness(.55)}

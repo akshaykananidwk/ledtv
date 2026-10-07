@@ -17,6 +17,7 @@ if ($saas) {
 }
 $tabs['notify'] = [__('Notifications'), 'bi-bell'];
 $tabs['features'] = [__('Features'), 'bi-toggles'];
+$tabs['data_feeds'] = [__('Data feeds'), 'bi-broadcast'];
 $tabs['admins'] = [__('Platform admins'), 'bi-shield-lock'];
 $tabs['license'] = [__('License'), 'bi-key'];
 $tab = isset($tabs[$_GET['tab'] ?? $_POST['tab'] ?? '']) ? (string) ($_GET['tab'] ?? $_POST['tab']) : 'branding';
@@ -131,6 +132,11 @@ if (is_post()) {
             }
             break;
 
+        case 'data_feeds':
+            // API keys (encrypted), budgets and symbols of the data feeds (core/DataFeeds.php).
+            $errors = DataFeeds::savePlatformSettings($_POST);
+            break;
+
         case 'toggle_admin':
             $uid = req_int('user_id', $_POST);
             $u = DB::one("SELECT * FROM users WHERE id = :id AND role = 'platform_admin'", ['id' => $uid]);
@@ -229,6 +235,9 @@ require __DIR__ . '/partials/header.php';
   </div>
   <div class="col-12"><button class="btn btn-primary"><i class="bi bi-check-lg"></i> <?= e(__('Save settings')) ?></button></div>
 </div></form>
+
+<?php elseif ($tab === 'data_feeds'): ?>
+<?php require __DIR__ . '/partials/data_feeds_platform.php'; ?>
 
 <?php elseif ($tab === 'admins'): $admins = DB::all("SELECT u.*, h.name AS hotel_name FROM users u LEFT JOIN hotels h ON h.id = u.hotel_id WHERE u.role = 'platform_admin' ORDER BY u.username"); ?>
 <div class="row g-3" style="max-width:1000px">

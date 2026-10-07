@@ -1,0 +1,48 @@
+/* Departures board (#7) — core/Apps/DeparturesApp.php. Split-flap look: dark tiles with a hinge line. */
+.hc-app-departures .hc-header{margin-bottom:1rem}
+.df-clock{font-family:"Courier New",monospace;font-size:2.2rem;letter-spacing:.05em}
+.df-board{height:100%;display:-webkit-flex;display:flex;-webkit-flex-direction:column;flex-direction:column}
+.df-head,.df-row{display:-webkit-flex;display:flex;-webkit-align-items:center;align-items:center}
+.df-head{font-size:1rem;text-transform:uppercase;letter-spacing:.08em;color:var(--hc-accent);padding:0 .8rem .5rem;
+  border-bottom:.12rem solid var(--hc-border)}
+.df-pages{-webkit-flex:1;flex:1;min-height:0;margin-top:.4rem}
+.df-page{display:-webkit-flex;display:flex;-webkit-flex-direction:column;flex-direction:column}
+.df-row{-webkit-flex:none;flex:none;height:12.5%;padding:0 .8rem;border-bottom:.06rem solid var(--hc-border)}
+.df-row:nth-child(even){background:rgba(255,255,255,.03)}
+.df-c{min-width:0;padding-right:1rem;overflow:hidden;white-space:nowrap}
+.df-c small{display:block;font-size:.8rem;color:var(--hc-muted);overflow:hidden;text-overflow:ellipsis;margin-top:.1rem}
+.df-c-time{width:13%}
+.df-c-no{width:13%}
+.df-c-dest{-webkit-flex:1;flex:1}
+.df-c-plat{width:11%;text-align:center}
+.df-c-status{width:22%;padding-right:0}
+.df-flap{position:relative;display:inline-block;max-width:100%;overflow:hidden;text-overflow:ellipsis;vertical-align:middle;
+  background:#141414;background:linear-gradient(#262626 0%,#1A1A1A 49%,#0C0C0C 51%,#1C1C1C 100%);color:#FFD54F;
+  padding:.15rem .5rem;border-radius:.25rem;font-size:1.55rem;font-weight:700;line-height:1.3;
+  box-shadow:0 .1rem .2rem rgba(0,0,0,.6) inset,0 .06rem 0 rgba(255,255,255,.08)}
+.df-flap:after{content:"";position:absolute;left:0;right:0;top:50%;height:.08rem;background:rgba(0,0,0,.85)}
+.df-mono{font-family:"Courier New",Courier,monospace;letter-spacing:.06em}
+.df-c-dest .df-flap{color:#FFFFFF}
+.df-kind{display:inline-block;font-size:.75rem;font-weight:700;margin-right:.5rem;padding:.1rem .4rem;border:.08rem solid var(--hc-border);border-radius:.3rem;
+  color:var(--hc-muted);vertical-align:middle}
+.df-status{display:inline-block;font-size:1.35rem;font-weight:700;padding:.15rem .7rem;border-radius:.3rem;background:#1B5E20;color:#fff;
+  max-width:100%;overflow:hidden;text-overflow:ellipsis}
+.df-st-delayed .df-status{background:#F9A825;color:#111}
+.df-st-boarding .df-status{background:#2E7D32;-webkit-animation:df-blink 1s steps(1) infinite;animation:df-blink 1s steps(1) infinite}
+.df-st-departed .df-status,.df-st-arrived .df-status{background:#455A64}
+.df-st-departed,.df-st-arrived{opacity:.6}
+.df-st-cancelled .df-status{background:#C62828}
+.df-st-cancelled .df-c-dest .df-flap,.df-st-cancelled .df-c-time .df-flap{text-decoration:line-through;color:#EF9A9A}
+.df-remark{color:#FFD54F !important}
+@-webkit-keyframes df-blink{50%{opacity:.15}}
+@keyframes df-blink{50%{opacity:.15}}
+/* Status changed since the last refresh: flip the tiles once. */
+.df-changed .df-flap,.df-changed .df-status{-webkit-animation:df-flip .6s ease-in-out 2;animation:df-flip .6s ease-in-out 2}
+.df-st-boarding.df-changed .df-status{-webkit-animation:df-flip .6s ease-in-out 2,df-blink 1s steps(1) 1.2s infinite;animation:df-flip .6s ease-in-out 2,df-blink 1s steps(1) 1.2s infinite}
+@-webkit-keyframes df-flip{0%{-webkit-transform:rotateX(0)}50%{-webkit-transform:rotateX(90deg)}100%{-webkit-transform:rotateX(0)}}
+@keyframes df-flip{0%{transform:rotateX(0)}50%{transform:rotateX(90deg)}100%{transform:rotateX(0)}}
+.df-footer{-webkit-justify-content:center;justify-content:center;font-size:1.1rem}
+/* More than 9 rows per page: smaller tiles, no second lines. */
+.df-dense .df-flap{font-size:1.05rem;padding:.05rem .4rem}
+.df-dense .df-status{font-size:.95rem;padding:.05rem .5rem}
+.df-dense .df-c small{display:none}

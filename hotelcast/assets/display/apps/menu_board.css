@@ -1,0 +1,73 @@
+/* Menu board — core/Apps/MenuBoardApp.php, assets/display/apps/menu_board.js. rem units, theme variables. */
+.mb-body{display:-webkit-flex;display:flex;overflow:hidden}
+.mb-list{-webkit-flex:1;flex:1;min-width:0;position:relative;height:100%}
+.mb-pages{position:relative;height:100%;width:100%}
+.mb-page{display:-webkit-flex;display:flex}
+.mb-col{-webkit-flex:1;flex:1;min-width:0;height:100%;overflow:hidden;margin-right:2.2rem}
+.mb-col:last-child{margin-right:0}
+
+/* Category heading */
+.mb-cat{font-family:var(--hc-heading-font);font-size:1.7rem;font-weight:700;color:var(--hc-accent);padding:.6rem 0 .3rem;
+  border-bottom:.12rem solid var(--hc-border);margin-bottom:.5rem;text-transform:uppercase;letter-spacing:.04em}
+.mb-cat.mb-cont{opacity:.75;font-size:1.3rem}
+
+/* Dish rows (classic list) */
+.mb-item{display:-webkit-flex;display:flex;-webkit-align-items:center;align-items:center;padding:.45rem 0}
+.mb-thumb{width:4.2rem;height:4.2rem;border-radius:.5rem;margin-right:1rem;-o-object-fit:cover;object-fit:cover;-webkit-flex:none;flex:none}
+.mb-main{-webkit-flex:1;flex:1;min-width:0}
+.mb-line{display:-webkit-flex;display:flex;-webkit-align-items:baseline;align-items:baseline}
+.mb-name{font-size:1.45rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.mb-dots{-webkit-flex:1;flex:1;border-bottom:.15rem dotted var(--hc-muted);margin:0 .6rem;opacity:.5;min-width:1.5rem;position:relative;top:-.3rem}
+.mb-price{font-size:1.45rem;font-weight:700;color:var(--hc-accent);white-space:nowrap}
+.mb-old{font-size:1.05rem;color:var(--hc-muted);margin-right:.5rem;white-space:nowrap}
+.mb-desc{font-size:1rem;color:var(--hc-muted);margin:.1rem 0 0 1.75rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mb-badge{display:inline-block;margin-left:.6rem;padding:.1rem .55rem;border-radius:1rem;font-size:.75rem;font-weight:700;
+  background:var(--hc-accent);color:var(--hc-accent-fg);text-transform:uppercase;white-space:nowrap;position:relative;top:-.15rem}
+.mb-item.is-special .mb-name{color:var(--hc-accent)}
+.mb-sold{display:inline-block;font-size:.85rem;font-weight:700;color:#fff;background:#C62828;border-radius:.3rem;padding:.05rem .5rem;
+  margin:.15rem 0 0 1.75rem;text-transform:uppercase;letter-spacing:.05em}
+.is-sold .mb-name,.is-sold .mb-price,.is-sold .mb-card-name{text-decoration:line-through;opacity:.55}
+.is-sold .mb-thumb,.is-sold.mb-card .mb-card-img{opacity:.4;-webkit-filter:grayscale(1);filter:grayscale(1)}
+.mb-cols-1 .mb-name,.mb-cols-1 .mb-price{font-size:1.8rem}
+
+/* Indian food symbols: square outline + green dot (veg), red triangle (non-veg), amber dot (egg) */
+.mb-food{display:inline-block;-webkit-flex:none;flex:none;width:1.05rem;height:1.05rem;border:.13rem solid #1B8E3E;border-radius:.12rem;
+  background:#fff;position:relative;margin-right:.7rem;vertical-align:middle;top:-.05rem}
+.mb-food:after{content:"";position:absolute;left:50%;top:50%;width:.5rem;height:.5rem;margin:-.25rem 0 0 -.25rem;border-radius:50%;background:#1B8E3E}
+.mb-food.mb-nonveg{border-color:#C62828}
+.mb-food.mb-nonveg:after{width:0;height:0;border-radius:0;background:none;margin:-.27rem 0 0 -.3rem;
+  border-left:.3rem solid transparent;border-right:.3rem solid transparent;border-bottom:.5rem solid #C62828}
+.mb-food.mb-egg{border-color:#E6A100}
+.mb-food.mb-egg:after{background:#E6A100}
+
+/* Photo cards */
+.mb-grid .mb-col{display:-webkit-flex;display:flex;-webkit-flex-wrap:wrap;flex-wrap:wrap;-webkit-align-content:flex-start;align-content:flex-start;margin-right:0}
+.mb-card{width:23.5%;margin:0 2% 1.4rem 0;padding:0;overflow:hidden;display:-webkit-flex;display:flex;-webkit-flex-direction:column;flex-direction:column}
+.mb-card:nth-child(4n){margin-right:0}
+.mb-cols-2 .mb-card{width:32%}
+.mb-cols-2 .mb-card:nth-child(4n){margin-right:2%}
+.mb-cols-2 .mb-card:nth-child(3n){margin-right:0}
+.mb-card-img{height:10rem;background-size:cover;background-position:center;background-color:rgba(0,0,0,.25)}
+.mb-noimg{display:-webkit-flex;display:flex;-webkit-align-items:center;align-items:center;-webkit-justify-content:center;justify-content:center}
+.mb-noimg .mb-food{-webkit-transform:scale(2.4);transform:scale(2.4);margin:0}
+.mb-card-body{padding:.8rem 1rem 1rem}
+.mb-card-cat{font-size:.8rem;color:var(--hc-muted);text-transform:uppercase;letter-spacing:.05em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mb-card-name{font-size:1.35rem;font-weight:700;margin:.2rem 0 .4rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mb-card-foot{display:-webkit-flex;display:flex;-webkit-align-items:center;align-items:center;-webkit-justify-content:flex-end;justify-content:flex-end}
+.mb-card-foot .mb-sold{margin:0 auto 0 0}
+.mb-card-foot .mb-old{margin-right:auto}
+.mb-card .mb-price{font-size:1.5rem}
+
+/* Today's special hero + list */
+.mb-hero{width:38%;margin-right:2.2rem;padding:0;overflow:hidden;position:relative;-webkit-flex:none;flex:none}
+.mb-hero-slide{display:-webkit-flex;display:flex;-webkit-flex-direction:column;flex-direction:column}
+.mb-hero-img{-webkit-flex:1;flex:1;min-height:0;background-size:cover;background-position:center}
+img.mb-hero-img{width:100%;max-height:60%;-o-object-fit:cover;object-fit:cover}
+.mb-hero-text{padding:1.4rem 1.6rem 1.6rem}
+.mb-hero-tag{display:inline-block;font-size:.95rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;background:var(--hc-accent);
+  color:var(--hc-accent-fg);border-radius:2rem;padding:.25rem .9rem;margin:1rem 0 .5rem}
+.mb-hero-text .mb-hero-tag{margin-top:0}
+.mb-hero-name{font-family:var(--hc-heading-font);font-size:2.4rem;font-weight:700;line-height:1.15}
+.mb-hero-desc{font-size:1.15rem;color:var(--hc-muted);margin-top:.5rem}
+.mb-hero-price{font-size:2.2rem;font-weight:700;color:var(--hc-accent);margin-top:.7rem}
+.mb-hero > .mb-hero-tag,.mb-hero > .mb-hero-name,.mb-hero > .mb-hero-desc,.mb-hero > .mb-hero-price{margin-left:1.6rem;margin-right:1.6rem}
