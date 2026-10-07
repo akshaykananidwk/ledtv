@@ -46,7 +46,12 @@ if (is_post()) {
 
     if ($op === 'save') {
         [$data, $formErrors] = ContentManager::validate($in, 'app', false);
-        if ($formErrors) {
+        if ($formErrors && !DisplayApps::find((string) $data['settings']['app'])) {
+            // Unknown app: back to the gallery with the message.
+            http_response_code(422);
+            flash('danger', implode("\n", $formErrors));
+            $formErrors = [];
+        } elseif ($formErrors) {
             http_response_code(422);
             $formItem = [
                 'id' => $existing ? (int) $existing['id'] : 0, 'title' => $data['title'], 'duration' => $data['duration'],
