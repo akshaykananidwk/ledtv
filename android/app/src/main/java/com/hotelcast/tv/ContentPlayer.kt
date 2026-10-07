@@ -20,6 +20,7 @@ import android.view.ViewGroup
 import android.webkit.WebChromeClient
 import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
+import android.webkit.WebResourceResponse
 import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
@@ -62,6 +63,8 @@ class ContentPlayer(
     private val stage: FrameLayout,
     private val cache: ContentCache,
     private val listener: Listener,
+    /** True for the per-zone players of a split-screen layout (see [LayoutPlayer]): no nested layouts. */
+    private val zoneMode: Boolean = false,
 ) {
     interface Listener {
         fun onItemStarted(item: ContentItem)
@@ -81,6 +84,17 @@ class ContentPlayer(
     private var consecutiveFailures = 0
     private var transition = "fade"
     private var loopPlaylist = true
+    private var webRetries = 0
+    private var webLoadFailed = false
+
+    /** Layout zones without sound: video volume 0, YouTube mute=1, web pages may not autoplay media. */
+    var forceMute: Boolean = false
+
+    /**
+     * Called when an ExoPlayer fails for lack of a hardware decoder ([DecoderPlanner.isDecoderError]).
+     * Return true when handled (the layout drops video from this zone); false = normal error handling.
+     */
+    var decoderErrorHandler: ((ContentItem) -> Boolean)? = null
 
     /**
      * How video and images fill the stage. FIT on a full screen; the activity switches to the
@@ -116,6 +130,7 @@ class ContentPlayer(
     private val advanceRunnable = Runnable { advance() }
     private val retryRunnable = Runnable { retryCurrent() }
     private val refreshRunnable = Runnable { refreshCurrentWeb() }
+    private val webRetryRunnable = Runnable { retryCurrentWeb() }
     private val clockTicker = object : Runnable {
         override fun run() {
             (currentView?.getTag(TAG_CLOCK_UPDATER) as? (() -> Unit))?.invoke()
@@ -128,6 +143,7 @@ class ContentPlayer(
     /** Starts playing [newContent]. No-op if the same content is already playing (unless [force]). */
     fun setContent(newContent: Content, force: Boolean = false) {
         if (!force && content != null && content?.hash == newContent.hash && !newContent.hash.isNullOrBlank()) return
+        if (!force && keepCurrentItem(newContent)) return
         stop()
         content = newContent
         items = newContent.playableItems()
@@ -157,15 +173,48 @@ class ContentPlayer(
 
     fun release() = stop()
 
+    /**
+     * New content (hash changed, e.g. a ticker edit) that still contains the web page or layout on
+     * screen, unchanged: keep that view running instead of recreating it (no reload, no flash), adopt
+     * the new playlist, and advance after the rest of the item's time.
+     */
+    private fun keepCurrentItem(newContent: Content): Boolean {
+        val cur = currentItem ?: return false
+        if (content == null || currentView == null) return false
+        if (cur.type !in KEEP_ACROSS_SYNC) return false
+        val newItems = newContent.playableItems()
+        val newIndex = if (newItems.getOrNull(index) == cur) index else newItems.indexOfFirst { it == cur }
+        if (newIndex < 0) return false
+        content = newContent
+        items = newItems
+        index = newIndex
+        transition = newContent.playlist?.transition?.lowercase() ?: "fade"
+        loopPlaylist = newContent.playlist?.loop != false
+        consecutiveFailures = 0
+        handler.removeCallbacks(advanceRunnable)
+        if (items.size > 1) {
+            val total = itemSeconds(cur) * 1000L
+            val left = total - (System.currentTimeMillis() - itemStartedAt)
+            handler.postDelayed(advanceRunnable, left.coerceIn(1000L, total.coerceAtLeast(1000L)))
+        }
+        Log.i(TAG, "Content changed; keeping item ${cur.id} (${cur.type}) on screen")
+        return true
+    }
+
     // ------------------------------------------------------------------ playlist
 
     private fun showItem(i: Int) {
         handler.removeCallbacks(advanceRunnable)
         handler.removeCallbacks(retryRunnable)
         handler.removeCallbacks(refreshRunnable)
+        handler.removeCallbacks(webRetryRunnable)
         handler.removeCallbacks(clockTicker)
         finishCurrentItem()
         releasePlayer()
+        // Free the zones' decoders before the next item starts (the old view only fades out).
+        releaseLayout(currentView)
+        webRetries = 0
+        webLoadFailed = false
         if (items.isEmpty()) return
         index = i.coerceIn(0, items.lastIndex)
         val item = items[index]
@@ -198,8 +247,15 @@ class ContentPlayer(
             d > 0 -> handler.postDelayed(advanceRunnable, d * 1000L)
             // duration 0 in a playlist: videos advance when they end; finite-by-nature items get a default.
             item.type == ContentItem.TYPE_VIDEO -> Unit
-            else -> handler.postDelayed(advanceRunnable, DEFAULT_ITEM_SEC * 1000L)
+            else -> handler.postDelayed(advanceRunnable, itemSeconds(item) * 1000L)
         }
+    }
+
+    /** Seconds an item stays on screen in a playlist (duration, or the default for its type). */
+    private fun itemSeconds(item: ContentItem): Int = when {
+        item.durationSec > 0 -> item.durationSec
+        item.type == ContentItem.TYPE_LAYOUT -> DEFAULT_LAYOUT_SEC
+        else -> DEFAULT_ITEM_SEC
     }
 
     private fun advance() {
@@ -288,9 +344,18 @@ class ContentPlayer(
         stage.removeView(old)
     }
 
+    private fun releaseLayout(v: View?) {
+        try {
+            (v?.getTag(TAG_LAYOUT_PLAYER) as? LayoutPlayer)?.release()
+        } catch (e: Throwable) {
+            Log.w(TAG, "layout release failed", e)
+        }
+    }
+
     private fun disposeView(v: View?) {
         try {
             v?.animate()?.setListener(null)?.cancel()
+            releaseLayout(v)
             when (v) {
                 is WebView -> {
                     v.stopLoading()
@@ -323,7 +388,22 @@ class ContentPlayer(
         ContentItem.TYPE_YOUTUBE -> buildWeb(item, url = youtubeUrl(item))
         ContentItem.TYPE_ANNOUNCEMENT -> buildAnnouncement(item)
         ContentItem.TYPE_CLOCK -> buildClock(item)
+        ContentItem.TYPE_LAYOUT -> if (zoneMode) null else buildLayout(item)
         else -> null
+    }
+
+    private fun buildLayout(item: ContentItem): View? {
+        val spec = LayoutSpec.from(item.layout) ?: return null
+        val layout = LayoutPlayer(context, cache, content?.overlay, spec)
+        layout.view.setTag(TAG_LAYOUT_PLAYER, layout)
+        try {
+            layout.start()
+        } catch (e: Throwable) {
+            layout.release()
+            throw e
+        }
+        handler.post { if (currentItem === item) onItemOk() }
+        return layout.view
     }
 
     private fun buildImage(item: ContentItem): View {
@@ -384,7 +464,7 @@ class ContentPlayer(
             exo.setMediaItem(mediaItem)
         }
 
-        exo.volume = if (item.mute == true) 0f else 1f
+        exo.volume = if (item.mute == true || forceMute) 0f else 1f
         val loopVideo = !isStream && item.loop == true && (items.size == 1 || item.durationSec > 0)
         exo.repeatMode = if (loopVideo) Player.REPEAT_MODE_ONE else Player.REPEAT_MODE_OFF
         exo.addListener(object : Player.Listener {
@@ -412,6 +492,7 @@ class ContentPlayer(
             override fun onPlayerError(error: PlaybackException) {
                 if (currentItem !== item || player !== exo) return
                 Log.w(TAG, "Playback error (${item.type}) $url: ${error.errorCodeName}")
+                if (DecoderPlanner.isDecoderError(error.errorCode) && decoderErrorHandler?.invoke(item) == true) return
                 when {
                     isStream -> scheduleStreamRetry(exo, mediaItem)
                     local != null -> {
@@ -483,12 +564,17 @@ class ContentPlayer(
         web.settings.apply {
             javaScriptEnabled = true
             domStorageEnabled = true
-            mediaPlaybackRequiresUserGesture = false
+            // Display apps (token chime, menu boards) and YouTube autoplay with sound. A muted layout
+            // zone blocks page media instead (YouTube is muted through its URL and still autoplays).
+            mediaPlaybackRequiresUserGesture = forceMute && item.type != ContentItem.TYPE_YOUTUBE
             loadWithOverviewMode = true
             useWideViewPort = true
             defaultTextEncodingName = "utf-8"
             cacheMode = WebSettings.LOAD_DEFAULT
-            mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
+            // Hotel LANs often serve http: allow it inside https pages the way browsers do.
+            mixedContentMode = WebSettings.MIXED_CONTENT_COMPATIBILITY_MODE
+            // Fixed 100 %: the TV's accessibility font scale must not break fixed-size display layouts.
+            textZoom = 100
             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
                 @Suppress("DEPRECATION")
                 setRenderPriority(WebSettings.RenderPriority.HIGH)
@@ -500,22 +586,35 @@ class ContentPlayer(
             override fun shouldOverrideUrlLoading(view: WebView?, url: String?): Boolean = false
 
             override fun onPageFinished(view: WebView?, url: String?) {
-                if (currentItem === item) onItemOk()
+                if (currentItem !== item || currentView.let { it != null && it !== view }) return
+                // Ignore the black page shown after a failure; a real page resets the backoff.
+                if (webLoadFailed) return
+                webRetries = 0
+                onItemOk()
             }
 
             override fun onReceivedError(view: WebView?, request: WebResourceRequest?, error: WebResourceError?) {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && request?.isForMainFrame == true && currentItem === item) {
                     Log.w(TAG, "WebView error ${error?.errorCode} for ${request.url}")
-                    handler.removeCallbacks(refreshRunnable)
-                    handler.postDelayed(refreshRunnable, 30_000)
+                    onWebLoadFailed(view)
                 }
             }
 
             @Deprecated("Deprecated in Java")
             override fun onReceivedError(view: WebView?, errorCode: Int, description: String?, failingUrl: String?) {
                 if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M && currentItem === item) {
-                    handler.removeCallbacks(refreshRunnable)
-                    handler.postDelayed(refreshRunnable, 30_000)
+                    Log.w(TAG, "WebView error $errorCode for $failingUrl")
+                    onWebLoadFailed(view)
+                }
+            }
+
+            override fun onReceivedHttpError(view: WebView?, request: WebResourceRequest?, errorResponse: WebResourceResponse?) {
+                // Only full pages (url / display apps): a 404/502 while the server restarts is retried.
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && request?.isForMainFrame == true && currentItem === item &&
+                    item.type == ContentItem.TYPE_URL && (errorResponse?.statusCode ?: 0) >= 400
+                ) {
+                    Log.w(TAG, "WebView HTTP ${errorResponse?.statusCode} for ${request.url}")
+                    onWebLoadFailed(view)
                 }
             }
         }
@@ -534,29 +633,69 @@ class ContentPlayer(
             val base = Prefs.apiBase.ifBlank { null }
             web.loadDataWithBaseURL(base, html, "text/html", "UTF-8", null)
         } else if (url != null) {
-            web.loadUrl(url)
+            if (YouTubeUrls.isYouTube(url)) {
+                // YouTube refuses embeds without a referrer ("video player configuration error").
+                web.loadUrl(url, mapOf("Referer" to youtubeReferer()))
+            } else {
+                web.loadUrl(url)
+            }
+        }
+    }
+
+    private fun youtubeReferer(): String {
+        val base = if (Prefs.isInitialized) Prefs.apiBase else ""
+        val origin = Regex("^(https?://[^/?#]+)").find(base.trim())?.groupValues?.get(1)
+        return (origin ?: "https://www.youtube.com") + "/"
+    }
+
+    /**
+     * Main-frame load failure: hide the Android error page behind black and retry with backoff
+     * (5 s, 10 s, 20 s … max 2 min). The periodic refresh (refresh_sec > 0) is left as it is.
+     */
+    private fun onWebLoadFailed(view: WebView?) {
+        if (view == null || view !== currentView) return
+        webLoadFailed = true
+        try {
+            view.stopLoading()
+            view.loadDataWithBaseURL(null, BLACK_PAGE, "text/html", "UTF-8", null)
+        } catch (e: Exception) {
+            Log.w(TAG, "cannot blank web view", e)
+        }
+        val delay = webRetryDelayMs(webRetries++)
+        handler.removeCallbacks(webRetryRunnable)
+        handler.postDelayed(webRetryRunnable, delay)
+        Log.i(TAG, "Retrying page in ${delay / 1000}s")
+    }
+
+    private fun retryCurrentWeb() {
+        val web = currentView as? WebView ?: return
+        if (currentItem == null) return
+        webLoadFailed = false
+        try {
+            loadWeb(web)
+        } catch (e: Exception) {
+            Log.w(TAG, "web retry failed", e)
         }
     }
 
     private fun refreshCurrentWeb() {
         val web = currentView as? WebView ?: return
         val item = currentItem ?: return
+        webLoadFailed = false
         try {
             loadWeb(web)
         } catch (e: Exception) {
             Log.w(TAG, "web refresh failed", e)
         }
         val refresh = item.refreshSec ?: 0
-        if (refresh > 0) handler.postDelayed(refreshRunnable, refresh * 1000L)
+        if (refresh > 0) {
+            handler.removeCallbacks(refreshRunnable)
+            handler.postDelayed(refreshRunnable, refresh * 1000L)
+        }
     }
 
-    private fun youtubeUrl(item: ContentItem): String {
-        val base = item.embedUrl?.takeIf { it.isNotBlank() } ?: item.url!!
-        if (!base.contains("/embed/")) return base
-        val sep = if (base.contains('?')) "&" else "?"
-        val mute = if (item.mute == true) "1" else "0"
-        return if (base.contains("autoplay=")) base else "$base${sep}autoplay=1&mute=$mute&controls=0&rel=0&playsinline=1&loop=1"
-    }
+    private fun youtubeUrl(item: ContentItem): String =
+        YouTubeUrls.forItem(item.embedUrl, item.url, mute = item.mute == true || forceMute)
 
     private fun buildAnnouncement(item: ContentItem): View {
         val bg = Utils.parseColor(item.bgColor, Color.parseColor("#0D47A1"))
@@ -600,6 +739,7 @@ class ContentPlayer(
         }
         val date = text("", fg, 36f)
         val dateFmt = SimpleDateFormat("EEEE, d MMMM yyyy", Locale.getDefault())
+        if (zoneMode) return buildZoneClock(item, root, fg, date, dateFmt)
         if (item.style == "analog") {
             val clock = AnalogClockView(context).apply { color = fg }
             // Stage height, not screen height: the ticker bar may have taken part of the screen.
@@ -624,6 +764,50 @@ class ContentPlayer(
         return root
     }
 
+    /**
+     * Clock inside a layout zone: everything is sized from the zone itself (the stage size is the
+     * zone's, often still 0 here), and text sizes follow the zone whenever it is re-laid out.
+     */
+    private fun buildZoneClock(item: ContentItem, root: LinearLayout, fg: Int, date: TextView, dateFmt: SimpleDateFormat): View {
+        val pad = dp(8)
+        root.setPadding(pad, pad, pad, pad)
+        if (item.style == "analog") {
+            val clock = AnalogClockView(context).apply { color = fg }
+            root.addView(clock, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f))
+            root.addView(date, LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { topMargin = dp(4) })
+            root.setTag(TAG_CLOCK_UPDATER, { date.text = dateFmt.format(Date()) })
+            root.addOnLayoutChangeListener { _, l, t, r, b, ol, ot, or, ob ->
+                if (r - l == or - ol && b - t == ob - ot) return@addOnLayoutChangeListener
+                val px = ((b - t) * 0.07f).coerceIn(dp(10).toFloat(), dp(36).toFloat())
+                root.post { date.setTextSize(TypedValue.COMPLEX_UNIT_PX, px) }
+            }
+        } else {
+            val time = text("", fg, 48f, bold = true).apply { maxLines = 1 }
+            date.maxLines = 1
+            val pattern = content?.overlay?.clockFormat?.takeIf { it.isNotBlank() } ?: "hh:mm a"
+            val timeFmt = try { SimpleDateFormat(pattern, Locale.getDefault()) } catch (e: Exception) { SimpleDateFormat("hh:mm a", Locale.getDefault()) }
+            root.addView(time)
+            root.addView(date, LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { topMargin = dp(4) })
+            root.setTag(TAG_CLOCK_UPDATER, {
+                val now = Date()
+                time.text = timeFmt.format(now)
+                date.text = dateFmt.format(now)
+            })
+            root.addOnLayoutChangeListener { _, l, t, r, b, ol, ot, or, ob ->
+                if (r - l == or - ol && b - t == ob - ot) return@addOnLayoutChangeListener
+                val w = (r - l).toFloat()
+                val h = (b - t).toFloat()
+                val timePx = minOf(h * 0.4f, w / 5.5f).coerceAtLeast(dp(12).toFloat())
+                root.post {
+                    time.setTextSize(TypedValue.COMPLEX_UNIT_PX, timePx)
+                    date.setTextSize(TypedValue.COMPLEX_UNIT_PX, (timePx * 0.3f).coerceAtLeast(dp(9).toFloat()))
+                }
+            }
+        }
+        (root.getTag(TAG_CLOCK_UPDATER) as? (() -> Unit))?.invoke()
+        return root
+    }
+
     private fun text(value: String?, color: Int, sizeSp: Float, bold: Boolean = false) = TextView(context).apply {
         text = value
         setTextColor(color)
@@ -640,9 +824,22 @@ class ContentPlayer(
         private const val TAG = "ContentPlayer"
         private const val TRANSITION_MS = 700L
         private const val DEFAULT_ITEM_SEC = 10
+        /** A layout with duration 0 in a playlist stays this long. */
+        private const val DEFAULT_LAYOUT_SEC = 60
         private const val FAILED_RETRY_SEC = 60
         private val TAG_CLOCK_UPDATER = R.id.tag_clock_updater
         private val TAG_WEB_HTML = R.id.tag_web_html
         private val TAG_WEB_URL = R.id.tag_web_url
+        private val TAG_LAYOUT_PLAYER = R.id.tag_layout_player
+
+        /** Item types whose view survives a content change when the item itself is unchanged. */
+        private val KEEP_ACROSS_SYNC = setOf(
+            ContentItem.TYPE_URL, ContentItem.TYPE_HTML, ContentItem.TYPE_TIMETABLE,
+            ContentItem.TYPE_YOUTUBE, ContentItem.TYPE_LAYOUT,
+        )
+        private const val BLACK_PAGE = "<html><body style=\"margin:0;background:#000\"></body></html>"
+
+        /** Backoff for a display page that failed to load: 5 s, 10 s, 20 s, 40 s, 80 s, then 120 s. */
+        fun webRetryDelayMs(attempt: Int): Long = (5_000L shl attempt.coerceIn(0, 5)).coerceAtMost(120_000L)
     }
 }

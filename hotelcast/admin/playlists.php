@@ -233,6 +233,7 @@ $playlists = DB::all(
      GROUP BY p.id ORDER BY p.name',
     hid()
 );
+$layoutUse = Layouts::usageMap(); // "used in layout X" notes (2.3)
 require __DIR__ . '/partials/header.php';
 ?>
 <div class="page-head">
@@ -255,7 +256,7 @@ require __DIR__ . '/partials/header.php';
       <tbody>
       <?php foreach ($playlists as $p): $t = (int) $p['total_sec']; ?>
         <tr>
-          <td><strong><?= e($p['name']) ?></strong><?php if ($p['description']): ?><div class="small text-muted"><?= e($p['description']) ?></div><?php endif; ?></td>
+          <td><strong><?= e($p['name']) ?></strong><?php if ($p['description']): ?><div class="small text-muted"><?= e($p['description']) ?></div><?php endif; ?><?= Layouts::usageNote($layoutUse, 'p', (int) $p['id']) ?></td>
           <td><?= (int) $p['items'] ?></td>
           <td class="d-none d-sm-table-cell"><?= e(($t >= 60 ? floor($t / 60) . 'm ' : '') . ($t % 60) . 's') ?></td>
           <td class="d-none d-md-table-cell"><?= e(__(ucfirst($p['transition']))) ?></td>

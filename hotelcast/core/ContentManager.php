@@ -16,12 +16,14 @@ final class ContentManager
         'url' => 'Web URL',
         'youtube' => 'YouTube',
         'clock' => 'Clock',
+        'layout' => 'Split screen layout',
     ];
 
     public const TYPE_ICONS = [
         'image' => 'bi-image', 'video' => 'bi-film', 'stream' => 'bi-broadcast',
         'timetable' => 'bi-calendar3', 'announcement' => 'bi-megaphone', 'html' => 'bi-code-slash',
         'url' => 'bi-globe', 'youtube' => 'bi-youtube', 'clock' => 'bi-clock',
+        'layout' => 'bi-grid-1x2',
     ];
 
     /** Content item of the current hotel (404 when it belongs to another hotel). */
@@ -120,6 +122,9 @@ final class ContentManager
                 $out['style'] = ($s['style'] ?? 'digital') === 'analog' ? 'analog' : 'digital';
                 $out['bg_color'] = clean_color($s['bg_color'] ?? null, '#000000');
                 $out['text_color'] = clean_color($s['text_color'] ?? null, '#FFFFFF');
+                break;
+            case 'layout': // split screen (2.3): zones with their own resolved items, see core/Layouts.php
+                $out['layout'] = Layouts::toTv($s);
                 break;
         }
         return $out;
@@ -333,6 +338,10 @@ HTML;
                     'bg_color' => clean_color($in['bg_color'] ?? null, '#000000'),
                     'text_color' => clean_color($in['text_color'] ?? null, '#FFFFFF'),
                 ];
+                break;
+            case 'layout': // split screen (2.3): zones, sources, audio zone — validated in core/Layouts.php
+                [$data['settings'], $layoutErrors] = Layouts::validate($in);
+                array_push($errors, ...$layoutErrors);
                 break;
         }
         return [$data, $errors];

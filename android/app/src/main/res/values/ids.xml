@@ -4,4 +4,5 @@
     <item name="tag_web_html" type="id" />
     <item name="tag_web_url" type="id" />
     <item name="tag_base_margins" type="id" />
+    <item name="tag_layout_player" type="id" />
 </resources>

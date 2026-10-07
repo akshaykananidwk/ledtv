@@ -62,14 +62,14 @@ switch (true) {
         $clientHash = (string) ($_GET['hash'] ?? '');
         $wait = Settings::bool('long_poll_enabled') ? max(0, min(25, (int) ($_GET['wait'] ?? 0))) : 0;
 
-        $content = ContentResolver::forRoom($room);
+        $content = ContentResolver::forDevice($room, $device);
         $commands = DeviceManager::pendingCommands((int) $device['id']);
         $deadline = time() + $wait;
         while ($wait > 0 && !$commands && $content['hash'] === $clientHash && time() < $deadline && !connection_aborted()) {
             sleep(1);
             Settings::flush();
             $room = DeviceManager::room($device);
-            $content = ContentResolver::forRoom($room);
+            $content = ContentResolver::forDevice($room, $device);
             $commands = DeviceManager::pendingCommands((int) $device['id']);
         }
         $changed = $content['hash'] !== $clientHash;
@@ -126,7 +126,7 @@ switch (true) {
         if ((int) $parts[1] !== (int) $device['room_id']) {
             Api::error('FORBIDDEN', 'A device may only read its own room', 403);
         }
-        Api::ok(ContentResolver::forRoom(DeviceManager::room($device)));
+        Api::ok(ContentResolver::forDevice(DeviceManager::room($device), $device));
 }
 
 // ---------------------------------------------------------------- module routes

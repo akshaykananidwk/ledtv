@@ -146,7 +146,8 @@ if ($action === 'delete') {
         redirect(admin_url('content.php'));
     }
     $usage = ContentManager::usage((int) $item['id']);
-    $used = array_sum($usage) > 0 || (string) Settings::get('default_content_id') === (string) $item['id'];
+    $layoutUse = Layouts::usageMap()['c'][(int) $item['id']] ?? [];
+    $used = array_sum($usage) > 0 || $layoutUse || (string) Settings::get('default_content_id') === (string) $item['id'];
     $pageTitle = __('Delete content');
     require __DIR__ . '/partials/header.php';
     ?>
@@ -162,6 +163,7 @@ if ($action === 'delete') {
               <?php if ($usage['playlists']): ?><li><?= e(__('Part of :n playlists', ['n' => $usage['playlists']])) ?></li><?php endif; ?>
               <?php if ($usage['broadcasts']): ?><li><?= e(__('Used by :n scheduled broadcasts', ['n' => $usage['broadcasts']])) ?></li><?php endif; ?>
               <?php if ((string) Settings::get('default_content_id') === (string) $item['id']): ?><li><?= e(__('It is the hotel default content')) ?></li><?php endif; ?>
+              <?php if ($layoutUse): ?><li><?= e(__('Used in layout :t', ['t' => '"' . implode('", "', $layoutUse) . '"'])) ?> — <?= e(__('Deleting it leaves that zone empty.')) ?></li><?php endif; ?>
             </ul>
             <div class="mt-2 small"><?= e(__('Those TVs will fall back to their group or hotel default content.')) ?></div>
           </div>
@@ -200,7 +202,7 @@ if ($action === 'new' || $action === 'edit') {
         if (!isset(ContentManager::TYPES[$type])) {
             redirect(admin_url('content.php'));
         }
-        $item = ['id' => 0, 'title' => '', 'type' => $type, 'url' => '', 'body' => '', 'settings' => null, 'duration' => 10, 'is_active' => 1, 'file_path' => null, 'thumb_path' => null, 'file_size' => null];
+        $item = ['id' => 0, 'title' => '', 'type' => $type, 'url' => '', 'body' => '', 'settings' => null, 'duration' => $type === 'layout' ? 60 : 10, 'is_active' => 1, 'file_path' => null, 'thumb_path' => null, 'file_size' => null];
     }
     $s = ContentManager::settings($item);
     $isNew = !$item['id'];
@@ -366,6 +368,8 @@ if ($action === 'new' || $action === 'edit') {
               </div>
               <?= $color('bg_color', __('Background colour'), clean_color($s['bg_color'] ?? null, '#000000')) ?>
               <?= $color('text_color', __('Text colour'), clean_color($s['text_color'] ?? null, '#FFFFFF')) ?>
+            <?php elseif ($type === 'layout'): ?>
+              <?php require __DIR__ . '/partials/layout_editor.php'; // split screen editor (2.3) ?>
             <?php endif; ?>
           </div></div>
         </div>
@@ -438,6 +442,7 @@ foreach (DB::all('SELECT type, COUNT(*) AS n FROM content_items WHERE hotel_id =
     $counts[$c['type']] = (int) $c['n'];
 }
 $total = array_sum($counts);
+$layoutUse = Layouts::usageMap(); // "used in layout X" notes (2.3)
 require __DIR__ . '/partials/header.php';
 ?>
 <div class="page-head">
@@ -495,11 +500,12 @@ require __DIR__ . '/partials/header.php';
     <?php foreach ($items as $it): $thumb = ContentManager::thumbUrl($it); ?>
       <div class="card content-card<?= (int) $it['is_active'] ? '' : ' inactive' ?>">
         <a class="content-thumb" href="<?= e(admin_url('preview.php', ['content_id' => $it['id']])) ?>" target="_blank" rel="noopener" title="<?= e(__('Preview')) ?>">
-          <?php if ($thumb): ?><img src="<?= e($thumb) ?>" alt="" loading="lazy"><?php else: ?><i class="bi <?= e(ContentManager::TYPE_ICONS[$it['type']]) ?>"></i><?php endif; ?>
+          <?php if ($it['type'] === 'layout'): ?><?= Layouts::miniSvg(ContentManager::settings($it), 'w-100 h-100') ?><?php elseif ($thumb): ?><img src="<?= e($thumb) ?>" alt="" loading="lazy"><?php else: ?><i class="bi <?= e(ContentManager::TYPE_ICONS[$it['type']]) ?>"></i><?php endif; ?>
           <span class="badge text-bg-dark type-badge"><i class="bi <?= e(ContentManager::TYPE_ICONS[$it['type']]) ?>"></i> <?= e(__(ContentManager::TYPES[$it['type']])) ?></span>
         </a>
         <div class="card-body p-2 d-flex flex-column">
           <div class="fw-semibold text-truncate" title="<?= e($it['title']) ?>"><?= e($it['title']) ?></div>
+          <?= Layouts::usageNote($layoutUse, 'c', (int) $it['id']) ?>
           <div class="small text-muted">
             <?= (int) $it['duration'] ? e((int) $it['duration'] . 's') : '∞' ?>
             <?php if ($it['file_size']): ?> · <?= e(human_bytes($it['file_size'])) ?><?php endif; ?>
@@ -528,7 +534,7 @@ require __DIR__ . '/partials/header.php';
       <?php foreach ($items as $it): $thumb = ContentManager::thumbUrl($it); ?>
         <tr class="<?= (int) $it['is_active'] ? '' : 'text-muted' ?>">
           <td><?php if ($thumb): ?><img class="thumb-sm" src="<?= e($thumb) ?>" alt="" loading="lazy"><?php else: ?><span class="thumb-sm"><i class="bi <?= e(ContentManager::TYPE_ICONS[$it['type']]) ?>"></i></span><?php endif; ?></td>
-          <td><strong><?= e($it['title']) ?></strong><?php if (!(int) $it['is_active']): ?> <span class="badge text-bg-secondary"><?= e(__('inactive')) ?></span><?php endif; ?></td>
+          <td><strong><?= e($it['title']) ?></strong><?php if (!(int) $it['is_active']): ?> <span class="badge text-bg-secondary"><?= e(__('inactive')) ?></span><?php endif; ?><?= Layouts::usageNote($layoutUse, 'c', (int) $it['id']) ?></td>
           <td class="small"><?= e(__(ContentManager::TYPES[$it['type']])) ?></td>
           <td class="d-none d-md-table-cell"><?= (int) $it['duration'] ? e((int) $it['duration'] . 's') : '∞' ?></td>
           <td class="d-none d-md-table-cell small"><?= $it['file_size'] ? e(human_bytes($it['file_size'])) : '-' ?></td>

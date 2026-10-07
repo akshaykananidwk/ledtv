@@ -147,6 +147,14 @@ object Prefs {
         get() = sp.getString(K_HOTEL_NAME, "") ?: ""
         set(v) = sp.edit().putString(K_HOTEL_NAME, v).apply()
 
+    /**
+     * 2.3: how many video decoders split-screen layouts may use at once. Starts at
+     * [DecoderPlanner.DEFAULT_MAX_DECODERS] and only goes down, after a decoder failure on this TV.
+     */
+    var maxVideoDecoders: Int
+        get() = sp.getInt(K_MAX_DECODERS, DecoderPlanner.DEFAULT_MAX_DECODERS)
+        set(v) = sp.edit().putInt(K_MAX_DECODERS, v).apply()
+
     /** Snapshot for UPLOAD_LOGS. Secrets (token, registration key) are never included. */
     fun debugSnapshot(): Map<String, Any?> = linkedMapOf(
         "device_id" to deviceId,
@@ -173,6 +181,7 @@ object Prefs {
         "last_crash_time" to lastCrashTime,
         "handled_commands" to handledCommands.split(',').size,
         "volume_stay_applied" to volumeStayApplied,
+        "max_video_decoders" to maxVideoDecoders,
         "welcome_shown" to shownWelcomeIds.lines().filter { it.isNotBlank() },
         "reminders_dismissed" to dismissedReminderIds.lines().filter { it.isNotBlank() },
     )
@@ -191,6 +200,7 @@ object Prefs {
     const val DEFAULT_HEARTBEAT = 60
 
     private const val K_DEVICE_ID = "device_id"
+    private const val K_MAX_DECODERS = "max_video_decoders"
     private const val K_SERVER_URL = "server_url"
     private const val K_API_BASE = "api_base"
     private const val K_TOKEN = "token"

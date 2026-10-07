@@ -26,6 +26,17 @@ final class ContentResolver
         return $content;
     }
 
+    /**
+     * Content object for the TV polling with $device (row of `devices`). Same as forRoom(), except that
+     * apps older than 2.3.0 (app_version_code < Layouts::MIN_APP_CODE) get every split screen layout
+     * replaced by the items of its largest zone (they do not know type 'layout').
+     */
+    public static function forDevice(array $room, array $device): array
+    {
+        $content = self::forRoom($room);
+        return Layouts::legacyDevice($device) ? Layouts::downgradeContent($content) : $content;
+    }
+
     /** A room may only be resolved inside its own hotel's context. */
     private static function assertRoom(array $room): void
     {

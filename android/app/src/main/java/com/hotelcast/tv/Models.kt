@@ -387,6 +387,8 @@ data class ContentItem(
     @SerializedName("embed_url") val embedUrl: String? = null,
     /** V2: sponsor ad inserted by the server; reported back in `played`. */
     @SerializedName("ad_campaign_id") val adCampaignId: Long? = null,
+    /** 2.3: split-screen layout (type = "layout"); normalised by [LayoutSpec.from]. */
+    @SerializedName("layout") val layout: LayoutData? = null,
 ) {
     val durationSec: Int get() = (duration ?: 0).coerceAtLeast(0)
 
@@ -396,11 +398,20 @@ data class ContentItem(
         TYPE_TIMETABLE, TYPE_HTML -> !html.isNullOrBlank()
         TYPE_ANNOUNCEMENT -> !text.isNullOrBlank() || !subtitle.isNullOrBlank()
         TYPE_CLOCK -> true
+        TYPE_LAYOUT -> LayoutSpec.from(layout) != null
         else -> false
     }
 
     /** URLs worth caching on disk for offline playback. */
     fun cacheableUrl(): String? = if ((type == TYPE_IMAGE || type == TYPE_VIDEO) && !url.isNullOrBlank()) url else null
+
+    /** [cacheableUrl], plus the media of every zone of a layout. */
+    fun cacheableUrls(): List<String> =
+        if (type == TYPE_LAYOUT) {
+            LayoutSpec.from(layout)?.zones.orEmpty().flatMap { z -> z.items.mapNotNull { it.cacheableUrl() } }
+        } else {
+            listOfNotNull(cacheableUrl())
+        }
 
     companion object {
         const val TYPE_IMAGE = "image"
@@ -412,8 +423,33 @@ data class ContentItem(
         const val TYPE_URL = "url"
         const val TYPE_YOUTUBE = "youtube"
         const val TYPE_CLOCK = "clock"
+        const val TYPE_LAYOUT = "layout"
     }
 }
+
+/** 2.3: `item.layout` of a type "layout" item. Raw server data; see [LayoutSpec] for the normalised form. */
+data class LayoutData(
+    @SerializedName("bg_color") val bgColor: String? = null,
+    @SerializedName("zones") val zones: List<LayoutZoneData?>? = null,
+)
+
+/** One zone; position and size in percent of the stage (0..100, floats). */
+data class LayoutZoneData(
+    @SerializedName("id") val id: String? = null,
+    @SerializedName("x") val x: Double? = null,
+    @SerializedName("y") val y: Double? = null,
+    @SerializedName("w") val w: Double? = null,
+    @SerializedName("h") val h: Double? = null,
+    @SerializedName("items") val items: List<ContentItem?>? = null,
+    @JsonAdapter(LenientBooleanAdapter::class)
+    @SerializedName("loop") val loop: Boolean? = null,
+    /** "fade" (default) | "none". */
+    @SerializedName("transition") val transition: String? = null,
+    /** "fit" (default) | "fill" | "zoom". */
+    @SerializedName("scale") val scale: String? = null,
+    @JsonAdapter(LenientBooleanAdapter::class)
+    @SerializedName("mute") val mute: Boolean? = null,
+)
 
 // ---- 2.1: QR setup (POST provision/start, GET provision/status) ----
 

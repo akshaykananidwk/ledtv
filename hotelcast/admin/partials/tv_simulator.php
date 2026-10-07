@@ -62,6 +62,7 @@ body.embed .bar{display:none}body.embed .wrap{top:0}
 .ov-tick span{position:absolute;left:0;white-space:nowrap;will-change:transform}
 .empty-note{color:#64748b;font-size:2em}
 .badge-off{position:absolute;bottom:3%;right:3%;color:#334155;font-size:1.6em}
+.lay .zone{position:absolute;overflow:hidden}.lay .zone .layer{inset:0}
 .mutebtn{position:absolute;z-index:6;bottom:9%;right:2%;background:rgba(0,0,0,.6);color:#fff;border:0;border-radius:50%;width:3.4em;height:3.4em;font-size:1.4em;cursor:pointer}
 </style>
 </head>
@@ -188,14 +189,61 @@ body.embed .bar{display:none}body.embed .wrap{top:0}
         }
         break;
       }
+      case 'layout': {
+        // Split screen (2.3): each zone cycles its own items; only the audio zone (mute=false) plays sound.
+        const L = item.layout || {};
+        const pct = (v) => Math.max(0, Math.min(100, Number(v) || 0));
+        el.classList.add('lay');
+        el.style.background = /^#[0-9a-f]{6}$/i.test(String(L.bg_color || '')) ? L.bg_color : '#000';
+        const stops = [];
+        (Array.isArray(L.zones) ? L.zones : []).slice(0, 6).forEach((z) => {
+          const box = document.createElement('div');
+          box.className = 'zone';
+          box.style.cssText = 'left:' + pct(z.x) + '%;top:' + pct(z.y) + '%;width:' + pct(z.w) + '%;height:' + pct(z.h) + '%;font-size:' + (pct(z.w) / 100) + 'em';
+          box.style.setProperty('--tk-fit', { fit: 'contain', fill: 'fill', zoom: 'cover' }[z.scale] || 'contain');
+          el.appendChild(box);
+          stops.push(zonePlayer(box, z));
+        });
+        el._stop = () => stops.forEach((f) => f());
+        break;
+      }
       default:
         el.innerHTML = '<div class="ph"><i class="bi bi-question-circle"></i><div>' + esc(item.type) + '</div></div>';
     }
     return el;
   }
 
+  /** Plays one layout zone: cycles its items (durations, fade / none). Returns a stop function. */
+  function zonePlayer(box, z) {
+    const items = (Array.isArray(z.items) ? z.items : []).filter((it) => it && it.type !== 'layout');
+    let i = -1, t = null, dead = false;
+    const next = () => {
+      if (dead || !items.length) return;
+      i = (i + 1) % items.length;
+      const it = z.mute ? Object.assign({}, items[i], { mute: true }) : items[i];
+      const single = items.length === 1;
+      const layer = renderItem(it, single && z.loop !== false);
+      const old = Array.from(box.children);
+      if (z.transition === 'fade' && old.length) {
+        layer.classList.add('fade-enter');
+        box.appendChild(layer);
+        requestAnimationFrame(() => requestAnimationFrame(() => { layer.classList.remove('fade-enter'); old.forEach((o) => o.classList.add('fade-leave')); }));
+        setTimeout(() => old.forEach(cleanupLayer), 900);
+      } else {
+        old.forEach(cleanupLayer);
+        box.appendChild(layer);
+      }
+      if (single || (z.loop === false && i === items.length - 1)) return;
+      if (it.duration > 0) t = setTimeout(next, it.duration * 1000);
+      else if (it.type === 'video') { const v = layer.querySelector('video'); if (v) v.addEventListener('ended', next, { once: true }); }
+    };
+    next();
+    return () => { dead = true; clearTimeout(t); Array.from(box.children).forEach(cleanupLayer); };
+  }
+
   function clearTimers() {
     clearTimeout(timer); timer = null;
+    stage.querySelectorAll('.layer').forEach((l) => { if (l._stop) l._stop(); });
     clockTimers.forEach(clearInterval); clockTimers = [];
   }
 
@@ -228,6 +276,7 @@ body.embed .bar{display:none}body.embed .wrap{top:0}
     }
   }
   function cleanupLayer(o) {
+    if (o._stop) o._stop();
     o.querySelectorAll('video').forEach((v) => { v.pause(); v.removeAttribute('src'); v.load(); });
     o.remove();
   }

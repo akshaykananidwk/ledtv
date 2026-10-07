@@ -117,7 +117,7 @@ class ContentCache(context: Context) {
         /** All media URLs of a content object that should be cached. */
         fun mediaUrls(content: Content?): List<String> {
             if (content == null) return emptyList()
-            val urls = content.items.orEmpty().mapNotNull { it.cacheableUrl() }.toMutableList()
+            val urls = content.items.orEmpty().flatMap { it.cacheableUrls() }.toMutableList()
             content.hotel?.logoUrl?.takeIf { it.isNotBlank() }?.let { urls.add(it) }
             content.branding?.logoUrl?.takeIf { it.isNotBlank() }?.let { urls.add(it) }
             return urls.distinct()
