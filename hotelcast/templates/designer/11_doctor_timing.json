@@ -1,0 +1,128 @@
+{
+    "id": "doctor_timing",
+    "name": "Doctor timing",
+    "category": "clinic",
+    "design": {
+        "version": "6.9.1",
+        "background": "#FFFFFF",
+        "objects": [
+            {
+                "type": "Rect",
+                "left": 0,
+                "top": 0,
+                "width": 1920,
+                "height": 260,
+                "fill": "#00796B",
+                "strokeWidth": 0
+            },
+            {
+                "type": "Circle",
+                "left": 110,
+                "top": 55,
+                "radius": 75,
+                "fill": "#FFFFFF",
+                "strokeWidth": 0
+            },
+            {
+                "type": "Textbox",
+                "left": 110,
+                "top": 52,
+                "width": 150,
+                "text": "+",
+                "fontSize": 120,
+                "fill": "#00796B",
+                "fontFamily": "\"Noto Sans\", \"Noto Sans Gujarati\", \"Hind Vadodara\", \"Noto Sans Devanagari\", \"Mukta\", \"Nirmala UI\", \"Shruti\", \"Mangal\", sans-serif",
+                "fontWeight": "bold",
+                "textAlign": "center",
+                "lineHeight": 1.16
+            },
+            {
+                "type": "Textbox",
+                "left": 330,
+                "top": 50,
+                "width": 1400,
+                "text": "Dr. A. Patel",
+                "fontSize": 96,
+                "fill": "#FFFFFF",
+                "fontFamily": "\"Noto Sans\", \"Noto Sans Gujarati\", \"Hind Vadodara\", \"Noto Sans Devanagari\", \"Mukta\", \"Nirmala UI\", \"Shruti\", \"Mangal\", sans-serif",
+                "fontWeight": "bold",
+                "textAlign": "left",
+                "lineHeight": 1.16
+            },
+            {
+                "type": "Textbox",
+                "left": 330,
+                "top": 160,
+                "width": 1400,
+                "text": "MBBS, MD (General Medicine)",
+                "fontSize": 48,
+                "fill": "#B2DFDB",
+                "fontFamily": "\"Noto Sans\", \"Noto Sans Gujarati\", \"Hind Vadodara\", \"Noto Sans Devanagari\", \"Mukta\", \"Nirmala UI\", \"Shruti\", \"Mangal\", sans-serif",
+                "fontWeight": "normal",
+                "textAlign": "left",
+                "lineHeight": 1.16
+            },
+            {
+                "type": "Textbox",
+                "left": 160,
+                "top": 330,
+                "width": 1600,
+                "text": "OPD Timings",
+                "fontSize": 80,
+                "fill": "#00796B",
+                "fontFamily": "\"Noto Sans\", \"Noto Sans Gujarati\", \"Hind Vadodara\", \"Noto Sans Devanagari\", \"Mukta\", \"Nirmala UI\", \"Shruti\", \"Mangal\", sans-serif",
+                "fontWeight": "bold",
+                "textAlign": "center",
+                "lineHeight": 1.16
+            },
+            {
+                "type": "Textbox",
+                "left": 300,
+                "top": 470,
+                "width": 640,
+                "text": "Monday – Saturday\nSunday",
+                "fontSize": 62,
+                "fill": "#263238",
+                "fontFamily": "\"Noto Sans\", \"Noto Sans Gujarati\", \"Hind Vadodara\", \"Noto Sans Devanagari\", \"Mukta\", \"Nirmala UI\", \"Shruti\", \"Mangal\", sans-serif",
+                "fontWeight": "bold",
+                "textAlign": "left",
+                "lineHeight": 1.7
+            },
+            {
+                "type": "Textbox",
+                "left": 900,
+                "top": 470,
+                "width": 760,
+                "text": "10:00 AM – 1:00 PM  ·  5:00 PM – 8:00 PM\nClosed",
+                "fontSize": 62,
+                "fill": "#263238",
+                "fontFamily": "\"Noto Sans\", \"Noto Sans Gujarati\", \"Hind Vadodara\", \"Noto Sans Devanagari\", \"Mukta\", \"Nirmala UI\", \"Shruti\", \"Mangal\", sans-serif",
+                "fontWeight": "normal",
+                "textAlign": "left",
+                "lineHeight": 1.7
+            },
+            {
+                "type": "Rect",
+                "left": 0,
+                "top": 940,
+                "width": 1920,
+                "height": 140,
+                "fill": "#E0F2F1",
+                "strokeWidth": 0
+            },
+            {
+                "type": "Textbox",
+                "left": 160,
+                "top": 980,
+                "width": 1600,
+                "text": "Emergency: 98765 43210 · Please take an appointment",
+                "fontSize": 46,
+                "fill": "#004D40",
+                "fontFamily": "\"Noto Sans\", \"Noto Sans Gujarati\", \"Hind Vadodara\", \"Noto Sans Devanagari\", \"Mukta\", \"Nirmala UI\", \"Shruti\", \"Mangal\", sans-serif",
+                "fontWeight": "normal",
+                "textAlign": "center",
+                "lineHeight": 1.16
+            }
+        ]
+    }
+}

@@ -1,0 +1,68 @@
+/*
+ * Display apps (2.3) — base styles for every TV page rendered by display/index.php.
+ * 16:9 stage sized in rem: 1rem = 1/64 of the stage width (30px on 1920×1080), set by app.js
+ * (falls back to 1.5625vw), so a page looks the same on 720p, 1080p and 4K TVs.
+ * Theme variables (--hc-*) come from DisplayApps::themeCss(); the defaults below = "Classic dark".
+ * No build step; works in old Android WebViews (Chrome 50+).
+ */
+@font-face{font-family:"Noto Sans Gujarati";font-style:normal;font-weight:400;font-display:swap;src:url(../fonts/noto-sans-gujarati-gujarati-400-normal.woff2) format("woff2");unicode-range:U+0951-0952,U+0964-0965,U+0A80-0AFF,U+200C-200D,U+20B9,U+25CC,U+A830-A839}
+@font-face{font-family:"Noto Sans Gujarati";font-style:normal;font-weight:700;font-display:swap;src:url(../fonts/noto-sans-gujarati-gujarati-700-normal.woff2) format("woff2");unicode-range:U+0951-0952,U+0964-0965,U+0A80-0AFF,U+200C-200D,U+20B9,U+25CC,U+A830-A839}
+@font-face{font-family:"Noto Sans Devanagari";font-style:normal;font-weight:400;font-display:swap;src:url(../fonts/noto-sans-devanagari-devanagari-400-normal.woff2) format("woff2");unicode-range:U+0900-097F,U+1CD0-1CF9,U+200C-200D,U+20A8,U+20B9,U+20F0,U+25CC,U+A830-A839,U+A8E0-A8FF}
+@font-face{font-family:"Noto Sans Devanagari";font-style:normal;font-weight:700;font-display:swap;src:url(../fonts/noto-sans-devanagari-devanagari-700-normal.woff2) format("woff2");unicode-range:U+0900-097F,U+1CD0-1CF9,U+200C-200D,U+20A8,U+20B9,U+20F0,U+25CC,U+A830-A839,U+A8E0-A8FF}
+@font-face{font-family:"Noto Sans";font-style:normal;font-weight:400;font-display:swap;src:url(../fonts/noto-sans-latin-400-normal.woff2) format("woff2");unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:"Noto Sans";font-style:normal;font-weight:700;font-display:swap;src:url(../fonts/noto-sans-latin-700-normal.woff2) format("woff2");unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+
+:root{
+  --hc-bg:#0B0F1A;--hc-bg2:#1B2235;--hc-fg:#F5F7FA;--hc-muted:#9AA4B2;--hc-accent:#FFB300;--hc-accent-fg:#111111;
+  --hc-card:rgba(255,255,255,.07);--hc-card-fg:#F5F7FA;--hc-border:rgba(255,255,255,.14);
+  --hc-font:"Noto Sans","Noto Sans Gujarati","Noto Sans Devanagari",Arial,sans-serif;--hc-heading-font:var(--hc-font);
+}
+*{box-sizing:border-box}
+html{font-size:1.5625vw;height:100%;overflow:hidden;-webkit-text-size-adjust:100%}
+body{margin:0;height:100%;overflow:hidden;color:#F5F7FA;color:var(--hc-fg);background:#0B0F1A;background:var(--hc-bg);
+  background-image:linear-gradient(135deg,var(--hc-bg) 0%,var(--hc-bg2) 100%);
+  font-family:var(--hc-font);line-height:1.35;-webkit-font-smoothing:antialiased;cursor:none;
+  -webkit-user-select:none;user-select:none}
+.hc-preview{cursor:default}
+img{max-width:100%}
+h1,h2,h3{margin:0;font-family:var(--hc-heading-font);font-weight:700;line-height:1.2}
+
+/* Stage: the whole screen, flex column, safe padding for overscan. */
+.hc-stage{position:absolute;top:0;left:0;right:0;bottom:0;display:-webkit-box;display:-webkit-flex;display:flex;
+  -webkit-flex-direction:column;flex-direction:column;padding:2.2rem 2.8rem;overflow:hidden}
+
+/* Building blocks for apps. */
+.hc-header{display:-webkit-flex;display:flex;-webkit-align-items:center;align-items:center;margin-bottom:1.4rem}
+.hc-header .hc-title{-webkit-flex:1;flex:1;min-width:0}
+.hc-title{font-size:2.6rem;color:var(--hc-accent)}
+.hc-subtitle{font-size:1.3rem;color:var(--hc-muted);margin-top:.3rem}
+.hc-clock{font-size:1.8rem;font-weight:700;white-space:nowrap;margin-left:1.5rem}
+.hc-date{font-size:1rem;color:var(--hc-muted);text-align:right}
+.hc-logo{height:3.2rem;width:auto;margin-right:1.2rem}
+.hc-body{-webkit-flex:1;flex:1;min-height:0;position:relative}
+.hc-card{background:var(--hc-card);color:var(--hc-card-fg);border:.08rem solid var(--hc-border);border-radius:.8rem;padding:1.2rem 1.5rem}
+.hc-badge{display:inline-block;padding:.2rem .7rem;border-radius:2rem;font-size:.85rem;font-weight:700;background:var(--hc-accent);color:var(--hc-accent-fg);
+  text-transform:uppercase;letter-spacing:.04em;vertical-align:middle}
+.hc-muted{color:var(--hc-muted)}
+.hc-accent{color:var(--hc-accent)}
+.hc-center{position:absolute;top:0;left:0;right:0;bottom:0;display:-webkit-flex;display:flex;-webkit-align-items:center;align-items:center;
+  -webkit-justify-content:center;justify-content:center;text-align:center;padding:2rem}
+.hc-message{font-size:1.6rem;color:var(--hc-muted);max-width:40rem}
+.hc-empty{font-size:1.6rem;color:var(--hc-muted);text-align:center;padding:4rem 2rem}
+.hc-footer{margin-top:1rem;font-size:1rem;color:var(--hc-muted);display:-webkit-flex;display:flex;-webkit-justify-content:space-between;justify-content:space-between}
+
+/* Rotating slides (HC.rotate): only .is-active is visible, cross-fade. */
+.hc-slides{position:relative;height:100%}
+.hc-slide{position:absolute;top:0;left:0;right:0;bottom:0;opacity:0;-webkit-transition:opacity .8s ease;transition:opacity .8s ease;visibility:hidden}
+.hc-slide.is-active{opacity:1;visibility:visible}
+
+/* Connection state (app.js): small pill, bottom right. */
+.hc-status{position:fixed;right:1rem;bottom:1rem;z-index:50;padding:.35rem .9rem;border-radius:2rem;font-size:.8rem;
+  background:rgba(0,0,0,.65);color:#fff}
+.hc-status-dot{display:inline-block;width:.6rem;height:.6rem;border-radius:50%;background:#FFB300;margin-right:.3rem;
+  -webkit-animation:hc-blink 1s infinite;animation:hc-blink 1s infinite}
+@-webkit-keyframes hc-blink{50%{opacity:.2}}
+@keyframes hc-blink{50%{opacity:.2}}
+
+/* Gujarati / Devanagari need a little more line height. */
+.hc-lang-gu body,.hc-lang-hi body{line-height:1.45}

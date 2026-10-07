@@ -1,0 +1,111 @@
+{
+    "id": "welcome_guest",
+    "name": "Welcome guest",
+    "category": "hotel",
+    "design": {
+        "version": "6.9.1",
+        "background": {
+            "type": "linear",
+            "gradientUnits": "pixels",
+            "coords": {
+                "x1": 0,
+                "y1": 0,
+                "x2": 0,
+                "y2": 1080
+            },
+            "colorStops": [
+                {
+                    "offset": 0,
+                    "color": "#0D1B3E"
+                },
+                {
+                    "offset": 1,
+                    "color": "#1A3A6E"
+                }
+            ]
+        },
+        "objects": [
+            {
+                "type": "Rect",
+                "left": 160,
+                "top": 150,
+                "width": 1600,
+                "height": 780,
+                "fill": "rgba(255,255,255,0.04)",
+                "strokeWidth": 4,
+                "stroke": "#D4AF37",
+                "rx": 24,
+                "ry": 24
+            },
+            {
+                "type": "Textbox",
+                "left": 160,
+                "top": 230,
+                "width": 1600,
+                "text": "{hotel}",
+                "fontSize": 52,
+                "fill": "#D4AF37",
+                "fontFamily": "\"Noto Sans\", \"Noto Sans Gujarati\", \"Hind Vadodara\", \"Noto Sans Devanagari\", \"Mukta\", \"Nirmala UI\", \"Shruti\", \"Mangal\", sans-serif",
+                "fontWeight": "normal",
+                "textAlign": "center",
+                "lineHeight": 1.16,
+                "charSpacing": 300
+            },
+            {
+                "type": "Textbox",
+                "left": 160,
+                "top": 330,
+                "width": 1600,
+                "text": "Welcome",
+                "fontSize": 200,
+                "fill": "#FFFFFF",
+                "fontFamily": "Georgia, \"Times New Roman\", \"Noto Sans Gujarati\", \"Hind Vadodara\", \"Noto Sans Devanagari\", \"Mukta\", \"Nirmala UI\", \"Shruti\", \"Mangal\", serif",
+                "fontWeight": "bold",
+                "textAlign": "center",
+                "lineHeight": 1.16,
+                "fontStyle": "italic",
+                "shadow": {
+                    "color": "rgba(0,0,0,0.5)",
+                    "blur": 24,
+                    "offsetX": 0,
+                    "offsetY": 6
+                }
+            },
+            {
+                "type": "Rect",
+                "left": 760,
+                "top": 590,
+                "width": 400,
+                "height": 6,
+                "fill": "#D4AF37",
+                "strokeWidth": 0
+            },
+            {
+                "type": "Textbox",
+                "left": 160,
+                "top": 640,
+                "width": 1600,
+                "text": "Mr. & Mrs. Sharma",
+                "fontSize": 90,
+                "fill": "#FFFFFF",
+                "fontFamily": "\"Noto Sans\", \"Noto Sans Gujarati\", \"Hind Vadodara\", \"Noto Sans Devanagari\", \"Mukta\", \"Nirmala UI\", \"Shruti\", \"Mangal\", sans-serif",
+                "fontWeight": "bold",
+                "textAlign": "center",
+                "lineHeight": 1.16
+            },
+            {
+                "type": "Textbox",
+                "left": 160,
+                "top": 790,
+                "width": 1600,
+                "text": "We wish you a pleasant stay · સુખદ રોકાણની શુભેચ્છા",
+                "fontSize": 48,
+                "fill": "#C5CAE9",
+                "fontFamily": "\"Noto Sans\", \"Noto Sans Gujarati\", \"Hind Vadodara\", \"Noto Sans Devanagari\", \"Mukta\", \"Nirmala UI\", \"Shruti\", \"Mangal\", sans-serif",
+                "fontWeight": "normal",
+                "textAlign": "center",
+                "lineHeight": 1.16
+            }
+        ]
+    }
+}

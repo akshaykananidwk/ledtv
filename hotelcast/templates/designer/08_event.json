@@ -1,0 +1,109 @@
+{
+    "id": "event",
+    "name": "Event",
+    "category": "event",
+    "design": {
+        "version": "6.9.1",
+        "background": {
+            "type": "linear",
+            "gradientUnits": "pixels",
+            "coords": {
+                "x1": 0,
+                "y1": 0,
+                "x2": 1920,
+                "y2": 0
+            },
+            "colorStops": [
+                {
+                    "offset": 0,
+                    "color": "#004D40"
+                },
+                {
+                    "offset": 1,
+                    "color": "#00251A"
+                }
+            ]
+        },
+        "objects": [
+            {
+                "type": "Rect",
+                "left": 0,
+                "top": 0,
+                "width": 24,
+                "height": 1080,
+                "fill": "#FFC107",
+                "strokeWidth": 0
+            },
+            {
+                "type": "Textbox",
+                "left": 140,
+                "top": 130,
+                "width": 1100,
+                "text": "{hotel} presents",
+                "fontSize": 52,
+                "fill": "#FFC107",
+                "fontFamily": "\"Noto Sans\", \"Noto Sans Gujarati\", \"Hind Vadodara\", \"Noto Sans Devanagari\", \"Mukta\", \"Nirmala UI\", \"Shruti\", \"Mangal\", sans-serif",
+                "fontWeight": "normal",
+                "textAlign": "left",
+                "lineHeight": 1.16,
+                "charSpacing": 150
+            },
+            {
+                "type": "Textbox",
+                "left": 140,
+                "top": 220,
+                "width": 1100,
+                "text": "LIVE MUSIC\nNIGHT",
+                "fontSize": 170,
+                "fill": "#FFFFFF",
+                "fontFamily": "Impact, \"Arial Black\", \"Noto Sans Gujarati\", \"Hind Vadodara\", \"Noto Sans Devanagari\", \"Mukta\", \"Nirmala UI\", \"Shruti\", \"Mangal\", sans-serif",
+                "fontWeight": "bold",
+                "textAlign": "left",
+                "lineHeight": 0.95
+            },
+            {
+                "type": "Textbox",
+                "left": 140,
+                "top": 640,
+                "width": 1000,
+                "text": "📅  Saturday, 25 October\n🕗  8:00 PM onwards\n📍  Rooftop Lounge",
+                "fontSize": 60,
+                "fill": "#E0F2F1",
+                "fontFamily": "\"Noto Sans\", \"Noto Sans Gujarati\", \"Hind Vadodara\", \"Noto Sans Devanagari\", \"Mukta\", \"Nirmala UI\", \"Shruti\", \"Mangal\", sans-serif",
+                "fontWeight": "normal",
+                "textAlign": "left",
+                "lineHeight": 1.5
+            },
+            {
+                "type": "Rect",
+                "left": 1280,
+                "top": 160,
+                "width": 520,
+                "height": 760,
+                "fill": "rgba(255,255,255,0.12)",
+                "strokeWidth": 4,
+                "stroke": "#FFFFFF",
+                "strokeDashArray": [
+                    18,
+                    12
+                ],
+                "rx": 16,
+                "ry": 16
+            },
+            {
+                "type": "Textbox",
+                "left": 1320,
+                "top": 510,
+                "width": 440,
+                "text": "Add an event photo",
+                "fontSize": 40,
+                "fill": "#FFFFFF",
+                "fontFamily": "\"Noto Sans\", \"Noto Sans Gujarati\", \"Hind Vadodara\", \"Noto Sans Devanagari\", \"Mukta\", \"Nirmala UI\", \"Shruti\", \"Mangal\", sans-serif",
+                "fontWeight": "normal",
+                "textAlign": "center",
+                "lineHeight": 1.16,
+                "opacity": 0.8
+            }
+        ]
+    }
+}

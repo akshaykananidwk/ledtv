@@ -262,6 +262,33 @@ Common fields: `id`, `type`, `title`, `duration` (seconds the item stays on scre
 | `url`          | `url` (open in WebView) |
 | `youtube`      | `url` (original), `embed_url` (open in WebView, autoplay) |
 | `clock`        | `style` (`digital` \| `analog`), `bg_color`, `text_color` |
+| `layout`       | `layout` = `{ bg_color, zones: [Zone, …] }` — split screen (2.3, app version code ≥ 10), see below |
+
+#### `layout` items (split screen, 2.3)
+
+```json
+{ "id": 12, "type": "layout", "title": "Lobby", "duration": 60,
+  "layout": { "bg_color": "#000000",
+    "zones": [
+      { "id": "z1", "x": 0, "y": 0, "w": 70, "h": 100,
+        "items": [ { "id": 5, "type": "video", "title": "Promo", "duration": 0, "url": "…", "loop": true, "mute": false } ],
+        "loop": true, "transition": "none", "scale": "zoom", "mute": false },
+      { "id": "z2", "x": 70, "y": 0, "w": 30, "h": 100,
+        "items": [ { "id": 7, "type": "image", "title": "Menu", "duration": 8, "url": "…" } ],
+        "loop": true, "transition": "fade", "scale": "fit", "mute": true } ] } }
+```
+
+- `x`, `y`, `w`, `h`: percent of the stage (the content area, i.e. inside the ticker's reserved space),
+  numbers 0–100 with at most 2 decimals (JSON may write `70` or `33.33`). 1–6 zones, inside the stage, never overlapping.
+- `items`: normal ContentItems exactly as for a playlist (never `layout`); a zone fed by one content item has
+  one item with `duration` 0 (stays), a zone fed by a playlist has the playlist's active items with their durations.
+  `items` may be empty (deleted / inactive source): show `bg_color` there.
+- `loop` (bool), `transition` (`fade` \| `none`, between the zone's items), `scale` (`fit` = letterbox,
+  `fill` = stretch, `zoom` = crop) for images / videos in the zone.
+- `mute`: at most one zone has `mute: false`; the TV must mute every zone whose `mute` is true, whatever its items say.
+- The layout item's own `duration` is how long the whole layout stays inside a playlist (0 when assigned alone).
+- Apps older than 2.3.0 (`app_version_code` < 10, or unknown) never receive `layout`: the server replaces it by
+  the items of its largest zone (see docs/modules/layouts.md).
 
 Media URLs (`image`, `video`) point to `/uploads/h<hotel_id>/media/YYYY/MM/<random>.ext` (files uploaded
 before 2.0 keep their old `/uploads/media/YYYY/MM/…` address) (or the configured CDN base

@@ -1,0 +1,107 @@
+{
+    "id": "temple_aarti",
+    "name": "Temple aarti timing",
+    "category": "temple",
+    "design": {
+        "version": "6.9.1",
+        "background": {
+            "type": "linear",
+            "gradientUnits": "pixels",
+            "coords": {
+                "x1": 0,
+                "y1": 0,
+                "x2": 0,
+                "y2": 1080
+            },
+            "colorStops": [
+                {
+                    "offset": 0,
+                    "color": "#5D1010"
+                },
+                {
+                    "offset": 1,
+                    "color": "#8E2400"
+                }
+            ]
+        },
+        "objects": [
+            {
+                "type": "Rect",
+                "left": 80,
+                "top": 80,
+                "width": 1760,
+                "height": 920,
+                "fill": "rgba(0,0,0,0)",
+                "strokeWidth": 6,
+                "stroke": "#FFB300",
+                "rx": 30,
+                "ry": 30
+            },
+            {
+                "type": "Textbox",
+                "left": 860,
+                "top": 100,
+                "width": 200,
+                "text": "ॐ",
+                "fontSize": 110,
+                "fill": "#FFB300",
+                "fontFamily": "\"Noto Sans Devanagari\", \"Noto Sans Gujarati\", \"Hind Vadodara\", \"Noto Sans Devanagari\", \"Mukta\", \"Nirmala UI\", \"Shruti\", \"Mangal\", sans-serif",
+                "fontWeight": "bold",
+                "textAlign": "center",
+                "lineHeight": 1.16
+            },
+            {
+                "type": "Textbox",
+                "left": 160,
+                "top": 220,
+                "width": 1600,
+                "text": "આરતી દર્શન સમય",
+                "fontSize": 110,
+                "fill": "#FFE082",
+                "fontFamily": "\"Noto Sans Gujarati\", \"Noto Sans Gujarati\", \"Hind Vadodara\", \"Noto Sans Devanagari\", \"Mukta\", \"Nirmala UI\", \"Shruti\", \"Mangal\", sans-serif",
+                "fontWeight": "bold",
+                "textAlign": "center",
+                "lineHeight": 1.16
+            },
+            {
+                "type": "Textbox",
+                "left": 360,
+                "top": 400,
+                "width": 640,
+                "text": "મંગળા આરતી\nશૃંગાર દર્શન\nરાજભોગ આરતી\nસંધ્યા આરતી\nશયન આરતી",
+                "fontSize": 64,
+                "fill": "#FFF8E1",
+                "fontFamily": "\"Noto Sans Gujarati\", \"Noto Sans Gujarati\", \"Hind Vadodara\", \"Noto Sans Devanagari\", \"Mukta\", \"Nirmala UI\", \"Shruti\", \"Mangal\", sans-serif",
+                "fontWeight": "normal",
+                "textAlign": "left",
+                "lineHeight": 1.45
+            },
+            {
+                "type": "Textbox",
+                "left": 1060,
+                "top": 400,
+                "width": 500,
+                "text": "6:00 AM\n8:00 AM\n11:30 AM\n7:00 PM\n9:00 PM",
+                "fontSize": 64,
+                "fill": "#FFB300",
+                "fontFamily": "\"Noto Sans\", \"Noto Sans Gujarati\", \"Hind Vadodara\", \"Noto Sans Devanagari\", \"Mukta\", \"Nirmala UI\", \"Shruti\", \"Mangal\", sans-serif",
+                "fontWeight": "bold",
+                "textAlign": "right",
+                "lineHeight": 1.45
+            },
+            {
+                "type": "Textbox",
+                "left": 160,
+                "top": 900,
+                "width": 1600,
+                "text": "જય શ્રી કૃષ્ણ · {hotel}",
+                "fontSize": 44,
+                "fill": "#FFE0B2",
+                "fontFamily": "\"Noto Sans Gujarati\", \"Noto Sans Gujarati\", \"Hind Vadodara\", \"Noto Sans Devanagari\", \"Mukta\", \"Nirmala UI\", \"Shruti\", \"Mangal\", sans-serif",
+                "fontWeight": "normal",
+                "textAlign": "center",
+                "lineHeight": 1.16
+            }
+        ]
+    }
+}

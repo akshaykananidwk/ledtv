@@ -16,6 +16,7 @@ final class ContentManager
         'url' => 'Web URL',
         'youtube' => 'YouTube',
         'clock' => 'Clock',
+        'app' => 'Display app',
         'layout' => 'Split screen layout',
     ];
 
@@ -23,6 +24,7 @@ final class ContentManager
         'image' => 'bi-image', 'video' => 'bi-film', 'stream' => 'bi-broadcast',
         'timetable' => 'bi-calendar3', 'announcement' => 'bi-megaphone', 'html' => 'bi-code-slash',
         'url' => 'bi-globe', 'youtube' => 'bi-youtube', 'clock' => 'bi-clock',
+        'app' => 'bi-grid-3x3-gap',
         'layout' => 'bi-grid-1x2',
     ];
 
@@ -125,6 +127,12 @@ final class ContentManager
                 break;
             case 'layout': // split screen (2.3): zones with their own resolved items, see core/Layouts.php
                 $out['layout'] = Layouts::toTv($s);
+                break;
+            case 'app': // display app (2.3): the TV shows the signed server page like a 'url' item, see core/DisplayApps.php
+                $out['type'] = 'url';
+                $out['url'] = DisplayApps::displayUrl($item);
+                $out['app'] = (string) ($s['app'] ?? '');
+                $out['refresh_sec'] = 0; // the page refreshes its own data (assets/display/app.js)
                 break;
         }
         return $out;
@@ -342,6 +350,10 @@ HTML;
             case 'layout': // split screen (2.3): zones, sources, audio zone — validated in core/Layouts.php
                 [$data['settings'], $layoutErrors] = Layouts::validate($in);
                 array_push($errors, ...$layoutErrors);
+                break;
+            case 'app': // display app (2.3): app, cfg[...], theme, font, accent, lang — core/DisplayApps.php
+                [$data['settings'], $appErrors] = DisplayApps::validateItem($in);
+                array_push($errors, ...$appErrors);
                 break;
         }
         return [$data, $errors];

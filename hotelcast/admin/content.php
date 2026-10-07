@@ -204,6 +204,10 @@ if ($action === 'new' || $action === 'edit') {
         }
         $item = ['id' => 0, 'title' => '', 'type' => $type, 'url' => '', 'body' => '', 'settings' => null, 'duration' => $type === 'layout' ? 60 : 10, 'is_active' => 1, 'file_path' => null, 'thumb_path' => null, 'file_size' => null];
     }
+    // Display apps (2.3) have their own form with a live preview: admin/apps.php.
+    if ($type === 'app') {
+        redirect(admin_url('apps.php', $item['id'] ? ['action' => 'edit', 'id' => $item['id']] : []));
+    }
     $s = ContentManager::settings($item);
     $isNew = !$item['id'];
     $pageTitle = ($isNew ? __('Add') : __('Edit')) . ' · ' . __(ContentManager::TYPES[$type]);
@@ -455,7 +459,7 @@ require __DIR__ . '/partials/header.php';
     <button class="btn btn-primary btn-lg dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-plus-lg"></i> <?= e(__('Add content')) ?></button>
     <ul class="dropdown-menu dropdown-menu-end">
       <?php foreach (ContentManager::TYPES as $t => $label): ?>
-        <li><a class="dropdown-item py-2" href="<?= e(admin_url('content.php', ['action' => 'new', 'type' => $t])) ?>"><i class="bi <?= e(ContentManager::TYPE_ICONS[$t]) ?> me-2"></i><?= e(__($label)) ?></a></li>
+        <li><a class="dropdown-item py-2" href="<?= e($t === 'app' ? admin_url('apps.php') : admin_url('content.php', ['action' => 'new', 'type' => $t])) ?>"><i class="bi <?= e(ContentManager::TYPE_ICONS[$t]) ?> me-2"></i><?= e(__($label)) ?></a></li>
       <?php endforeach; ?>
       <?php if (Auth::can('templates.manage') && Tenant::feature('templates') && is_file(__DIR__ . '/templates.php')): ?>
         <li><hr class="dropdown-divider"></li>

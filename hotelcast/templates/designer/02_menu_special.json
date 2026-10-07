@@ -1,0 +1,138 @@
+{
+    "id": "menu_special",
+    "name": "Menu special",
+    "category": "food",
+    "design": {
+        "version": "6.9.1",
+        "background": "#1C1A17",
+        "objects": [
+            {
+                "type": "Rect",
+                "left": 0,
+                "top": 0,
+                "width": 720,
+                "height": 1080,
+                "fill": "#C62828",
+                "strokeWidth": 0
+            },
+            {
+                "type": "Textbox",
+                "left": 60,
+                "top": 170,
+                "width": 600,
+                "text": "TODAY'S\nSPECIAL",
+                "fontSize": 120,
+                "fill": "#FFFFFF",
+                "fontFamily": "Impact, \"Arial Black\", \"Noto Sans Gujarati\", \"Hind Vadodara\", \"Noto Sans Devanagari\", \"Mukta\", \"Nirmala UI\", \"Shruti\", \"Mangal\", sans-serif",
+                "fontWeight": "bold",
+                "textAlign": "left",
+                "lineHeight": 1
+            },
+            {
+                "type": "Textbox",
+                "left": 60,
+                "top": 470,
+                "width": 600,
+                "text": "Chef recommends",
+                "fontSize": 48,
+                "fill": "#FFCDD2",
+                "fontFamily": "\"Noto Sans\", \"Noto Sans Gujarati\", \"Hind Vadodara\", \"Noto Sans Devanagari\", \"Mukta\", \"Nirmala UI\", \"Shruti\", \"Mangal\", sans-serif",
+                "fontWeight": "normal",
+                "textAlign": "left",
+                "lineHeight": 1.16,
+                "fontStyle": "italic"
+            },
+            {
+                "type": "Rect",
+                "left": 60,
+                "top": 560,
+                "width": 220,
+                "height": 8,
+                "fill": "#FFD54F",
+                "strokeWidth": 0
+            },
+            {
+                "type": "Rect",
+                "left": 80,
+                "top": 640,
+                "width": 560,
+                "height": 340,
+                "fill": "rgba(255,255,255,0.12)",
+                "strokeWidth": 4,
+                "stroke": "#FFFFFF",
+                "strokeDashArray": [
+                    18,
+                    12
+                ],
+                "rx": 16,
+                "ry": 16
+            },
+            {
+                "type": "Textbox",
+                "left": 120,
+                "top": 780,
+                "width": 480,
+                "text": "Add a food photo",
+                "fontSize": 40,
+                "fill": "#FFFFFF",
+                "fontFamily": "\"Noto Sans\", \"Noto Sans Gujarati\", \"Hind Vadodara\", \"Noto Sans Devanagari\", \"Mukta\", \"Nirmala UI\", \"Shruti\", \"Mangal\", sans-serif",
+                "fontWeight": "normal",
+                "textAlign": "center",
+                "lineHeight": 1.16,
+                "opacity": 0.8
+            },
+            {
+                "type": "Textbox",
+                "left": 820,
+                "top": 110,
+                "width": 1000,
+                "text": "Menu",
+                "fontSize": 72,
+                "fill": "#FFD54F",
+                "fontFamily": "\"Noto Sans\", \"Noto Sans Gujarati\", \"Hind Vadodara\", \"Noto Sans Devanagari\", \"Mukta\", \"Nirmala UI\", \"Shruti\", \"Mangal\", sans-serif",
+                "fontWeight": "bold",
+                "textAlign": "left",
+                "lineHeight": 1.16
+            },
+            {
+                "type": "Textbox",
+                "left": 820,
+                "top": 240,
+                "width": 700,
+                "text": "Paneer Butter Masala\nVeg Biryani\nMasala Dosa\nGujarati Thali\nGulab Jamun (2 pcs)",
+                "fontSize": 58,
+                "fill": "#FFFFFF",
+                "fontFamily": "\"Noto Sans\", \"Noto Sans Gujarati\", \"Hind Vadodara\", \"Noto Sans Devanagari\", \"Mukta\", \"Nirmala UI\", \"Shruti\", \"Mangal\", sans-serif",
+                "fontWeight": "normal",
+                "textAlign": "left",
+                "lineHeight": 1.6
+            },
+            {
+                "type": "Textbox",
+                "left": 1520,
+                "top": 240,
+                "width": 300,
+                "text": "₹ 240\n₹ 220\n₹ 150\n₹ 320\n₹ 90",
+                "fontSize": 58,
+                "fill": "#FFD54F",
+                "fontFamily": "\"Noto Sans\", \"Noto Sans Gujarati\", \"Hind Vadodara\", \"Noto Sans Devanagari\", \"Mukta\", \"Nirmala UI\", \"Shruti\", \"Mangal\", sans-serif",
+                "fontWeight": "bold",
+                "textAlign": "right",
+                "lineHeight": 1.6
+            },
+            {
+                "type": "Textbox",
+                "left": 820,
+                "top": 900,
+                "width": 1000,
+                "text": "{hotel} · Restaurant open 7 AM – 11 PM",
+                "fontSize": 40,
+                "fill": "#BDBDBD",
+                "fontFamily": "\"Noto Sans\", \"Noto Sans Gujarati\", \"Hind Vadodara\", \"Noto Sans Devanagari\", \"Mukta\", \"Nirmala UI\", \"Shruti\", \"Mangal\", sans-serif",
+                "fontWeight": "normal",
+                "textAlign": "left",
+                "lineHeight": 1.16
+            }
+        ]
+    }
+}

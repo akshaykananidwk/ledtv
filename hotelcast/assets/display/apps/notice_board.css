@@ -1,0 +1,20 @@
+/* Notice board (#3) — core/Apps/NoticeBoardApp.php */
+.nb-wrap{display:-webkit-flex;display:flex}
+.nb-notices{-webkit-flex:1;flex:1;min-width:0;position:relative;overflow:hidden}
+.nb-side{width:36%;margin-left:1.5rem;border-radius:.8rem;overflow:hidden;border:.08rem solid var(--hc-border)}
+.nb-tt{width:100%;height:100%;border:0;display:block;background:#000}
+.nb-rotate{height:100%}
+.nb-rotate .nb-card{display:-webkit-flex;display:flex;-webkit-flex-direction:column;flex-direction:column;padding:2rem 2.4rem}
+.nb-rotate .nb-title{font-size:2.6rem}
+.nb-rotate .nb-body{font-size:1.6rem}
+.nb-rotate .nb-img{max-height:22rem;max-width:40%}
+.nb-list{position:absolute;top:0;left:0;right:0;-webkit-transition:-webkit-transform 1.2s ease;transition:transform 1.2s ease}
+.nb-list .nb-card{margin-bottom:1rem}
+.nb-meta{margin-bottom:.6rem}
+.nb-date{margin-left:.8rem;color:var(--hc-muted);font-size:1rem;vertical-align:middle}
+.nb-main{display:-webkit-flex;display:flex;-webkit-flex:1;flex:1;min-height:0;-webkit-align-items:flex-start;align-items:flex-start}
+.nb-img{max-height:9rem;max-width:30%;border-radius:.5rem;margin-right:1.4rem;-o-object-fit:cover;object-fit:cover}
+.nb-text{-webkit-flex:1;flex:1;min-width:0;overflow:hidden}
+.nb-title{font-size:1.7rem;font-weight:700;line-height:1.25}
+.nb-body{font-size:1.15rem;margin-top:.5rem;opacity:.9}
+.nb-rotate .nb-main{-webkit-align-items:stretch;align-items:stretch}

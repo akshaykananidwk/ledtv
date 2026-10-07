@@ -1,0 +1,8 @@
+# Bundled web fonts (OFL, see OFL.txt) for display apps.
+<IfModule mod_mime.c>
+    AddType font/woff2 .woff2
+</IfModule>
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType font/woff2 "access plus 1 year"
+</IfModule>

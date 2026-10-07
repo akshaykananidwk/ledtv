@@ -1,0 +1,75 @@
+{
+    "id": "coming_soon",
+    "name": "Coming soon",
+    "category": "business",
+    "design": {
+        "version": "6.9.1",
+        "background": "#000000",
+        "objects": [
+            {
+                "type": "Circle",
+                "left": 440,
+                "top": 20,
+                "radius": 520,
+                "fill": "rgba(212,175,55,0.07)",
+                "strokeWidth": 0
+            },
+            {
+                "type": "Textbox",
+                "left": 160,
+                "top": 220,
+                "width": 1600,
+                "text": "{hotel}",
+                "fontSize": 50,
+                "fill": "#D4AF37",
+                "fontFamily": "\"Noto Sans\", \"Noto Sans Gujarati\", \"Hind Vadodara\", \"Noto Sans Devanagari\", \"Mukta\", \"Nirmala UI\", \"Shruti\", \"Mangal\", sans-serif",
+                "fontWeight": "normal",
+                "textAlign": "center",
+                "lineHeight": 1.16,
+                "charSpacing": 400
+            },
+            {
+                "type": "Textbox",
+                "left": 100,
+                "top": 380,
+                "width": 1720,
+                "text": "COMING SOON",
+                "fontSize": 200,
+                "fill": "#FFFFFF",
+                "fontFamily": "\"Noto Sans\", \"Noto Sans Gujarati\", \"Hind Vadodara\", \"Noto Sans Devanagari\", \"Mukta\", \"Nirmala UI\", \"Shruti\", \"Mangal\", sans-serif",
+                "fontWeight": "bold",
+                "textAlign": "center",
+                "lineHeight": 1.16,
+                "charSpacing": 150,
+                "shadow": {
+                    "color": "rgba(212,175,55,0.6)",
+                    "blur": 40,
+                    "offsetX": 0,
+                    "offsetY": 0
+                }
+            },
+            {
+                "type": "Rect",
+                "left": 810,
+                "top": 640,
+                "width": 300,
+                "height": 6,
+                "fill": "#D4AF37",
+                "strokeWidth": 0
+            },
+            {
+                "type": "Textbox",
+                "left": 160,
+                "top": 700,
+                "width": 1600,
+                "text": "Something new is on the way · Stay tuned",
+                "fontSize": 56,
+                "fill": "#BDBDBD",
+                "fontFamily": "\"Noto Sans\", \"Noto Sans Gujarati\", \"Hind Vadodara\", \"Noto Sans Devanagari\", \"Mukta\", \"Nirmala UI\", \"Shruti\", \"Mangal\", sans-serif",
+                "fontWeight": "normal",
+                "textAlign": "center",
+                "lineHeight": 1.16
+            }
+        ]
+    }
+}

@@ -74,7 +74,7 @@ final class Layouts
             $n = $i + 1;
             $id = 'z' . $n;
             if ($audioIn !== 'auto' && $audioIn !== 'none' && $audioIn !== null && $audioIn !== ''
-                && ((string) $audioIn === (string) ($z['id'] ?? '') || (is_int($audioIn) && $audioIn === $i))) {
+                && ((string) $audioIn === (string) ($z['id'] ?? $id) || (is_int($audioIn) && $audioIn === $i))) {
                 $audio = $id;
             }
             $rect = [];

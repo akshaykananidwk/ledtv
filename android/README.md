@@ -9,9 +9,15 @@ in [`../docs/API.md`](../docs/API.md).
 | | |
 |---|---|
 | Package / applicationId | `com.hotelcast.tv` |
-| Version | 2.2.0 (versionCode 7) |
+| Version | 2.3.0 (versionCode 10) |
 | Android | 5.0 (API 21) and newer, targetSdk 34 |
-| Signed release APK | `release/HotelCast-TV-2.2.0.apk` (same signing key as 1.x / 2.0 / 2.1, so OTA `UPDATE_APP` from older versions works) |
+| Signed release APK | `release/KrishnaCloud-TV-2.3.0.apk` (same signing key as 1.x / 2.x, signer SHA-256 `b0f2c899…1a156c`, so OTA `UPDATE_APP` from older versions works) |
+
+What is new in 2.3: **split-screen layouts** (up to 6 zones, each looping its own items, see
+[Split-screen layouts (2.3)](#split-screen-layouts-23)), **YouTube playlists and channels**
+(autoplay, the whole list loops), and WebView settings for server-rendered **display apps** (menu
+boards, token displays with a chime, countdowns): no reload on sync, retry with backoff instead of
+the Android error page, text zoom fixed at 100 %.
 
 What is new in 2.2: a separate **ticker bar** (bottom or top) whose text, colours, speed, font size
 and height come from the server per TV. By default the content area shrinks so the bar never cuts
@@ -71,7 +77,7 @@ If that file does not exist, it falls back to environment variables (useful on C
 Check a signature with:
 
 ```bash
-$ANDROID_HOME/build-tools/34.0.0/apksigner verify --print-certs release/HotelCast-TV-2.2.0.apk
+$ANDROID_HOME/build-tools/34.0.0/apksigner verify --print-certs release/KrishnaCloud-TV-2.3.0.apk
 ```
 
 ---
@@ -87,12 +93,12 @@ $ANDROID_HOME/build-tools/34.0.0/apksigner verify --print-certs release/HotelCas
 3. From a PC on the same network:
    ```bash
    adb connect 192.168.1.45:5555          # the TV's IP address
-   adb install -r HotelCast-TV-2.2.0.apk
+   adb install -r KrishnaCloud-TV-2.3.0.apk
    ```
 
 ### b) With a USB pen drive and a file manager
 
-1. Copy `HotelCast-TV-2.2.0.apk` to a FAT32/exFAT pen drive and plug it into the TV.
+1. Copy `KrishnaCloud-TV-2.3.0.apk` to a FAT32/exFAT pen drive and plug it into the TV.
 2. Install a file manager on the TV, such as *File Commander*, *X-plore* or *FX File Explorer*.
 3. Allow unknown sources:
    * Android 8 and newer: *Settings → Apps → Security & restrictions → Unknown sources* (or *Install
@@ -222,7 +228,7 @@ Device-owner mode enables these features:
 Setup: the TV must have **no Google or other accounts** (factory reset it if needed). Then run:
 
 ```bash
-adb install -r HotelCast-TV-2.2.0.apk
+adb install -r KrishnaCloud-TV-2.3.0.apk
 adb shell dpm set-device-owner com.hotelcast.tv/.AdminReceiver
 adb shell am start -n com.hotelcast.tv/.MainActivity
 ```
@@ -326,9 +332,10 @@ The screen works with the D-pad: large, focusable fields and buttons with a yell
 * **Streams**: HLS, RTSP, DASH or progressive, through ExoPlayer. A broken stream reconnects with
   backoff from 2 s up to 30 s; RTSP alternates between UDP and TCP.
 * **WebView items**: `timetable` and `html` (with `refresh_sec`), `url`, and `youtube` (autoplay
-  embed).
+  embed, single video, playlist or channel; see below).
 * **Announcements**: full screen or marquee.
 * **Clocks**: digital or analog.
+* **Layouts** (2.3): split screen, see [Split-screen layouts (2.3)](#split-screen-layouts-23).
 
 A failing item is skipped. If every item fails, the welcome screen shows and the player retries
 after 60 s.
@@ -410,6 +417,80 @@ Behaviour:
   screen, so a very long Gujarati / Hindi text scrolls as smoothly as a short one.
 - Logic and geometry: `TickerSpec` / `TickerLayout` (`TickerLayout.kt`, unit tested in
   `TickerLayoutTest`); drawing: `MarqueeView`; wiring: `MainActivity.applyTicker`.
+
+### Split-screen layouts (2.3)
+
+A `type: "layout"` item carries `layout: { bg_color, zones: [...] }`. Each zone has `x`, `y`, `w`,
+`h` in percent of the stage (floats 0..100), its own `items` (any normal item type, never another
+layout), `loop`, `transition` (`fade` | `none`), `scale` (`fit` | `fill` | `zoom`, default `fit`)
+and `mute`. Contract: `docs/API.md`.
+
+- **Parsing**: `LayoutData` / `LayoutZoneData` (Gson, nullable, lenient booleans) are normalised by
+  `LayoutSpec.from` (`LayoutSpec.kt`): positions and sizes clamped to 0..100 and to the stage edge,
+  zero-size zones and zones without a playable item dropped, nested layouts and unknown item types
+  dropped, at most 6 zones, unique zone ids. A layout with no usable zone is not playable.
+- **Playback**: `LayoutPlayer` puts one sub-`FrameLayout` per zone into a `ZoneLayout` that places
+  them by percent of the stage and re-lays them out whenever the stage changes size (ticker bar
+  reserving space). Each zone runs its own `ContentPlayer` (zone mode) with a synthetic playlist, so
+  images, video, streams, web pages, announcements and clocks behave as they do full screen. Zone
+  `scale` maps to `ScaleMode` for video and images. Clocks in a zone size from the zone (the analog
+  dial fills it; digital text follows the zone size).
+- **Duration**: the layout item's own `duration` (60 s when 0) is how long it stays before the
+  outer playlist moves on; the zones keep looping inside it. Analytics / play history report only
+  the layout item (its id); zones never report.
+- **Sound**: only one zone plays sound — the first zone with `mute: false` that has video, stream
+  or YouTube (otherwise the first unmuted zone with a web page). Every other zone is muted (video
+  volume 0, YouTube `mute=1`, web pages may not autoplay media).
+- **Releasing**: when the layout ends, the content changes or playback stops, every zone player is
+  released (ExoPlayers, WebViews, handlers). Zone decoders are freed before the next item starts.
+- **Unchanged content**: if a sync changes the hash but the layout item on screen is identical, the
+  layout keeps running (no restart).
+
+#### Video decoder limits
+
+Many inexpensive TVs and boxes run only one or two hardware video decoders at once. `DecoderPlanner`
+(pure Kotlin, unit tested in `LayoutSpecTest`) gives decoders to at most **2** zones by default
+(video, stream and YouTube all count): the sound zone first, then the other video zones in order.
+A zone without a decoder plays its other items only; if it has none, it shows a black placeholder
+with the item title. If an ExoPlayer in a zone still fails with a decoder error (ExoPlayer codes
+4001–4004) while another zone is decoding, the TV lowers its limit (saved as `max_video_decoders`,
+visible in uploaded logs) and that zone drops its video, without restarting the others. On a TV
+with a limit of 1, put the important video in the unmuted zone. A failing video in the only video
+zone is handled like a normal item error (skip / retry).
+
+### YouTube playlists and channels
+
+`youtube` items play `embed_url` (or `url`) in a WebView with the same settings as single videos.
+`YouTubeUrls` (unit tested in `YouTubeUrlsTest`) handles:
+
+- single videos `…/embed/ID` (adds `playlist=ID`, which YouTube needs for `loop=1` to repeat one
+  video), playlists `…/embed/videoseries?list=PL…` and channel uploads `list=UU…` (the list loops
+  as a whole);
+- watch, `youtu.be`, `/shorts/`, `/live/`, `/playlist?list=` and `/channel/UC…` links (a channel
+  becomes its uploads list `UU…`), converted to embeds.
+
+The URL always gets `autoplay=1` and `loop=1`, `rel=0`, and (when the server did not set them)
+`controls=0`, `playsinline=1`, `iv_load_policy=3`. `mute` follows the item / zone. Looping avoids
+the end screen; YouTube still decides what `rel=0` shows if a list does end. The embed is loaded
+with a `Referer` of the server's origin, since YouTube refuses embeds without one. A YouTube item
+is black when the TV's Android System WebView is too old (see Troubleshooting).
+
+### Display apps (web pages)
+
+Server-rendered display apps (menu boards, token displays with a chime, countdowns, live widgets)
+arrive as `type: "url"` items whose page polls JSON itself. The WebView:
+
+- has JavaScript and DOM storage on, and `mediaPlaybackRequiresUserGesture = false` so a chime can
+  autoplay (except in a muted layout zone);
+- allows mixed content in compatibility mode (`http` images / media inside an `https` page on a
+  hotel LAN; the page itself should be on the same scheme as the JSON it polls);
+- has a black background while loading and a fixed text zoom of 100 %, so the TV's accessibility
+  font scale does not break the layout;
+- is not recreated when a sync changes the content hash but the item (same URL) is still in the
+  playlist: the page keeps running and the playlist timing continues;
+- is reloaded only when the item has `refresh_sec > 0` (as before; `0` or missing = never);
+- on a failed main-page load (network error, or HTTP ≥ 400 for `url` items) shows black instead of
+  the Android error page and retries after 5 s, 10 s, 20 s … then every 2 min (`WebRetryPolicy`).
 
 ### Languages
 

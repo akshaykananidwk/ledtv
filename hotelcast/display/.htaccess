@@ -1,0 +1,3 @@
+# Display apps (2.3): public, signed, read-only TV pages (index.php, data.php). No listing.
+Options -Indexes
+DirectoryIndex index.php

@@ -661,7 +661,7 @@ class ContentPlayer(
         } catch (e: Exception) {
             Log.w(TAG, "cannot blank web view", e)
         }
-        val delay = webRetryDelayMs(webRetries++)
+        val delay = WebRetryPolicy.delayMs(webRetries++)
         handler.removeCallbacks(webRetryRunnable)
         handler.postDelayed(webRetryRunnable, delay)
         Log.i(TAG, "Retrying page in ${delay / 1000}s")
@@ -838,8 +838,11 @@ class ContentPlayer(
             ContentItem.TYPE_YOUTUBE, ContentItem.TYPE_LAYOUT,
         )
         private const val BLACK_PAGE = "<html><body style=\"margin:0;background:#000\"></body></html>"
-
-        /** Backoff for a display page that failed to load: 5 s, 10 s, 20 s, 40 s, 80 s, then 120 s. */
-        fun webRetryDelayMs(attempt: Int): Long = (5_000L shl attempt.coerceIn(0, 5)).coerceAtMost(120_000L)
     }
+}
+
+/** Backoff for a web page (display app) that failed to load. Pure, unit tested. */
+object WebRetryPolicy {
+    /** 5 s, 10 s, 20 s, 40 s, 80 s, then every 120 s. */
+    fun delayMs(attempt: Int): Long = (5_000L shl attempt.coerceIn(0, 5)).coerceAtMost(120_000L)
 }

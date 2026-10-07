@@ -1,0 +1,131 @@
+{
+    "id": "birthday",
+    "name": "Birthday",
+    "category": "greeting",
+    "design": {
+        "version": "6.9.1",
+        "background": {
+            "type": "linear",
+            "gradientUnits": "pixels",
+            "coords": {
+                "x1": 0,
+                "y1": 0,
+                "x2": 1920,
+                "y2": 1080
+            },
+            "colorStops": [
+                {
+                    "offset": 0,
+                    "color": "#F06292"
+                },
+                {
+                    "offset": 1,
+                    "color": "#7E57C2"
+                }
+            ]
+        },
+        "objects": [
+            {
+                "type": "Circle",
+                "left": 120,
+                "top": 120,
+                "radius": 90,
+                "fill": "#FFEB3B",
+                "strokeWidth": 0,
+                "opacity": 0.9
+            },
+            {
+                "type": "Circle",
+                "left": 1650,
+                "top": 160,
+                "radius": 110,
+                "fill": "#4FC3F7",
+                "strokeWidth": 0,
+                "opacity": 0.9
+            },
+            {
+                "type": "Circle",
+                "left": 1500,
+                "top": 760,
+                "radius": 80,
+                "fill": "#FFFFFF",
+                "strokeWidth": 0,
+                "opacity": 0.6
+            },
+            {
+                "type": "Circle",
+                "left": 260,
+                "top": 800,
+                "radius": 70,
+                "fill": "#81C784",
+                "strokeWidth": 0,
+                "opacity": 0.9
+            },
+            {
+                "type": "Textbox",
+                "left": 160,
+                "top": 200,
+                "width": 1600,
+                "text": "Happy Birthday!",
+                "fontSize": 170,
+                "fill": "#FFFFFF",
+                "fontFamily": "Georgia, \"Times New Roman\", \"Noto Sans Gujarati\", \"Hind Vadodara\", \"Noto Sans Devanagari\", \"Mukta\", \"Nirmala UI\", \"Shruti\", \"Mangal\", serif",
+                "fontWeight": "bold",
+                "textAlign": "center",
+                "lineHeight": 1.16,
+                "fontStyle": "italic",
+                "shadow": {
+                    "color": "rgba(0,0,0,0.35)",
+                    "blur": 20,
+                    "offsetX": 0,
+                    "offsetY": 8
+                }
+            },
+            {
+                "type": "Textbox",
+                "left": 160,
+                "top": 450,
+                "width": 1600,
+                "text": "Riya",
+                "fontSize": 150,
+                "fill": "#FFF59D",
+                "fontFamily": "\"Noto Sans\", \"Noto Sans Gujarati\", \"Hind Vadodara\", \"Noto Sans Devanagari\", \"Mukta\", \"Nirmala UI\", \"Shruti\", \"Mangal\", sans-serif",
+                "fontWeight": "bold",
+                "textAlign": "center",
+                "lineHeight": 1.16,
+                "shadow": {
+                    "color": "rgba(0,0,0,0.3)",
+                    "blur": 16,
+                    "offsetX": 0,
+                    "offsetY": 6
+                }
+            },
+            {
+                "type": "Textbox",
+                "left": 160,
+                "top": 700,
+                "width": 1600,
+                "text": "Wishing you a wonderful year ahead · જન્મદિવસની શુભકામનાઓ",
+                "fontSize": 52,
+                "fill": "#FFFFFF",
+                "fontFamily": "\"Noto Sans\", \"Noto Sans Gujarati\", \"Hind Vadodara\", \"Noto Sans Devanagari\", \"Mukta\", \"Nirmala UI\", \"Shruti\", \"Mangal\", sans-serif",
+                "fontWeight": "normal",
+                "textAlign": "center",
+                "lineHeight": 1.16
+            },
+            {
+                "type": "Textbox",
+                "left": 160,
+                "top": 860,
+                "width": 1600,
+                "text": "From all of us at {hotel}",
+                "fontSize": 44,
+                "fill": "#F3E5F5",
+                "fontFamily": "\"Noto Sans\", \"Noto Sans Gujarati\", \"Hind Vadodara\", \"Noto Sans Devanagari\", \"Mukta\", \"Nirmala UI\", \"Shruti\", \"Mangal\", sans-serif",
+                "fontWeight": "normal",
+                "textAlign": "center",
+                "lineHeight": 1.16
+            }
+        ]
+    }
+}

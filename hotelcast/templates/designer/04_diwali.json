@@ -1,0 +1,129 @@
+{
+    "id": "diwali",
+    "name": "Festival greeting – Diwali",
+    "category": "festival",
+    "design": {
+        "version": "6.9.1",
+        "background": {
+            "type": "linear",
+            "gradientUnits": "pixels",
+            "coords": {
+                "x1": 0,
+                "y1": 0,
+                "x2": 1920,
+                "y2": 1080
+            },
+            "colorStops": [
+                {
+                    "offset": 0,
+                    "color": "#2A0A3D"
+                },
+                {
+                    "offset": 0.5,
+                    "color": "#6A1B4D"
+                },
+                {
+                    "offset": 1,
+                    "color": "#B33F00"
+                }
+            ]
+        },
+        "objects": [
+            {
+                "type": "Circle",
+                "left": 180,
+                "top": 760,
+                "radius": 70,
+                "fill": "#FFB300",
+                "strokeWidth": 0,
+                "shadow": {
+                    "color": "rgba(255,179,0,0.9)",
+                    "blur": 60,
+                    "offsetX": 0,
+                    "offsetY": 0
+                }
+            },
+            {
+                "type": "Circle",
+                "left": 1640,
+                "top": 760,
+                "radius": 70,
+                "fill": "#FFB300",
+                "strokeWidth": 0,
+                "shadow": {
+                    "color": "rgba(255,179,0,0.9)",
+                    "blur": 60,
+                    "offsetX": 0,
+                    "offsetY": 0
+                }
+            },
+            {
+                "type": "Circle",
+                "left": 860,
+                "top": -260,
+                "radius": 420,
+                "fill": "rgba(255,215,64,0.10)",
+                "strokeWidth": 0
+            },
+            {
+                "type": "Textbox",
+                "left": 160,
+                "top": 150,
+                "width": 1600,
+                "text": "શુભ દીપાવલી",
+                "fontSize": 170,
+                "fill": "#FFD54F",
+                "fontFamily": "\"Noto Sans Gujarati\", \"Noto Sans Gujarati\", \"Hind Vadodara\", \"Noto Sans Devanagari\", \"Mukta\", \"Nirmala UI\", \"Shruti\", \"Mangal\", sans-serif",
+                "fontWeight": "bold",
+                "textAlign": "center",
+                "lineHeight": 1.16,
+                "shadow": {
+                    "color": "rgba(255,160,0,0.7)",
+                    "blur": 30,
+                    "offsetX": 0,
+                    "offsetY": 0
+                }
+            },
+            {
+                "type": "Textbox",
+                "left": 160,
+                "top": 400,
+                "width": 1600,
+                "text": "Happy Diwali",
+                "fontSize": 120,
+                "fill": "#FFFFFF",
+                "fontFamily": "Georgia, \"Times New Roman\", \"Noto Sans Gujarati\", \"Hind Vadodara\", \"Noto Sans Devanagari\", \"Mukta\", \"Nirmala UI\", \"Shruti\", \"Mangal\", serif",
+                "fontWeight": "bold",
+                "textAlign": "center",
+                "lineHeight": 1.16,
+                "fontStyle": "italic"
+            },
+            {
+                "type": "Textbox",
+                "left": 260,
+                "top": 580,
+                "width": 1400,
+                "text": "May the festival of lights bring joy, peace and prosperity to you and your family",
+                "fontSize": 52,
+                "fill": "#FFE0B2",
+                "fontFamily": "\"Noto Sans\", \"Noto Sans Gujarati\", \"Hind Vadodara\", \"Noto Sans Devanagari\", \"Mukta\", \"Nirmala UI\", \"Shruti\", \"Mangal\", sans-serif",
+                "fontWeight": "normal",
+                "textAlign": "center",
+                "lineHeight": 1.16
+            },
+            {
+                "type": "Textbox",
+                "left": 160,
+                "top": 860,
+                "width": 1600,
+                "text": "— {hotel}",
+                "fontSize": 52,
+                "fill": "#FFD54F",
+                "fontFamily": "\"Noto Sans\", \"Noto Sans Gujarati\", \"Hind Vadodara\", \"Noto Sans Devanagari\", \"Mukta\", \"Nirmala UI\", \"Shruti\", \"Mangal\", sans-serif",
+                "fontWeight": "bold",
+                "textAlign": "center",
+                "lineHeight": 1.16
+            }
+        ]
+    }
+}

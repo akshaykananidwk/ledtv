@@ -1,0 +1,12 @@
+/* Countdown (#17) — core/Apps/CountdownApp.php */
+.cd-bg{position:absolute;top:0;left:0;right:0;bottom:0;background-size:cover;background-position:center;opacity:.45}
+.cd-wrap{z-index:1}
+.cd-inner{max-width:100%}
+.cd-title{font-size:3.6rem;color:var(--hc-accent);text-shadow:0 .15rem .6rem rgba(0,0,0,.4)}
+.cd-sub{font-size:1.6rem;margin-top:.6rem}
+.cd-boxes{display:-webkit-flex;display:flex;-webkit-justify-content:center;justify-content:center;margin:2.6rem 0 1.6rem}
+.cd-box{width:10.5rem;margin:0 .9rem;padding:1.2rem .5rem;text-align:center}
+.cd-num{font-size:5rem;font-weight:700;line-height:1;color:var(--hc-fg)}
+.cd-label{font-size:1.1rem;margin-top:.6rem;color:var(--hc-muted);text-transform:uppercase;letter-spacing:.06em}
+.cd-done{font-size:3.4rem;font-weight:700;margin:2.6rem 0 1.6rem;color:var(--hc-fg)}
+.cd-when{font-size:1.2rem}

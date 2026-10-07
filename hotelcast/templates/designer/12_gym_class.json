@@ -1,0 +1,89 @@
+{
+    "id": "gym_class",
+    "name": "Gym class",
+    "category": "fitness",
+    "design": {
+        "version": "6.9.1",
+        "background": "#0A0A0A",
+        "objects": [
+            {
+                "type": "Rect",
+                "left": -200,
+                "top": 760,
+                "width": 2400,
+                "height": 120,
+                "fill": "#C6FF00",
+                "strokeWidth": 0,
+                "angle": -6
+            },
+            {
+                "type": "Textbox",
+                "left": 120,
+                "top": 90,
+                "width": 1680,
+                "text": "GYM CLASSES",
+                "fontSize": 150,
+                "fill": "#C6FF00",
+                "fontFamily": "Impact, \"Arial Black\", \"Noto Sans Gujarati\", \"Hind Vadodara\", \"Noto Sans Devanagari\", \"Mukta\", \"Nirmala UI\", \"Shruti\", \"Mangal\", sans-serif",
+                "fontWeight": "bold",
+                "textAlign": "left",
+                "lineHeight": 1.16,
+                "charSpacing": 100
+            },
+            {
+                "type": "Textbox",
+                "left": 120,
+                "top": 320,
+                "width": 600,
+                "text": "YOGA\nZUMBA\nHIIT",
+                "fontSize": 80,
+                "fill": "#FFFFFF",
+                "fontFamily": "\"Noto Sans\", \"Noto Sans Gujarati\", \"Hind Vadodara\", \"Noto Sans Devanagari\", \"Mukta\", \"Nirmala UI\", \"Shruti\", \"Mangal\", sans-serif",
+                "fontWeight": "bold",
+                "textAlign": "left",
+                "lineHeight": 1.35
+            },
+            {
+                "type": "Textbox",
+                "left": 720,
+                "top": 320,
+                "width": 1000,
+                "text": "6:30 AM – 7:30 AM\n6:00 PM – 7:00 PM\n7:15 PM – 8:00 PM",
+                "fontSize": 80,
+                "fill": "#E0E0E0",
+                "fontFamily": "\"Noto Sans\", \"Noto Sans Gujarati\", \"Hind Vadodara\", \"Noto Sans Devanagari\", \"Mukta\", \"Nirmala UI\", \"Shruti\", \"Mangal\", sans-serif",
+                "fontWeight": "normal",
+                "textAlign": "left",
+                "lineHeight": 1.35
+            },
+            {
+                "type": "Textbox",
+                "left": 0,
+                "top": 800,
+                "width": 1920,
+                "text": "NO PAIN · NO GAIN",
+                "fontSize": 56,
+                "fill": "#0A0A0A",
+                "fontFamily": "\"Noto Sans\", \"Noto Sans Gujarati\", \"Hind Vadodara\", \"Noto Sans Devanagari\", \"Mukta\", \"Nirmala UI\", \"Shruti\", \"Mangal\", sans-serif",
+                "fontWeight": "bold",
+                "textAlign": "center",
+                "lineHeight": 1.16,
+                "angle": -6,
+                "charSpacing": 200
+            },
+            {
+                "type": "Textbox",
+                "left": 120,
+                "top": 980,
+                "width": 1680,
+                "text": "{hotel} Fitness Centre · Free for in-house guests",
+                "fontSize": 40,
+                "fill": "#9E9E9E",
+                "fontFamily": "\"Noto Sans\", \"Noto Sans Gujarati\", \"Hind Vadodara\", \"Noto Sans Devanagari\", \"Mukta\", \"Nirmala UI\", \"Shruti\", \"Mangal\", sans-serif",
+                "fontWeight": "normal",
+                "textAlign": "left",
+                "lineHeight": 1.16
+            }
+        ]
+    }
+}

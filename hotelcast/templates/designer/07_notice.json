@@ -1,0 +1,82 @@
+{
+    "id": "notice",
+    "name": "Notice",
+    "category": "notice",
+    "design": {
+        "version": "6.9.1",
+        "background": "#FFFFFF",
+        "objects": [
+            {
+                "type": "Rect",
+                "left": 0,
+                "top": 0,
+                "width": 1920,
+                "height": 220,
+                "fill": "#C62828",
+                "strokeWidth": 0
+            },
+            {
+                "type": "Textbox",
+                "left": 120,
+                "top": 45,
+                "width": 1680,
+                "text": "NOTICE",
+                "fontSize": 130,
+                "fill": "#FFFFFF",
+                "fontFamily": "\"Noto Sans\", \"Noto Sans Gujarati\", \"Hind Vadodara\", \"Noto Sans Devanagari\", \"Mukta\", \"Nirmala UI\", \"Shruti\", \"Mangal\", sans-serif",
+                "fontWeight": "bold",
+                "textAlign": "center",
+                "lineHeight": 1.16,
+                "charSpacing": 300
+            },
+            {
+                "type": "Textbox",
+                "left": 200,
+                "top": 340,
+                "width": 1520,
+                "text": "Dear guests, the swimming pool will remain closed on Monday for maintenance.\nWe regret the inconvenience.",
+                "fontSize": 72,
+                "fill": "#212121",
+                "fontFamily": "\"Noto Sans\", \"Noto Sans Gujarati\", \"Hind Vadodara\", \"Noto Sans Devanagari\", \"Mukta\", \"Nirmala UI\", \"Shruti\", \"Mangal\", sans-serif",
+                "fontWeight": "normal",
+                "textAlign": "center",
+                "lineHeight": 1.35
+            },
+            {
+                "type": "Textbox",
+                "left": 200,
+                "top": 700,
+                "width": 1520,
+                "text": "સ્વિમિંગ પૂલ સોમવારે જાળવણી માટે બંધ રહેશે.",
+                "fontSize": 56,
+                "fill": "#424242",
+                "fontFamily": "\"Noto Sans\", \"Noto Sans Gujarati\", \"Hind Vadodara\", \"Noto Sans Devanagari\", \"Mukta\", \"Nirmala UI\", \"Shruti\", \"Mangal\", sans-serif",
+                "fontWeight": "normal",
+                "textAlign": "center",
+                "lineHeight": 1.16
+            },
+            {
+                "type": "Rect",
+                "left": 0,
+                "top": 960,
+                "width": 1920,
+                "height": 120,
+                "fill": "#F5F5F5",
+                "strokeWidth": 0
+            },
+            {
+                "type": "Textbox",
+                "left": 120,
+                "top": 990,
+                "width": 1680,
+                "text": "— Management, {hotel}",
+                "fontSize": 46,
+                "fill": "#616161",
+                "fontFamily": "\"Noto Sans\", \"Noto Sans Gujarati\", \"Hind Vadodara\", \"Noto Sans Devanagari\", \"Mukta\", \"Nirmala UI\", \"Shruti\", \"Mangal\", sans-serif",
+                "fontWeight": "normal",
+                "textAlign": "right",
+                "lineHeight": 1.16
+            }
+        ]
+    }
+}

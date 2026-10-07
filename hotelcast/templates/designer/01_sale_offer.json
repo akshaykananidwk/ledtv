@@ -1,0 +1,124 @@
+{
+    "id": "sale_offer",
+    "name": "Sale offer",
+    "category": "business",
+    "design": {
+        "version": "6.9.1",
+        "background": {
+            "type": "linear",
+            "gradientUnits": "pixels",
+            "coords": {
+                "x1": 0,
+                "y1": 0,
+                "x2": 1920,
+                "y2": 1080
+            },
+            "colorStops": [
+                {
+                    "offset": 0,
+                    "color": "#B71C1C"
+                },
+                {
+                    "offset": 1,
+                    "color": "#E65100"
+                }
+            ]
+        },
+        "objects": [
+            {
+                "type": "Circle",
+                "left": -160,
+                "top": -200,
+                "radius": 420,
+                "fill": "rgba(255,255,255,0.08)",
+                "strokeWidth": 0
+            },
+            {
+                "type": "Circle",
+                "left": 1500,
+                "top": 700,
+                "radius": 380,
+                "fill": "rgba(255,255,255,0.08)",
+                "strokeWidth": 0
+            },
+            {
+                "type": "Textbox",
+                "left": 160,
+                "top": 120,
+                "width": 1600,
+                "text": "MEGA SALE",
+                "fontSize": 190,
+                "fill": "#FFFFFF",
+                "fontFamily": "Impact, \"Arial Black\", \"Noto Sans Gujarati\", \"Hind Vadodara\", \"Noto Sans Devanagari\", \"Mukta\", \"Nirmala UI\", \"Shruti\", \"Mangal\", sans-serif",
+                "fontWeight": "bold",
+                "textAlign": "center",
+                "lineHeight": 1.16,
+                "charSpacing": 80,
+                "shadow": {
+                    "color": "rgba(0,0,0,0.45)",
+                    "blur": 18,
+                    "offsetX": 4,
+                    "offsetY": 4
+                }
+            },
+            {
+                "type": "Rect",
+                "left": 560,
+                "top": 390,
+                "width": 800,
+                "height": 300,
+                "fill": "#FFD600",
+                "strokeWidth": 0,
+                "rx": 40,
+                "ry": 40,
+                "angle": -3,
+                "shadow": {
+                    "color": "rgba(0,0,0,0.35)",
+                    "blur": 30,
+                    "offsetX": 0,
+                    "offsetY": 10
+                }
+            },
+            {
+                "type": "Textbox",
+                "left": 580,
+                "top": 405,
+                "width": 760,
+                "text": "FLAT\n50% OFF",
+                "fontSize": 120,
+                "fill": "#B71C1C",
+                "fontFamily": "\"Noto Sans\", \"Noto Sans Gujarati\", \"Hind Vadodara\", \"Noto Sans Devanagari\", \"Mukta\", \"Nirmala UI\", \"Shruti\", \"Mangal\", sans-serif",
+                "fontWeight": "bold",
+                "textAlign": "center",
+                "lineHeight": 1,
+                "angle": -3
+            },
+            {
+                "type": "Textbox",
+                "left": 160,
+                "top": 760,
+                "width": 1600,
+                "text": "On all items · Limited period offer",
+                "fontSize": 64,
+                "fill": "#FFFFFF",
+                "fontFamily": "\"Noto Sans\", \"Noto Sans Gujarati\", \"Hind Vadodara\", \"Noto Sans Devanagari\", \"Mukta\", \"Nirmala UI\", \"Shruti\", \"Mangal\", sans-serif",
+                "fontWeight": "normal",
+                "textAlign": "center",
+                "lineHeight": 1.16
+            },
+            {
+                "type": "Textbox",
+                "left": 160,
+                "top": 930,
+                "width": 1600,
+                "text": "{hotel}",
+                "fontSize": 48,
+                "fill": "#FFE0B2",
+                "fontFamily": "\"Noto Sans\", \"Noto Sans Gujarati\", \"Hind Vadodara\", \"Noto Sans Devanagari\", \"Mukta\", \"Nirmala UI\", \"Shruti\", \"Mangal\", sans-serif",
+                "fontWeight": "bold",
+                "textAlign": "center",
+                "lineHeight": 1.16
+            }
+        ]
+    }
+}

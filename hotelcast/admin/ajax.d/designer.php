@@ -76,6 +76,9 @@ try {
             ajax_ok($r + ['edit_url' => admin_url('playlists.php', ['action' => 'edit', 'id' => $r['id']])]);
     }
 } catch (RuntimeException $e) {
+    if ($e instanceof PDOException) {
+        throw $e; // logged as a server error by ajax.php
+    }
     $code = $e->getCode();
     if (!in_array($code, [404, 413, 422], true)) {
         // Uploader errors (no code) are user-friendly validation messages.

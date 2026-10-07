@@ -1,0 +1,126 @@
+{
+    "id": "navratri",
+    "name": "Festival greeting – Navratri",
+    "category": "festival",
+    "design": {
+        "version": "6.9.1",
+        "background": {
+            "type": "linear",
+            "gradientUnits": "pixels",
+            "coords": {
+                "x1": 0,
+                "y1": 0,
+                "x2": 1920,
+                "y2": 1080
+            },
+            "colorStops": [
+                {
+                    "offset": 0,
+                    "color": "#880E4F"
+                },
+                {
+                    "offset": 0.5,
+                    "color": "#E65100"
+                },
+                {
+                    "offset": 1,
+                    "color": "#FFB300"
+                }
+            ]
+        },
+        "objects": [
+            {
+                "type": "Circle",
+                "left": -200,
+                "top": 600,
+                "radius": 500,
+                "fill": "rgba(255,255,255,0.08)",
+                "strokeWidth": 0
+            },
+            {
+                "type": "Circle",
+                "left": 1560,
+                "top": -160,
+                "radius": 460,
+                "fill": "rgba(255,255,255,0.08)",
+                "strokeWidth": 0
+            },
+            {
+                "type": "Textbox",
+                "left": 160,
+                "top": 140,
+                "width": 1600,
+                "text": "નવરાત્રીની શુભકામનાઓ",
+                "fontSize": 140,
+                "fill": "#FFFFFF",
+                "fontFamily": "\"Noto Sans Gujarati\", \"Noto Sans Gujarati\", \"Hind Vadodara\", \"Noto Sans Devanagari\", \"Mukta\", \"Nirmala UI\", \"Shruti\", \"Mangal\", sans-serif",
+                "fontWeight": "bold",
+                "textAlign": "center",
+                "lineHeight": 1.16,
+                "shadow": {
+                    "color": "rgba(0,0,0,0.45)",
+                    "blur": 18,
+                    "offsetX": 4,
+                    "offsetY": 4
+                }
+            },
+            {
+                "type": "Textbox",
+                "left": 160,
+                "top": 380,
+                "width": 1600,
+                "text": "GARBA NIGHT",
+                "fontSize": 150,
+                "fill": "#FFF59D",
+                "fontFamily": "Impact, \"Arial Black\", \"Noto Sans Gujarati\", \"Hind Vadodara\", \"Noto Sans Devanagari\", \"Mukta\", \"Nirmala UI\", \"Shruti\", \"Mangal\", sans-serif",
+                "fontWeight": "bold",
+                "textAlign": "center",
+                "lineHeight": 1.16,
+                "charSpacing": 120,
+                "shadow": {
+                    "color": "rgba(0,0,0,0.45)",
+                    "blur": 18,
+                    "offsetX": 4,
+                    "offsetY": 4
+                }
+            },
+            {
+                "type": "Rect",
+                "left": 560,
+                "top": 620,
+                "width": 800,
+                "height": 110,
+                "fill": "rgba(0,0,0,0.30)",
+                "strokeWidth": 0,
+                "rx": 55,
+                "ry": 55
+            },
+            {
+                "type": "Textbox",
+                "left": 560,
+                "top": 643,
+                "width": 800,
+                "text": "Every night · 9 PM onwards",
+                "fontSize": 54,
+                "fill": "#FFFFFF",
+                "fontFamily": "\"Noto Sans\", \"Noto Sans Gujarati\", \"Hind Vadodara\", \"Noto Sans Devanagari\", \"Mukta\", \"Nirmala UI\", \"Shruti\", \"Mangal\", sans-serif",
+                "fontWeight": "bold",
+                "textAlign": "center",
+                "lineHeight": 1.16
+            },
+            {
+                "type": "Textbox",
+                "left": 160,
+                "top": 840,
+                "width": 1600,
+                "text": "Venue: Lawn · {hotel}",
+                "fontSize": 52,
+                "fill": "#FFFFFF",
+                "fontFamily": "\"Noto Sans\", \"Noto Sans Gujarati\", \"Hind Vadodara\", \"Noto Sans Devanagari\", \"Mukta\", \"Nirmala UI\", \"Shruti\", \"Mangal\", sans-serif",
+                "fontWeight": "normal",
+                "textAlign": "center",
+                "lineHeight": 1.16
+            }
+        ]
+    }
+}

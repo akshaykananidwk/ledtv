@@ -1,0 +1,15 @@
+/* QR code (#18) — core/Apps/QrApp.php. The QR keeps its own light background (quiet zone) for scanners. */
+.qr-wrap{position:absolute;top:0;left:0;right:0;bottom:0;display:-webkit-flex;display:flex;-webkit-align-items:center;align-items:center;
+  -webkit-justify-content:center;justify-content:center;padding:2.5rem 3rem}
+.qr-box{width:28rem;height:28rem;-webkit-flex:none;flex:none;border-radius:1rem;padding:.6rem;box-shadow:0 .4rem 2rem rgba(0,0,0,.35)}
+.qr-box svg{display:block;width:100%;height:100%}
+.qr-empty{display:-webkit-flex;display:flex;-webkit-align-items:center;align-items:center;-webkit-justify-content:center;justify-content:center;font-size:2rem;color:var(--hc-muted)}
+.qr-text{margin-left:3.5rem;max-width:30rem}
+.qr-title{font-size:3.4rem;color:var(--hc-accent)}
+.qr-caption{font-size:1.9rem;margin-top:1rem}
+.qr-detail{font-size:1.5rem;margin-top:.8rem;word-break:break-all}
+.qr-amount{font-size:3rem;font-weight:700;margin-top:1rem}
+.qr-center{-webkit-flex-direction:column;flex-direction:column;text-align:center}
+.qr-center .qr-box{width:22rem;height:22rem;margin:1.2rem 0}
+.qr-center .qr-text{margin-left:0;max-width:56rem}
+.qr-center .qr-caption{margin-top:0}
