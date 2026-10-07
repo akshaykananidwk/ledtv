@@ -1,0 +1,41 @@
+/* Class schedule (#6) — core/Apps/ClassScheduleApp.php. Today rows (.cs-row) or week grid (.cs-week). */
+.cs-today{height:100%}
+.cs-page{display:-webkit-flex;display:flex;-webkit-flex-direction:column;flex-direction:column}
+.cs-row{display:-webkit-flex;display:flex;-webkit-align-items:center;align-items:center;margin-bottom:.7rem;padding:.3rem 1.4rem;
+  border-left:.5rem solid var(--hc-accent);min-height:0;-webkit-flex:1 1 0;flex:1 1 0;max-height:6.5rem;overflow:hidden}
+.cs-time{width:9.5rem;-webkit-flex:none;flex:none}
+.cs-time b{display:block;font-size:1.5rem;line-height:1.1}
+.cs-time span{display:block;font-size:1rem;color:var(--hc-muted)}
+.cs-photo{width:3.2rem;height:3.2rem;border-radius:50%;-webkit-flex:none;flex:none;margin-right:1.2rem;-o-object-fit:cover;object-fit:cover;
+  border:.15rem solid var(--hc-border)}
+.cs-initials{display:-webkit-flex;display:flex;-webkit-align-items:center;align-items:center;-webkit-justify-content:center;justify-content:center;
+  color:#fff;font-weight:700;font-size:1.4rem}
+.cs-main{-webkit-flex:1;flex:1;min-width:0}
+.cs-name{font-size:1.6rem;font-weight:700;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cs-level{display:inline-block;font-size:.85rem;font-weight:400;padding:.1rem .6rem;border:.08rem solid var(--hc-border);border-radius:1rem;
+  color:var(--hc-muted);vertical-align:middle}
+.cs-meta{font-size:1rem;color:var(--hc-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cs-k{opacity:.75}
+.cs-state{-webkit-flex:none;flex:none;margin-left:1rem}
+.cs-pill{display:inline-block;padding:.25rem .9rem;border-radius:2rem;font-weight:700;font-size:1rem;letter-spacing:.06em}
+.cs-pill-now{background:#2E7D32;color:#fff;-webkit-animation:cs-pulse 1.6s infinite;animation:cs-pulse 1.6s infinite}
+.cs-pill-next{background:var(--hc-accent);color:var(--hc-accent-fg)}
+.cs-row.cs-now{background:rgba(46,125,50,.28);border-color:var(--hc-border);border-left-color:#43A047 !important;
+  box-shadow:0 0 1.4rem rgba(67,160,71,.45)}
+.cs-row.cs-now .cs-name{font-size:1.8rem}
+.cs-row.cs-done,.cs-item.cs-done{opacity:.45}
+@-webkit-keyframes cs-pulse{50%{opacity:.55}}
+@keyframes cs-pulse{50%{opacity:.55}}
+/* Week grid. */
+.cs-week{display:-webkit-flex;display:flex;height:100%}
+.cs-day{-webkit-flex:1;flex:1;min-width:0;margin-right:.6rem;background:var(--hc-card);border:.08rem solid var(--hc-border);border-radius:.7rem;
+  padding:.6rem;overflow:hidden}
+.cs-day:last-child{margin-right:0}
+.cs-day.is-today{border-color:var(--hc-accent);box-shadow:0 0 0 .12rem var(--hc-accent) inset}
+.cs-dayname{font-weight:700;font-size:1.1rem;text-align:center;margin-bottom:.5rem;color:var(--hc-accent)}
+.cs-item{border-left:.3rem solid var(--hc-accent);background:rgba(0,0,0,.18);border-radius:.35rem;padding:.35rem .5rem;margin-bottom:.4rem}
+.cs-item-time{font-size:.8rem;color:var(--hc-muted)}
+.cs-item-name{font-size:.95rem;font-weight:700;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cs-item-meta{font-size:.75rem;color:var(--hc-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cs-item .cs-pill{font-size:.6rem;padding:.05rem .4rem}
+.cs-item.cs-now{background:rgba(46,125,50,.35)}
