@@ -164,7 +164,7 @@ final class OffersApp extends DisplayApp
         }
         $h .= '<div class="of-info">';
         if ($o['badge'] !== '') {
-            $h .= '<div><span class="hc-badge of-badge">' . e($o['badge']) . '</span></div>';
+            $h .= '<div class="of-bw"><span class="hc-badge of-badge">' . e($o['badge']) . '</span></div>';
         }
         $h .= '<div class="of-title">' . e($o['title']) . '</div>';
         if ($o['description'] !== '') {

@@ -1,0 +1,63 @@
+/* Shop offers (#4) — core/Apps/OffersApp.php. Layouts: .of-hero (1 per page), .of-grid (2×2), .of-list (rows). */
+.of-page{display:-webkit-flex;display:flex;-webkit-flex-wrap:wrap;flex-wrap:wrap;-webkit-align-content:flex-start;align-content:flex-start}
+.of-card{position:relative;display:-webkit-flex;display:flex;-webkit-align-items:center;align-items:center;overflow:hidden}
+.of-card.of-gone{opacity:.15}
+.of-img{-webkit-flex:none;flex:none;margin-right:1.6rem;border-radius:.6rem;overflow:hidden;background:rgba(0,0,0,.2)}
+.of-img img{display:block;width:100%;height:100%;-o-object-fit:cover;object-fit:cover}
+.of-info{-webkit-flex:1;flex:1;min-width:0;overflow:hidden}
+.of-badge{margin-bottom:.6rem}
+.of-title{font-weight:700;line-height:1.2;overflow:hidden}
+.of-desc{color:var(--hc-muted);margin-top:.4rem;overflow:hidden}
+.of-prices{margin-top:.6rem;white-space:nowrap}
+.of-price{font-weight:700;color:var(--hc-accent)}
+.of-old{color:var(--hc-muted);margin-left:1rem;text-decoration:line-through}
+.of-ends{margin-top:.6rem;color:var(--hc-fg)}
+.of-ends span{color:var(--hc-muted)}
+.of-ends b{font-variant-numeric:tabular-nums;letter-spacing:.03em}
+/* Discount badge: a big round sticker in the corner. */
+.of-disc{position:absolute;top:1rem;right:1rem;border-radius:50%;background:#D32F2F;color:#fff;text-align:center;
+  display:-webkit-flex;display:flex;-webkit-flex-direction:column;flex-direction:column;-webkit-justify-content:center;justify-content:center;
+  box-shadow:0 .3rem 1rem rgba(0,0,0,.35);-webkit-transform:rotate(-8deg);transform:rotate(-8deg)}
+.of-disc b{display:block;line-height:1}
+.of-disc span{display:block;font-weight:700;letter-spacing:.08em}
+/* Hero: one big offer. */
+.of-hero .of-page .of-card{width:100%;height:100%;padding:2.4rem 3rem}
+.of-hero .of-img{width:42%;height:100%}
+.of-hero .of-title{font-size:3.6rem;max-height:13rem}
+.of-hero .of-desc{font-size:1.6rem;max-height:6.5rem}
+.of-hero .of-price{font-size:4.2rem}
+.of-hero .of-old{font-size:2.2rem}
+.of-hero .of-ends{font-size:1.7rem}
+.of-hero .of-disc{width:10rem;height:10rem;top:1.5rem;right:1.5rem}
+.of-hero .of-disc b{font-size:3.4rem}
+.of-hero .of-disc span{font-size:1.3rem}
+.of-hero .has-img .of-info{padding-right:9rem}
+.of-hero .of-card:not(.has-img) .of-info{padding-right:11rem}
+/* Grid: 2 × 2. */
+.of-grid .of-card{width:49%;height:48.5%;margin:0 2% 1.5% 0;padding:1.4rem 1.6rem}
+.of-grid .of-card:nth-child(2n){margin-right:0}
+.of-grid .of-img{width:38%;height:100%}
+.of-grid .of-title{font-size:1.9rem;max-height:4.8rem;padding-right:5.5rem}
+.of-grid .of-desc{font-size:1.05rem;max-height:2.9rem}
+.of-grid .of-price{font-size:2.3rem}
+.of-grid .of-old{font-size:1.3rem}
+.of-grid .of-ends{font-size:1.05rem}
+.of-grid .of-disc{width:5.8rem;height:5.8rem;top:.8rem;right:.8rem}
+.of-grid .of-disc b{font-size:1.8rem}
+.of-grid .of-disc span{font-size:.75rem}
+/* List: 5 rows. */
+.of-list .of-card{width:100%;height:18.4%;margin-bottom:2%;padding:.8rem 1.4rem}
+.of-list .of-img{width:9rem;height:100%}
+.of-list .of-info{padding-right:6rem}
+.of-list .of-badge{margin:0 .8rem 0 0}
+.of-list .of-bw{display:inline-block}
+.of-list .of-title{display:inline;font-size:1.6rem}
+.of-list .of-desc{font-size:.95rem;white-space:nowrap;text-overflow:ellipsis;margin-top:.2rem}
+.of-list .of-prices{display:inline-block;margin:.3rem 1.4rem 0 0}
+.of-list .of-price{font-size:1.7rem}
+.of-list .of-old{font-size:1.1rem}
+.of-list .of-ends{display:inline-block;font-size:1rem}
+.of-list .of-disc{width:5rem;height:5rem;top:50%;margin-top:-2.5rem;right:1.2rem;-webkit-transform:none;transform:none}
+.of-list .of-disc b{font-size:1.5rem}
+.of-list .of-disc span{font-size:.7rem}
+.of-footer{-webkit-justify-content:center;justify-content:center;font-size:1.1rem}
