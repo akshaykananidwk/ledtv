@@ -197,6 +197,10 @@ if ($action === 'new' || $action === 'edit') {
         if (empty($_GET['raw']) && class_exists('Templates') && Templates::fromContent($item) && Auth::can('templates.manage') && Tenant::feature('templates')) {
             redirect(admin_url('templates.php', ['action' => 'edit', 'id' => $item['id']]));
         }
+        // Designer slides (#11) open in the designer; ?raw=1 keeps the plain image form.
+        if (empty($_GET['raw']) && $type === 'image' && class_exists('Designer') && Designer::designFor((int) $item['id'])) {
+            redirect(admin_url('designer.php', ['id' => $item['id']]));
+        }
     } else {
         $type = (string) ($_GET['type'] ?? '');
         if (!isset(ContentManager::TYPES[$type])) {
@@ -455,6 +459,11 @@ require __DIR__ . '/partials/header.php';
     <p class="lead-sm"><?= e(__(':n items', ['n' => $total])) ?> · <?= e(__('Server upload limit: :s.', ['s' => $limitText])) ?></p>
   </div>
   <?php if ($canManage): ?>
+  <div class="d-flex flex-wrap gap-2">
+  <?php if (is_file(__DIR__ . '/designer.php')): // slide designer & PDF import (#11, #12) ?>
+    <a class="btn btn-outline-primary btn-lg" href="<?= e(admin_url('designer.php')) ?>"><i class="bi bi-brush"></i> <?= e(__('Design a slide')) ?></a>
+    <a class="btn btn-outline-primary btn-lg" href="<?= e(admin_url('pdf_import.php')) ?>"><i class="bi bi-file-earmark-pdf"></i> <?= e(__('Import PDF / slides')) ?></a>
+  <?php endif; ?>
   <div class="dropdown">
     <button class="btn btn-primary btn-lg dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-plus-lg"></i> <?= e(__('Add content')) ?></button>
     <ul class="dropdown-menu dropdown-menu-end">
@@ -466,6 +475,7 @@ require __DIR__ . '/partials/header.php';
         <li><a class="dropdown-item py-2" href="<?= e(admin_url('templates.php')) ?>"><i class="bi bi-palette me-2"></i><?= e(__('From a template…')) ?></a></li>
       <?php endif; ?>
     </ul>
+  </div>
   </div>
   <?php endif; ?>
 </div>

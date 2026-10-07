@@ -21,10 +21,7 @@
     const uploadsBase = new URL('../uploads/', window.location.href).href;
 
     fabric.FabricObject.customProperties = ['hcRole'];
-    fabric.FabricObject.ownDefaults.transparentCorners = false;
-    fabric.FabricObject.ownDefaults.cornerColor = '#2563eb';
-    fabric.FabricObject.ownDefaults.cornerStyle = 'circle';
-    fabric.FabricObject.ownDefaults.borderColor = '#2563eb';
+    Object.assign(fabric.FabricObject.ownDefaults || {}, { transparentCorners: false, cornerColor: '#2563eb', cornerStyle: 'circle', borderColor: '#2563eb' });
 
     const canvas = new fabric.Canvas('dzCanvas', { preserveObjectStacking: true, backgroundColor: '#1a237e', stopContextMenu: true });
 
@@ -121,7 +118,6 @@
       restoring = true;
       try {
         await canvas.loadFromJSON(clean);
-        canvas.backgroundImage = canvas.backgroundImage || null;
       } finally {
         restoring = false;
       }
@@ -156,6 +152,7 @@
       refreshLayers();
     }
     function later() {
+      if (restoring) return;
       clearTimeout(histTimer);
       histTimer = setTimeout(record, 250);
     }

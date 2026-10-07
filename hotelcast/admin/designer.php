@@ -93,7 +93,7 @@ $config = [
 ];
 
 $pageTitle = $item ? __('Edit design') : __('Design a slide');
-$activeNav = 'content';
+$activeNav = 'designer';
 $extraScripts = ['vendor/fabric/fabric.min.js', 'js/designer.js'];
 $extraStyles = ['css/designer.css'];
 require __DIR__ . '/partials/header.php';
