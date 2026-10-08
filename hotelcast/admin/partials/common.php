@@ -586,6 +586,8 @@ function command_label(string $cmd): string
         'OPEN_INPUT' => __('Switch TV input'),
         'SHOW_WELCOME' => __('Show welcome again'),
         'SHOW_MESSAGE' => __('Show message'),
+        'SPEAK' => __('Spoken announcement'),
+        'PLAY_SOUND' => __('Play sound'),
         default => $cmd,
     };
 }

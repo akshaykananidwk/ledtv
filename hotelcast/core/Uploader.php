@@ -16,9 +16,16 @@ final class Uploader
         'mp4' => 'video/mp4', 'm4v' => 'video/mp4', 'webm' => 'video/webm',
         'mkv' => 'video/x-matroska', 'mov' => 'video/quicktime', '3gp' => 'video/3gpp',
     ];
+    /** Audio for bell / chime sounds (device schedules, 2.4): extension → accepted real MIME types. */
+    public const AUDIO_TYPES = [
+        'mp3' => ['audio/mpeg', 'audio/mp3', 'audio/x-mp3', 'audio/mpeg3'],
+        'wav' => ['audio/wav', 'audio/x-wav', 'audio/wave', 'audio/vnd.wave'],
+        'ogg' => ['audio/ogg', 'application/ogg', 'audio/x-ogg', 'audio/vorbis'],
+    ];
+    public const AUDIO_MAX_MB = 5;
 
     /**
-     * Handle one uploaded file from $_FILES. $kind = image|video|logo|apk.
+     * Handle one uploaded file from $_FILES. $kind = image|video|logo|apk|audio.
      * Files are stored per hotel: uploads/h{hotel_id}/media/YYYY/MM/…, uploads/h{id}/branding/…,
      * storage/apk/h{id}/… ; $scope 'platform' stores platform-wide branding in uploads/platform/.
      * (Files uploaded before 2.0 keep their old paths, e.g. media/2026/10/x.jpg — still valid.)
@@ -47,6 +54,9 @@ final class Uploader
         if ($kind === 'apk') {
             $maxMb = 300;
         }
+        if ($kind === 'audio') {
+            $maxMb = self::AUDIO_MAX_MB;
+        }
         if ($file['size'] > $maxMb * 1024 * 1024) {
             throw new RuntimeException(__('File too large. Maximum is :m MB.', ['m' => $maxMb]));
         }
@@ -66,6 +76,14 @@ final class Uploader
                     throw new RuntimeException(__('Only MP4, WEBM, MKV, MOV or 3GP videos are allowed.'));
                 }
                 return self::storeVideo($file['tmp_name'], $ext, $mime, self::root($scope) . '/media');
+            case 'audio':
+                if (!isset(self::AUDIO_TYPES[$ext]) || !self::isAudio($file['tmp_name'], $ext, $mime)) {
+                    throw new RuntimeException(__('Only MP3, WAV or OGG sound files are allowed.'));
+                }
+                [$rel, $abs] = self::subdir(self::root($scope) . '/sounds');
+                $name = random_token(12) . '.' . $ext;
+                self::move($file['tmp_name'], $abs . '/' . $name);
+                return ['path' => $rel . '/' . $name, 'size' => (int) filesize($abs . '/' . $name), 'mime' => self::AUDIO_TYPES[$ext][0], 'thumb' => null];
             case 'apk':
                 if ($ext !== 'apk' || !in_array($mime, ['application/vnd.android.package-archive', 'application/zip', 'application/java-archive', 'application/octet-stream'], true)) {
                     throw new RuntimeException(__('Only .apk files are allowed.'));
@@ -85,6 +103,31 @@ final class Uploader
                 return ['path' => 'apk/' . $sub . '/' . $name, 'size' => (int) filesize($dir . '/' . $name), 'mime' => 'application/vnd.android.package-archive', 'thumb' => null];
         }
         throw new RuntimeException('Unknown upload kind');
+    }
+
+    /**
+     * Real audio check for $ext: the sniffed MIME type (application/octet-stream allowed for headerless MP3)
+     * and the file signature (RIFF…WAVE / OggS / ID3 or an MPEG frame sync) must match, and the file may not
+     * contain PHP / HTML script code (polyglot uploads).
+     */
+    public static function isAudio(string $path, string $ext, string $mime): bool
+    {
+        $ok = self::AUDIO_TYPES[$ext] ?? null;
+        if ($ok === null || (!in_array($mime, $ok, true) && !($ext === 'mp3' && $mime === 'application/octet-stream'))) {
+            return false;
+        }
+        $head = (string) @file_get_contents($path, false, null, 0, 12);
+        $sig = match ($ext) {
+            'wav' => str_starts_with($head, 'RIFF') && substr($head, 8, 4) === 'WAVE',
+            'ogg' => str_starts_with($head, 'OggS'),
+            'mp3' => str_starts_with($head, 'ID3') || (strlen($head) >= 2 && ord($head[0]) === 0xFF && (ord($head[1]) & 0xE0) === 0xE0),
+            default => false,
+        };
+        if (!$sig) {
+            return false;
+        }
+        $body = (string) @file_get_contents($path);
+        return !preg_match('/<\?php|<script/i', $body);
     }
 
     /** Storage root for the current hotel ("h3") or the platform ("platform"). */

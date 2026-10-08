@@ -77,6 +77,7 @@ final class DeviceManager
             'is_revoked' => 0,
             'last_ping' => now(),
         ];
+        $fields += self::platformFields($in); // 2.4: android | web (web player), migration 026
         if ($existing) {
             DB::update('devices', $fields + ['registered_at' => now()], 'id = :id', ['id' => $existing['id']]);
             $deviceId = (int) $existing['id'];
@@ -266,6 +267,20 @@ final class DeviceManager
     {
         return $device && $device['status'] === 'online' && $device['last_ping']
             && strtotime($device['last_ping']) >= time() - max(30, Settings::int('offline_after', 90));
+    }
+
+    /**
+     * 2.4 web player: `platform` ('android' | 'web', from `platform` or `device_type` in the register body)
+     * and the browser's `user_agent`. Empty when migration 026 has not run yet.
+     */
+    public static function platformFields(array $in): array
+    {
+        if (!Migrator::hasColumn(DB::pdo(), 'devices', 'platform')) {
+            return [];
+        }
+        $p = strtolower(trim((string) ($in['platform'] ?? $in['device_type'] ?? '')));
+        $web = $p === 'web';
+        return ['platform' => $web ? 'web' : 'android', 'user_agent' => $web ? self::str($in['user_agent'] ?? null, 255) : null];
     }
 
     private static function str(mixed $v, int $max): ?string

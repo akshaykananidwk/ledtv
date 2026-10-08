@@ -75,6 +75,8 @@ switch (true) {
         $changed = $content['hash'] !== $clientHash;
         $data = [
             'server_time' => date('c'),
+            // 2.4 synchronized playback: ms clock for the TV's NTP-like offset estimate (core/SyncPlayback.php).
+            'server_time_ms' => SyncPlayback::nowMs(),
             'poll_interval' => DeviceManager::pollInterval(),
             'content_hash' => $content['hash'],
             'content_changed' => $changed,

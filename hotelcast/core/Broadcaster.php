@@ -9,7 +9,9 @@ final class Broadcaster
 {
     public const DEVICE_COMMANDS = ['REBOOT', 'CLEAR_CACHE', 'UPDATE_APP', 'SCREEN_OFF', 'SCREEN_ON', 'RELOAD', 'PING', 'SHOW_CONTENT',
         // 2.0 (V2_SPEC § TV contract): volume, support tools, inputs, guest messages.
-        'SET_VOLUME', 'MUTE', 'UNMUTE', 'SCREENSHOT', 'UPLOAD_LOGS', 'OPEN_INPUT', 'SHOW_WELCOME', 'SHOW_MESSAGE'];
+        'SET_VOLUME', 'MUTE', 'UNMUTE', 'SCREENSHOT', 'UPLOAD_LOGS', 'OPEN_INPUT', 'SHOW_WELCOME', 'SHOW_MESSAGE',
+        // 2.4 (device schedules): text-to-speech announcement and bell / chime sound.
+        'SPEAK', 'PLAY_SOUND'];
     public const TARGET_TYPES = ['all', 'rooms', 'groups', 'floors'];
 
     /** Resolve target → list of room rows (current hotel only). */
