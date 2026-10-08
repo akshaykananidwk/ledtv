@@ -378,6 +378,21 @@ data class Emergency(
     @SerializedName("message") val message: String? = null,
     @SerializedName("bg_color") val bgColor: String? = null,
     @SerializedName("text_color") val textColor: String? = null,
+    /** 2.4.1: alarm sound to play while the emergency is shown; null = none / silenced. */
+    @SerializedName("alarm") val alarm: EmergencyAlarmSound? = null,
+    /** 2.4.1: "Silence alarm on all TVs" was pressed (alarm is then null). */
+    @SerializedName("alarm_muted") val alarmMuted: Boolean? = null,
+)
+
+/** `content.emergency.alarm` (2.4.1): validated into an [AlarmSpec] by [AlarmPlan.from]. */
+data class EmergencyAlarmSound(
+    @SerializedName("url") val url: String? = null,
+    /** true = repeat until the emergency stops or is silenced; false = play [repeat] times. */
+    @SerializedName("loop") val loop: Boolean? = null,
+    @SerializedName("repeat") val repeat: Int? = null,
+    /** 0–100: STREAM_MUSIC is raised to at least this share of its maximum while the alarm plays. */
+    @SerializedName("volume") val volume: Int? = null,
+    @SerializedName("name") val name: String? = null,
 )
 
 data class ContentItem(

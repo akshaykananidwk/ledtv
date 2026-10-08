@@ -1109,7 +1109,8 @@ final class Chains
                         ], $userId);
                         break;
                     case 'emergency':
-                        $bid = Broadcaster::emergencyStart($p['title'], $p['message'], 'all', [], $userId, $p['bg_color'], $p['text_color']);
+                        // 2.4.1: chain emergencies sound the built-in beep (built-in sounds exist in every hotel).
+                        $bid = Broadcaster::emergencyStart($p['title'], $p['message'], 'all', [], $userId, $p['bg_color'], $p['text_color'], Broadcaster::alarmOptions([]));
                         break;
                     default:
                         $n = Broadcaster::emergencyStop();

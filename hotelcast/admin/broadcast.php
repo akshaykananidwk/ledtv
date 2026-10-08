@@ -57,10 +57,21 @@ if (is_post()) {
                 if ($title === '' && $message === '') {
                     throw new InvalidArgumentException(__('Enter a title or message.'));
                 }
+                $alarm = Broadcaster::alarmOptions($_POST); // 2.4.1: alarm sound (another hotel's sound → 404)
                 $bid = Broadcaster::emergencyStart($title, $message, $type, $ids, Auth::id(),
-                    clean_color($_POST['bg_color'] ?? null, '#B00020'), clean_color($_POST['text_color'] ?? null, '#FFFFFF'));
-                ActivityLog::add('emergency_start', 'broadcast', $bid, $title . ' → ' . Broadcaster::describeTarget($type, $ids));
+                    clean_color($_POST['bg_color'] ?? null, '#B00020'), clean_color($_POST['text_color'] ?? null, '#FFFFFF'), $alarm);
+                ActivityLog::add('emergency_start', 'broadcast', $bid, $title . ' → ' . Broadcaster::describeTarget($type, $ids)
+                    . ($alarm ? ' · ' . __('Alarm sound') . ': ' . $alarm['sound'] . ($alarm['loop'] ? ' (loop)' : ' ×' . $alarm['repeat']) . ' ' . $alarm['volume'] . '%' : ''));
                 flash('warning', __('Emergency message is now showing on the TVs. Remember to stop it when done.'));
+                break;
+
+            case 'emergency_silence':
+                // 2.4.1: the message stays on the TVs, the alarm sound stops.
+                require_can('broadcast.emergency');
+                $id = req_int('id', $_POST);
+                $n = Broadcaster::emergencySilence($id ?: null);
+                ActivityLog::add('emergency_silence', 'broadcast', $id ?: null, "Silenced $n");
+                flash($n ? 'success' : 'info', $n ? __('Alarm silenced. The emergency message stays on the TVs.') : __('No alarm is sounding.'));
                 break;
 
             case 'emergency_stop':
@@ -99,7 +110,7 @@ if (is_post()) {
     } catch (InvalidArgumentException $e) {
         flash('danger', $e->getMessage());
     }
-    redirect(admin_url('broadcast.php') . ($op === 'emergency' || $op === 'emergency_stop' ? '#emergency' : ($op === 'announce' ? '#announce' : '')));
+    redirect(admin_url('broadcast.php') . (in_array($op, ['emergency', 'emergency_stop', 'emergency_silence'], true) ? '#emergency' : ($op === 'announce' ? '#announce' : '')));
 }
 
 $canSchedule = Auth::can('schedule.manage');
@@ -119,6 +130,14 @@ if ($history) {
     [$in, $p] = DB::in(array_map(fn ($b) => (int) $b['id'], $history), 'b');
     foreach (DB::all("SELECT broadcast_id, status, COUNT(*) AS n FROM device_commands WHERE broadcast_id IN $in GROUP BY broadcast_id, status", $p) as $r) {
         $stats[(int) $r['broadcast_id']][$r['status']] = (int) $r['n'];
+    }
+}
+// 2.4.1 alarm sound picker: built-in alarms first, then every other sound of the hotel's library.
+$alarmChoices = [];
+if (Auth::can('broadcast.emergency')) {
+    $allSounds = Sounds::all();
+    foreach (array_keys(Sounds::choices(Sounds::ALARMS)) as $ref) {
+        $alarmChoices[$ref] = $allSounds[$ref];
     }
 }
 $hasContent = (bool) DB::value('SELECT 1 FROM content_items WHERE hotel_id = :hid LIMIT 1', hid()) || (bool) DB::value('SELECT 1 FROM content_playlists WHERE hotel_id = :hid LIMIT 1', hid());
@@ -281,11 +300,22 @@ require __DIR__ . '/partials/header.php';
       <div class="card-body">
         <?php if ($emergencies): ?>
           <div class="mb-3">
-            <?php foreach ($emergencies as $em): ?>
+            <?php if (Broadcaster::alarmSounding($emergencies)): ?>
+              <form method="post" class="mb-2">
+                <?= Csrf::field() ?><input type="hidden" name="op" value="emergency_silence">
+                <button class="btn btn-warning w-100" data-confirm="<?= e(__('Stop the alarm sound on all TVs? The emergency message stays on the screen.')) ?>" data-confirm-safe="1"><i class="bi bi-bell-slash-fill"></i> <?= e(__('Silence alarm on all TVs')) ?></button>
+              </form>
+            <?php endif; ?>
+            <?php foreach ($emergencies as $em): $emAlarm = Broadcaster::alarmFor($em); ?>
               <div class="alert alert-danger d-flex align-items-center gap-2 mb-2">
                 <div class="flex-grow-1">
                   <strong><?= e($em['title']) ?></strong>
                   <div class="small"><?= e(Broadcaster::describeTarget($em['target_type'], $em['target_ids'])) ?> · <?= e(time_ago($em['start_at'])) ?></div>
+                  <?php if ($emAlarm): ?>
+                    <div class="small" data-alarm-state="on"><i class="bi bi-bell-fill"></i> <?= e(__('Alarm sound')) ?>: <?= e($emAlarm['name']) ?> · <?= e($emAlarm['loop'] ? __('until stopped') : __(':n times', ['n' => $emAlarm['repeat']])) ?> · <?= (int) $emAlarm['volume'] ?>%</div>
+                  <?php elseif (!empty($em['alarm_muted'])): ?>
+                    <div class="small" data-alarm-state="muted"><i class="bi bi-bell-slash"></i> <?= e(__('Alarm silenced')) ?></div>
+                  <?php endif; ?>
                 </div>
                 <?php if (Access::canBroadcast($em)): ?>
                 <form method="post">
@@ -313,6 +343,28 @@ require __DIR__ . '/partials/header.php';
             <div class="col-6"><label class="form-label" for="ebg"><?= e(__('Background colour')) ?></label><input type="color" class="form-control form-control-color w-100" id="ebg" name="bg_color" value="#B00020"></div>
             <div class="col-6"><label class="form-label" for="efg"><?= e(__('Text colour')) ?></label><input type="color" class="form-control form-control-color w-100" id="efg" name="text_color" value="#FFFFFF"></div>
           </div>
+          <fieldset class="border rounded p-2 mb-2" id="emAlarm">
+            <legend class="float-none w-auto px-1 fs-6 mb-0"><i class="bi bi-bell-fill"></i> <?= e(__('Alarm sound')) ?></legend>
+            <div class="input-group mb-2">
+              <select class="form-select" id="ealarm" name="alarm_sound" aria-label="<?= e(__('Alarm sound')) ?>">
+                <option value="none"><?= e(__('No sound')) ?></option>
+                <?php foreach ($alarmChoices as $ref => $s): ?>
+                  <option value="<?= e($ref) ?>" data-url="<?= e($s['url']) ?>"<?= $ref === Sounds::DEFAULT_ALARM ? ' selected' : '' ?>><?= e($s['name']) ?></option>
+                <?php endforeach; ?>
+              </select>
+              <button type="button" class="btn btn-outline-secondary" id="ealarmPlay" title="<?= e(__('Listen')) ?>"><i class="bi bi-play-fill"></i></button>
+            </div>
+            <input type="hidden" name="alarm_loop" value="0">
+            <div class="form-check mb-2">
+              <input class="form-check-input" type="checkbox" id="ealoop" name="alarm_loop" value="1" checked>
+              <label class="form-check-label" for="ealoop"><?= e(__('Repeat until the emergency is stopped')) ?></label>
+            </div>
+            <div class="row g-2">
+              <div class="col-5" data-alarm-repeat hidden><label class="form-label small" for="earep"><?= e(__('Play how many times')) ?></label><input type="number" class="form-control form-control-sm" id="earep" name="alarm_repeat" min="1" max="10" value="3"></div>
+              <div class="col"><label class="form-label small" for="eavol"><?= e(__('Alarm volume')) ?>: <strong id="eavolOut">80</strong>%</label><input type="range" class="form-range" id="eavol" name="alarm_volume" min="0" max="100" value="80"></div>
+            </div>
+            <div class="form-text"><?= e(__('The TVs raise their volume to at least this level while the alarm plays and restore it afterwards.')) ?></div>
+          </fieldset>
           <label class="form-label"><?= e(__('Show on')) ?></label>
           <div class="mb-3"><?= target_picker('em') ?></div>
           <button class="btn btn-danger w-100" data-confirm="<?= e(__('Show this emergency message full screen on the selected TVs now?')) ?>"><i class="bi bi-megaphone-fill"></i> <?= e(__('Show emergency message now')) ?></button>
@@ -371,6 +423,32 @@ document.addEventListener('DOMContentLoaded', () => {
     if (st) st.required = w === 'once';
   };
   form.querySelectorAll('input[name=when]').forEach((r) => r.addEventListener('change', sync));
+  sync();
+});
+// 2.4.1 emergency alarm options: "play N times" only when not looping, volume label, listen button.
+document.addEventListener('DOMContentLoaded', () => {
+  const box = document.getElementById('emAlarm');
+  if (!box) return;
+  const sel = box.querySelector('#ealarm'), loop = box.querySelector('#ealoop'), vol = box.querySelector('#eavol');
+  let audio = null;
+  const sync = () => {
+    const none = sel.value === 'none';
+    box.querySelector('[data-alarm-repeat]').hidden = none || loop.checked;
+    [loop, vol, box.querySelector('#earep')].forEach((el) => { el.disabled = none; });
+    box.querySelector('#eavolOut').textContent = vol.value;
+  };
+  sel.addEventListener('change', () => { if (audio) { audio.pause(); audio = null; } sync(); });
+  loop.addEventListener('change', sync);
+  vol.addEventListener('input', sync);
+  box.querySelector('#ealarmPlay').addEventListener('click', () => {
+    if (audio) { audio.pause(); audio = null; return; }
+    const url = (sel.selectedOptions[0] || {}).dataset ? sel.selectedOptions[0].dataset.url : '';
+    if (!url) return;
+    audio = new Audio(url);
+    audio.volume = vol.value / 100;
+    audio.play().catch(() => {});
+    setTimeout(() => { if (audio) { audio.pause(); audio = null; } }, 6000);
+  });
   sync();
 });
 </script>

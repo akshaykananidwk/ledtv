@@ -87,6 +87,24 @@ object AnnounceSpec {
         )
     }
 
+    /**
+     * 2.4.1 SHOW_MESSAGE `sound` {url, repeat 1–5, volume 0–100}: the sound played when the message appears,
+     * or null (none, or not a valid http(s) url — the message is still shown).
+     */
+    fun messageSound(cmd: Command): SoundRequest? {
+        val o = try {
+            cmd.payload?.get("sound")?.takeIf { it.isJsonObject }?.asJsonObject
+        } catch (e: Exception) {
+            null
+        } ?: return null
+        val inner = Command(cmd.id, "PLAY_SOUND", o)
+        val req = try { sound(inner) } catch (e: CommandFailedException) { return null }
+        return req.copy(
+            repeat = (inner.payloadDouble("repeat")?.toInt() ?: 1).coerceIn(1, 5),
+            volume = (inner.payloadDouble("volume")?.toInt() ?: 80).coerceIn(0, 100),
+        )
+    }
+
     /** "auto": Gujarati script → gu, Devanagari → hi, otherwise en. */
     fun detectLang(text: String): String {
         var gu = 0

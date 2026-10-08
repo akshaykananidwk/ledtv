@@ -65,3 +65,8 @@ DirectoryIndex index.php index.html
 
 # Signed TV app download (downloads/HotelCast-TV-x.y.z.apk)
 AddType application/vnd.android.package-archive .apk
+
+# Sound library / emergency alarms (2.4.1): TVs and browsers need an audio Content-Type
+AddType audio/wav .wav
+AddType audio/mpeg .mp3
+AddType audio/ogg .ogg

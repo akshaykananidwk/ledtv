@@ -142,7 +142,21 @@ class CommandHandler(
                         return
                     }
                     val dur = (cmd.payloadInt("duration_sec") ?: DEFAULT_MESSAGE_SEC).let { if (it <= 0) DEFAULT_MESSAGE_SEC else it }.coerceIn(3, 3600)
-                    safeAck(id, STATUS_ACKED, actions.showMessage(title, message, dur))
+                    val shown = actions.showMessage(title, message, dur)
+                    // 2.4.1: optional sound when the message appears (PLAY_SOUND path: queued, content ducked).
+                    // A bad / unplayable sound never fails the message itself.
+                    val sound = AnnounceSpec.messageSound(cmd)
+                    val note = when {
+                        sound == null -> ""
+                        else -> try {
+                            "; " + actions.playSound(sound)
+                        } catch (e: kotlinx.coroutines.CancellationException) {
+                            throw e
+                        } catch (e: Exception) {
+                            "; sound not played: " + (e.message ?: e.javaClass.simpleName)
+                        }
+                    }
+                    safeAck(id, STATUS_ACKED, shown + note)
                 }
                 // 2.4: invalid payloads throw CommandFailedException → acked as failed with the reason.
                 "SPEAK" -> safeAck(id, STATUS_ACKED, actions.speak(AnnounceSpec.speak(cmd)))

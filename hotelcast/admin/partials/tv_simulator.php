@@ -72,6 +72,7 @@ body.embed .bar{display:none}body.embed .wrap{top:0}
   <span class="lbl"><?= e($label) ?></span>
   <?php if (!empty($simBadge)): ?><span class="mode" style="background:#b45309"><?= e($simBadge) ?></span><?php endif; ?>
   <span class="mode" id="modeBadge"></span>
+  <span class="mode m-emergency" id="alarmBadge" hidden></span>
   <span id="itemInfo" style="opacity:.75"></span>
   <span class="sp"></span>
   <button type="button" id="btnPrev" title="<?= e(__('Previous')) ?>"><i class="bi bi-skip-start-fill"></i></button>
@@ -89,6 +90,8 @@ body.embed .bar{display:none}body.embed .wrap{top:0}
       'modes' => ['emergency' => __('Emergency'), 'scheduled' => __('Scheduled'), 'assigned' => __('Assigned'), 'group' => __('Group'), 'default' => __('Default'), 'off' => __('Screen off'), 'empty' => __('Welcome screen'), 'preview' => __('Preview')],
       'welcome' => __('Welcome'), 'room' => __('Room'), 'rtsp' => __('RTSP camera streams play on the TV but cannot be shown in a web browser.'),
       'off' => __('Screen off'), 'nothing' => __('Nothing to show'), 'of' => __('of'),
+      'alarm' => __('Alarm sound'), 'alarmLoop' => __('until stopped'), 'alarmTimes' => __(':n times'), 'alarmMuted' => __('Alarm silenced'),
+      'alarmHint' => __('Sound on/off'),
   ]) ?>;
   const refreshUrl = <?= json_embed($simRefreshUrl ?? null) ?>;
   const stage = document.getElementById('stage');
@@ -325,7 +328,38 @@ body.embed .bar{display:none}body.embed .wrap{top:0}
     if (c) every(1000, () => { c.textContent = fmtTime(new Date(), ov.clock_format); });
   }
 
+  // 2.4.1 emergency alarm: indicator in the toolbar; the sound plays here only after "Sound on".
+  let alarmAudio = null, alarmKey = '';
+  function alarmState() {
+    const em = content.mode === 'emergency' ? (content.emergency || {}) : null;
+    const al = em && em.alarm && em.alarm.url ? em.alarm : null;
+    const badge = document.getElementById('alarmBadge');
+    if (al) {
+      badge.hidden = false;
+      badge.innerHTML = '<i class="bi bi-bell-fill"></i> ' + esc(T.alarm) + ': ' + esc(al.name || '') + ' · '
+        + esc(al.loop ? T.alarmLoop : T.alarmTimes.replace(':n', al.repeat)) + ' · ' + esc(al.volume) + '%';
+      badge.title = T.alarmHint;
+    } else if (em && em.alarm_muted) {
+      badge.hidden = false;
+      badge.innerHTML = '<i class="bi bi-bell-slash"></i> ' + esc(T.alarmMuted);
+    } else {
+      badge.hidden = true;
+    }
+    const key = al && !muted ? al.url + '|' + al.loop + '|' + al.repeat : '';
+    if (key === alarmKey) return;
+    alarmKey = key;
+    if (alarmAudio) { alarmAudio.pause(); alarmAudio = null; }
+    if (!key) return;
+    let plays = 0;
+    alarmAudio = new Audio(al.url);
+    alarmAudio.loop = !!al.loop;
+    alarmAudio.volume = Math.max(0, Math.min(1, (Number(al.volume) || 80) / 100));
+    alarmAudio.addEventListener('ended', function () { plays++; if (!al.loop && plays < al.repeat) { this.currentTime = 0; this.play().catch(() => {}); } });
+    alarmAudio.play().catch(() => {});
+  }
+
   function render() {
+    alarmState();
     clearTimers();
     hlsList.forEach((h) => { try { h.destroy(); } catch (e) { /* ignore */ } }); hlsList = [];
     stage.innerHTML = '';
@@ -357,6 +391,7 @@ body.embed .bar{display:none}body.embed .wrap{top:0}
     muted = !muted;
     stage.querySelectorAll('video').forEach((v) => { v.muted = muted || v.dataset.mute === '1'; if (!muted) v.play().catch(() => {}); });
     ev.currentTarget.innerHTML = '<i class="bi ' + (muted ? 'bi-volume-mute-fill' : 'bi-volume-up-fill') + '"></i>';
+    alarmState();
   });
   document.getElementById('btnFs').addEventListener('click', () => {
     if (document.fullscreenElement) document.exitFullscreen(); else (stage.requestFullscreen || stage.webkitRequestFullscreen || (() => {})).call(stage);

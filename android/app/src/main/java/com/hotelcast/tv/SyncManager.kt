@@ -135,6 +135,9 @@ object SyncManager : CommandActions {
         // 2.4: USB / offline mode, announcements.
         _effective.value = _content.value
         Announcer.init(app)
+        // 2.4.1: emergency alarm — also sounds when the player activity is not on screen (TV screen off).
+        EmergencyAlarm.init(app, cache)
+        EmergencyAlarm.update(_content.value)
         UsbMedia.init(app)
         scope.launch {
             combine(_content, UsbMedia.items) { c, usb -> c to usb }.collect { (c, usb) ->
@@ -336,6 +339,7 @@ object SyncManager : CommandActions {
         normalized.branding?.color?.takeIf { it.isNotBlank() }?.let { if (Prefs.brandColor != it) Prefs.brandColor = it }
         normalized.hotel?.name?.takeIf { it.isNotBlank() }?.let { if (Prefs.hotelName != it) Prefs.hotelName = it }
         PowerController.evaluate(normalized)
+        EmergencyAlarm.update(normalized) // same alarm re-sent → keeps playing; null → stops at once
         if (normalized.isEmergency && !wasEmergency) bringPlayerToFront() // e.g. guest is in Live TV / HDMI
         VolumeController.applyDefaultIfNewStay(app, normalized)
         Log.i(TAG, "New content hash=$hash mode=${normalized.mode} items=${normalized.items?.size ?: 0}")

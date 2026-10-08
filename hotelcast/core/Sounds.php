@@ -2,8 +2,9 @@
 declare(strict_types=1);
 
 /**
- * Sound library for bell / chime schedules (device schedules, 2.4): three built-in chimes synthesized for
- * this product (assets/sounds/*.wav, no third-party audio) plus the hotel's own uploads (table `sounds`,
+ * Sound library for bell / chime schedules (device schedules, 2.4), emergency alarms and message sounds
+ * (2.4.1): built-in sounds synthesized for this product (assets/sounds/*.wav, no third-party audio,
+ * generator: tools/sounds/make_alarm_sounds.php) plus the hotel's own uploads (table `sounds`,
  * mp3 / wav / ogg ≤ 5 MB, validated by Uploader kind 'audio').
  *
  * A sound is referenced by a string: "b:school_bell" (built-in) or "u:12" (uploaded row id).
@@ -14,7 +15,18 @@ final class Sounds
         'school_bell' => 'School bell',
         'temple_bell' => 'Temple bell',
         'soft_chime' => 'Soft chime',
+        // 2.4.1: emergency alarms (loopable without a click) and the message / notice chime.
+        'emergency_beep' => 'Emergency beep',
+        'emergency_siren' => 'Emergency siren',
+        'fire_alarm' => 'Fire alarm',
+        'notice_chime' => 'Notice chime',
     ];
+    /** Alarm sound of a new emergency (admin form default, AJAX API and chain emergencies). */
+    public const DEFAULT_ALARM = 'b:emergency_beep';
+    /** Built-in alarms offered first in the emergency form. */
+    public const ALARMS = ['b:emergency_beep', 'b:emergency_siren', 'b:fire_alarm'];
+    /** Built-in sound offered for messages and the notice board. */
+    public const NOTICE_CHIME = 'b:notice_chime';
 
     /** Built-in sounds: [ref => ['ref', 'name', 'url', 'builtin' => true]]. */
     public static function builtins(): array
@@ -93,13 +105,49 @@ final class Sounds
         ]);
     }
 
-    /** Number of schedules of the current hotel that play this uploaded sound. */
+    /** Number of schedules (and active emergency alarms, 2.4.1) of the current hotel that play this uploaded sound. */
     public static function usage(int $id): int
     {
         return (int) DB::value(
             "SELECT COUNT(*) FROM device_schedules WHERE hotel_id = :h AND action = 'bell' AND options LIKE :p",
             ['h' => Tenant::id(), 'p' => '%"sound":"u:' . $id . '"%']
+        ) + (int) DB::value(
+            "SELECT COUNT(*) FROM broadcast_commands WHERE hotel_id = :h AND is_emergency = 1 AND status = 'active' AND alarm_sound = :s",
+            ['h' => Tenant::id(), 's' => 'u:' . $id]
         );
+    }
+
+    /**
+     * Validated sound of the hotel's library for a TV payload (emergency alarm, message sound): the same
+     * rule as PLAY_SOUND after the 2.4 security review (DeviceFeatures::playSoundPayload) — a built-in sound
+     * or one of the current hotel's uploads, nothing else. Another hotel's id → 404 (Tenant::deny).
+     * Returns ['ref', 'name', 'url']. Throws InvalidArgumentException.
+     */
+    public static function libraryRef(string $ref): array
+    {
+        $ref = trim($ref);
+        $s = preg_match('/^(b:[a-z_]{1,30}|u:\d{1,10})$/', $ref) ? self::resolve($ref) : null;
+        if (!$s) {
+            throw new InvalidArgumentException(__('Choose a sound from the sound library (Device schedules → Sounds).'));
+        }
+        $url = DeviceFeatures::playSoundPayload(['sound' => $ref])['url'];
+        return ['ref' => $ref, 'name' => (string) $s['name'], 'url' => $url];
+    }
+
+    /** Choices for a sound picker: [ref => name], built-ins listed first in the given order. */
+    public static function choices(array $first = []): array
+    {
+        $all = self::all();
+        $out = [];
+        foreach ($first as $ref) {
+            if (isset($all[$ref])) {
+                $out[$ref] = $all[$ref]['name'];
+            }
+        }
+        foreach ($all as $ref => $s) {
+            $out[$ref] ??= $s['name'];
+        }
+        return $out;
     }
 
     /** Delete an uploaded sound (file + row). False when a schedule still uses it. */

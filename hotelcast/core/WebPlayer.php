@@ -12,11 +12,12 @@ declare(strict_types=1);
  */
 final class WebPlayer
 {
-    /** Shown as app_version "web-2.4.0". */
-    public const VERSION = '2.4.0';
+    /** Shown as app_version "web-2.4.1". */
+    public const VERSION = '2.4.1';
     /**
-     * Feature level, sent as app_version_code: the same as the 2.4.0 Android app (11), so the server sends
-     * split screen layouts (Layouts::MIN_APP_CODE = 10) and every 2.4 field.
+     * Feature level, sent as app_version_code: the 2.4 feature level (11), so the server sends split screen
+     * layouts (Layouts::MIN_APP_CODE = 10) and every 2.4 field. The 2.4.1 emergency alarm needs no newer level
+     * (`emergency.alarm` is sent to every TV; older apps ignore it).
      */
     public const VERSION_CODE = 11;
 
@@ -125,6 +126,8 @@ final class WebPlayer
             'Language', 'Close', 'Room', 'Device ID', 'Server', 'Version', 'Press OK again to confirm',
             'Web player', 'Sound on', 'Full screen', 'Message',
             'This screen was removed from the server. Please set it up again.',
+            // 2.4.1 emergency alarm
+            'Tap or press OK to enable the alarm sound',
         ];
     }
 

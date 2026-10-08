@@ -177,6 +177,15 @@ function tvc_target(string $uid, string $label, string $confirm): string
         <div class="mb-2"><label class="form-label" for="mtitle"><?= e(__('Title')) ?></label><input class="form-control" id="mtitle" name="title" maxlength="120" placeholder="<?= e(__('e.g. Your food is on the way')) ?>"></div>
         <div class="mb-2"><label class="form-label" for="mmsg"><?= e(__('Message')) ?></label><textarea class="form-control" id="mmsg" name="message" rows="2" maxlength="1000"></textarea></div>
         <div class="mb-3" style="max-width:220px"><label class="form-label" for="mdur"><?= e(__('Show for (seconds)')) ?></label><input type="number" class="form-control" id="mdur" name="duration_sec" min="3" max="3600" value="15"></div>
+        <div class="row g-2 mb-3" data-msg-sound>
+          <div class="col-sm-6"><label class="form-label" for="msound"><i class="bi bi-music-note-beamed"></i> <?= e(__('Sound when the message appears')) ?></label>
+            <select class="form-select" id="msound" name="sound">
+              <option value="none"><?= e(__('No sound')) ?></option>
+              <?php foreach (Sounds::choices([Sounds::NOTICE_CHIME]) as $ref => $name): ?><option value="<?= e($ref) ?>"><?= e($name) ?></option><?php endforeach; ?>
+            </select></div>
+          <div class="col-6 col-sm-3"><label class="form-label" for="msrep"><?= e(__('Play times')) ?></label><input type="number" class="form-control" id="msrep" name="sound_repeat" min="1" max="5" value="1"></div>
+          <div class="col-6 col-sm-3"><label class="form-label" for="msvol"><?= e(__('Volume')) ?> %</label><input type="number" class="form-control" id="msvol" name="sound_volume" min="0" max="100" value="80"></div>
+        </div>
         <?= tvc_target('msg', __('Show message'), __('Show this message on the selected TVs?')) ?>
       </div>
     </form>

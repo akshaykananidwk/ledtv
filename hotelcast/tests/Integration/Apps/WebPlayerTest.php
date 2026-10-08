@@ -199,7 +199,7 @@ final class WebPlayerTest extends TestCase
         $dev = DB::one('SELECT * FROM devices WHERE device_uid = :u', ['u' => self::$uid]);
         $this->assertSame('web', $dev['platform']);
         $this->assertSame(self::UA, $dev['user_agent']);
-        $this->assertSame('web-2.4.0', $dev['app_version']);
+        $this->assertSame('web-' . WebPlayer::VERSION, $dev['app_version']);
         $this->assertSame(11, (int) $dev['app_version_code']);
 
         // Poll (the player uses index.php?r= so it works without mod_rewrite, and asks for a long poll).

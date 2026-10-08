@@ -26,10 +26,32 @@
     }, Math.max(3, sec) * 1000);
   }
 
+  /* 2.4.1: optional chime when a notice appears that was not shown before (data.chime_url). */
+  var seen = null, audio = null;
+  function noticeKey(n) { return n.id ? 'i' + n.id : 't' + n.title; }
+  function chime(data) {
+    var notices = data.notices || [], next = {}, fresh = false, i, k;
+    for (i = 0; i < notices.length; i++) {
+      k = noticeKey(notices[i]);
+      next[k] = true;
+      if (seen && !seen[k]) { fresh = true; }
+    }
+    seen = next;
+    if (!fresh || !data.chime_url) { return; }
+    try {
+      if (!audio) { audio = d.createElement('audio'); audio.preload = 'auto'; }
+      if (audio.getAttribute('src') !== data.chime_url) { audio.src = data.chime_url; }
+      audio.currentTime = 0;
+      var p = audio.play();
+      if (p && typeof p.then === 'function') { p.then(null, function () { /* autoplay blocked: ignore */ }); }
+    } catch (e) { /* no audio on this screen */ }
+  }
+
   w.HCApp = {
     update: function (data, initial) {
       var list = d.getElementById('nbList');
       if (!list || !data) { return; }
+      chime(data);
       var rotate = data.layout === 'rotate', sec = data.rotate_sec || 10, html = '', i;
       if (!initial) {
         var notices = data.notices || [];

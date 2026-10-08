@@ -1,3 +1,10 @@
+# 2.4.1 — emergency alarm sound + notice chime (2026-10-08)
+
+Emergency: beep / siren / fire alarm / library sound, repeating until stopped (or N times), alarm volume (TV raised, restored after), "Silence alarm" button. Messages and notice board: optional chime. Built-in sounds synthesised in-house (`tools/sounds/make_alarm_sounds.php`).
+PHPUnit ✅ 520 tests, 0 failures (EmergencyAlarmTest 12 new) · Android ✅ 226 tests, lint 0 errors, APK `KrishnaCloud-TV-2.4.1.apk` (code 12), same signing key. Not verified here: loudness / volume restore / standby behaviour on real TVs.
+
+---
+
 # 2.4.0 — features 26–50 (2026-10-08)
 
 | Area | Result |

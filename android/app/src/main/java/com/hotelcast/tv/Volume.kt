@@ -121,6 +121,7 @@ object VolumeController {
     /** Clamps the current volume to the allowed max (night limit). Returns true if it was lowered. */
     fun enforce(context: Context, cfg: VolumeConfig?): Boolean {
         if (cfg == null) return false
+        if (EmergencyAlarm.holdsVolume) return false // 2.4.1: the emergency alarm may exceed the (night) max
         val am = am(context) ?: return false
         if (isFixed(am)) return false
         return try {
@@ -141,6 +142,7 @@ object VolumeController {
     /** Applies `volume.default` once per stay (see [VolumePolicy.stayKey]). */
     fun applyDefaultIfNewStay(context: Context, content: Content?) {
         val key = VolumePolicy.stayKey(content) ?: return
+        if (EmergencyAlarm.holdsVolume) return // applied after the alarm (the stay key is not consumed)
         if (Prefs.volumeStayApplied == key) return
         Prefs.volumeStayApplied = key
         val level = VolumePolicy.clamp(content!!.volume!!.defaultLevel!!, content.volume, VolumePolicy.minutesOfDay())

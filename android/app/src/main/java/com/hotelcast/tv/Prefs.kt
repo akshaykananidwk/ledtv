@@ -132,6 +132,15 @@ object Prefs {
         get() = sp.getString(K_VOLUME_STAY, "") ?: ""
         set(v) = sp.edit().putString(K_VOLUME_STAY, v).apply()
 
+    /**
+     * 2.4.1 emergency alarm: STREAM_MUSIC state saved before the alarm raised the volume
+     * ([AlarmPlan.VolumeRestore.serialize]); "" when nothing is to be restored. Persisted so a restart
+     * in the middle of an alarm still restores the guest's volume.
+     */
+    var alarmVolumeRestore: String
+        get() = sp.getString(K_ALARM_RESTORE, "") ?: ""
+        set(v) = sp.edit().putString(K_ALARM_RESTORE, v).apply()
+
     /** Branding product name (white-label), shown in the settings title. */
     var brandProduct: String
         get() = sp.getString(K_BRAND_PRODUCT, "") ?: ""
@@ -222,6 +231,7 @@ object Prefs {
     private const val K_WELCOME_SHOWN = "welcome_shown_ids"
     private const val K_REMINDER_DISMISSED = "reminder_dismissed_ids"
     private const val K_VOLUME_STAY = "volume_stay_applied"
+    private const val K_ALARM_RESTORE = "alarm_volume_restore"
     private const val K_BRAND_PRODUCT = "brand_product"
     private const val K_HOTEL_NAME = "hotel_name"
     private const val K_BRAND_COLOR = "brand_color"

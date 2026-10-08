@@ -504,7 +504,7 @@ final class DeviceSchedulesTest extends TestCase
             $this->assertTrue(Uploader::isAudio($f, 'wav', (new finfo(FILEINFO_MIME_TYPE))->file($f)), basename($f));
             $this->assertLessThan(Uploader::AUDIO_MAX_MB * 1024 * 1024, filesize($f));
         }
-        $this->assertCount(3, glob(HC_ROOT . '/assets/sounds/*.wav'));
+        $this->assertCount(count(Sounds::BUILTIN), glob(HC_ROOT . '/assets/sounds/*.wav')); // 3 bells + 4 alarm / chime sounds (2.4.1)
 
         $s = new AdminSession(self::$url, 'dsMgr');
         $before = (int) DB::value('SELECT COUNT(*) FROM sounds WHERE hotel_id = 1');

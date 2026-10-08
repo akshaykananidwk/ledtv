@@ -87,6 +87,9 @@ final class ContentResolver
                     'message' => (string) ($p['message'] ?? ''),
                     'bg_color' => clean_color($p['bg_color'] ?? null, '#B00020'),
                     'text_color' => clean_color($p['text_color'] ?? null, '#FFFFFF'),
+                    // 2.4.1: alarm sound {url, loop, repeat, volume, name} or null; old apps ignore it.
+                    'alarm' => Broadcaster::alarmFor($b),
+                    'alarm_muted' => !empty($b['alarm_muted']) && (string) ($b['alarm_sound'] ?? '') !== '',
                 ];
                 $content['mode'] = 'emergency';
                 $content['emergency'] = $em;

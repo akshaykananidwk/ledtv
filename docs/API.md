@@ -137,6 +137,7 @@ the TV must de-duplicate by `id`). Commands not acked within 24 h expire.
 | `PING`           | `{}`                                          | Ack only (connectivity test). |
 | `SPEAK`          | `{text, lang: gu\|hi\|en\|auto, rate: 0.5–2, repeat: 1–3, volume?: 0–100, chime_before}` | (2.4) Text-to-speech announcement (gu-IN / hi-IN / en-IN voice, default voice when missing — named in the ack), video sound ducked, queued (never overlapping). |
 | `PLAY_SOUND`     | `{url, volume: 0–100, repeat: 1–10}`          | (2.4) Short clip in its own player (max 2 min), video sound ducked, same queue as `SPEAK`. |
+| `SHOW_MESSAGE`   | `{title, message, duration_sec: 3–3600, sound?: {url, repeat: 1–5, volume: 0–100}}` | (2.0) Message card over the content (OK / BACK closes it). (2.4.1) Optional `sound`: played once (or `repeat` times) when the card appears, through the `PLAY_SOUND` queue (video ducked); a sound that cannot play never fails the message. Refused while an emergency is shown. |
 | `LIVE_VIEW`      | `{session, interval, max_sec, max_width, quality}` | (2.4) Upload small screenshots (`device/screenshot` + field `live`) every `interval` s while the server keeps the session alive. See docs/modules/device_features.md. |
 
 ---
@@ -239,7 +240,17 @@ Returns the Content object currently scheduled for a room. A device may only rea
 | `empty`     | nothing to show — show the hotel logo / welcome screen |
 | `wall`      | (2.4) the room is a tile of an active video wall: `items` are the wall's, plus `wall` and `sync` (below) |
 
-When `emergency` is not null it is: `{ "id": 9, "title": "...", "message": "...", "bg_color": "#B00020", "text_color": "#FFFFFF" }`.
+When `emergency` is not null it is: `{ "id": 9, "title": "...", "message": "...", "bg_color": "#B00020", "text_color": "#FFFFFF", "alarm": {...} | null, "alarm_muted": false }`.
+
+`emergency.alarm` (2.4.1, docs/modules/emergency_alarm.md) is the sound to play while the emergency is shown,
+or `null` (no sound, silenced, or an emergency from before 2.4.1):
+`{ "url": "https://…/assets/sounds/emergency_beep.wav", "loop": true, "repeat": 3, "volume": 80, "name": "Emergency beep" }`.
+`url` is absolute (a built-in sound or the hotel's sound library only); `loop` true = repeat until the emergency
+ends or is silenced, false = play `repeat` (1–10) times; `volume` 0–100 = raise the TV volume to at least this
+share of its maximum while the alarm plays and restore it afterwards. `alarm_muted` is true after
+"Silence alarm on all TVs": the message stays, `alarm` becomes `null` and the content hash changes. The TV must
+not restart a running alarm when the same `alarm` is re-sent; it restarts only when `url` or `loop` changes and
+stops at once when `alarm` becomes `null` or the emergency ends. Apps before 2.4.1 ignore both fields.
 
 `overlay.ticker` (2.2, see docs/modules/ticker_bar.md) is `null` when no ticker bar is active for the room,
 otherwise: `text` (all active messages joined with `"   ✦   "`; 2.1 apps only use `text`, `speed` and the
@@ -363,8 +374,9 @@ request. Base: `/admin/ajax.php?action=<name>`.
 | `dashboard_stats`     | GET    | any             | room/device counts, online/offline, recent activity |
 | `room_status`         | GET    | any             | live status for every room (used for auto refresh) |
 | `send_command`        | POST   | manager (+staff for SHOW_CONTENT) | `{command, target_type, target_ids[]}` |
-| `emergency_start`     | POST   | staff+          | `{title, message, target_type, target_ids[]}` |
-| `emergency_stop`      | POST   | staff+          | clears all active emergencies |
+| `emergency_start`     | POST   | staff+          | `{title, message, target_type, target_ids[], bg_color?, text_color?, alarm_sound?, alarm_loop?, alarm_repeat?, alarm_volume?}` — 2.4.1 alarm: `alarm_sound` `"b:emergency_beep"` (default when missing), `"b:emergency_siren"`, `"b:fire_alarm"`, `"u:<id>"` (hotel sound library) or `"none"`; `alarm_loop` (default true), `alarm_repeat` 1–10 (default 3), `alarm_volume` 0–100 (default 80). Unknown sound → 422, another hotel's sound → 404 |
+| `emergency_silence`   | POST   | staff+          | (2.4.1) `{id?}` — stop the alarm sound of one / all active emergencies, the message stays; returns `{silenced}` |
+| `emergency_stop`      | POST   | staff+          | `{id?}` — stops one / all active emergencies |
 | `preview_content`     | GET    | any             | `content_id` or `playlist_id` → Content object preview |
 | `update_check`        | POST   | platform_admin  | checks GitHub (latest commit, version, changed files, commits) |
 | `update_run`          | POST   | platform_admin  | runs the full update; returns step log |

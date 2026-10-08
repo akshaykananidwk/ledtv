@@ -635,8 +635,9 @@
     $('hc-full').className = 'hc-full';
     hideTicker();
     setBlack(false);
+    syncAlarm();
     if (!c) { showWelcome(null, t('Connecting…')); return; }
-    if (isEmergency(c)) { power(true); showEmergency(c); return; }
+    if (isEmergency(c)) { power(true); showEmergency(c); alarmHint(); return; }
     if (desiredOff(c) && !S.override) {
       setBlack(true);
       power(false, S.localOff || c.power_off_mode !== 'black');
@@ -692,8 +693,82 @@
     var msg = em.message !== undefined ? em.message : (ann.subtitle || '');
     showFull('hc-emergency', '<div class="hc-em" style="background:' + color(em.bg_color || ann.bg_color, '#B00020') + ';color:' + color(em.text_color || ann.text_color, '#FFFFFF') + '">' +
       '<div class="hc-em-icon">&#9888;</div><div class="hc-em-title">' + esc(title) + '</div>' +
-      (msg ? '<div class="hc-em-msg">' + esc(msg) + '</div>' : '') + '</div>');
+      (msg ? '<div class="hc-em-msg">' + esc(msg) + '</div>' : '') +
+      '<div class="hc-em-alarm" id="hc-em-alarm">&#128266; ' + esc(t('Tap or press OK to enable the alarm sound')) + '</div></div>');
   }
+
+  // ------------------------------------------------------------------- emergency alarm (2.4.1)
+  /**
+   * content.emergency.alarm {url, loop, repeat, volume}: an HTML audio element plays it while the emergency
+   * is shown — looping, or `repeat` times. The same alarm in a re-sent content object keeps playing (no
+   * restart); a new sound / loop setting restarts it; no alarm (stopped or silenced) stops it at once.
+   * A browser cannot change the TV's own volume: the element plays at max(player volume, alarm volume),
+   * even when the player is muted. Autoplay blocked → "tap / OK" hint on the emergency screen.
+   */
+  var alarm = { a: null, key: '', blocked: false };
+  function alarmSpec(c) {
+    var em = isEmergency(c) ? c.emergency : null;
+    var al = em && em.alarm;
+    if (!al || typeof al !== 'object' || !trim(al.url) || !/^(https?:)?\/\//i.test(trim(al.url))) return null;
+    var loop = al.loop !== false && al.loop !== 0 && al.loop !== '0';
+    return { url: trim(al.url), loop: loop, repeat: clamp(Math.round(num(al.repeat, 3)), 1, 10), volume: clamp(Math.round(num(al.volume, 80)), 0, 100), id: em.id || 0 };
+  }
+  /** Restart key: sound + loop mode (a repeat-N alarm also restarts for a new emergency). */
+  function alarmKey(sp) { return sp.url + '|' + (sp.loop ? 'loop' : 'x' + sp.repeat + '|' + sp.id); }
+  function stopAlarm() {
+    var a = alarm.a;
+    alarm.a = null;
+    alarm.key = '';
+    alarm.blocked = false;
+    if (!a) return;
+    a.onended = a.onerror = null;
+    try { a.pause(); a.removeAttribute('src'); a.load(); } catch (e) { /* ignore */ }
+    log('Alarm stopped');
+  }
+  function playAlarm() {
+    var a = alarm.a;
+    if (!a) return;
+    var pr = tryPlay(a);
+    if (pr) {
+      pr.then(function () { if (alarm.a === a) { alarm.blocked = false; alarmHint(); } }, function (err) {
+        if (alarm.a !== a) return;
+        alarm.blocked = !!(err && err.name === 'NotAllowedError');
+        if (!alarm.blocked) log('Alarm cannot play: ' + (err && err.message));
+        alarmHint();
+      });
+    }
+  }
+  function syncAlarm() {
+    var sp = S.mode === 'player' ? alarmSpec(S.content) : null;
+    if (!sp) { stopAlarm(); return; }
+    var key = alarmKey(sp), vol = Math.max(sp.volume, S.volume) / 100;
+    if (alarm.a && alarm.key === key) {
+      try { alarm.a.volume = vol; } catch (e) { /* read-only on some TVs */ }
+      return;
+    }
+    stopAlarm();
+    var a = new window.Audio();
+    var plays = 0;
+    alarm.a = a;
+    alarm.key = key;
+    a.loop = sp.loop;
+    a.preload = 'auto';
+    try { a.volume = vol; } catch (e) { /* ignore */ }
+    a.onended = function () {
+      if (alarm.a !== a || sp.loop) return;
+      plays++;
+      if (plays < sp.repeat) { a.currentTime = 0; tryPlay(a); }
+    };
+    a.onerror = function () { if (alarm.a === a) log('Alarm sound failed to load'); };
+    a.src = sp.url;
+    log('Alarm ' + (sp.loop ? 'looping' : sp.repeat + '×') + ' at ' + Math.round(vol * 100) + '%');
+    playAlarm();
+  }
+  function alarmHint() {
+    var h = $('hc-em-alarm');
+    if (h) h.className = 'hc-em-alarm' + (alarm.a && alarm.blocked ? ' hc-on' : '');
+  }
+  on(window, 'pagehide', stopAlarm);
   function brandLogo(c) {
     return (c && c.hotel && c.hotel.logo_url) || (c && c.branding && c.branding.logo_url) || CFG.logo || null;
   }
@@ -1229,7 +1304,10 @@
           var dur = num(p.duration_sec, 15);
           dur = clamp(dur <= 0 ? 15 : dur, 3, 3600);
           showMessage(title, message, dur);
-          done('acked', 'Message shown for ' + dur + ' s' + (isBlack() ? ' (screen is off)' : ''));
+          // 2.4.1: optional sound {url, repeat, volume} when the message appears (PLAY_SOUND path, video ducked).
+          var snd = p.sound && typeof p.sound === 'object' && trim(p.sound.url) ? p.sound : null;
+          if (snd) playSound({ url: snd.url, repeat: clamp(Math.round(num(snd.repeat, 1)), 1, 5), volume: snd.volume }, function () { /* acked with the message */ });
+          done('acked', 'Message shown for ' + dur + ' s' + (snd ? ' with sound' : '') + (isBlack() ? ' (screen is off)' : ''));
           break;
         }
         case 'SCREENSHOT': screenshot(done); break;
@@ -1264,6 +1342,7 @@
     S.volume = level;
     store.set('hc_volume', String(level));
     applyAudio();
+    if (alarm.a) syncAlarm(); // alarm plays at max(player volume, alarm volume)
   }
   function setMuted(m) {
     S.muted = m;
@@ -1582,6 +1661,7 @@
       if (S.mode === 'player' && first && ROOT.querySelector && ROOT.querySelector('iframe[src*="mute=1"]') && !S.muted) render();
     }
     if (audioCtx && audioCtx.state === 'suspended' && audioCtx.resume) { try { audioCtx.resume(); } catch (e) { /* ignore */ } }
+    if (alarm.a && alarm.blocked) playAlarm();
     if (S.mode === 'player') { requestFullscreen(); requestWakeLock(); }
   }
   function requestFullscreen() {

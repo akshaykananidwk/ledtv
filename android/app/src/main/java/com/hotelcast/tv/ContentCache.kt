@@ -120,6 +120,8 @@ class ContentCache(context: Context) {
             val urls = content.items.orEmpty().flatMap { it.cacheableUrls() }.toMutableList()
             content.hotel?.logoUrl?.takeIf { it.isNotBlank() }?.let { urls.add(it) }
             content.branding?.logoUrl?.takeIf { it.isNotBlank() }?.let { urls.add(it) }
+            // 2.4.1: the emergency alarm keeps playing when the network drops mid-emergency.
+            AlarmPlan.from(content)?.let { urls.add(it.url) }
             return urls.distinct()
         }
     }

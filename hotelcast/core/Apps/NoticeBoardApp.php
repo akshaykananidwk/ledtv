@@ -50,6 +50,7 @@ final class NoticeBoardApp extends DisplayApp
             'show_dates' => true,
             'show_clock' => true,
             'timetable_id' => 0,
+            'chime' => false,
         ];
     }
 
@@ -74,6 +75,7 @@ final class NoticeBoardApp extends DisplayApp
             'show_dates' => self::bool($in, 'show_dates'),
             'show_clock' => self::bool($in, 'show_clock'),
             'timetable_id' => $tt,
+            'chime' => self::bool($in, 'chime'),
         ], $errors];
     }
 
@@ -95,7 +97,8 @@ final class NoticeBoardApp extends DisplayApp
             . self::input('max', __('Maximum notices'), $config['max'], 'number', ['min' => 1, 'max' => 50], '', 'col-md-4')
             . self::select('timetable_id', __('Timetable beside the notices (optional)'), $tts, (string) $config['timetable_id'], __('A timetable from the content library, e.g. the weekly class timetable.'))
             . self::checkbox('show_dates', __('Show dates'), (bool) $config['show_dates'], 'col-md-3')
-            . self::checkbox('show_clock', __('Show clock'), (bool) $config['show_clock'], 'col-md-3');
+            . self::checkbox('show_clock', __('Show clock'), (bool) $config['show_clock'], 'col-md-3')
+            . self::checkbox('chime', __('Play a chime when a new notice appears'), !empty($config['chime']), 'col-md-6');
     }
 
     /** Notices as JSON-able rows for the TV. */
@@ -133,6 +136,9 @@ final class NoticeBoardApp extends DisplayApp
             'layout' => $config['layout'],
             'rotate_sec' => (int) $config['rotate_sec'],
             'empty' => __('No notices right now.'),
+            // 2.4.1: chime (built-in notice_chime.wav) when a notice that was not on the screen appears;
+            // never in the admin preview. The Android WebView allows autoplay; browsers may block it.
+            'chime_url' => !empty($config['chime']) && empty($ctx['preview']) ? Sounds::resolve(Sounds::NOTICE_CHIME)['url'] ?? null : null,
         ];
     }
 

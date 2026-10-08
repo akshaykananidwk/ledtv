@@ -92,7 +92,7 @@ async function shot(page, name) {
     check(/^[0-9a-f]{64}$/.test(ls.token || ''), 'token stored in localStorage');
     check(ls.id === uid && ls.cookie.indexOf('hc_device_id=' + uid) >= 0, 'device id in localStorage + cookie');
     const dev = JSON.parse(ctl('device', uid));
-    check(dev.platform === 'web' && dev.app_version === 'web-2.4.0' && Number(dev.app_version_code) >= 10, 'registered as web device', JSON.stringify(dev));
+    check(dev.platform === 'web' && /^web-2\.4\.\d+$/.test(dev.app_version) && Number(dev.app_version_code) >= 10, 'registered as web device', JSON.stringify(dev));
 
     // 3. Playlist: image → app → announcement → layout, ticker reserves space.
     await waitItem(info.ids.image);

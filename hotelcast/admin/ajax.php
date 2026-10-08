@@ -85,8 +85,13 @@ try {
                 ajax_error(__('Enter a title or message.'), 422, 'VALIDATION_ERROR');
             }
             [$type, $ids] = $parseTarget($in);
+            try {
+                $alarm = Broadcaster::alarmOptions($in); // 2.4.1: default beep; "none" = no sound
+            } catch (InvalidArgumentException $e) {
+                ajax_error($e->getMessage(), 422, 'VALIDATION_ERROR');
+            }
             $bid = Broadcaster::emergencyStart($title, $message, $type, $ids, Auth::id(),
-                clean_color((string) ($in['bg_color'] ?? ''), '#B00020'), clean_color((string) ($in['text_color'] ?? ''), '#FFFFFF'));
+                clean_color((string) ($in['bg_color'] ?? ''), '#B00020'), clean_color((string) ($in['text_color'] ?? ''), '#FFFFFF'), $alarm);
             ActivityLog::add('emergency_start', 'broadcast', $bid, $title . ' → ' . Broadcaster::describeTarget($type, $ids));
             ajax_ok(['broadcast_id' => $bid]);
 
@@ -97,6 +102,15 @@ try {
             $n = Broadcaster::emergencyStop($id > 0 ? $id : null);
             ActivityLog::add('emergency_stop', 'broadcast', $id > 0 ? $id : null, "Stopped $n emergency broadcast(s)");
             ajax_ok(['stopped' => $n]);
+
+        case 'emergency_silence':
+            // 2.4.1: stop the alarm sound, keep the emergency message.
+            $needPost();
+            require_can('broadcast.emergency');
+            $id = isset($in['id']) && is_numeric($in['id']) ? (int) $in['id'] : 0;
+            $n = Broadcaster::emergencySilence($id > 0 ? $id : null);
+            ActivityLog::add('emergency_silence', 'broadcast', $id > 0 ? $id : null, "Silenced $n emergency alarm(s)");
+            ajax_ok(['silenced' => $n]);
 
         case 'preview_content':
             require_can('content.view');

@@ -393,11 +393,84 @@ final class Broadcaster
         }
     }
 
-    /** Start an emergency broadcast that overrides all content on targeted TVs. */
-    public static function emergencyStart(string $title, string $message, string $targetType, array $ids, ?int $userId = null, string $bg = '#B00020', string $fg = '#FFFFFF'): int
+    /**
+     * Validated alarm options of an emergency (2.4.1, docs/modules/emergency_alarm.md) from form / JSON input:
+     *   alarm_sound   "" / "none" = no alarm, "b:emergency_beep" (default when the key is missing),
+     *                 "b:emergency_siren", "b:fire_alarm" or any sound of the hotel's library ("u:12");
+     *   alarm_loop    repeat until the emergency is stopped (default on);
+     *   alarm_repeat  plays when not looping, 1–10 (default 3);
+     *   alarm_volume  0–100, the TV raises its volume to at least this (default 80).
+     * Returns ['sound', 'loop', 'repeat', 'volume'] or null (no alarm). Only built-in sounds and the current
+     * hotel's uploads are accepted (Sounds::libraryRef, same rule as PLAY_SOUND); another hotel's sound id → 404.
+     * Throws InvalidArgumentException.
+     */
+    public static function alarmOptions(array $in): ?array
+    {
+        $ref = array_key_exists('alarm_sound', $in) ? trim((string) $in['alarm_sound']) : Sounds::DEFAULT_ALARM;
+        if ($ref === '' || $ref === 'none') {
+            return null;
+        }
+        Sounds::libraryRef($ref);
+        $loop = !array_key_exists('alarm_loop', $in) || filter_var($in['alarm_loop'], FILTER_VALIDATE_BOOLEAN);
+        $rep = $in['alarm_repeat'] ?? 3;
+        $vol = $in['alarm_volume'] ?? 80;
+        if ($rep === '' || $rep === null) {
+            $rep = 3;
+        }
+        if ($vol === '' || $vol === null) {
+            $vol = 80;
+        }
+        if (!is_numeric($rep) || (int) $rep < 1 || (int) $rep > 10) {
+            throw new InvalidArgumentException(__('Repeat must be between 1 and 10 times.'));
+        }
+        if (!is_numeric($vol) || (int) $vol < 0 || (int) $vol > 100) {
+            throw new InvalidArgumentException(__('Volume must be between 0 and 100.'));
+        }
+        return ['sound' => $ref, 'loop' => $loop, 'repeat' => (int) $rep, 'volume' => (int) $vol];
+    }
+
+    /**
+     * `content.emergency.alarm` of an emergency row: {url, loop, repeat, volume, name} or null (no alarm,
+     * silenced, or a row from before 2.4.1 without the alarm columns). A deleted uploaded sound falls back to
+     * the built-in beep: an emergency that had an alarm keeps sounding.
+     */
+    public static function alarmFor(array $b): ?array
+    {
+        $ref = (string) ($b['alarm_sound'] ?? '');
+        if ($ref === '' || !empty($b['alarm_muted'])) {
+            return null;
+        }
+        $s = null;
+        try {
+            $s = Sounds::resolve($ref);
+        } catch (TenantException) {
+            $s = null;
+        }
+        $s ??= Sounds::resolve(Sounds::DEFAULT_ALARM);
+        if (!$s) {
+            return null;
+        }
+        $loop = (int) ($b['alarm_loop'] ?? 1) === 1;
+        return [
+            'url' => (string) $s['url'],
+            'loop' => $loop,
+            'repeat' => max(1, min(10, (int) ($b['alarm_repeat'] ?? 3))), // used when loop is false
+            'volume' => max(0, min(100, (int) ($b['alarm_volume'] ?? 80))),
+            'name' => (string) $s['name'],
+        ];
+    }
+
+    /**
+     * Start an emergency broadcast that overrides all content on targeted TVs. $alarm: validated
+     * alarmOptions() or null (no alarm sound).
+     */
+    public static function emergencyStart(string $title, string $message, string $targetType, array $ids, ?int $userId = null, string $bg = '#B00020', string $fg = '#FFFFFF', ?array $alarm = null): int
     {
         Access::requireTargetList($targetType, $ids);
         $title = trim($title) ?: __('Emergency');
+        if ($alarm !== null) {
+            Sounds::libraryRef((string) ($alarm['sound'] ?? '')); // never trust a caller-built array
+        }
         $bid = DB::insert('broadcast_commands', [
             'title' => mb_substr($title, 0, 190),
             'command' => 'EMERGENCY',
@@ -410,10 +483,57 @@ final class Broadcaster
             'start_at' => now(),
             'created_by' => $userId,
             'created_at' => now(),
+            'alarm_sound' => $alarm ? (string) $alarm['sound'] : null,
+            'alarm_loop' => $alarm && empty($alarm['loop']) ? 0 : 1,
+            'alarm_repeat' => $alarm ? max(1, min(10, (int) ($alarm['repeat'] ?? 3))) : 3,
+            'alarm_volume' => $alarm ? max(0, min(100, (int) ($alarm['volume'] ?? 80))) : 80,
+            'alarm_muted' => 0,
         ]);
         Settings::bumpContentVersion();
         self::queueForRooms(self::targetRooms($targetType, $ids), 'SHOW_CONTENT', [], $bid);
         return $bid;
+    }
+
+    /**
+     * "Silence alarm on all TVs" (2.4.1): the emergency message stays on screen but the alarm sound stops
+     * (alarm_muted → content.emergency.alarm becomes null, so the content hash changes and TVs refresh).
+     * One emergency ($id) or every active one; a user limited to some TVs only silences emergencies that
+     * target nothing but their TVs (like emergencyStop). Returns the number of emergencies silenced.
+     */
+    public static function emergencySilence(?int $id = null): int
+    {
+        if ($id) {
+            $row = Tenant::find('broadcast_commands', $id, "is_emergency = 1 AND status = 'active'");
+            if ($row) {
+                Access::requireBroadcast($row);
+            }
+            $rows = $row ? [$row] : [];
+        } else {
+            $rows = DB::all("SELECT * FROM broadcast_commands WHERE hotel_id = :hid AND is_emergency = 1 AND status = 'active'", ['hid' => Tenant::id()]);
+            $rows = array_values(array_filter($rows, [Access::class, 'canBroadcast']));
+        }
+        $n = 0;
+        foreach ($rows as $b) {
+            if ((string) ($b['alarm_sound'] ?? '') === '' || !empty($b['alarm_muted'])) {
+                continue;
+            }
+            DB::update('broadcast_commands', ['alarm_muted' => 1], 'id = :id', ['id' => $b['id']]);
+            Settings::bumpContentVersion();
+            self::queueForRooms(self::targetRooms($b['target_type'], json_decode((string) $b['target_ids'], true) ?: []), 'SHOW_CONTENT', [], (int) $b['id']);
+            $n++;
+        }
+        return $n;
+    }
+
+    /** True when an active emergency (visible to this user) still sounds its alarm. */
+    public static function alarmSounding(array $emergencies): bool
+    {
+        foreach ($emergencies as $b) {
+            if ((string) ($b['alarm_sound'] ?? '') !== '' && empty($b['alarm_muted']) && Access::canBroadcast($b)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

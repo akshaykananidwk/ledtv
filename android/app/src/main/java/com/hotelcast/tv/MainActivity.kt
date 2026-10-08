@@ -252,6 +252,7 @@ class MainActivity : AppCompatActivity(), ContentPlayer.Listener, PlayerUi, Gues
     override fun onResume() {
         super.onResume()
         hideSystemUi()
+        if (Prefs.isRegistered) EmergencyAlarm.onHostResumed(SyncManager.content.value)
         // Back from Live TV / HDMI: only HotelCast may run in lock task again.
         if (KioskHelper.externalAppActive) KioskHelper.restoreKioskPackages(this)
         if (Prefs.isRegistered) {
@@ -261,6 +262,12 @@ class MainActivity : AppCompatActivity(), ContentPlayer.Listener, PlayerUi, Gues
                 handler.postDelayed(kioskReentry, 30_000)
             }
         }
+    }
+
+    override fun onPause() {
+        super.onPause()
+        // 2.4.1: leaving the player (HDMI, settings) stops the alarm; screen off does not.
+        EmergencyAlarm.onHostPaused(PowerController.isScreenInteractive())
     }
 
     override fun onStop() {
@@ -315,6 +322,8 @@ class MainActivity : AppCompatActivity(), ContentPlayer.Listener, PlayerUi, Gues
         rendering = true
         val c = SyncManager.content.value
         try {
+            // 2.4.1: alarm of the emergency (idempotent: an unchanged alarm keeps playing).
+            EmergencyAlarm.update(c)
             when {
                 c != null && c.isEmergency -> {
                     guestUi.hideAll()

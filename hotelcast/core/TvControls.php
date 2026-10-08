@@ -36,7 +36,12 @@ final class TvControls
                     throw new InvalidArgumentException(__('Enter a title or message.'));
                 }
                 $dur = is_numeric($in['duration_sec'] ?? null) ? (int) $in['duration_sec'] : 15;
-                return ['title' => $title, 'message' => $message, 'duration_sec' => max(3, min(3600, $dur))];
+                $p = ['title' => $title, 'message' => $message, 'duration_sec' => max(3, min(3600, $dur))];
+                $sound = self::messageSound($in);
+                if ($sound !== null) {
+                    $p['sound'] = $sound; // 2.4.1; older apps ignore it
+                }
+                return $p;
             case 'SPEAK':
                 return DeviceSchedules::speakPayload($in);
             case 'PLAY_SOUND':
@@ -47,6 +52,38 @@ final class TvControls
                 return [];
         }
         throw new InvalidArgumentException(__('Unknown command.'));
+    }
+
+    /**
+     * Optional sound of a SHOW_MESSAGE (2.4.1): played when the message appears. Input `sound` = "" / "none"
+     * (default: no sound), "b:notice_chime" or any sound of the hotel's library ("u:12"), `sound_repeat`
+     * 1–5 (default 1), `sound_volume` 0–100 (default 80); or `sound` = {ref, repeat, volume} (JSON callers).
+     * Returns {url, repeat, volume} or null. Only the hotel's own library (Sounds::libraryRef, the PLAY_SOUND
+     * rule); another hotel's sound id → 404. Throws InvalidArgumentException.
+     */
+    public static function messageSound(array $in): ?array
+    {
+        $raw = $in['sound'] ?? '';
+        if (is_array($raw)) {
+            $in = ['sound_repeat' => $raw['repeat'] ?? null, 'sound_volume' => $raw['volume'] ?? null];
+            $raw = $raw['ref'] ?? $raw['sound'] ?? '';
+        }
+        $ref = trim((string) $raw);
+        if ($ref === '' || $ref === 'none') {
+            return null;
+        }
+        $s = Sounds::libraryRef($ref);
+        $rep = $in['sound_repeat'] ?? 1;
+        $vol = $in['sound_volume'] ?? 80;
+        $rep = $rep === '' || $rep === null ? 1 : $rep;
+        $vol = $vol === '' || $vol === null ? 80 : $vol;
+        if (!is_numeric($rep) || (int) $rep < 1 || (int) $rep > 5) {
+            throw new InvalidArgumentException(__('Repeat must be between 1 and 5 times.'));
+        }
+        if (!is_numeric($vol) || (int) $vol < 0 || (int) $vol > 100) {
+            throw new InvalidArgumentException(__('Volume must be between 0 and 100.'));
+        }
+        return ['url' => $s['url'], 'repeat' => (int) $rep, 'volume' => (int) $vol];
     }
 
     /**
