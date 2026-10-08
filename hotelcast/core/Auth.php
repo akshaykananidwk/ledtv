@@ -59,6 +59,19 @@ final class Auth
     private static ?array $user = null;
     private static bool $resolved = false;
 
+    /** Per-request cache of can() results: "<hotel>|<user>|<permission>" => bool (see forgetPermissions()). */
+    private static array $canCache = [];
+    /** Per-request cache of custom role permission lists: "<hotel>|<role id>" => string[] */
+    private static array $rolePerms = [];
+    /** Guard against a plan check that itself asks Auth::can(). */
+    private static bool $inPlanCheck = false;
+
+    /**
+     * Test / CLI hook for the plan check: fn (string $permission): ?bool. null result = ask Features.
+     * Never set in production code.
+     */
+    public static ?Closure $planOverride = null;
+
     public static function startSession(): void
     {
         if (session_status() === PHP_SESSION_ACTIVE || PHP_SESSION_DISABLED === session_status()) {
@@ -192,6 +205,7 @@ final class Auth
         $_SESSION['hc_uid'] = (int) $user['id'];
         $_SESSION['lang'] = $user['language'] ?: 'en';
         unset($_SESSION['hc_hotel']);
+        self::forgetPermissions();
         self::$user = $user;
         self::$resolved = true;
         self::resolveTenant();
@@ -215,6 +229,7 @@ final class Auth
         session_destroy();
         self::$user = null;
         self::$resolved = true;
+        self::forgetPermissions();
     }
 
     /** Current logged-in user or null. */
@@ -400,6 +415,7 @@ final class Auth
     public static function registerPermission(string $permission, string|array $rule): void
     {
         self::$extraPermissions[$permission] = $rule;
+        self::$canCache = [];
     }
 
     public static function isPlatformPermission(string $permission): bool
@@ -407,13 +423,39 @@ final class Auth
         return isset(self::PLATFORM_PERMISSIONS[$permission]) || is_array(self::$extraPermissions[$permission] ?? null);
     }
 
+    /** Rule of a permission: minimum hotel role (string) or list of allowed roles (array). Unknown = 'super_admin'. */
+    public static function rule(string $permission): string|array
+    {
+        return self::PLATFORM_PERMISSIONS[$permission] ?? self::$extraPermissions[$permission] ?? self::PERMISSIONS[$permission] ?? 'super_admin';
+    }
+
+    /**
+     * Every hotel permission (rule = minimum hotel role) of the registry: core PERMISSIONS plus the ones
+     * modules registered (core/boot.d). These are the permissions a custom role can hold. Role-list
+     * permissions (platform / chain / push.self) are not part of it.
+     *
+     * @return array<string, string> permission => minimum built-in role
+     */
+    public static function hotelPermissions(): array
+    {
+        $out = [];
+        foreach (array_merge(array_keys(self::PERMISSIONS), array_keys(self::$extraPermissions)) as $p) {
+            $rule = self::rule($p);
+            if (is_string($rule)) {
+                $out[$p] = $rule;
+            }
+        }
+        return $out;
+    }
+
     /**
      * Would a user with $role have $permission inside a hotel (no session needed)? Used to pick the
      * recipients of staff alerts. Platform roles act as super_admin inside a hotel.
+     * Built-in roles only — for a user row (custom role aware) use userCan().
      */
     public static function roleCan(string $role, string $permission): bool
     {
-        $rule = self::PLATFORM_PERMISSIONS[$permission] ?? self::$extraPermissions[$permission] ?? self::PERMISSIONS[$permission] ?? 'super_admin';
+        $rule = self::rule($permission);
         if (is_array($rule)) {
             return in_array($role, $rule, true);
         }
@@ -421,13 +463,154 @@ final class Auth
         return $level > 0 && $level >= (self::ROLE_LEVEL[$rule] ?? 99);
     }
 
+    /**
+     * Custom role id of a hotel user (users.role_id), or null for a built-in role. Platform / reseller /
+     * chain users never have a custom role.
+     */
+    public static function customRoleId(?array $user = null): ?int
+    {
+        $u = $user ?? self::user();
+        if (!$u || empty($u['role_id']) || !in_array($u['role'] ?? '', self::HOTEL_ROLES, true)) {
+            return null;
+        }
+        return (int) $u['role_id'];
+    }
+
+    /** Permission list of a custom role of $hotelId (cached per request); [] when the role does not exist there. */
+    public static function customRolePermissions(int $roleId, int $hotelId): array
+    {
+        $key = $hotelId . '|' . $roleId;
+        if (!array_key_exists($key, self::$rolePerms)) {
+            $perms = [];
+            try {
+                $json = DB::value('SELECT permissions FROM roles WHERE id = :id AND hotel_id = :h', ['id' => $roleId, 'h' => $hotelId]);
+                $list = is_string($json) ? json_decode($json, true) : null;
+                $perms = is_array($list) ? array_values(array_filter($list, 'is_string')) : [];
+            } catch (Throwable) {
+                $perms = []; // before migration 029: a custom role grants nothing
+            }
+            self::$rolePerms[$key] = $perms;
+        }
+        return self::$rolePerms[$key];
+    }
+
+    /**
+     * Customer Admin: the built-in super_admin role (also platform admins / resellers / chain admins acting
+     * as Admin inside a hotel). Users with a custom role are never Admin.
+     */
+    public static function isAdmin(): bool
+    {
+        return self::hotelRole() === 'super_admin' && self::customRoleId() === null;
+    }
+
+    /**
+     * Plan check (core/Features.php, built by another module): is $permission part of the current
+     * customer's plan? Falls back to "enabled" while Features is not available.
+     */
+    public static function planAllows(string $permission): bool
+    {
+        if (self::$planOverride !== null) {
+            $r = (self::$planOverride)($permission);
+            if ($r !== null) {
+                return (bool) $r;
+            }
+        }
+        if (self::$inPlanCheck || !Tenant::has() || !class_exists('Features') || !method_exists('Features', 'permissionEnabled')) {
+            return true;
+        }
+        self::$inPlanCheck = true;
+        try {
+            return (bool) Features::permissionEnabled($permission);
+        } catch (Throwable $e) {
+            if (class_exists('Logger')) {
+                Logger::error('Features::permissionEnabled failed: ' . $e->getMessage());
+            }
+            return true;
+        } finally {
+            self::$inPlanCheck = false;
+        }
+    }
+
+    /**
+     * Would this user row have $permission inside the current hotel (no session)? Custom-role aware;
+     * used for staff alert recipients. Includes the plan check.
+     */
+    public static function userCan(array $user, string $permission): bool
+    {
+        $rule = self::rule($permission);
+        if (is_array($rule)) {
+            return in_array($user['role'] ?? '', $rule, true);
+        }
+        $roleId = self::customRoleId($user);
+        if ($roleId !== null) {
+            $ok = Tenant::has() && (int) ($user['hotel_id'] ?? 0) === Tenant::id()
+                && in_array($permission, self::customRolePermissions($roleId, Tenant::id()), true);
+        } else {
+            $ok = self::roleCan((string) ($user['role'] ?? ''), $permission);
+        }
+        return $ok && self::planAllows($permission);
+    }
+
+    /**
+     * Permission check for the logged-in user:
+     *  - role-list permissions (platform, chain, push.self): the real role must be listed (unchanged);
+     *  - hotel permissions: built-in role level (unchanged), or — for a user with a custom role — the
+     *    permission must be in the role's list; AND the customer's plan must include it (Features).
+     * Cached per request (forgetPermissions() after changing roles).
+     */
     public static function can(string $permission): bool
     {
-        $rule = self::PLATFORM_PERMISSIONS[$permission] ?? self::$extraPermissions[$permission] ?? self::PERMISSIONS[$permission] ?? 'super_admin';
-        if (is_array($rule)) {
-            return in_array(self::role(), $rule, true);
+        $u = self::user();
+        $key = (Tenant::current() ?? 0) . '|' . ($u['id'] ?? 0) . '|' . $permission;
+        if (isset(self::$canCache[$key])) {
+            return self::$canCache[$key];
         }
-        return self::hasRole($rule);
+        $rule = self::rule($permission);
+        if (is_array($rule)) {
+            $ok = in_array(self::role(), $rule, true);
+        } else {
+            $roleId = self::customRoleId();
+            if ($roleId !== null) {
+                // Custom role: only inside the user's own hotel, only the listed permissions.
+                $ok = Tenant::has() && (int) ($u['hotel_id'] ?? 0) === Tenant::id()
+                    && in_array($permission, self::customRolePermissions($roleId, Tenant::id()), true);
+            } else {
+                $ok = self::hasRole($rule);
+            }
+            $ok = $ok && self::planAllows($permission);
+        }
+        if ($u !== null) {
+            self::$canCache[$key] = $ok;
+        }
+        return $ok;
+    }
+
+    /** Drop the per-request permission caches (after a role or plan change). */
+    public static function forgetPermissions(): void
+    {
+        self::$canCache = [];
+        self::$rolePerms = [];
+    }
+
+    /** Display name of the user's role: the custom role's name, else role_label(). */
+    public static function roleName(?array $user = null): string
+    {
+        $u = $user ?? self::user();
+        if (!$u) {
+            return '';
+        }
+        $rid = self::customRoleId($u);
+        if ($rid !== null && !empty($u['hotel_id'])) {
+            try {
+                $name = DB::value('SELECT name FROM roles WHERE id = :id AND hotel_id = :h', ['id' => $rid, 'h' => (int) $u['hotel_id']]);
+                if (is_string($name) && $name !== '') {
+                    return $name;
+                }
+            } catch (Throwable) {
+                // before migration 029
+            }
+        }
+        return role_label((string) ($u['role'] ?? ''));
     }
 
     /** Admin pages / actions still allowed while the hotel is suspended (read-only mode). */
@@ -506,8 +689,26 @@ final class Auth
                 default => 'profile.php',
             };
         }
+        if (self::customRoleId() !== null) {
+            // Custom role: the first main page the role may open (profile when none).
+            foreach (self::HOME_PAGES as $page => $perm) {
+                if (self::can($perm) && is_file(HC_ROOT . '/admin/' . $page)) {
+                    return $page;
+                }
+            }
+            return 'profile.php';
+        }
         return $role === 'reception' && is_file(HC_ROOT . '/admin/guests.php') ? 'guests.php' : 'index.php';
     }
+
+    /** Landing page candidates for custom roles, in order (page => permission). */
+    public const HOME_PAGES = [
+        'index.php' => 'dashboard.view', 'guests.php' => 'guests.manage', 'content.php' => 'content.view',
+        'playlists.php' => 'playlists.manage', 'rooms.php' => 'rooms.view', 'broadcast.php' => 'broadcast.send',
+        'schedule.php' => 'schedule.manage', 'orders.php' => 'services.manage', 'notices.php' => 'notices.manage',
+        'menu_board.php' => 'menu_board.manage', 'queue.php' => 'queue.operate', 'tickers.php' => 'tickers.manage',
+        'logs.php' => 'logs.view', 'users.php' => 'users.manage', 'settings.php' => 'settings.manage',
+    ];
 
     public static function isAjax(): bool
     {
