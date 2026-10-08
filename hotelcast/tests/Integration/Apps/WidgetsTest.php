@@ -338,6 +338,7 @@ final class WidgetsTest extends TestCase
         $this->assertStringContainsString('>80<', $html);
         $this->assertStringContainsString('Satisfactory', $html);
         $this->assertStringNotContainsString('aq-warn ', $html, 'no warning below the thresholds');
+        $this->assertStringContainsString('<div class="aq-main-row">', $html, 'full-size dial without warnings');
 
         // Forecast parse + warnings with thresholds; ferry line only for coastal towns.
         $fc = AirQuality::parseForecast([200, self::fcJson(80, 42, 45, 95)]);
@@ -363,6 +364,10 @@ final class WidgetsTest extends TestCase
         $this->assertStringContainsString('ભારે વરસાદ', $html);
         $this->assertStringContainsString('દરિયાઈ ચેતવણી', $html);
         $this->assertStringContainsString('સંતોષકારક', $html);
+        // Regression (QA 2.4): five warnings pushed the dial and PM cards over each other on a 1080p TV;
+        // several warnings now render in two columns and the main row gets the compact (tight) layout.
+        $this->assertStringContainsString('aq-warnings aq-warn-many', $html);
+        $this->assertStringContainsString('aq-main-row aq-tight aq-tighter', $html);
         ContentManager::deleteItem((int) $item['id']);
     }
 

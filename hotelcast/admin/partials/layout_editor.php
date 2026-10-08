@@ -97,7 +97,7 @@ document.addEventListener('DOMContentLoaded', () => {
   'use strict';
   const D = JSON.parse(document.getElementById('lyData').textContent);
   const T = <?= json_embed([
-      'zone' => __('Zone'), 'source' => __('Plays'), 'choose' => __('— choose content or playlist —'), 'content' => __('Content'), 'playlists' => __('Playlists'),
+      'zone' => __('Zone'), 'source' => __('What it plays'), 'choose' => __('— choose content or playlist —'), 'content' => __('Content'), 'playlists' => __('Playlists'),
       'items' => __(':n items'), 'inactive' => __('inactive'), 'missing' => __('(deleted — choose again)'), 'nested' => __('contains a layout'),
       'scale' => __('Scale'), 'fit' => __('Fit'), 'fill' => __('Stretch'), 'zoom' => __('Zoom (crop)'), 'transition' => __('Transition'), 'fade' => __('Fade'), 'none' => __('None'),
       'sound' => __('Sound from this zone'), 'remove' => __('Remove zone'), 'empty' => __('empty'), 'overlap' => __('Zones :a and :b overlap.'),

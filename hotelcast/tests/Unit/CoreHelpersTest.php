@@ -81,4 +81,23 @@ final class CoreHelpersTest extends TestCase
         I18n::setLang('en');
         $this->assertSame('Dashboard', __('Dashboard'));
     }
+
+    /**
+     * Regression (QA 2.4): trim($s, ' ·') strips single UTF-8 bytes, so a name ending in Gujarati "ષ" /
+     * Devanagari "ष" (bytes … B7) lost its last byte ("गुजराती नव वर्�" on the Festivals page).
+     */
+    public function testDotTrimIsMultibyteSafe(): void
+    {
+        $this->assertSame('નૂતન વર્ષ · गुजराती नव वर्ष', dot_trim(' · નૂતન વર્ષ · गुजराती नव वर्ष · '));
+        $this->assertSame('°C', dot_trim('°C ·'));
+        $this->assertSame('', dot_trim(' · '));
+        $bad = [];
+        foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator(HC_ROOT, FilesystemIterator::SKIP_DOTS)) as $f) {
+            if (str_ends_with($f->getFilename(), '.php') && !str_contains($f->getPathname(), '/tests/')
+                && preg_match("/trim\\([^\\n]*, ' ·'\\)/u", (string) file_get_contents($f->getPathname()))) {
+                $bad[] = substr($f->getPathname(), strlen(HC_ROOT) + 1);
+            }
+        }
+        $this->assertSame([], $bad, "use dot_trim() instead of trim(\$s, ' ·')");
+    }
 }

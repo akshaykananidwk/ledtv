@@ -173,7 +173,7 @@ if ($action === 'view') {
     ?>
     <div class="page-head">
       <div class="min-w-0"><h1 class="text-truncate"><i class="bi bi-diagram-3"></i> <?= e($c['name']) ?></h1>
-        <p class="lead-sm mb-0"><?= e(trim(($c['owner_name'] ?? '') . ' · ' . ($c['owner_phone'] ?? '') . ($c['reseller_name'] ? ' · ' . __('Reseller') . ': ' . $c['reseller_name'] : ''), ' ·')) ?></p></div>
+        <p class="lead-sm mb-0"><?= e(dot_trim(($c['owner_name'] ?? '') . ' · ' . ($c['owner_phone'] ?? '') . ($c['reseller_name'] ? ' · ' . __('Reseller') . ': ' . $c['reseller_name'] : ''))) ?></p></div>
       <div class="d-flex flex-wrap gap-2">
         <a class="btn btn-primary" href="<?= e(admin_url('chain.php', ['chain' => $cid])) ?>"><i class="bi bi-speedometer2"></i> <?= e(__('Chain dashboard')) ?></a>
         <a class="btn btn-outline-primary" href="<?= e(admin_url('platform_chains.php', ['action' => 'edit', 'id' => $cid])) ?>"><i class="bi bi-pencil"></i> <?= e(__('Edit')) ?></a>

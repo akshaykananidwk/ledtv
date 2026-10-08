@@ -61,7 +61,7 @@ function push_device_name(?string $ua): string
         str_contains($ua, 'Safari') => 'Safari',
         default => '',
     };
-    return trim($os . ' · ' . $br, ' ·');
+    return dot_trim($os . ' · ' . $br);
 }
 
 $pageTitle = __('Notifications');

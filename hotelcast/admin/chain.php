@@ -100,7 +100,7 @@ $delta = static function ($cur, $old): string {
 <div class="page-head">
   <div class="min-w-0">
     <h1 class="text-truncate"><i class="bi bi-diagram-3"></i> <?= e($chain['name']) ?></h1>
-    <p class="lead-sm mb-0"><?= e(trim(__('Hotel chain') . ' · ' . ($chain['owner_name'] ?? '') . ($chain['owner_phone'] ? ' · ' . $chain['owner_phone'] : ''), ' ·')) ?></p>
+    <p class="lead-sm mb-0"><?= e(dot_trim(__('Hotel chain') . ' · ' . ($chain['owner_name'] ?? '') . ($chain['owner_phone'] ? ' · ' . $chain['owner_phone'] : ''))) ?></p>
   </div>
   <div class="d-flex flex-wrap gap-2">
     <?php if ($myChains): ?>
@@ -201,7 +201,7 @@ $delta = static function ($cur, $old): string {
     <div class="col-sm-6 col-xl-4" data-hotel-row data-name="<?= e(mb_strtolower($h['name'] . ' ' . $h['city'])) ?>">
       <div class="card h-100"><div class="card-body">
         <div class="d-flex align-items-start gap-2 mb-2">
-          <div class="flex-grow-1 min-w-0"><h2 class="h6 mb-0 text-truncate"><?= e($h['name']) ?></h2><div class="small text-muted"><?= e(trim($h['city'] . ' · ' . ($h['plan'] ?: __('No plan')), ' ·')) ?></div></div>
+          <div class="flex-grow-1 min-w-0"><h2 class="h6 mb-0 text-truncate"><?= e($h['name']) ?></h2><div class="small text-muted"><?= e(dot_trim($h['city'] . ' · ' . ($h['plan'] ?: __('No plan')))) ?></div></div>
           <?= $stateLabel($h['state']) ?>
         </div>
         <div class="row g-2 small text-center mb-2">

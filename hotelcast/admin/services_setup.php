@@ -491,7 +491,7 @@ require __DIR__ . '/partials/header.php';
       <div class="card mb-3<?= (int) $c['is_active'] ? '' : ' opacity-75' ?>">
         <div class="card-header d-flex align-items-center gap-2 flex-wrap">
           <strong><?= e($c['name_en']) ?></strong>
-          <span class="small text-muted"><?= e(trim(($c['name_gu'] ?? '') . ' · ' . ($c['name_hi'] ?? ''), ' ·')) ?></span>
+          <span class="small text-muted"><?= e(dot_trim(($c['name_gu'] ?? '') . ' · ' . ($c['name_hi'] ?? ''))) ?></span>
           <?php if (!(int) $c['is_active']): ?><span class="badge text-bg-secondary"><?= e(__('Hidden')) ?></span><?php endif; ?>
           <div class="ms-auto d-flex gap-1">
             <a class="btn btn-sm btn-outline-secondary" href="<?= e(admin_url('services_setup.php', ['tab' => 'menu', 'edit_cat' => $c['id']])) ?>" title="<?= e(__('Edit')) ?>"><i class="bi bi-pencil"></i></a>
@@ -507,7 +507,7 @@ require __DIR__ . '/partials/header.php';
               <tr class="<?= (int) $i['is_active'] ? '' : 'text-muted' ?>">
                 <td style="width:56px"><?php if ($i['photo_path']): ?><img class="gs-thumb" src="<?= e(media_url((string) $i['photo_path'])) ?>" alt="" loading="lazy"><?php endif; ?></td>
                 <td><span class="gs-food gs-<?= e($i['food_type']) ?>" title="<?= e($foodTypes[$i['food_type']] ?? '') ?>"></span> <strong><?= e($i['name_en']) ?></strong>
-                  <div class="small text-muted"><?= e(trim(($i['name_gu'] ?? '') . ' · ' . ($i['name_hi'] ?? ''), ' ·')) ?><?= GuestServices::hoursLabel($i) !== '' ? ' · ⏰ ' . e(GuestServices::hoursLabel($i)) : '' ?></div></td>
+                  <div class="small text-muted"><?= e(dot_trim(($i['name_gu'] ?? '') . ' · ' . ($i['name_hi'] ?? ''))) ?><?= GuestServices::hoursLabel($i) !== '' ? ' · ⏰ ' . e(GuestServices::hoursLabel($i)) : '' ?></div></td>
                 <td class="text-end text-nowrap"><?= e(money($i['price'], 'INR')) ?></td>
                 <td class="text-end text-nowrap">
                   <a class="btn btn-sm btn-outline-secondary" href="<?= e(admin_url('services_setup.php', ['tab' => 'menu', 'edit_item' => $i['id']])) ?>#itemForm" title="<?= e(__('Edit')) ?>"><i class="bi bi-pencil"></i></a>
@@ -559,7 +559,7 @@ require __DIR__ . '/partials/header.php';
           <?php foreach ($types as $t): ?>
             <tr class="<?= (int) $t['is_active'] ? '' : 'text-muted' ?>">
               <td class="fs-4" style="width:3rem"><?= e($t['icon']) ?></td>
-              <td><strong><?= e($t['name_en']) ?></strong><div class="small text-muted"><?= e(trim(($t['name_gu'] ?? '') . ' · ' . ($t['name_hi'] ?? ''), ' ·')) ?></div></td>
+              <td><strong><?= e($t['name_en']) ?></strong><div class="small text-muted"><?= e(dot_trim(($t['name_gu'] ?? '') . ' · ' . ($t['name_hi'] ?? ''))) ?></div></td>
               <td><?= (int) $t['needs_time'] ? '<i class="bi bi-clock"></i>' : '' ?></td>
               <td><?= (int) $t['is_active'] ? '<span class="badge text-bg-success">' . e(__('Active')) . '</span>' : '<span class="badge text-bg-secondary">' . e(__('Hidden')) . '</span>' ?></td>
               <td class="text-end text-nowrap">

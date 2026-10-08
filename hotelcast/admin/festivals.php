@@ -223,7 +223,7 @@ require __DIR__ . '/partials/header.php';
             <strong class="text-break"><?= e($f['name_en']) ?></strong>
             <span class="badge rounded-pill align-self-start <?= e($cls) ?>"><i class="bi <?= e($icon) ?>"></i> <?= e($label) ?></span>
           </div>
-          <?php if ($f['name_gu'] !== '' || $f['name_hi'] !== ''): ?><div class="small text-muted"><?= e(trim($f['name_gu'] . ' · ' . $f['name_hi'], ' ·')) ?></div><?php endif; ?>
+          <?php if ($f['name_gu'] !== '' || $f['name_hi'] !== ''): ?><div class="small text-muted"><?= e(implode(' · ', array_filter([$f['name_gu'], $f['name_hi']], static fn ($n) => $n !== ''))) ?></div><?php endif; ?>
           <div class="small mt-1"><i class="bi bi-calendar3"></i> <?= e($f['starts_on'] . ($f['ends_on'] ? ' → ' . $f['ends_on'] : '')) ?>
             <?php if ($days > 0): ?><span class="text-muted">· <?= e(__('in :n days', ['n' => $days])) ?></span><?php endif; ?></div>
           <?php if ((int) $f['is_starter']): ?><div class="small text-warning-emphasis"><i class="bi bi-exclamation-circle"></i> <?= e(__('Please verify the date')) ?></div><?php endif; ?>

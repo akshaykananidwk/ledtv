@@ -49,7 +49,7 @@ require __DIR__ . '/partials/header.php';
 <div class="page-head">
   <div>
     <h1><i class="bi bi-display"></i> <?= e(__('Live view')) ?> — <?= e($room['room_number'] ?? '-') ?></h1>
-    <p class="lead-sm mono"><?= e($dev['device_uid']) ?> · <?= e(trim(($dev['model'] ?? '') . ' · v' . ($dev['app_version'] ?? '?'), ' ·')) ?></p>
+    <p class="lead-sm mono"><?= e($dev['device_uid']) ?> · <?= e(dot_trim(($dev['model'] ?? '') . ' · v' . ($dev['app_version'] ?? '?'))) ?></p>
   </div>
   <div class="d-flex flex-wrap gap-2 align-items-center">
     <?= (int) $dev['is_revoked'] ? '<span class="badge text-bg-dark">' . e(__('Revoked')) . '</span>' : status_badge($online ? 'online' : 'offline') ?>

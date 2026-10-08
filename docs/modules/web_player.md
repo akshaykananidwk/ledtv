@@ -176,8 +176,10 @@ Language (English / ગુજરાતી / हिन्दी), **Re-pair this 
 * Web players appear like TVs: online state, current content, commands, emergency, broadcasts, schedules,
   screenshots and logs (Support) work the same. The TV column shows a **Web player** badge (browser · OS); the TV
   details page shows the platform and the user agent.
-* Version: web players report `web-2.4.0` with version code 11. When a newer APK is uploaded, the APK page may
-  list web players as "update available" — they update themselves on the next reload.
+* Version: web players report `web-2.4.0` with version code 11. They cannot install an APK: the APK page shows
+  them with a **Web player** badge (never "update available"), **Push update** skips them (`UPDATE_APP` is not
+  queued, `DeviceManager::notWebSql()`), and TV support / the platform dashboard do not count them as outdated.
+  They update themselves on the next page reload.
 
 ## Setting up screens
 

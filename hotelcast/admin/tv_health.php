@@ -151,7 +151,7 @@ require __DIR__ . '/partials/header.php';
             </div>
           </td>
           <td class="d-none d-xl-table-cell small">
-            <?= e(trim(($d['model'] ?? '') . ' · Android ' . ($h['android_version'] ?? $d['android_version'] ?? '?'), ' ·')) ?>
+            <?= e(dot_trim(($d['model'] ?? '') . ' · Android ' . ($h['android_version'] ?? $d['android_version'] ?? '?'))) ?>
             <div class="text-muted">v<?= e($d['app_version'] ?? '?') ?><?= isset($h['resolution']) ? ' · ' . e($h['resolution']) : '' ?><?= !empty($h['device_owner']) ? ' · ' . e(__('device owner')) : '' ?></div>
             <?php if (!empty($h['last_crash_at'])): ?><div class="text-danger"><?= e(__('Last crash: :t', ['t' => time_ago($h['last_crash_at'])])) ?></div><?php endif; ?>
           </td>

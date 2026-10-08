@@ -42,7 +42,7 @@ ob_start();
       <?php if ($brand['logo_url']): ?><img src="<?= e($brand['logo_url']) ?>" alt="" style="max-height:56px;max-width:220px" class="mb-2"><br><?php endif; ?>
       <strong class="fs-5" style="color:var(--inv)"><?= e($brand['product']) ?></strong>
       <?php if ($seller !== ''): ?><div class="small text-muted" style="white-space:pre-line"><?= e($seller) ?></div><?php endif; ?>
-      <?php if ($brand['support_phone'] !== '' || $brand['support_email'] !== ''): ?><div class="small text-muted"><?= e(trim($brand['support_phone'] . ' · ' . $brand['support_email'], ' ·')) ?></div><?php endif; ?>
+      <?php if ($brand['support_phone'] !== '' || $brand['support_email'] !== ''): ?><div class="small text-muted"><?= e(dot_trim($brand['support_phone'] . ' · ' . $brand['support_email'])) ?></div><?php endif; ?>
     </div>
     <div class="text-end">
       <div class="fs-3 fw-bold" style="color:var(--inv)"><?= e(__('INVOICE')) ?></div>

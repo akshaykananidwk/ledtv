@@ -136,7 +136,7 @@ if ($action === 'view') {
     <div class="page-head">
       <div>
         <h1><i class="bi bi-building"></i> <?= e($h['name']) ?> <?= Hotels::statusBadge($state) ?></h1>
-        <p class="lead-sm"><?= e(trim(($h['city'] ?? '') . ' · ' . ($h['plan_name'] ?? __('No plan')) . ($h['reseller_name'] ? ' · ' . __('Reseller') . ': ' . $h['reseller_name'] : ''), ' ·')) ?></p>
+        <p class="lead-sm"><?= e(dot_trim(($h['city'] ?? '') . ' · ' . ($h['plan_name'] ?? __('No plan')) . ($h['reseller_name'] ? ' · ' . __('Reseller') . ': ' . $h['reseller_name'] : ''))) ?></p>
       </div>
       <div class="d-flex flex-wrap gap-2">
         <form method="post"><?= Csrf::field() ?><input type="hidden" name="op" value="enter"><input type="hidden" name="id" value="<?= $hid ?>">

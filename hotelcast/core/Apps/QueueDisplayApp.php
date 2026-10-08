@@ -147,7 +147,7 @@ final class QueueDisplayApp extends DisplayApp
         return '<div class="qd-counter hc-card' . ($c['token'] !== '' ? ' has-token' : '') . '" data-counter="' . (int) $c['id'] . '">'
             . '<div class="qd-cname">' . e($c['name']) . '</div>'
             . '<div class="qd-token">' . ($c['token'] !== '' ? e($c['token']) : '—') . '</div>'
-            . '<div class="qd-csub">' . e(trim($c['service'] . ($c['room'] !== '' ? ' · ' . $c['room'] : ''), ' ·')) . '</div></div>';
+            . '<div class="qd-csub">' . e(dot_trim($c['service'] . ($c['room'] !== '' ? ' · ' . $c['room'] : ''))) . '</div></div>';
     }
 
     public function render(array $config, array $ctx): string

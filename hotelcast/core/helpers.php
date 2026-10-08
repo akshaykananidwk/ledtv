@@ -2,6 +2,12 @@
 declare(strict_types=1);
 
 /** HTML-escape for output (XSS protection). */
+/** Trims spaces and "·" separators, multibyte-safe (a byte list with "·" in trim() cuts UTF-8 bytes, e.g. Gujarati "ષ"). */
+function dot_trim(string $s): string
+{
+    return (string) preg_replace('/^[\s·]+|[\s·]+$/u', '', $s);
+}
+
 function e(mixed $value): string
 {
     return htmlspecialchars((string) ($value ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
