@@ -34,6 +34,12 @@ if (str_starts_with($action, 'update_') || $action === 'rollback') {
 $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 $in = $method === 'GET' ? $_GET : request_json();
 
+// 2.6 panels: one-click switches of the Super Admin console / Reseller panel (admin/ajax_platform.php).
+if ($action === 'platform_toggle') {
+    require __DIR__ . '/ajax_platform.php';
+    exit;
+}
+
 $needPost = function () use ($method): void {
     if ($method !== 'POST') {
         ajax_error('POST required', 405, 'METHOD_NOT_ALLOWED');

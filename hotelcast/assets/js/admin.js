@@ -278,5 +278,33 @@
 
     // Enable Bootstrap tooltips.
     if (window.bootstrap) document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach((el) => new bootstrap.Tooltip(el));
+
+    // 2.6 panels: one-click switches (admin/partials/panel_ui.php → ajax.php?action=platform_toggle).
+    document.querySelectorAll('[data-platform-switch]').forEach((sw) => {
+      const input = sw.querySelector('input[type=checkbox]');
+      if (!input) return;
+      input.addEventListener('change', async () => {
+        const on = input.checked;
+        const ask = on ? sw.dataset.confirmOn : sw.dataset.confirmOff;
+        if (ask && !(await HC.confirm(ask))) { input.checked = !on; return; }
+        const payload = { kind: sw.dataset.kind, target: sw.dataset.target, on };
+        Object.keys(sw.dataset).forEach((k) => { if (!['kind', 'target', 'confirmOn', 'confirmOff', 'platformSwitch'].includes(k)) payload[k] = sw.dataset[k]; });
+        sw.classList.add('is-busy'); input.disabled = true;
+        try {
+          const r = await HC.api('platform_toggle', { data: payload });
+          input.checked = !!r.on;
+          const label = sw.querySelector('[data-switch-label]');
+          if (label && label.dataset.on && label.dataset.off && label.dataset.stateLabel === '1') label.textContent = r.on ? label.dataset.on : label.dataset.off;
+          if (r.badge) { const b = document.querySelector('[data-status-badge="' + sw.dataset.target + '"]'); if (b) b.innerHTML = r.badge; }
+          HC.toast(r.warning ? r.warning : T.saved, r.warning ? 'warning' : 'success', 2500);
+          sw.dispatchEvent(new CustomEvent('hc:switched', { detail: r, bubbles: true }));
+        } catch (e) {
+          input.checked = !on;
+          HC.toast(e.message, 'danger');
+        } finally {
+          sw.classList.remove('is-busy'); input.disabled = false;
+        }
+      });
+    });
   });
 })();

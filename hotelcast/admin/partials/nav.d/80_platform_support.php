@@ -3,5 +3,5 @@
 declare(strict_types=1);
 
 return [
-    ['platform_support', 'platform_support.php', 'support.platform', 'bi-life-preserver', __('Support'), 'platform'],
+    ['platform_support', 'platform_support.php', 'support.platform', 'bi-life-preserver', __('Support & logs'), 'platform'],
 ];

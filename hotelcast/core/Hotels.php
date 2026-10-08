@@ -232,6 +232,55 @@ final class Hotels
         Logger::write('platform', 'info', 'Hotel status changed', ['hotel' => $id, 'status' => $status, 'reason' => $reason]);
     }
 
+    /**
+     * 2.6: delete a customer with everything it owns (Super Admin console → Customer 360 → Settings).
+     * Every table with a hotel_id column is cleared for that customer (users, screens, TVs, content,
+     * logs, invoices …), then the hotels row. Returns rows removed per table. Uploaded files stay on
+     * disk (docs/modules/panels.md, open point).
+     */
+    public static function delete(int $id): array
+    {
+        if ($id <= 0 || !DB::value('SELECT id FROM hotels WHERE id = :id', ['id' => $id])) {
+            throw new InvalidArgumentException(__('Customer not found.'));
+        }
+        if ((int) DB::value('SELECT COUNT(*) FROM hotels') <= 1) {
+            throw new RuntimeException(__('The last customer cannot be deleted.'));
+        }
+        $tables = array_map('strval', array_column(DB::all(
+            "SELECT TABLE_NAME AS t FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND COLUMN_NAME = 'hotel_id' AND TABLE_NAME <> 'hotels' ORDER BY TABLE_NAME"
+        ), 't'));
+        $pdo = DB::pdo();
+        $removed = [];
+        $pdo->exec('SET FOREIGN_KEY_CHECKS = 0');
+        try {
+            DB::transaction(static function () use ($tables, $id, &$removed): void {
+                foreach ($tables as $t) {
+                    if (!preg_match('/^[a-z0-9_]+$/i', $t)) {
+                        continue;
+                    }
+                    if ($t === 'licenses') {
+                        DB::query('UPDATE licenses SET hotel_id = NULL WHERE hotel_id = :h', ['h' => $id]);
+                        continue;
+                    }
+                    $n = DB::query("DELETE FROM `$t` WHERE hotel_id = :h", ['h' => $id])->rowCount();
+                    if ($n) {
+                        $removed[$t] = $n;
+                    }
+                }
+                DB::query('DELETE FROM hotels WHERE id = :h', ['h' => $id]);
+                $removed['hotels'] = 1;
+            });
+        } finally {
+            $pdo->exec('SET FOREIGN_KEY_CHECKS = 1');
+        }
+        Tenant::forget($id);
+        Branding::flush();
+        Settings::flush();
+        Cache::clear();
+        Logger::write('platform', 'warning', 'Customer deleted', ['hotel' => $id, 'rows' => $removed]);
+        return $removed;
+    }
+
     /** Hotel row changed: refresh caches and the content of its TVs. */
     public static function changed(int $id): void
     {
