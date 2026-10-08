@@ -646,7 +646,7 @@ final class ContentAppsTest extends TestCase
         $this->assertSame(403, $code);
         $this->assertStringContainsString(e(__('Photo upload for this album is closed.')), $html);
         DB::update('albums', ['guest_upload' => 1], 'id = :id', ['id' => $aid]);
-        foreach ([preg_replace('/s=[0-9a-f]/', 's=0', $rel), 'album/?a=' . $aid . '&s=', 'album/?a=' . self::$id['h2album'] . '&s=' . substr((string) preg_replace('/.*s=/', '', $rel), 0, 32), 'album/?a=abc&s=x', 'album/'] as $q) {
+        foreach ([preg_replace_callback('/s=([0-9a-f])/', static fn ($m) => 's=' . ($m[1] === '0' ? '1' : '0'), $rel), 'album/?a=' . $aid . '&s=', 'album/?a=' . self::$id['h2album'] . '&s=' . substr((string) preg_replace('/.*s=/', '', $rel), 0, 32), 'album/?a=abc&s=x', 'album/'] as $q) {
             [$code, , $html] = $get($q);
             $this->assertSame(404, $code, $q);
             $this->assertFalse(TestEnv::hasPhpError($html));

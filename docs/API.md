@@ -57,6 +57,8 @@ Request body (JSON):
 | `android_version`  | string | no       | e.g. `"11"`                                        |
 | `model`            | string | no       | `Build.MODEL`                                      |
 | `ip_address`       | string | no       | LAN IP of the TV                                   |
+| `device_type`      | string | no       | 2.4: `"web"` for the browser web player (`platform` is accepted too); anything else / missing = `android`. Stored in `devices.platform` |
+| `user_agent`       | string | no       | 2.4, web player only: the browser's user agent (255 chars) |
 
 Response `data`:
 
@@ -394,6 +396,7 @@ Roles inside a hotel: `super_admin` > `manager` > `staff` > `reception`. Platfor
 * Guests, PMS and guest web app: [modules/guests_services.md](modules/guests_services.md)
 * Ads, analytics, templates: [modules/ads_analytics_templates.md](modules/ads_analytics_templates.md)
 * Device support (screenshot, logs, crash, events), web push: [modules/pwa_support_devices.md](modules/pwa_support_devices.md)
+* Web player (browser TVs, Fire TV, Raspberry Pi, kiosk PCs — device type `web`): [modules/web_player.md](modules/web_player.md)
 * 2.4 live view, TV health, USB mode, announcements, HDMI-CEC: [modules/device_features.md](modules/device_features.md)
 
 * QR TV setup (provision start/status): [modules/qr_setup.md](modules/qr_setup.md)
