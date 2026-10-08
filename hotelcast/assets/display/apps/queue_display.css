@@ -6,6 +6,8 @@
 .qd-counter:nth-child(2n){margin-right:0}
 .qd-n1 .qd-counter{width:100%;margin-right:0}
 .qd-n1 .qd-token{font-size:11rem}
+.qd-n3 .qd-counter,.qd-n4 .qd-counter{padding:.9rem 1rem 1rem}
+.qd-n3 .qd-token,.qd-n4 .qd-token{font-size:4.8rem}
 .qd-n5 .qd-counter,.qd-n6 .qd-counter,.qd-n7 .qd-counter,.qd-n8 .qd-counter,.qd-n9 .qd-counter,
 .qd-n10 .qd-counter,.qd-n11 .qd-counter,.qd-n12 .qd-counter{width:31.3%;margin-right:3%;padding:.8rem}
 .qd-n5 .qd-counter:nth-child(2n),.qd-n6 .qd-counter:nth-child(2n),.qd-n7 .qd-counter:nth-child(2n),.qd-n8 .qd-counter:nth-child(2n),
@@ -24,7 +26,9 @@
 .qd-blink .qd-token,.qd-blink .qd-cname,.qd-blink .qd-csub{color:inherit}
 
 .qd-side{width:30%;margin-left:1.8rem;display:-webkit-flex;display:flex;-webkit-flex-direction:column;flex-direction:column;overflow:hidden}
-.qd-panel{margin-bottom:1.2rem;padding:1rem 1.3rem}
+.qd-panel{margin-bottom:1.2rem;padding:1rem 1.3rem;-webkit-flex:none;flex:none}
+/* Lists give way first (whole rows clip inside their card); the QR codes always stay complete. */
+.qd-side .qd-list{-webkit-flex:0 1 auto;flex:0 1 auto;min-height:5rem;overflow:hidden}
 .qd-ptitle{font-size:1.1rem;font-weight:700;color:var(--hc-accent);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.5rem}
 .qd-row{display:-webkit-flex;display:flex;-webkit-justify-content:space-between;justify-content:space-between;-webkit-align-items:baseline;align-items:baseline;
   font-size:1.35rem;padding:.25rem 0;border-bottom:.06rem solid var(--hc-border)}
@@ -37,6 +41,13 @@
 .qd-qr-img svg{width:100%;height:100%;display:block}
 .qd-qr-text{font-size:1.05rem;min-width:0}
 .qd-qr-text span{display:block;color:var(--hc-muted);margin-top:.3rem}
+.qd-qr2{display:block}
+.qd-qr2 .qd-qr-text{margin-bottom:.5rem}
+.qd-qr-pair{display:-webkit-flex;display:flex}
+.qd-qr-cell{-webkit-flex:1;flex:1;min-width:0;text-align:center}
+.qd-qr-cell+.qd-qr-cell{margin-left:.8rem}
+.qd-qr-cell .qd-qr-img{width:6.2rem;height:6.2rem;margin:0 auto .3rem}
+.qd-qr-cell span{display:block;font-size:.95rem;color:var(--hc-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
 /* Big banner on a new call */
 .qd-flash{position:absolute;left:4rem;right:4rem;top:50%;margin-top:-8rem;height:16rem;z-index:20;border-radius:1.4rem;

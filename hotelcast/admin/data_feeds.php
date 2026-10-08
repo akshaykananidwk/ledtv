@@ -53,6 +53,12 @@ if (is_post()) {
             }
             [, $owner] = DataFeeds::keyFor($p);
             $row = DB::one('SELECT * FROM data_feeds WHERE feed_key = :k', ['k' => DataFeeds::feedKey($p, DataFeeds::cleanParams($p, $params) ?? [], $owner)]);
+            if ($row && $P[$p]['key'] && $owner === 0 && !DataFeeds::due($row)) {
+                // Feed on the shared platform key (used by every hotel without its own key): only when its
+                // TTL / back-off is over, so one hotel cannot spend the provider's daily cap of all hotels.
+                flash('info', __('Up to date'));
+                break;
+            }
             $new = $row ? DataFeeds::refreshRow($row) : null;
             if (!$new || ($new['_result'] ?? '') === 'budget') {
                 flash('warning', __('Request limit reached — try again in a minute.'));

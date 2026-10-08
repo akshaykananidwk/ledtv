@@ -20,7 +20,7 @@
 .kp-value{white-space:nowrap;overflow:hidden;line-height:1.1;margin:.2rem 0;font-size:3.8rem}
 .kp-value b{font-size:1em;font-variant-numeric:tabular-nums}
 .kp-unit{font-size:.4em;margin-left:.4rem;color:var(--hc-muted)}
-.kp-t-text .kp-value{white-space:normal}
+.kp-t-text .kp-value{white-space:normal;-webkit-flex-shrink:1;flex-shrink:1;min-height:0}
 .kp-t-text .kp-value{font-size:3rem}
 .kp-bar{height:.8rem;border-radius:.4rem;background:rgba(127,127,127,.25);overflow:hidden;margin-top:.6rem}
 .kp-bar i{display:block;height:100%;background:var(--hc-accent);border-radius:.4rem;-webkit-transition:width 1s ease;transition:width 1s ease}

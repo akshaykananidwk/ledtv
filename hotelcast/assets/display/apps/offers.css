@@ -4,7 +4,7 @@
 .of-card.of-gone{opacity:.15}
 .of-img{-webkit-flex:none;flex:none;margin-right:1.6rem;border-radius:.6rem;overflow:hidden;background:rgba(0,0,0,.2)}
 .of-img img{display:block;width:100%;height:100%;-o-object-fit:cover;object-fit:cover}
-.of-info{-webkit-flex:1;flex:1;min-width:0;overflow:hidden}
+.of-info{-webkit-flex:1;flex:1;min-width:0;max-height:100%;overflow:hidden}
 .of-badge{margin-bottom:.6rem}
 .of-title{font-weight:700;line-height:1.2;overflow:hidden}
 .of-desc{color:var(--hc-muted);margin-top:.4rem;overflow:hidden}

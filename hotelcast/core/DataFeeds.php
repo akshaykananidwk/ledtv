@@ -74,6 +74,12 @@ final class DataFeeds
     private static array $phMemo = [];
     /** Number of real (or mocked) HTTP requests made in this process (tests). */
     public static int $requests = 0;
+    /**
+     * Read-only mode (draft previews, admin/apps.php op=preview): get() only reads feeds that already
+     * exist — it never registers a new feed and never fetches, so typing in a form cannot spend the
+     * shared platform API budget (daily caps) of every hotel.
+     */
+    public static bool $readOnly = false;
 
     public static function flush(): void
     {
@@ -584,6 +590,10 @@ final class DataFeeds
         $now = time();
         try {
             $row = self::$memo[$fk] ?? DB::one('SELECT * FROM data_feeds WHERE feed_key = :k', ['k' => $fk]);
+            if (self::$readOnly) {
+                // Draft preview: show what is stored, register / fetch nothing.
+                return $row ? self::state($row) : $out;
+            }
             if (!$row) {
                 DB::query(
                     'INSERT INTO data_feeds (feed_key, provider, params, key_hotel_id, demand_at, created_at) VALUES (:k, :p, :pa, :o, :d, :c)

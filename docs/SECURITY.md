@@ -35,3 +35,55 @@ and never touched by the updater. No credentials are hard-coded anywhere.
 Device token stored in private SharedPreferences; settings protected by a 4-digit PIN (SHA-256 hash pushed from
 the server, per room override possible); kiosk/lock-task mode when provisioned as device owner; APK updates
 verified by SHA-256 before installation.
+
+## 2.3 additions
+
+### New public endpoints (no login)
+
+| Endpoint | Credential | Protections |
+|---|---|---|
+| `display/?c=&s=` (TV page), `display/data.php?c=&s=` (live JSON) | `s` = first 32 hex of HMAC-SHA256(`display:<hotel>:<content id>`, `APP_KEY`) | Row looked up by id, signature checked with `hash_equals` against **its** hotel, then `Tenant::set()`; only `type = 'app'` items; bad / missing → 404, suspended / expired hotel → 403 neutral page; read-only; `Cache-Control: no-store`, `X-Robots-Tag: noindex`; all values escaped server-side (`e()`), JSON for JS with `JSON_HEX_*`, TV scripts build HTML only through `HC.esc()` |
+| `display/queue.php?h=&q=&s=[&t=&k=]` (self-service token) | `s` = HMAC(`queue:<hotel>:<service>`), `k` = HMAC(`queue-token:<hotel>:<token>`) | Only active services with self-service on; 3 tokens / 15 min per IP and hotel (429 + `Retry-After`); suspended → 403; `X-Frame-Options: DENY` |
+| `album/?a=&s=` (guest photo upload) | `s` = HMAC(`album:<hotel>:<album>:<guest_key>`); "New link" rotates `guest_key` | Link must be switched on; 20 uploads / 10 min per IP and album; `guest_max` per album; Uploader image rules (extension + `finfo` + `getimagesize`, 25 MB, no SVG / HTML); HEIC refused; JPG / PNG / WEBP re-encoded by GD and **guest GIFs flattened to PNG** (no byte-for-byte copy of an anonymous file); moderation on by default (`pending` until approved); strict CSP, `frame-ancestors 'none'`, `Referrer-Policy: no-referrer` |
+| `POST /api/kpi/push` (machine values) | `Bearer kpi<48 hex>`, one token per tile, only its SHA-256 stored, shown once | 600 req / min per IP, 20 wrong tokens / 10 min per IP, 30 updates / min per tile; suspended hotel → 403; values validated (`Kpi::apply`) and escaped on the TV |
+
+### Server-side requests (SSRF)
+
+* `Http::request()` limits protocols to http / https, also after redirects (`CURLOPT_REDIR_PROTOCOLS`);
+  requests carrying an API key never follow redirects (`$followRedirects = false`).
+* Data feeds (`core/DataFeeds.php`): fixed provider hosts, parameters validated by strict patterns and
+  URL-encoded, host re-checked before sending; keys encrypted at rest (`Crypto`), never in rows, logs, errors
+  (scrubbed), HTML or JSON. Budget: `platform_feeds_per_min` and a daily cap per provider and key owner.
+  Draft previews (`admin/apps.php`) only read existing feeds (`DataFeeds::$readOnly`) and "Refresh now" on a
+  feed using the shared platform key waits for its TTL / back-off, so one hotel cannot spend the caps of all hotels.
+* Google Sheet table (`core/SheetFeed.php`): only `https://docs.google.com/spreadsheets/…` links, rebuilt from
+  their id / gid; cached per hotel; HTML answers rejected; size / row / column / cell limits.
+* Social wall: the server never fetches; only canonical facebook.com / instagram.com embed URLs reach the TV.
+
+### Uploads, tenancy, CSRF, headers
+
+* Designer / PDF import: browser-rendered PNG (JPG for PDF pages) ≤ 8 MB, real MIME + dimensions checked,
+  then the Uploader (re-encode, random name, per-hotel folder `uploads/h<id>/`, which inherits
+  `uploads/.htaccess`). Re-saving a slide replaces only a file of the hotel's own item (`ContentManager::find`).
+  `assets/fonts/` serves only bundled fonts; `templates/` is web-denied; `display/` and `album/` hold only the
+  public PHP entry points.
+* New tenant tables (registered in `core/boot.d/*.php`): `notices`, `offers`, `class_sessions`, `departures`,
+  `kpi_tiles`, `queue_services`, `queue_counters`, `queue_tokens`, `albums`, `album_photos`, `metal_rates`,
+  `designs`, `pdf_imports`, `pdf_import_pages`. `data_feeds` is a platform table (shared feed values, no hotel data).
+  Every admin page / AJAX action loads ids with `Tenant::find` (another hotel's id → 404).
+* Every new admin page calls `Csrf::check()` (also the AJAX quick toggles: sold out, queue NEXT, KPI +1,
+  departure status, rates); designer AJAX goes through `admin/ajax.php` (X-CSRF-Token).
+* Admin pages keep `X-Frame-Options: SAMEORIGIN`. TV pages are public and read-only; they are framed only by the
+  same-origin admin preview.
+
+### Operator notes (documented limits)
+
+* Display, album and queue links do not expire. A leaked TV link keeps showing that item (also when it is
+  switched off) until the item is deleted; album links are revoked with "New link". Keep TV URLs private.
+* Platform data-feed keys are shared by all hotels that have no key of their own; caps are per key owner,
+  not per hotel. Set `platform_feeds_per_min` and the daily caps, or let large hotels use their own keys.
+  The aviationstack "HTTP" option sends the key unencrypted (free plan only).
+* Self-service queue and guest upload limits are per IP: guests behind one Wi-Fi (NAT) share them.
+* Staff uploads keep GIFs unchanged (animation); they are served from `uploads/` with `nosniff` and a
+  `default-src 'none'` CSP. Use Apache (or equivalent nginx rules) so these headers and the PHP / HTML / SVG
+  block apply.

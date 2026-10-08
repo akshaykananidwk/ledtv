@@ -152,6 +152,9 @@ final class Albums
         }
         if (isset($file['tmp_name']) && is_string($file['tmp_name']) && ($file['error'] ?? 1) === UPLOAD_ERR_OK) {
             self::fixOrientation($file['tmp_name']);
+            if (($meta['source'] ?? 'staff') === 'guest') {
+                $file = self::flattenGif($file);
+            }
         }
         $up = Uploader::handle($file, 'image');
         $sort = (int) DB::value('SELECT COALESCE(MAX(sort_order), 0) + 1 FROM album_photos WHERE hotel_id = :h AND album_id = :a', ['h' => Tenant::id(), 'a' => $albumId]);
@@ -170,6 +173,26 @@ final class Albums
             'created_by' => ($meta['source'] ?? 'staff') === 'guest' ? null : Auth::id(),
             'created_at' => now(),
         ]);
+    }
+
+    /**
+     * Guest uploads (public link): a GIF is decoded and saved as PNG (first frame) before the Uploader,
+     * which keeps GIFs byte for byte for their animation. A file from an anonymous guest is never
+     * stored unchanged (polyglots / appended payloads are dropped, like for JPG / PNG / WEBP).
+     */
+    private static function flattenGif(array $file): array
+    {
+        $path = (string) $file['tmp_name'];
+        if (!is_file($path) || (new finfo(FILEINFO_MIME_TYPE))->file($path) !== 'image/gif') {
+            return $file;
+        }
+        $img = function_exists('imagecreatefromgif') ? @imagecreatefromgif($path) : false;
+        if (!$img || !imagepng($img, $path)) {
+            throw new RuntimeException(__('Only JPG, PNG, GIF or WEBP images are allowed.'));
+        }
+        imagedestroy($img);
+        clearstatcache(true, $path);
+        return ['name' => 'photo.png', 'type' => 'image/png', 'size' => (int) filesize($path)] + $file;
     }
 
     /** Rotate a JPEG in place according to its EXIF orientation (phones store photos sideways). */

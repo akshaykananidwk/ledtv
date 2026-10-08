@@ -37,6 +37,8 @@ if (is_post()) {
 
     if ($op === 'preview') {
         // Draft preview of the form (not saved): the TV page as HTML for the preview iframe.
+        // Sent while typing: data feeds are read only (no new feed, no fetch → no shared API budget spent).
+        DataFeeds::$readOnly = true;
         [$data] = ContentManager::validate($in, 'app', false);
         header('Content-Type: text/html; charset=utf-8');
         header('Cache-Control: no-store');

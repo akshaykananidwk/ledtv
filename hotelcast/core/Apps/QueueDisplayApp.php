@@ -173,22 +173,29 @@ final class QueueDisplayApp extends DisplayApp
         $h .= '</div></div>';
         $side = '';
         if ($config['show_recent']) {
-            $side .= '<div class="qd-panel hc-card"><div class="qd-ptitle">' . e(__('Last called')) . '</div><div id="qdRecent">';
+            $side .= '<div class="qd-panel qd-list hc-card"><div class="qd-ptitle">' . e(__('Last called')) . '</div><div id="qdRecent">';
             foreach ($d['recent'] as $r) {
                 $side .= '<div class="qd-row"><b>' . e($r['token']) . '</b><span>' . e($r['counter']) . '</span></div>';
             }
             $side .= '</div></div>';
         }
         if ($config['show_waiting']) {
-            $side .= '<div class="qd-panel hc-card"><div class="qd-ptitle">' . e(__('Waiting')) . '</div><div id="qdWaiting">';
+            $side .= '<div class="qd-panel qd-list hc-card"><div class="qd-ptitle">' . e(__('Waiting')) . '</div><div id="qdWaiting">';
             foreach ($d['services'] as $s) {
                 $side .= '<div class="qd-row"><span>' . e($s['name']) . '</span><b>' . (int) $s['waiting'] . '</b></div>';
             }
             $side .= '</div></div>';
         }
-        foreach ($this->qrServices($config) as $s) {
-            $side .= '<div class="qd-panel hc-card qd-qr"><div class="qd-qr-img">' . QrCode::svg(Queue::publicUrl($s)) . '</div>'
-                . '<div class="qd-qr-text"><b>' . e(__('Get your token on your phone')) . '</b><span>' . e($s['name']) . '</span></div></div>';
+        $qrs = $this->qrServices($config);
+        if (count($qrs) === 1) {
+            $side .= '<div class="qd-panel hc-card qd-qr"><div class="qd-qr-img">' . QrCode::svg(Queue::publicUrl($qrs[0])) . '</div>'
+                . '<div class="qd-qr-text"><b>' . e(__('Get your token on your phone')) . '</b><span>' . e($qrs[0]['name']) . '</span></div></div>';
+        } elseif ($qrs) { // two services: one panel with the codes side by side, so the lists keep their room
+            $side .= '<div class="qd-panel hc-card qd-qr qd-qr2"><div class="qd-qr-text"><b>' . e(__('Get your token on your phone')) . '</b></div><div class="qd-qr-pair">';
+            foreach ($qrs as $s) {
+                $side .= '<div class="qd-qr-cell"><div class="qd-qr-img">' . QrCode::svg(Queue::publicUrl($s)) . '</div><span>' . e($s['name']) . '</span></div>';
+            }
+            $side .= '</div></div>';
         }
         if ($side !== '') {
             $h .= '<div class="qd-side">' . $side . '</div>';

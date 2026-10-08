@@ -4,6 +4,26 @@
   'use strict';
   var text = {}, tick = null, asked = 0, last = null;
 
+  /** Shrink the texts of a card together while its whole text block (badge, title, text, prices, countdown) is taller than the card. */
+  function fitInfo(t) {
+    var info = t.parentNode && t.parentNode.parentNode, root, els, base = [], f = 1, guard = 12, i;
+    if (!info || (' ' + info.className + ' ').indexOf(' of-info ') < 0 || info.scrollHeight <= info.clientHeight + 1) { return; }
+    root = parseFloat(w.getComputedStyle(d.documentElement).fontSize) || 16;
+    els = info.querySelectorAll('.of-title, .of-desc, .of-price, .of-old, .of-ends');
+    for (i = 0; i < els.length; i++) { base.push(parseFloat(w.getComputedStyle(els[i]).fontSize) / root); }
+    while (guard-- > 0 && info.scrollHeight > info.clientHeight + 1) {
+      f *= 0.9;
+      for (i = 0; i < els.length; i++) { els[i].style.fontSize = Math.max(0.8, base[i] * f) + 'rem'; }
+    }
+  }
+
+  function fitAll(box) {
+    var t = box.querySelectorAll('.of-title, .of-desc, .of-price, .of-old, .of-ends'), k;
+    for (k = 0; k < t.length; k++) { t[k].style.fontSize = ''; } // start again from the CSS sizes
+    t = box.querySelectorAll('.of-title');
+    for (k = 0; k < t.length; k++) { HC.fitText(t[k], 1.2); fitInfo(t[k]); }
+  }
+
   function countdown(sec) {
     sec = Math.max(0, sec);
     var days = Math.floor(sec / 86400);
@@ -65,10 +85,8 @@
         if (html) { html += '</div>'; }
         list.innerHTML = html || '<div class="hc-empty">' + HC.esc(text.empty) + '</div>';
       }
-      HC.rotate(list, data.rotate_sec || 8, function (slide) {
-        var t = slide.querySelectorAll('.of-title');
-        for (var k = 0; k < t.length; k++) { HC.fitText(t[k], 1.2); }
-      });
+      HC.rotate(list, data.rotate_sec || 8, fitAll);
+      if (d.readyState !== 'complete') { w.addEventListener('load', function () { fitAll(list); }); } // web fonts change the text height
       if (!tick) { tick = setInterval(ticker, 1000); }
       ticker();
     }

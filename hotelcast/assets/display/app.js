@@ -84,7 +84,9 @@
     var root = parseFloat(w.getComputedStyle(d.documentElement).fontSize) || 16;
     var size = parseFloat(w.getComputedStyle(el).fontSize) / root;
     var min = minRem || 0.8, guard = 40;
-    while (guard-- > 0 && size > min && (el.scrollHeight > el.clientHeight + 1 || el.scrollWidth > el.clientWidth + 1)) {
+    // Glyphs of Noto Sans (more so Gujarati / Devanagari) reach a little outside a tight line-height (1.2):
+    // that overflow (up to ~0.35 em) is not "too much text", or every heading would shrink to the minimum.
+    while (guard-- > 0 && size > min && (el.scrollHeight > el.clientHeight + 1 + size * root * 0.35 || el.scrollWidth > el.clientWidth + 1)) {
       size = Math.max(min, size * 0.92);
       el.style.fontSize = size + 'rem';
     }
