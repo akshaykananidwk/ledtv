@@ -686,6 +686,10 @@ final class Auth
     public static function homePage(): string
     {
         $role = self::role();
+        // 2.6 panels: platform admins / resellers land in their own console unless they opened a customer.
+        if (($role === 'platform_admin' || $role === 'reseller') && !self::inEnteredHotel()) {
+            return Panel::home($role === 'platform_admin' ? 'platform' : 'reseller');
+        }
         if (!Tenant::has()) {
             return match ($role) {
                 'platform_admin' => 'platform_hotels.php',

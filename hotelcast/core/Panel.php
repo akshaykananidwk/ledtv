@@ -1,0 +1,195 @@
+<?php
+declare(strict_types=1);
+
+/**
+ * 2.6 panels (docs/modules/panels.md): which of the three admin panels the current request renders.
+ *
+ *   platform  Super Admin console — platform_admin outside a customer
+ *   reseller  Reseller panel      — reseller outside a customer
+ *   customer  Customer workspace  — customer roles; and a platform admin / reseller / chain admin who
+ *                                   opened a customer (Auth::enterHotel, shown with the impersonation banner)
+ *   chain     Chain dashboard     — chain_admin outside a customer
+ *
+ * Nothing is stored: the panel follows the role and Auth::inEnteredHotel(). Permissions stay in Auth::can();
+ * this class only decides the shell (theme, sidebar sections, home page).
+ */
+final class Panel
+{
+    public const PANELS = ['platform', 'reseller', 'customer', 'chain'];
+
+    /** Nav sections (admin/partials/nav.d) shown per panel. */
+    public const SECTIONS = [
+        'platform' => ['platform'],
+        'reseller' => ['reseller'],
+        'customer' => ['hotel', 'chain'],
+        'chain' => ['chain'],
+    ];
+
+    /** Sidebar order per panel (nav keys; unknown keys follow in file order). */
+    public const ORDER = [
+        'platform' => ['platform_overview', 'platform_hotels', 'platform_screens', 'platform_resellers', 'platform_chains',
+            'platform_plans', 'platform_invoices', 'platform_licenses', 'platform_signups', 'platform_demo', 'platform_marketplace',
+            'platform_support', 'platform_settings', 'update', 'qr_setup', 'push'],
+        'reseller' => ['reseller_overview', 'reseller', 'platform_screens', 'reseller_plans', 'reseller_invoices', 'reseller_support',
+            'platform_demo', 'platform_chains', 'qr_setup', 'push'],
+    ];
+
+    /** Sidebar headings per panel: heading label key => nav keys. */
+    public const GROUPS = [
+        'platform' => [
+            'Manage' => ['platform_overview', 'platform_hotels', 'platform_screens', 'platform_resellers', 'platform_chains'],
+            'Commercial' => ['platform_plans', 'platform_invoices', 'platform_licenses', 'platform_signups', 'platform_demo', 'platform_marketplace'],
+            'System' => ['platform_support', 'platform_settings', 'update', 'qr_setup', 'push'],
+        ],
+        'reseller' => [
+            'Manage' => ['reseller_overview', 'reseller', 'platform_screens', 'reseller_support'],
+            'Commercial' => ['reseller_plans', 'reseller_invoices', 'platform_demo', 'platform_chains'],
+            'Tools' => ['qr_setup', 'push'],
+        ],
+    ];
+
+    /** Test hook: force a panel (null = detect). Never set in production code. */
+    public static ?string $override = null;
+
+    public static function current(): string
+    {
+        if (self::$override !== null && in_array(self::$override, self::PANELS, true)) {
+            return self::$override;
+        }
+        $role = Auth::role();
+        if ($role === '') {
+            return 'customer';
+        }
+        if (Auth::inEnteredHotel()) {
+            return 'customer';
+        }
+        return match ($role) {
+            'platform_admin' => 'platform',
+            'reseller' => 'reseller',
+            'chain_admin' => 'chain',
+            default => 'customer',
+        };
+    }
+
+    public static function is(string $panel): bool
+    {
+        return self::current() === $panel;
+    }
+
+    /** True when a platform admin / reseller / chain admin works inside a customer they opened. */
+    public static function impersonating(): bool
+    {
+        return Auth::inEnteredHotel() && Tenant::has();
+    }
+
+    /** Role word for badges / the impersonation banner. */
+    public static function actorLabel(): string
+    {
+        return match (Auth::role()) {
+            'platform_admin' => __('Super Admin'),
+            'reseller' => __('Reseller'),
+            'chain_admin' => __('Chain Admin'),
+            default => Auth::roleName(),
+        };
+    }
+
+    /** Theme of a panel: css key, display name, icon, accent colours. */
+    public static function theme(?string $panel = null): array
+    {
+        $panel ??= self::current();
+        return match ($panel) {
+            'platform' => ['key' => 'platform', 'name' => __('Super Admin console'), 'badge' => __('Super Admin'), 'icon' => 'bi-shield-lock-fill', 'accent' => '#4f46e5', 'accent_dark' => '#3730a3'],
+            'reseller' => ['key' => 'reseller', 'name' => __('Reseller panel'), 'badge' => __('Reseller'), 'icon' => 'bi-briefcase-fill', 'accent' => '#0d9488', 'accent_dark' => '#0f766e'],
+            'chain' => ['key' => 'chain', 'name' => __('Chain dashboard'), 'badge' => __('Chain'), 'icon' => 'bi-diagram-3-fill', 'accent' => '#475569', 'accent_dark' => '#334155'],
+            default => ['key' => 'customer', 'name' => __('Customer workspace'), 'badge' => '', 'icon' => 'bi-tv', 'accent' => null, 'accent_dark' => null],
+        };
+    }
+
+    /** Home page of a panel (file in admin/). */
+    public static function home(?string $panel = null): string
+    {
+        $panel ??= self::current();
+        return match ($panel) {
+            'platform' => is_file(HC_ROOT . '/admin/platform_overview.php') ? 'platform_overview.php' : 'platform_hotels.php',
+            'reseller' => is_file(HC_ROOT . '/admin/reseller_overview.php') ? 'reseller_overview.php' : 'reseller.php',
+            'chain' => Chains::enabled() ? 'chain.php' : 'profile.php',
+            default => 'index.php',
+        };
+    }
+
+    /** Does the current user have a console / panel of their own to go back to (besides the customer workspace)? */
+    public static function consoleOf(?array $user = null): ?string
+    {
+        $role = $user['role'] ?? Auth::role();
+        return match ($role) {
+            'platform_admin' => 'platform',
+            'reseller' => 'reseller',
+            'chain_admin' => 'chain',
+            default => null,
+        };
+    }
+
+    /**
+     * Sidebar of the current panel: [section => [key => [key, file, perm, icon, label]]] from hc_nav_sections(),
+     * limited to the panel's sections and ordered by self::ORDER.
+     */
+    public static function navSections(?array $all = null): array
+    {
+        $all ??= function_exists('hc_nav_sections') ? hc_nav_sections() : [];
+        $panel = self::current();
+        $out = [];
+        foreach (self::SECTIONS[$panel] ?? [] as $section) {
+            if (empty($all[$section])) {
+                continue;
+            }
+            $items = $all[$section];
+            $order = self::ORDER[$panel] ?? [];
+            if ($order) {
+                uksort($items, static function (string $a, string $b) use ($order, $items): int {
+                    $ia = array_search($a, $order, true);
+                    $ib = array_search($b, $order, true);
+                    $ia = $ia === false ? PHP_INT_MAX : $ia;
+                    $ib = $ib === false ? PHP_INT_MAX : $ib;
+                    return $ia <=> $ib ?: array_search($a, array_keys($items), true) <=> array_search($b, array_keys($items), true);
+                });
+            }
+            $out[$section] = $items;
+        }
+        return $out;
+    }
+
+    /** Sidebar groups for the current panel: [heading => [key => item]] (items without a group under ''). */
+    public static function navGroups(array $items): array
+    {
+        $groups = self::GROUPS[self::current()] ?? [];
+        if (!$groups) {
+            return ['' => $items];
+        }
+        $out = [];
+        $seen = [];
+        foreach ($groups as $heading => $keys) {
+            foreach ($keys as $k) {
+                if (isset($items[$k])) {
+                    $out[$heading][$k] = $items[$k];
+                    $seen[$k] = true;
+                }
+            }
+        }
+        foreach ($items as $k => $item) {
+            if (!isset($seen[$k])) {
+                $out[''][$k] = $item;
+            }
+        }
+        return $out;
+    }
+
+    /** Flat list of nav keys visible in the current panel (tests, header). */
+    public static function navKeys(): array
+    {
+        $keys = [];
+        foreach (self::navSections() as $items) {
+            $keys = array_merge($keys, array_keys($items));
+        }
+        return $keys;
+    }
+}

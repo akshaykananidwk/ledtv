@@ -13,7 +13,7 @@ Csrf::check();
 // "Back to platform" from the hotel-context banner (any platform user).
 if (is_post() && req_str('op', $_POST, 20) === 'leave') {
     Auth::leaveHotel();
-    redirect(admin_url(Auth::role() === 'reseller' ? 'reseller.php' : (Auth::can('platform.manage') ? 'platform_hotels.php' : Auth::homePage())));
+    redirect(admin_url(Auth::homePage())); // 2.6: back to the user's own console
 }
 require_can('platform.manage');
 

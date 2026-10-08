@@ -11,7 +11,7 @@ $user = Auth::require();
 Csrf::check();
 if (is_post() && req_str('op', $_POST, 20) === 'leave') {
     Auth::leaveHotel();
-    redirect(admin_url('reseller.php'));
+    redirect(admin_url(Auth::homePage()));
 }
 require_can('reseller.panel');
 
