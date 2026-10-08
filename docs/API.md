@@ -103,6 +103,7 @@ Response `data`:
 ```json
 {
   "server_time": "2026-10-05T18:30:00+05:30",
+  "server_time_ms": 1791207000123,
   "poll_interval": 8,
   "content_hash": "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b",
   "content_changed": true,
@@ -113,6 +114,9 @@ Response `data`:
   ]
 }
 ```
+
+`server_time_ms` (2.4): the server clock in milliseconds, taken when the response is built. Apps ≥ 2.4.0 use
+it for synchronized playback (NTP-like offset estimate, see docs/modules/video_wall_sync.md).
 
 Commands are returned until they are acknowledged via `/api/device/ack` (delivery is at-least-once;
 the TV must de-duplicate by `id`). Commands not acked within 24 h expire.
@@ -224,6 +228,7 @@ Returns the Content object currently scheduled for a room. A device may only rea
 | `off`       | the room is switched off — show a black screen (`screen_on` = false) |
 | `suspended` | the hotel's service is paused (suspended / expired account or invalid license). `items` is empty; show `suspended.title` + `suspended.message` (e.g. "Service paused — please contact reception") with the `branding`. Emergencies still override it. |
 | `empty`     | nothing to show — show the hotel logo / welcome screen |
+| `wall`      | (2.4) the room is a tile of an active video wall: `items` are the wall's, plus `wall` and `sync` (below) |
 
 When `emergency` is not null it is: `{ "id": 9, "title": "...", "message": "...", "bg_color": "#B00020", "text_color": "#FFFFFF" }`.
 
@@ -242,6 +247,13 @@ screens; no app rebuild is needed for a rebrand.
 
 `suspended` is `{ "title": "...", "message": "..." }` when `mode` is `suspended` (texts in the hotel's
 default language), otherwise absent / null.
+
+`sync` (2.4, synchronized playback / video walls, docs/modules/video_wall_sync.md) is absent unless the
+content is a synced playlist or a video wall: `{ "epoch_ms": 1791206990000, "cycle_ms": 46000,
+"item_offsets_ms": [0, 30000, 36000] }` — one offset per item; the TV shows item *i* where
+`(server_now - epoch_ms) mod cycle_ms` falls. `wall` (2.4) is `{ "id", "rows", "cols", "row", "col",
+"bezel_x_pct", "bezel_y_pct", "audio" }` (0-based tile; bezel gap in percent of one picture; `audio` = this
+tile plays sound). Apps before 2.4.0 ignore both and play the items normally.
 
 Modules may add more fields through content extensions (see docs/DEVELOPER.md); the TV must ignore
 unknown fields.

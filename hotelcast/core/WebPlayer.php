@@ -124,6 +124,7 @@ final class WebPlayer
             'Settings', 'Enter the settings PIN', 'Wrong PIN', 'Reload', 'Re-pair this screen', 'Reset the player',
             'Language', 'Close', 'Room', 'Device ID', 'Server', 'Version', 'Press OK again to confirm',
             'Web player', 'Sound on', 'Full screen', 'Message',
+            'This screen was removed from the server. Please set it up again.',
         ];
     }
 

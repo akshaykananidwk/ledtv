@@ -220,6 +220,8 @@ final class DataFeedsTest extends TestCase
             $params = match ($p) {
                 'twelvedata' => ['symbols' => ['NSEI']],
                 'aviationstack' => ['flight' => 'AI101'],
+                'open_meteo_aq', 'open_meteo_wx' => ['lat' => 22.24, 'lon' => 68.97],
+                'google_places' => ['place_id' => 'ChIJN1t_tDeuEmsRUsoyG83frY4'],
                 default => [],
             };
             foreach (DataFeeds::requests($p, $params, 'k&x=1#@evil.com/') as [$url]) {

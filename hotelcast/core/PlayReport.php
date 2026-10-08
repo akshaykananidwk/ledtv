@@ -9,7 +9,7 @@ declare(strict_types=1);
  * Filters: date range (max 366 days, Analytics::range), content item, playlist (its items), room, group,
  * ad campaign. Users limited to some TVs (core/Access.php) only get plays of their rooms. Every query starts
  * on the index (hotel_id, event, created_at) or (hotel_id, content_id / device_id, created_at); the table is
- * paginated and the CSV is streamed in id-keyset chunks, so a year of plays stays fast.
+ * paginated and the CSV is streamed in keyset chunks, so a year of plays stays fast.
  */
 final class PlayReport
 {
@@ -165,18 +165,18 @@ final class PlayReport
         return self::fetch($f, '', [], 'LIMIT ' . $perPage . ' OFFSET ' . $offset);
     }
 
-    /** Every play of the filters, newest first, in id-keyset chunks (CSV export of large ranges). */
+    /** Every play of the filters, newest first, in (time, id) keyset chunks (CSV export of large ranges). */
     public static function iterate(array $f): Generator
     {
-        $before = null;
+        $last = null;
         do {
-            $rows = $before === null
+            $rows = $last === null
                 ? self::fetch($f, '', [], 'LIMIT ' . self::CHUNK)
-                : self::fetch($f, ' AND l.id < :before', ['before' => $before], 'LIMIT ' . self::CHUNK);
+                : self::fetch($f, ' AND (l.created_at < :kat OR (l.created_at = :kat2 AND l.id < :kid))', ['kat' => $last['played_at'], 'kat2' => $last['played_at'], 'kid' => $last['id']], 'LIMIT ' . self::CHUNK);
             foreach ($rows as $r) {
                 yield $r;
             }
-            $before = $rows ? (int) end($rows)['id'] : null;
+            $last = $rows ? end($rows) : null;
         } while (count($rows) === self::CHUNK);
     }
 
@@ -193,7 +193,7 @@ final class PlayReport
              LEFT JOIN rooms r ON r.id = l.room_id AND r.hotel_id = :h3
              LEFT JOIN devices d ON d.id = l.device_id AND d.hotel_id = :h4" .
              ($ads ? ' LEFT JOIN ad_campaigns a ON a.id = l.ad_campaign_id AND a.hotel_id = :h5' : '') . "
-             WHERE $w$extra ORDER BY l.id DESC $limit",
+             WHERE $w$extra ORDER BY l.created_at DESC, l.id DESC $limit",
             $p + $extraParams + ['h2' => $hid, 'h3' => $hid, 'h4' => $hid] + ($ads ? ['h5' => $hid] : [])
         );
         return array_map(static fn ($r) => [

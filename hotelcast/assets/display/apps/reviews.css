@@ -1,0 +1,18 @@
+/* Google reviews (#30). */
+.rv-wrap{display:-webkit-flex;display:flex;-webkit-flex:1;flex:1;min-height:0}
+.rv-summary{width:30%;-webkit-flex-shrink:0;flex-shrink:0;margin-right:1.5rem;display:-webkit-flex;display:flex;-webkit-flex-direction:column;flex-direction:column;-webkit-align-items:center;align-items:center;-webkit-justify-content:center;justify-content:center;text-align:center}
+.rv-avg{font-size:7rem;font-weight:800;line-height:1}
+.rv-summary .rv-stars{font-size:2.6rem}
+.rv-total{font-size:1.5rem;color:var(--hc-muted);margin-top:.3rem}
+.rv-google{margin-top:1.4rem;font-size:1.15rem;color:var(--hc-muted);display:-webkit-flex;display:flex;-webkit-align-items:center;align-items:center}
+.rv-g{display:inline-block;width:1.8rem;height:1.8rem;line-height:1.8rem;border-radius:50%;background:#fff;color:#4285F4;font-weight:800;margin-right:.5rem;font-family:Arial,sans-serif}
+.rv-slides{position:relative;-webkit-flex:1;flex:1;min-width:0}
+.rv-card{display:-webkit-flex;display:flex;-webkit-flex-direction:column;flex-direction:column;-webkit-justify-content:center;justify-content:center;padding:2rem 2.5rem}
+.rv-stars{color:#FBBC04;letter-spacing:.1em;font-size:2rem}
+.rv-off{color:rgba(128,128,128,.45)}
+.rv-half{background:-webkit-linear-gradient(left,#FBBC04 50%,rgba(128,128,128,.45) 50%);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.rv-text{font-size:2.1rem;line-height:1.4;margin:1rem 0;font-style:italic;overflow:hidden;max-height:17rem}
+.rv-long{font-size:1.6rem}
+.rv-author{font-size:1.4rem;display:-webkit-flex;display:flex;-webkit-align-items:center;align-items:center}
+.rv-avatar{display:inline-block;width:2.6rem;height:2.6rem;line-height:2.6rem;text-align:center;border-radius:50%;background:var(--hc-accent);color:var(--hc-accent-fg);font-weight:800;margin-right:.7rem;font-size:1.1rem}
+.rv-none{font-size:1.6rem;color:var(--hc-muted);text-align:center}

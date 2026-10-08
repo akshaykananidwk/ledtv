@@ -86,13 +86,20 @@ if (is_post()) {
                 flash('success', __(':cmd sent to :n TVs.', ['cmd' => command_label($command), 'n' => $count]));
                 break;
 
+            case 'announce':
+                // 2.4 (#48): spoken announcement (SPEAK) — same command path as the device-schedules "Announce now".
+                require_can('announce.send');
+                [, $count] = DeviceSchedules::announce($_POST, Auth::id());
+                flash('success', __('Announcement sent to :n TVs.', ['n' => $count]));
+                break;
+
             default:
                 flash('warning', __('Unknown action.'));
         }
     } catch (InvalidArgumentException $e) {
         flash('danger', $e->getMessage());
     }
-    redirect(admin_url('broadcast.php') . ($op === 'emergency' || $op === 'emergency_stop' ? '#emergency' : ''));
+    redirect(admin_url('broadcast.php') . ($op === 'emergency' || $op === 'emergency_stop' ? '#emergency' : ($op === 'announce' ? '#announce' : '')));
 }
 
 $canSchedule = Auth::can('schedule.manage');
@@ -229,6 +236,45 @@ require __DIR__ . '/partials/header.php';
   </div>
 
   <div class="col-xl-5">
+    <?php if (Auth::can('announce.send')): ?>
+    <div class="card mb-3" id="announce">
+      <div class="card-header"><i class="bi bi-megaphone"></i> <?= e(__('Announce')) ?></div>
+      <div class="card-body">
+        <form method="post">
+          <?= Csrf::field() ?><input type="hidden" name="op" value="announce">
+          <div class="mb-2">
+            <label class="form-label" for="antext"><?= e(__('What the TVs should say')) ?></label>
+            <textarea class="form-control" id="antext" name="text" rows="2" maxlength="500" required placeholder="<?= e(__('e.g. Breakfast is now served in the restaurant on the ground floor.')) ?>"></textarea>
+          </div>
+          <div class="row g-2 mb-2">
+            <div class="col-6">
+              <label class="form-label" for="anlang"><?= e(__('Language')) ?></label>
+              <select class="form-select" id="anlang" name="lang">
+                <option value="auto"><?= e(__('Automatic (from the text)')) ?></option>
+                <option value="gu">ગુજરાતી</option>
+                <option value="hi">हिन्दी</option>
+                <option value="en">English</option>
+              </select>
+            </div>
+            <div class="col-3">
+              <label class="form-label" for="anrepeat"><?= e(__('Repeat')) ?></label>
+              <select class="form-select" id="anrepeat" name="repeat"><option value="1">1×</option><option value="2">2×</option><option value="3">3×</option></select>
+            </div>
+            <div class="col-3 d-flex align-items-end">
+              <div class="form-check mb-2">
+                <input class="form-check-input" type="checkbox" id="anchime" name="chime_before" value="1" checked>
+                <label class="form-check-label" for="anchime"><?= e(__('Chime')) ?></label>
+              </div>
+            </div>
+          </div>
+          <label class="form-label"><?= e(__('On which TVs')) ?></label>
+          <div class="mb-3"><?= target_picker('an') ?></div>
+          <button class="btn btn-outline-primary w-100" data-confirm="<?= e(__('Speak this announcement on the selected TVs now?')) ?>" data-confirm-safe="1"><i class="bi bi-megaphone"></i> <?= e(__('Announce now')) ?></button>
+          <div class="form-text"><?= e(__('The TV speaks the text with its text-to-speech voice and lowers the video sound meanwhile. A TV without a Gujarati / Hindi voice uses its default voice (shown in the delivery result).')) ?></div>
+        </form>
+      </div>
+    </div>
+    <?php endif; ?>
     <?php if (Auth::can('broadcast.emergency')): ?>
     <div class="card mb-3 border border-danger" id="emergency">
       <div class="card-header bg-danger text-white"><i class="bi bi-exclamation-triangle-fill"></i> <?= e(__('Emergency message')) ?></div>

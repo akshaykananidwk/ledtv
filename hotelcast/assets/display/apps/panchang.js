@@ -5,7 +5,7 @@
  */
 (function (w, d) {
   'use strict';
-  var timer = null, lastNow = -1;
+  var timer = null, lastNow = -1, lastRefresh = 0;
   function mark() {
     var now = HC.now(), segs = d.querySelectorAll('.pc-seg'), cur = -1, next = 0, i, s, e;
     for (i = 0; i < segs.length; i++) {
@@ -18,7 +18,12 @@
     var wrap = d.querySelector('.pc-wrap');
     var dayEnd = wrap ? parseFloat(wrap.getAttribute('data-next')) || 0 : 0;
     // A new segment started (or the Vedic day ended): fetch the server's fresh body.
-    if ((lastNow >= 0 && cur !== lastNow) || (dayEnd && now >= dayEnd)) { lastNow = cur; HC.refresh(); return; }
+    if (((lastNow >= 0 && cur !== lastNow) || (dayEnd && now >= dayEnd)) && now - lastRefresh > 60000) {
+      lastNow = cur;
+      lastRefresh = now;
+      HC.refresh();
+      return;
+    }
     lastNow = cur;
   }
   w.HCApp = {

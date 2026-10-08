@@ -87,6 +87,25 @@ class ContentPlayer(
     private var webRetries = 0
     private var webLoadFailed = false
 
+    // 2.4 video wall (#36) / synchronized playback (#37): WallGeometry.kt, SyncPlan.kt, WallSync.kt.
+    private var wall: WallGeometry? = null
+    private var syncPlan: SyncPlan? = null
+    /** Learned extra ms to seek ahead (seeks land late); kept across items. */
+    private var syncSeekLead = 0L
+    private var syncSeekPending = false
+    private var syncStrictChecks = 0
+    private val syncCheckRunnable = Runnable { syncVideoCheck(strict = false) }
+    private val muted: Boolean get() = forceMute || wall?.audio == false
+
+    init {
+        // A wall view is laid out for the stage size: follow it (ticker bar, first layout).
+        stage.addOnLayoutChangeListener { _, l, t, r, b, ol, ot, or, ob ->
+            val w = wall ?: return@addOnLayoutChangeListener
+            if (r - l == or - ol && b - t == ob - ot) return@addOnLayoutChangeListener
+            stage.post { for (i in 0 until stage.childCount) WallLayout.apply(stage.getChildAt(i), w, stage) }
+        }
+    }
+
     /** Layout zones without sound: video volume 0, YouTube mute=1, web pages may not autoplay media. */
     var forceMute: Boolean = false
 
@@ -150,11 +169,14 @@ class ContentPlayer(
         transition = newContent.playlist?.transition?.lowercase() ?: "fade"
         loopPlaylist = newContent.playlist?.loop != false
         consecutiveFailures = 0
+        wall = WallGeometry.from(newContent.wall)
+        syncPlan = SyncPlan.from(newContent.sync, items.size)
+        if (newContent.sync != null && syncPlan == null) Log.w(TAG, "sync ignored: schedule does not match the ${items.size} playable items")
         if (items.isEmpty()) {
             listener.onNothingToPlay()
             return
         }
-        showItem(0)
+        showItem(syncPlan?.positionAt(ServerClock.nowMs())?.index ?: 0)
     }
 
     /** Stops everything and clears the stage (activity stop, screen off, emergency, new content). */
@@ -169,6 +191,8 @@ class ContentPlayer(
         content = null
         items = emptyList()
         index = -1
+        wall = null
+        syncPlan = null
     }
 
     fun release() = stop()
@@ -182,6 +206,8 @@ class ContentPlayer(
         val cur = currentItem ?: return false
         if (content == null || currentView == null) return false
         if (cur.type !in KEEP_ACROSS_SYNC) return false
+        // Wall / synced content is always rebuilt from the schedule.
+        if (wall != null || syncPlan != null || newContent.wall != null || newContent.sync != null) return false
         val newItems = newContent.playableItems()
         val newIndex = if (newItems.getOrNull(index) == cur) index else newItems.indexOfFirst { it == cur }
         if (newIndex < 0) return false
@@ -209,6 +235,9 @@ class ContentPlayer(
         handler.removeCallbacks(refreshRunnable)
         handler.removeCallbacks(webRetryRunnable)
         handler.removeCallbacks(clockTicker)
+        handler.removeCallbacks(syncCheckRunnable)
+        syncSeekPending = false
+        syncStrictChecks = 0
         finishCurrentItem()
         releasePlayer()
         // Free the zones' decoders before the next item starts (the old view only fades out).
@@ -242,6 +271,11 @@ class ContentPlayer(
 
     private fun scheduleAdvance(item: ContentItem) {
         if (items.size <= 1) return
+        syncPlan?.let { plan ->
+            // Synced: switch exactly at the schedule's next boundary (server clock), not after "duration".
+            handler.postDelayed(advanceRunnable, plan.positionAt(ServerClock.nowMs()).untilNextMs.coerceAtLeast(SyncPlan.MIN_WAIT_MS))
+            return
+        }
         val d = item.durationSec
         when {
             d > 0 -> handler.postDelayed(advanceRunnable, d * 1000L)
@@ -260,6 +294,14 @@ class ContentPlayer(
 
     private fun advance() {
         if (items.isEmpty()) return
+        syncPlan?.let { plan ->
+            // Re-align at every boundary: show what the server clock says, never just "the next one".
+            when (val step = plan.nextStep(index, ServerClock.nowMs())) {
+                is SyncPlan.Step.Wait -> handler.postDelayed(advanceRunnable, step.ms)
+                is SyncPlan.Step.Show -> showItem(step.index)
+            }
+            return
+        }
         var next = index + 1
         if (next > items.lastIndex) {
             if (!loopPlaylist) return // stay on the last item
@@ -314,6 +356,7 @@ class ContentPlayer(
         val old = currentView
         currentView = view
         stage.addView(view, FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
+        wall?.let { WallLayout.apply(view, it, stage) }
         if (view.getTag(TAG_CLOCK_UPDATER) != null) handler.post(clockTicker)
         if (old == null) return
         val w = stage.width.toFloat().takeIf { it > 0 } ?: 1920f
@@ -321,7 +364,8 @@ class ContentPlayer(
             override fun onAnimationEnd(animation: Animator) = removeOld(old)
             override fun onAnimationCancel(animation: Animator) = removeOld(old)
         }
-        when (transition) {
+        // A slide moves the views, which a wall tile uses for its crop: fade instead.
+        when (if (wall != null && transition.startsWith("slide")) "fade" else transition) {
             "none", "cut" -> removeOld(old)
             "slide", "slide_left" -> {
                 view.translationX = w
@@ -412,6 +456,7 @@ class ContentPlayer(
             setBackgroundColor(Color.BLACK)
         }
         applyScale(iv)
+        if (wall != null) iv.scaleType = ImageView.ScaleType.CENTER_CROP // the picture covers the whole wall
         val url = item.url!!
         val local = cache.cachedFile(url)
         Glide.with(context.applicationContext)
@@ -464,7 +509,7 @@ class ContentPlayer(
             exo.setMediaItem(mediaItem)
         }
 
-        exo.volume = if (item.mute == true || forceMute) 0f else 1f
+        exo.volume = if (item.mute == true || muted) 0f else 1f
         AudioDuck.track(exo) // 2.4: lowered while a SPEAK / PLAY_SOUND announcement plays
         val loopVideo = !isStream && item.loop == true && (items.size == 1 || item.durationSec > 0)
         exo.repeatMode = if (loopVideo) Player.REPEAT_MODE_ONE else Player.REPEAT_MODE_OFF
@@ -475,6 +520,7 @@ class ContentPlayer(
                     Player.STATE_READY -> {
                         playerRetries = 0
                         onItemOk()
+                        if (syncPlan != null && !isStream) syncVideoCheck(strict = true)
                     }
                     Player.STATE_ENDED -> {
                         if (isStream) {
@@ -506,9 +552,19 @@ class ContentPlayer(
                 }
             }
         })
+        // Synced: start at the schedule's position (fine-tuned by syncVideoCheck once the media is ready).
+        syncPlan?.positionAt(ServerClock.nowMs())?.takeIf { !isStream && it.index == index && it.offsetMs > 0 }?.let {
+            exo.seekTo(it.offsetMs + syncSeekLead)
+        }
         exo.prepare()
         exo.playWhenReady = true
 
+        if (wall != null) {
+            return WallLayout.playerView(context).apply {
+                isFocusable = false
+                this.player = exo
+            }
+        }
         return StyledPlayerView(context).apply {
             useController = false
             setShutterBackgroundColor(Color.BLACK)
@@ -567,7 +623,7 @@ class ContentPlayer(
             domStorageEnabled = true
             // Display apps (token chime, menu boards) and YouTube autoplay with sound. A muted layout
             // zone blocks page media instead (YouTube is muted through its URL and still autoplays).
-            mediaPlaybackRequiresUserGesture = forceMute && item.type != ContentItem.TYPE_YOUTUBE
+            mediaPlaybackRequiresUserGesture = muted && item.type != ContentItem.TYPE_YOUTUBE
             loadWithOverviewMode = true
             useWideViewPort = true
             defaultTextEncodingName = "utf-8"
@@ -696,7 +752,7 @@ class ContentPlayer(
     }
 
     private fun youtubeUrl(item: ContentItem): String =
-        YouTubeUrls.forItem(item.embedUrl, item.url, mute = item.mute == true || forceMute)
+        YouTubeUrls.forItem(item.embedUrl, item.url, mute = item.mute == true || muted)
 
     private fun buildAnnouncement(item: ContentItem): View {
         val bg = Utils.parseColor(item.bgColor, Color.parseColor("#0D47A1"))
@@ -818,6 +874,41 @@ class ContentPlayer(
         setLineSpacing(0f, 1.15f)
     }
 
+    /**
+     * 2.4 synchronized playback: keeps the playing video at the schedule's position. Strict (300 ms) right
+     * after it started / seeked and in the first part of an item, otherwise only beyond 1 s (SyncPlan.driftAction).
+     */
+    private fun syncVideoCheck(strict: Boolean) {
+        handler.removeCallbacks(syncCheckRunnable)
+        val plan = syncPlan ?: return
+        val exo = player ?: return
+        val item = currentItem ?: return
+        if (item.type != ContentItem.TYPE_VIDEO) return
+        val pos = plan.positionAt(ServerClock.nowMs())
+        if (pos.index == index && exo.playbackState == Player.STATE_READY) {
+            val loop = exo.repeatMode == Player.REPEAT_MODE_ONE
+            val expected = SyncPlan.expectedMediaPositionMs(pos.offsetMs, exo.duration, loop)
+            val actual = exo.currentPosition
+            val afterSeek = syncSeekPending
+            if (afterSeek) {
+                syncSeekPending = false
+                syncSeekLead = SyncPlan.adjustLead(syncSeekLead, expected - actual)
+            }
+            val atBoundary = ((strict || afterSeek) && syncStrictChecks < MAX_STRICT_SYNC_CHECKS) || pos.offsetMs < SyncPlan.BOUNDARY_WINDOW_MS
+            if (strict || afterSeek) syncStrictChecks++
+            if (SyncPlan.driftAction(expected, actual, atBoundary) == DriftAction.SEEK) {
+                val target = SyncPlan.expectedMediaPositionMs(pos.offsetMs + syncSeekLead, exo.duration, loop)
+                Log.i(TAG, "sync: video off by ${actual - expected} ms, seeking to $target")
+                exo.seekTo(target)
+                syncSeekPending = true
+                // STATE_READY after the seek checks again; a seek inside the buffer may not leave READY.
+                handler.postDelayed(syncCheckRunnable, SYNC_SEEK_SETTLE_MS)
+                return
+            }
+        }
+        handler.postDelayed(syncCheckRunnable, SYNC_CHECK_MS)
+    }
+
     private fun dp(v: Int) = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, v.toFloat(), context.resources.displayMetrics).toInt()
     private fun spPx(v: Float) = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, v, context.resources.displayMetrics).toInt()
 
@@ -828,6 +919,10 @@ class ContentPlayer(
         /** A layout with duration 0 in a playlist stays this long. */
         private const val DEFAULT_LAYOUT_SEC = 60
         private const val FAILED_RETRY_SEC = 60
+        private const val SYNC_CHECK_MS = 1000L
+        private const val SYNC_SEEK_SETTLE_MS = 1500L
+        /** Strict re-alignments in a row after a start / seek (then the 1 s mid-item rule applies). */
+        private const val MAX_STRICT_SYNC_CHECKS = 4
         private val TAG_CLOCK_UPDATER = R.id.tag_clock_updater
         private val TAG_WEB_HTML = R.id.tag_web_html
         private val TAG_WEB_URL = R.id.tag_web_url

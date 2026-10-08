@@ -1,0 +1,24 @@
+/* Festival calendar (#28). */
+.fe-hero{display:-webkit-flex;display:flex;-webkit-align-items:center;align-items:center;padding:0;overflow:hidden;margin-bottom:1rem;min-height:14rem;border:.15rem solid var(--hc-accent)}
+.fe-hero-img{width:38%;-webkit-align-self:stretch;align-self:stretch;min-height:14rem;background-size:cover;background-position:center;-webkit-flex-shrink:0;flex-shrink:0}
+.fe-hero-deco{font-size:8rem;padding:1rem 2.5rem}
+.fe-hero-text{padding:1.4rem 2rem;min-width:0}
+.fe-today{display:inline-block;background:var(--hc-accent);color:var(--hc-accent-fg);font-weight:800;text-transform:uppercase;letter-spacing:.05em;padding:.2rem .9rem;border-radius:2rem;font-size:1.1rem}
+.fe-hero-name{font-family:var(--hc-heading-font);font-size:4rem;line-height:1.1;margin:.4rem 0;color:var(--hc-accent)}
+.fe-greet{font-size:1.8rem;font-weight:700}
+.fe-desc{font-size:1.25rem;color:var(--hc-muted);margin-top:.5rem;max-height:5.5rem;overflow:hidden}
+.fe-also{margin-top:.4rem;font-size:1.2rem}
+.fe-list{-webkit-flex:1;flex:1;min-height:0;overflow:hidden}
+.fe-item{display:-webkit-flex;display:flex;-webkit-align-items:center;align-items:center;margin-bottom:.6rem;padding:.8rem 1.4rem}
+.fe-compact .fe-item{padding:.45rem 1.2rem;margin-bottom:.4rem}
+.fe-thumb{width:6rem;height:4.2rem;border-radius:.5rem;background-size:cover;background-position:center;margin-right:1.2rem;-webkit-flex-shrink:0;flex-shrink:0}
+.fe-info{-webkit-flex:1;flex:1;min-width:0}
+.fe-name{font-size:1.9rem;font-weight:800;line-height:1.15}
+.fe-compact .fe-name{font-size:1.5rem}
+.fe-when{font-size:1.2rem}
+.fe-small{font-size:1rem;color:var(--hc-muted)}
+.fe-count{text-align:center;min-width:7rem;margin-left:1rem}
+.fe-count b{display:block;font-size:3rem;line-height:1;color:var(--hc-accent)}
+.fe-compact .fe-count b{font-size:2.2rem}
+.fe-count span{font-size:1.1rem;color:var(--hc-muted)}
+.fe-count .fe-soon{font-size:1.5rem;font-weight:800;color:var(--hc-accent)}

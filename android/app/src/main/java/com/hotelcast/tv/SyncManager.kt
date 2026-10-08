@@ -275,7 +275,9 @@ object SyncManager : CommandActions {
     /** One poll of GET /device/command/{id}?hash=… — applies content and executes commands. */
     suspend fun pollOnce() = pollMutex.withLock {
         val service = api() ?: throw IOException("Server not configured")
+        val sentAt = ServerClock.localNow()
         val data = ApiClient.call { service.poll(Prefs.deviceId, Prefs.currentHash) } ?: return@withLock
+        ServerClock.onResponse(sentAt, data.serverTimeMs) // 2.4 synchronized playback (#37)
         val now = System.currentTimeMillis()
         Prefs.lastPollTime = now
         _status.value = _status.value.copy(online = true, lastPollTime = now, lastError = null, registered = true)

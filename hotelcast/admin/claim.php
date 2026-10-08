@@ -195,6 +195,7 @@ require __DIR__ . '/partials/header.php';
     <h1><i class="bi bi-qr-code-scan"></i> <?= e(__('Add TV with QR')) ?></h1>
     <p class="lead-sm"><?= e(__('Scan the QR code on the new TV with your phone camera, pick the room and press Assign. Nothing needs to be typed on the TV.')) ?></p>
   </div>
+  <div><?php require __DIR__ . '/partials/web_player_link.php'; // 2.4 web player (#45) ?></div>
 </div>
 <?= flash_show() ?>
 <?php if ($codeError): ?>

@@ -58,11 +58,14 @@ object DeviceHealth {
 
     private const val MB = 1024L * 1024L
 
-    private fun storage(dir: File?): Pair<Long, Long>? = try {
-        val s = StatFs((dir ?: return null).absolutePath)
-        (s.availableBytes / MB) to (s.totalBytes / MB)
-    } catch (_: Exception) {
-        null
+    private fun storage(dir: File?): Pair<Long, Long>? {
+        if (dir == null) return null
+        return try {
+            val s = StatFs(dir.absolutePath)
+            (s.availableBytes / MB) to (s.totalBytes / MB)
+        } catch (_: Exception) {
+            null
+        }
     }
 
     @SuppressLint("MissingPermission")

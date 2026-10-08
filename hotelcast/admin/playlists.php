@@ -207,7 +207,7 @@ if ($action === 'new' || $action === 'edit') {
       const list = document.getElementById('plList');
       if (!list) return;
       const T = { secs: <?= json_embed(__('seconds')) ?>, remove: <?= json_embed(__('Remove')) ?>, inactive: <?= json_embed(__('inactive')) ?>, total: <?= json_embed(__('total :t')) ?>,
-        dp: <?= json_embed(__('Time window')) ?>, dpFrom: <?= json_embed(__('Only from')) ?>, dpTo: <?= json_embed(__('until')) ?>, dpDays: <?= json_embed(__('on')) ?>,
+        dp: <?= json_embed(__('Time window')) ?>, dpFrom: <?= json_embed(__('Item shows from')) ?>, dpTo: <?= json_embed(__('Item shows until')) ?>, dpDays: <?= json_embed(__('Item shows on')) ?>,
         dpHelp: <?= json_embed(__('Leave empty to show it all day, every day. Overnight (e.g. 22:00 until 02:00) is allowed.')) ?>, pending: <?= json_embed(__('waiting for approval')) ?> };
       // 2.4 dayparting: keep the hidden daypart_days field and the summary in step with the controls.
       const dpSync = (row) => {

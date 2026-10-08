@@ -591,6 +591,7 @@ function command_label(string $cmd): string
         'SHOW_MESSAGE' => __('Show message'),
         'SPEAK' => __('Spoken announcement'),
         'PLAY_SOUND' => __('Play sound'),
+        'LIVE_VIEW' => __('Live view'), // 2.4 (core/LiveView.php)
         default => $cmd,
     };
 }

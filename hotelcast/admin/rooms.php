@@ -306,8 +306,10 @@ if ($action === 'device') {
         __('Last heartbeat') => time_ago($dev['last_heartbeat']),
         __('Device ID') => $dev['device_uid'],
         __('App version') => trim(($dev['app_version'] ?? '-') . ($dev['app_version_code'] ? ' (' . $dev['app_version_code'] . ')' : '')),
-        __('Android version') => $dev['android_version'] ?? '-',
+        __('Platform') => ($dev['platform'] ?? 'android') === 'web' ? __('Web player') : __('Android TV app'),
+        (($dev['platform'] ?? 'android') === 'web' ? __('Operating system') : __('Android version')) => $dev['android_version'] ?? '-',
         __('Model') => $dev['model'] ?? '-',
+        __('User agent') => $dev['user_agent'] ?? '-',
         __('LAN IP') => $dev['ip_address'] ?? '-',
         __('Public IP') => $dev['public_ip'] ?? '-',
         __('Network') => trim(($dev['network_type'] ?? '-') . ($dev['wifi_signal'] !== null ? ' · ' . $dev['wifi_signal'] . ' dBm' : '')),
@@ -343,6 +345,7 @@ if ($action === 'device') {
             <?php endforeach; ?>
           </table>
         </div>
+        <?php require __DIR__ . '/partials/device_features_card.php'; // 2.4: health, live view, USB / CEC mode ?>
       </div>
       <div class="col-lg-7">
         <div class="card mb-3">
@@ -462,7 +465,7 @@ if ($action === 'new' || $action === 'edit') {
             <?php if (!$devices): ?><li class="list-group-item text-muted small"><?= e(__('No TV registered yet.')) ?></li><?php endif; ?>
             <?php foreach ($devices as $d): ?>
               <li class="list-group-item d-flex justify-content-between align-items-center small">
-                <span><?= (int) $d['is_revoked'] ? '<span class="badge text-bg-dark">' . e(__('Revoked')) . '</span>' : status_badge(DeviceManager::isOnline($d) ? 'online' : 'offline') ?> <?= e($d['model'] ?? $d['device_uid']) ?></span>
+                <span><?= (int) $d['is_revoked'] ? '<span class="badge text-bg-dark">' . e(__('Revoked')) . '</span>' : status_badge(DeviceManager::isOnline($d) ? 'online' : 'offline') ?> <?php if (($d['platform'] ?? 'android') === 'web'): ?><i class="bi bi-browser-chrome" title="<?= e(__('Web player')) ?>"></i> <?php endif; ?><?= e($d['model'] ?? $d['device_uid']) ?></span>
                 <a href="<?= e(admin_url('rooms.php', ['action' => 'device', 'id' => $d['id']])) ?>"><?= e(__('Details')) ?></a>
               </li>
             <?php endforeach; ?>
@@ -621,6 +624,7 @@ require __DIR__ . '/partials/header.php';
   <?php if ($canManage): ?>
   <div class="d-flex flex-wrap gap-2">
     <?php if (is_file(__DIR__ . '/claim.php')): ?><a href="<?= e(admin_url('claim.php')) ?>" class="btn btn-success"><i class="bi bi-qr-code-scan"></i> <?= e(__('Add TV with QR')) ?></a><?php endif; ?>
+    <?php require __DIR__ . '/partials/web_player_link.php'; // 2.4 web player (#45) ?>
     <?php if (!$limited): ?>
     <a href="<?= e(admin_url('rooms.php', ['action' => 'new'])) ?>" class="btn btn-primary"><i class="bi bi-plus-lg"></i> <?= e(__('Add room')) ?></a>
     <a href="<?= e(admin_url('rooms.php', ['action' => 'bulk_add'])) ?>" class="btn btn-outline-primary"><i class="bi bi-plus-square-dotted"></i> <?= e(__('Add many rooms')) ?></a>
@@ -752,7 +756,8 @@ require __DIR__ . '/partials/header.php';
             </td>
             <td class="d-none d-xl-table-cell small text-muted">
               <?php if ($d): ?>
-                <?= e(($d['model'] ?? '-') . ' · Android ' . ($d['android_version'] ?? '?')) ?><br>
+                <?php if (($d['platform'] ?? 'android') === 'web'): ?><span class="badge text-bg-info" title="<?= e(__('Web player')) ?>"><i class="bi bi-browser-chrome"></i> <?= e(__('Web player')) ?></span> <?= e(preg_replace('/^Web player · /u', '', (string) ($d['model'] ?? $d['android_version'] ?? ''))) ?><br>
+                <?php else: ?><?= e(($d['model'] ?? '-') . ' · Android ' . ($d['android_version'] ?? '?')) ?><br><?php endif; ?>
                 <?= e('v' . ($d['app_version'] ?? '?') . ' · ' . ($d['ip_address'] ?? '-')) ?>
                 <?php if ($d['wifi_signal'] !== null): ?> · <i class="bi bi-wifi"></i> <?= e($d['wifi_signal']) ?> dBm<?php endif; ?>
               <?php else: ?>-<?php endif; ?>

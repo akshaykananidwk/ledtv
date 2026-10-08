@@ -84,6 +84,8 @@ data class PollResponse(
     @SerializedName("content_changed") val contentChanged: Boolean? = null,
     @SerializedName("content") val content: Content? = null,
     @SerializedName("commands") val commands: List<Command>? = null,
+    /** 2.4 synchronized playback: server clock in ms for the NTP-like offset estimate (ServerClock). */
+    @SerializedName("server_time_ms") val serverTimeMs: Long? = null,
 )
 
 data class AckRequest(
@@ -191,6 +193,9 @@ data class Content(
     @SerializedName("usb_mode") val usbMode: Boolean? = null,
     /** HDMI-CEC power mode of the room: auto | box | tv (null = auto). */
     @SerializedName("cec_mode") val cecMode: String? = null,
+    // ---- 2.4 synchronized playback (#37) and video wall (#36): SyncPlan.kt, WallGeometry.kt ----
+    @SerializedName("sync") val sync: SyncData? = null,
+    @SerializedName("wall") val wall: WallData? = null,
 ) {
     val isOff: Boolean get() = mode == MODE_OFF || screenOn == false
     val isEmergency: Boolean get() = emergency != null || mode == MODE_EMERGENCY

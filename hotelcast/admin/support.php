@@ -73,6 +73,7 @@ if ($deviceId) {
         <?php if (!(int) $dev['is_revoked']): ?>
           <button type="button" class="btn btn-primary" data-support="SCREENSHOT"><i class="bi bi-camera"></i> <?= e(__('Take screenshot')) ?></button>
           <button type="button" class="btn btn-outline-primary" data-support="UPLOAD_LOGS"><i class="bi bi-file-earmark-text"></i> <?= e(__('Request logs')) ?></button>
+          <a class="btn btn-outline-primary" href="<?= e(admin_url('live_view.php', ['device' => $deviceId])) ?>"><i class="bi bi-display"></i> <?= e(__('Live view')) ?></a>
         <?php endif; ?>
       </div>
     </div>
@@ -242,7 +243,7 @@ require __DIR__ . '/partials/header.php';
           <td><?= (int) $d['crashes'] ? '<span class="badge text-bg-danger">' . (int) $d['crashes'] . '</span>' : '<span class="text-muted">0</span>' ?></td>
           <td class="d-none d-sm-table-cell"><?= (int) $d['logs'] ?></td>
           <td class="d-none d-lg-table-cell small text-muted"><?= e($d['last_shot'] ? time_ago($d['last_shot']) : '-') ?></td>
-          <td class="text-end"><a class="btn btn-sm btn-primary" href="<?= e(admin_url('support.php', ['device' => $d['id']])) ?>"><i class="bi bi-tools"></i> <?= e(__('Open')) ?></a></td>
+          <td class="text-end text-nowrap"><a class="btn btn-sm btn-outline-primary" href="<?= e(admin_url('live_view.php', ['device' => $d['id']])) ?>" title="<?= e(__('Live view')) ?>"><i class="bi bi-display"></i></a> <a class="btn btn-sm btn-primary" href="<?= e(admin_url('support.php', ['device' => $d['id']])) ?>"><i class="bi bi-tools"></i> <?= e(__('Open')) ?></a></td>
         </tr>
       <?php endforeach; ?>
       </tbody>

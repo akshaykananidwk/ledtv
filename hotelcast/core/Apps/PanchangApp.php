@@ -103,11 +103,22 @@ final class PanchangApp extends WidgetApp
         return 900;
     }
 
-    /** "Ashwin Krishna Trayodashi" / "આસો વદ તેરસ" for a panchang day (translated). */
+    /**
+     * Lunar month name in the current language. Translation keys are "Lunar month <name>" because
+     * Jyeshtha, Shravana and Magha are also nakshatra names (different words in Gujarati / Hindi).
+     */
+    public static function monthLabel(string $name): string
+    {
+        $k = 'Lunar month ' . $name;
+        $t = __($k);
+        return $t === $k ? $name : $t;
+    }
+
+    /** "Ashwin Krishna paksha Trayodashi" / "આસો વદ તેરસ" for a panchang day (translated). */
     public static function tithiText(array $p): string
     {
         $m = $p['month'];
-        return ($m['adhik'] ? __('Adhik') . ' ' : '') . __($m['name']) . ' ' . __($p['tithi']['paksha'] === 'shukla' ? 'Shukla paksha' : 'Krishna paksha') . ' ' . __($p['tithi']['name']);
+        return ($m['adhik'] ? __('Adhik') . ' ' : '') . self::monthLabel((string) $m['name']) . ' ' . __($p['tithi']['paksha'] === 'shukla' ? 'Shukla paksha' : 'Krishna paksha') . ' ' . __($p['tithi']['name']);
     }
 
     /** Gujarati first: the Gujarati tithi line, plus the line in the screen language when it is not Gujarati. */

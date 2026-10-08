@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 2.4 video wall (WallLayout.playerView): TextureView surface so the video can be scaled and moved
+     with the view (a SurfaceView ignores view transforms). Only used for TVs that are a wall tile. -->
+<com.google.android.exoplayer2.ui.StyledPlayerView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:focusable="false"
+    app:surface_type="texture_view"
+    app:use_controller="false"
+    app:shutter_background_color="@android:color/black"
+    app:keep_content_on_player_reset="true"
+    app:resize_mode="zoom" />

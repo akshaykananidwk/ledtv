@@ -8,7 +8,9 @@ declare(strict_types=1);
 final class TvControls
 {
     /** Commands of the TV controls page and their payload builders. */
-    public const COMMANDS = ['SET_VOLUME', 'MUTE', 'UNMUTE', 'OPEN_INPUT', 'SHOW_WELCOME', 'SHOW_MESSAGE'];
+    public const COMMANDS = ['SET_VOLUME', 'MUTE', 'UNMUTE', 'OPEN_INPUT', 'SHOW_WELCOME', 'SHOW_MESSAGE',
+        // 2.4: spoken announcement and sound clip (payloads: DeviceSchedules / DeviceFeatures).
+        'SPEAK', 'PLAY_SOUND'];
     public const OPEN_INPUTS = ['live_tv', 'hdmi1', 'hdmi2', 'hdmi3', 'hdmi4'];
 
     /** Payload for a command from form / JSON input. Throws InvalidArgumentException. */
@@ -35,6 +37,10 @@ final class TvControls
                 }
                 $dur = is_numeric($in['duration_sec'] ?? null) ? (int) $in['duration_sec'] : 15;
                 return ['title' => $title, 'message' => $message, 'duration_sec' => max(3, min(3600, $dur))];
+            case 'SPEAK':
+                return DeviceSchedules::speakPayload($in);
+            case 'PLAY_SOUND':
+                return DeviceFeatures::playSoundPayload($in);
             case 'MUTE':
             case 'UNMUTE':
             case 'SHOW_WELCOME':

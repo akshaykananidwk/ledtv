@@ -42,7 +42,7 @@ if (is_post()) {
             break;
 
         case 'refresh':
-            $params = $p === 'aviationstack' || $p === 'twelvedata' ? null : [];
+            $params = in_array($p, ['aviationstack', 'twelvedata', 'open_meteo_aq', 'open_meteo_wx', 'google_places'], true) ? null : [];
             if ($params === null || ($P[$p]['feed'] === 'currency' && $p !== DataFeeds::currencyProvider())) {
                 break;
             }
@@ -78,6 +78,9 @@ $feedName = [
     'market' => __('Stock market'),
     'cricket' => __('Cricket scores'),
     'flights' => __('Flight status'),
+    'air_quality' => __('Air quality'),
+    'weather_alerts' => __('Weather warnings'),
+    'reviews' => __('Google reviews'),
 ];
 $activeNav = 'data_feeds';
 $pageTitle = __('Data feeds');

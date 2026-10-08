@@ -209,6 +209,7 @@ final class DeviceManager
             'last_ping' => now(),
             'status' => 'online',
         ], 'id = :id', ['id' => $device['id']]);
+        DeviceHealth::record($device, $in['health'] ?? null); // 2.4 TV health (#44)
         $room = $device['room_id'] ? DB::one('SELECT * FROM rooms WHERE id = :id AND hotel_id = :h', ['id' => $device['room_id'], 'h' => (int) $device['hotel_id']]) : null;
         return [
             'server_time' => date('c'),
