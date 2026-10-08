@@ -52,7 +52,7 @@ if (is_post()) {
             });
             Settings::bumpContentVersion();
             Broadcaster::queueForRooms(Broadcaster::targetRooms('groups', [$id]), 'SHOW_CONTENT');
-            ActivityLog::add($existing ? 'group_update' : 'group_create', 'group', $id, $name . ' (' . count($members) . ' rooms)');
+            ActivityLog::add($existing ? 'group_update' : 'group_create', 'group', $id, $name . ' (' . count($members) . ' screens)');
             flash('success', __('Group ":n" saved.', ['n' => $name]));
             redirect(admin_url('groups.php'));
 
@@ -133,7 +133,7 @@ if ($action === 'new' || $action === 'edit') {
         <div class="card"><div class="card-body row g-3">
           <div class="col-12">
             <label class="form-label" for="gname"><?= e(__('Group name')) ?> *</label>
-            <input class="form-control" id="gname" name="name" value="<?= e($g['name']) ?>" required maxlength="120" placeholder="<?= e(__('e.g. VIP Suites')) ?>">
+            <input class="form-control" id="gname" name="name" value="<?= e($g['name']) ?>" required maxlength="120" placeholder="<?= e(__('e.g. Ground floor')) ?>">
           </div>
           <div class="col-12">
             <label class="form-label" for="gtype"><?= e(__('Type')) ?></label>

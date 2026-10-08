@@ -44,7 +44,7 @@
             android:textColor="@color/white"
             android:textSize="48sp"
             android:textStyle="bold"
-            tools:text="Welcome to Hotel Dwarka Palace" />
+            tools:text="Welcome to Krishna Showroom" />
 
         <TextView
             android:id="@+id/welcome_subtitle"
@@ -65,7 +65,7 @@
             android:textColor="@color/settings_text_dim"
             android:textSize="16sp"
             android:visibility="gone"
-            tools:text="Krishna Cloud LED TV" />
+            tools:text="Krishna Cloud TV Management" />
     </LinearLayout>
 
     <!-- Overlay: logo, clock, weather (kept clear of the ticker bar by margins) -->
@@ -137,7 +137,7 @@
         android:layout_gravity="bottom"
         android:visibility="gone" />
 
-    <!-- Hotel suspended / licence expired (Content mode "suspended") -->
+    <!-- Customer suspended / licence expired (Content mode "suspended") -->
     <LinearLayout
         android:id="@+id/suspended_layer"
         android:layout_width="match_parent"
@@ -178,7 +178,7 @@
             android:lineSpacingMultiplier="1.15"
             android:textColor="@color/settings_text"
             android:textSize="26sp"
-            tools:text="Please contact reception." />
+            tools:text="Please contact the administrator." />
 
         <TextView
             android:id="@+id/suspended_support"

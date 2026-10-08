@@ -1,13 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Krishna Cloud LED TV</string>
-    <string name="device_admin_description">Krishna Cloud LED TV ને ટીવીને કિઓસ્ક મોડમાં લૉક કરવા, અપડેટ્સ આપમેળે ઇન્સ્ટોલ કરવા અને ટીવીને દૂરથી રીબૂટ કરવાની મંજૂરી આપે છે.</string>
+    <string name="app_name">Krishna Cloud TV Management</string>
+    <string name="app_label">Krishna Cloud TV</string>
+    <string name="device_admin_description">Krishna Cloud TV Management ને ટીવીને કિઓસ્ક મોડમાં લૉક કરવા, અપડેટ્સ આપમેળે ઇન્સ્ટોલ કરવા અને ટીવીને દૂરથી રીબૂટ કરવાની મંજૂરી આપે છે.</string>
 
     <string name="connecting">સર્વર સાથે જોડાઈ રહ્યું છે…</string>
     <string name="waiting_for_content">સામગ્રીની રાહ જોવાઈ રહી છે…</string>
     <string name="welcome">સ્વાગત છે</string>
     <string name="welcome_to">%1$s માં આપનું સ્વાગત છે</string>
-    <string name="room_label">રૂમ %1$s</string>
+    <string name="room_label">સ્ક્રીન %1$s</string>
     <string name="offline">ઑફલાઇન</string>
     <string name="emergency_default_title">કટોકટી</string>
     <string name="weather_format">%1$s %2$d°C %3$s</string>
@@ -18,15 +19,15 @@
     <string name="ok">બરાબર</string>
     <string name="cancel">રદ કરો</string>
 
-    <string name="settings_title">Krishna Cloud LED TV – સેટિંગ્સ</string>
-    <string name="setup_title">Krishna Cloud LED TV – પ્રથમ સેટઅપ</string>
-    <string name="setup_hint">સર્વરનું સરનામું, રૂમ નંબર અને હોટેલની નોંધણી કી (Admin → Settings → Devices) દાખલ કરો, પછી “સાચવો અને નોંધણી કરો” પસંદ કરો.</string>
+    <string name="settings_title">Krishna Cloud TV – સેટિંગ્સ</string>
+    <string name="setup_title">Krishna Cloud TV – પ્રથમ સેટઅપ</string>
+    <string name="setup_hint">સર્વરનું સરનામું, સ્ક્રીનનું નામ / ID અને નોંધણી કી (Admin → Settings → Devices) દાખલ કરો, પછી “સાચવો અને નોંધણી કરો” પસંદ કરો.</string>
     <string name="server_url">સર્વર URL</string>
-    <string name="server_url_hint">દા.ત. https://hotel.com/hotelcast અથવા http://192.168.1.10/hotelcast</string>
-    <string name="room_number">રૂમ નંબર</string>
-    <string name="room_number_hint">દા.ત. 101</string>
+    <string name="server_url_hint">દા.ત. https://tv.example.com/hotelcast અથવા http://192.168.1.10/hotelcast</string>
+    <string name="room_number">સ્ક્રીનનું નામ / ID</string>
+    <string name="room_number_hint">દા.ત. 101 અથવા Counter1</string>
     <string name="registration_key">નોંધણી કી</string>
-    <string name="registration_key_hint">હોટેલ નોંધણી કી</string>
+    <string name="registration_key_hint">તમારા એકાઉન્ટની નોંધણી કી</string>
     <string name="save_register">સાચવો અને નોંધણી કરો</string>
     <string name="test_connection">જોડાણ તપાસો</string>
     <string name="clear_cache">કેશ સાફ કરો</string>
@@ -35,7 +36,7 @@
     <string name="device_info">ઉપકરણની માહિતી</string>
     <string name="registering">નોંધણી થઈ રહી છે…</string>
     <string name="testing">જોડાણ તપાસાઈ રહ્યું છે…</string>
-    <string name="register_ok">રૂમ %1$s તરીકે નોંધાયેલ</string>
+    <string name="register_ok">સ્ક્રીન %1$s તરીકે નોંધાયેલ</string>
     <string name="register_failed">નોંધણી નિષ્ફળ: %1$s</string>
     <string name="test_ok">સર્વર બરાબર છે (આવૃત્તિ %1$s, ડેટાબેઝ %2$s)</string>
     <string name="test_failed">જોડાણ નિષ્ફળ: %1$s</string>
@@ -56,12 +57,12 @@
     <string name="info_model">મોડેલ</string>
     <string name="info_status">જોડાણ</string>
     <string name="info_last_poll">છેલ્લું પોલ</string>
-    <string name="info_room">નોંધાયેલ રૂમ</string>
+    <string name="info_room">નોંધાયેલ સ્ક્રીન</string>
     <string name="info_device_owner">ડિવાઇસ ઓનર (સંપૂર્ણ કિઓસ્ક)</string>
     <string name="info_network">નેટવર્ક</string>
 
     <string name="service_channel">પૃષ્ઠભૂમિ સમન્વય</string>
-    <string name="service_running">Krishna Cloud LED TV હોટેલ સર્વર સાથે જોડાયેલ છે</string>
+    <string name="service_running">Krishna Cloud TV સર્વર સાથે જોડાયેલ છે</string>
     <string name="update_installing">અપડેટ %1$s ઇન્સ્ટોલ થઈ રહ્યું છે…</string>
     <string name="guest_welcome_title">%1$s, આપનું સ્વાગત છે</string>
     <string name="guest_press_any_key">આગળ વધવા રિમોટનું કોઈપણ બટન દબાવો</string>
@@ -71,28 +72,28 @@
     <string name="guest_wifi_password">પાસવર્ડ: %1$s</string>
     <string name="guest_reminder_hint">બંધ કરવા OK દબાવો</string>
     <string name="guest_message_hint">બંધ કરવા OK દબાવો</string>
-    <string name="guest_menu_title">મહેમાન મેનુ</string>
+    <string name="guest_menu_title">TV મેનુ</string>
     <string name="guest_menu_hint">OK = ખોલો · BACK = બંધ કરો</string>
     <string name="guest_qr_hint">તમારા ફોનના કેમેરાથી સ્કેન કરો</string>
     <string name="guest_back_hint">પાછા જવા BACK દબાવો</string>
     <string name="guest_cast_title">ફોનમાંથી કાસ્ટ કરો</string>
-    <string name="guest_cast_default">તમારો ફોન હોટેલના Wi-Fi સાથે જોડો, YouTube, Netflix અથવા ફોટા ખોલો, કાસ્ટ આઇકન દબાવો અને આ ટીવી પસંદ કરો.</string>
+    <string name="guest_cast_default">તમારો ફોન આ ટીવી વાળા જ Wi-Fi સાથે જોડો, YouTube, Netflix અથવા ફોટા ખોલો, કાસ્ટ આઇકન દબાવો અને આ ટીવી પસંદ કરો.</string>
     <string name="live_tv">લાઇવ ટીવી</string>
-    <string name="input_unavailable">આ સુવિધા આ ટીવી પર ઉપલબ્ધ નથી. કૃપા કરીને રિસેપ્શનનો સંપર્ક કરો.</string>
+    <string name="input_unavailable">આ સુવિધા આ ટીવી પર ઉપલબ્ધ નથી. કૃપા કરીને એડમિનિસ્ટ્રેટરનો સંપર્ક કરો.</string>
     <string name="suspended_default_title">સેવા હાલ બંધ છે</string>
-    <string name="suspended_default_message">કૃપા કરીને રિસેપ્શનનો સંપર્ક કરો.</string>
+    <string name="suspended_default_message">કૃપા કરીને એડમિનિસ્ટ્રેટરનો સંપર્ક કરો.</string>
     <string name="suspended_support">સહાય: %1$s</string>
 
     <string name="settings_title_brand">%1$s – સેટિંગ્સ</string>
     <string name="setup_title_brand">%1$s – પ્રથમ સેટઅપ</string>
-    <string name="register_error_hotel_suspended">નોંધણી નકારી: આ હોટેલની સેવા હાલ બંધ છે (HOTEL_SUSPENDED). કૃપા કરીને તમારા સેવા પ્રદાતાનો સંપર્ક કરો.</string>
-    <string name="register_error_license_limit">નોંધણી નકારી: આ હોટેલના લાઇસન્સની ટીવી મર્યાદા પૂરી થઈ ગઈ છે (LICENSE_LIMIT). એડમિન પેનલમાં જૂનું ટીવી દૂર કરો અથવા પ્લાન અપગ્રેડ કરો.</string>
+    <string name="register_error_hotel_suspended">નોંધણી નકારી: આ ગ્રાહકની સેવા હાલ બંધ છે (HOTEL_SUSPENDED). કૃપા કરીને તમારા સેવા પ્રદાતાનો સંપર્ક કરો.</string>
+    <string name="register_error_license_limit">નોંધણી નકારી: આ એકાઉન્ટની ટીવી મર્યાદા પૂરી થઈ ગઈ છે (LICENSE_LIMIT). એડમિન પેનલમાં જૂનું ટીવી દૂર કરો અથવા પ્લાન અપગ્રેડ કરો.</string>
     <string name="register_error_invalid_key">નોંધણી નકારી: નોંધણી કી ખોટી છે (INVALID_REGISTRATION_KEY). Admin → Settings → Devices માંથી ફરી કૉપિ કરો.</string>
-    <string name="register_error_room_not_found">નોંધણી નકારી: રૂમ મળ્યો નથી (ROOM_NOT_FOUND). પહેલા એડમિન પેનલમાં રૂમ બનાવો.</string>
+    <string name="register_error_room_not_found">નોંધણી નકારી: સ્ક્રીન મળી નથી (ROOM_NOT_FOUND). પહેલા એડમિન પેનલમાં સ્ક્રીન બનાવો.</string>
     <string name="provision_invalid">સેટઅપ ટૂલની કિંમતો અમાન્ય છે: %1$s</string>
     <string name="provision_rejected">સેટઅપ ટૂલની કિંમતો અવગણવામાં આવી: %1$s</string>
     <string name="provision_filled">સેટઅપ ટૂલની કિંમતો ભરાઈ ગઈ. “સાચવો અને નોંધણી કરો” પસંદ કરો.</string>
-    <string name="info_hotel">હોટેલ</string>
+    <string name="info_hotel">ગ્રાહક</string>
 
     <!-- 2.1: QR setup -->
     <string name="qr_title">આ ટીવી સેટ કરો</string>
@@ -100,13 +101,13 @@
     <string name="qr_subtitle">ટીવી પર કંઈ ટાઇપ કરવાની જરૂર નથી – તમારા ફોનનો ઉપયોગ કરો.</string>
     <string name="qr_step1">તમારા ફોનથી આ QR કોડ સ્કેન કરો</string>
     <string name="qr_step2">એડમિન પેનલમાં લૉગ ઇન કરો</string>
-    <string name="qr_step3">રૂમ પસંદ કરો → થઈ ગયું</string>
+    <string name="qr_step3">સ્ક્રીન પસંદ કરો → થઈ ગયું</string>
     <string name="qr_code_caption">કૅમેરા નથી? આ કોડ એડમિન પેનલમાં દાખલ કરો.</string>
     <string name="qr_image_description">આ ટીવી સેટ કરવા માટેનો QR કોડ</string>
     <string name="qr_status_starting">સર્વર પરથી સેટઅપ કોડ મેળવી રહ્યા છીએ…</string>
-    <string name="qr_status_waiting">ફોન પર રૂમ પસંદ થવાની રાહ જોઈ રહ્યા છીએ…</string>
-    <string name="qr_status_claimed">રૂમ %1$s સોંપાયો – જોડાઈ રહ્યા છીએ…</string>
-    <string name="qr_status_registered">નોંધણી થઈ ગઈ ✔ રૂમ %1$s</string>
+    <string name="qr_status_waiting">ફોન પર સ્ક્રીન પસંદ થવાની રાહ જોઈ રહ્યા છીએ…</string>
+    <string name="qr_status_claimed">સ્ક્રીન %1$s સોંપાઈ – જોડાઈ રહ્યા છીએ…</string>
+    <string name="qr_status_registered">નોંધણી થઈ ગઈ ✔ સ્ક્રીન %1$s</string>
     <string name="qr_status_opening">પ્લેયર ખોલી રહ્યા છીએ…</string>
     <string name="qr_status_offline">Server સુધી પહોંચી શકાતું નથી. %1$d સેકન્ડમાં ફરી પ્રયાસ.</string>
     <string name="qr_status_server_error">સર્વર ભૂલ: %1$s. %2$d સેકન્ડમાં ફરી પ્રયાસ.</string>
@@ -125,13 +126,13 @@
     <string name="qr_btn_wifi">Wi-Fi સેટિંગ્સ ખોલો</string>
     <string name="qr_btn_try_again">ફરી પ્રયાસ કરો</string>
     <string name="qr_change_server_title">આ ટીવી માટે સર્વર</string>
-    <string name="qr_change_server_hint">ફક્ત પોતાનું TV સર્વર ધરાવતી હોટેલો માટે. “ડિફૉલ્ટ વાપરો” = %1$s</string>
+    <string name="qr_change_server_hint">ફક્ત પોતાનું TV સર્વર ધરાવતા વ્યવસાયો માટે. “ડિફૉલ્ટ વાપરો” = %1$s</string>
     <string name="qr_use_default">ડિફૉલ્ટ વાપરો</string>
     <string name="qr_wifi_unavailable">આ ટીવી પર Wi-Fi સેટિંગ્સ ખોલી શકાતી નથી.</string>
     <string name="back_to_qr">QR સેટઅપ પર પાછા</string>
-    <string name="resetup_qr">QR વડે ફરી સેટઅપ (બીજા રૂમમાં ખસેડો)</string>
+    <string name="resetup_qr">QR વડે ફરી સેટઅપ (બીજી સ્ક્રીન પર ખસેડો)</string>
     <string name="resetup_confirm_title">આ ટીવી QR વડે ફરી સેટ કરવું છે?</string>
-    <string name="resetup_confirm_message">આ ટીવી (રૂમ %1$s)ની નોંધણી રદ થશે અને નવો QR કોડ દેખાશે. ટીવીને બીજા રૂમમાં ખસેડવા માટે આનો ઉપયોગ કરો.</string>
+    <string name="resetup_confirm_message">આ ટીવી (સ્ક્રીન %1$s)ની નોંધણી રદ થશે અને નવો QR કોડ દેખાશે. ટીવીને બીજી સ્ક્રીન / જગ્યાએ ખસેડવા માટે આનો ઉપયોગ કરો.</string>
     <string name="resetup_confirm_yes">નોંધણી રદ કરો અને QR બતાવો</string>
     <string name="qr_btn_http">HTTPS વગર જોડો</string>
     <string name="qr_btn_time">તારીખ/સમય સુધારો</string>

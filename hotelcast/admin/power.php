@@ -119,7 +119,7 @@ require __DIR__ . '/partials/header.php';
   </div></div></div>
   <div class="col-lg-6"><div class="card h-100 border-info"><div class="card-body small">
     <i class="bi bi-info-circle text-info"></i>
-    <?= e(__('Real standby needs the TV app set as device owner (one-time adb command, see the TV setup guide). Without it the TV only shows a black screen. A guest can always switch the TV on with the remote. Emergency messages wake TVs automatically.')) ?>
+    <?= e(__('Real standby needs the TV app set as device owner (one-time adb command, see the TV setup guide). Without it the TV only shows a black screen. Anyone can always switch the TV on with the remote. Emergency messages wake TVs automatically.')) ?>
   </div></div></div>
 </div>
 

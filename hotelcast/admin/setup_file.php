@@ -75,7 +75,7 @@ if ($download !== null) {
         flash('danger', __('Set a registration key first (Settings → Devices).'));
         redirect(admin_url('setup_file.php'));
     }
-    ActivityLog::add('setup_file', 'room', null, 'Downloaded TV setup file (' . count($download) . ' rooms)');
+    ActivityLog::add('setup_file', 'room', null, 'Downloaded TV setup file (' . count($download) . ' screens)');
     header('Content-Type: text/csv; charset=utf-8');
     header('Content-Disposition: attachment; filename="tvs.csv"');
     header('Cache-Control: no-store');

@@ -97,13 +97,13 @@ final class PlatformTest extends TestCase
         [$s, , $html] = self::$root->get('rooms.php');
         $this->assertSame(200, $s);
         $this->assertStringContainsString('Sea View Resort', $html);
-        $this->assertStringContainsString('You are managing hotel', $html);
+        $this->assertStringContainsString('You are managing customer', $html);
         self::$root->post('rooms.php', ['op' => 'save', 'id' => 0, 'room_number' => 'S1', 'is_enabled' => 1]);
         $this->assertSame(self::$hotel, (int) DB::value("SELECT hotel_id FROM rooms WHERE room_number = 'S1'"));
         // Back to the platform → own hotel #1 again.
         self::$root->post('platform_hotels.php', ['op' => 'leave']);
         [, , $html] = self::$root->get('rooms.php');
-        $this->assertStringNotContainsString('You are managing hotel', $html);
+        $this->assertStringNotContainsString('You are managing customer', $html);
         $this->assertStringNotContainsString('>S1<', $html);
         // The new hotel's admin can log in and sees only his hotel.
         $sea = new AdminSession(self::$url, 'seaboss');

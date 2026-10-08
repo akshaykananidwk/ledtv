@@ -76,7 +76,8 @@ final class ExtensionPointsTest extends TestCase
         $this->assertSame('टेस्ट मॉड्यूल', I18n::translate('Test Module', 'hi'));
         $this->assertSame('Test Module', I18n::translate('Test Module', 'en'));
         $this->assertArrayHasKey('hi', I18n::GUEST_LANGUAGES);
-        $this->assertArrayNotHasKey('hi', I18n::LANGUAGES, 'admin UI stays EN / GU');
+        $this->assertArrayHasKey('hi', I18n::LANGUAGES, 'admin UI: EN / GU / HI (2.5)');
+        $this->assertSame(['en', 'gu', 'hi'], array_keys(I18n::LANGUAGES));
     }
 
     public function testApiRouteFile(): void

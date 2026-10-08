@@ -708,7 +708,7 @@ final class WidgetsTest extends TestCase
         $item = DisplayAppsTestKit::createItem('panchang', ['overrides' => $today . ' | MY-TITHI ' . self::XSS], ['lang' => 'en']);
         $html = DisplayAppsTestKit::assertRenders($this, self::$url, $item);
         $this->assertStringContainsString('MY-TITHI', $html);
-        $this->assertStringContainsString('(set by the hotel)', $html);
+        $this->assertStringContainsString('(set by the customer)', $html);
         $this->assertStringContainsString('Approximate', $html);
         $body = explode('window.HC_DISPLAY=', $html)[0];
         $this->assertSame(16, substr_count($body, 'class="pc-seg '));

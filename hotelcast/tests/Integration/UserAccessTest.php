@@ -442,7 +442,7 @@ final class UserAccessTest extends TestCase
             array_map(fn ($r) => array_map(fn ($v) => is_numeric($v) ? (int) $v : $v, $r), $rows));
         $this->assertSame(1, (int) DB::value("SELECT COUNT(*) FROM activity_logs WHERE action = 'user_access' AND entity_id = :u", ['u' => $uid]));
         [, , $html] = $boss->get('users.php');
-        $this->assertStringContainsString('1 room, 1 group', $html);
+        $this->assertStringContainsString('1 screen, 1 group', $html);
         $this->assertStringContainsString('All TVs', $html);
         $this->assertStringContainsString(role_label('super_admin'), $html);
         $this->assertStringContainsString('Who can do what', $html);

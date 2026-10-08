@@ -100,7 +100,7 @@ final class InstallerTest extends TestCase
 
         // Step 5: hotel
         $html = $this->page();
-        $this->assertStringContainsString('Hotel details', $html);
+        $this->assertStringContainsString('Business details', $html);
         $this->post(['_csrf' => $csrf, 'hotel_name' => 'હોટેલ દ્વારકા Palace', 'timezone' => 'Asia/Kolkata', 'language' => 'gu', 'weather_city' => 'Dwarka', 'base_url' => self::$url]);
 
         // Step 6: GitHub

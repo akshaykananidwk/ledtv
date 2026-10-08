@@ -529,7 +529,7 @@ final class PwaSupportDevicesTest extends TestCase
         [$s, $j, $raw, $head] = TestEnv::http('GET', self::$url . 'admin/manifest.php');
         $this->assertSame(200, $s);
         $this->assertMatchesRegularExpression('#Content-Type: application/manifest\+json#i', $head);
-        $this->assertSame('Krishna Cloud LED TV', $j['name'], 'platform branding before login');
+        $this->assertSame('Krishna Cloud TV Management', $j['name'], 'platform branding before login');
         foreach (['short_name', 'start_url', 'scope', 'display', 'theme_color', 'background_color', 'icons', 'id'] as $k) {
             $this->assertArrayHasKey($k, $j, $k);
         }
@@ -547,7 +547,7 @@ final class PwaSupportDevicesTest extends TestCase
         }
         $m1 = new AdminSession(self::$url, 'pmgr1');
         [$s, $j] = TestEnv::http('GET', self::$url . 'admin/manifest.php', null, [], $m1->jar);
-        $this->assertSame('Krishna Cloud LED TV · Hotel One', $j['name'], 'hotel name with the session');
+        $this->assertSame('Krishna Cloud TV Management · Hotel One', $j['name'], 'hotel name with the session');
 
         [$s, , $js, $head] = TestEnv::http('GET', self::$url . 'admin/sw.js');
         $this->assertSame(200, $s);

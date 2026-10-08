@@ -781,7 +781,7 @@ final class MarketplaceTest extends TestCase
             $this->assertSame(200, $st, $p);
             $this->assertFalse(TestEnv::hasPhpError($html), $p);
         }
-        $this->assertStringContainsString('હોટેલ', $s->get('advertise/hotels.php')[2], 'Gujarati UI');
+        $this->assertStringContainsString('સ્થળો', $s->get('advertise/hotels.php')[2], 'Gujarati UI');
         $s->get('advertise/index.php?lang=en');
         foreach (['advertise/', 'advertise/login.php', 'advertise/signup.php', 'advertise/hotels.php'] as $p) {
             [$st, , $html] = TestEnv::http('GET', self::$url . $p);

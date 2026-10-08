@@ -6,8 +6,9 @@ declare(strict_types=1);
  * lang/<code>_<module>.php (e.g. lang/gu_platform.php, lang/hi_guests.php) are merged
  * automatically, so modules never need to edit the main language file.
  *
- *  - LANGUAGES: admin panel languages (English, Gujarati).
- *  - GUEST_LANGUAGES: guest-facing languages (TV / guest web app) — adds Hindi.
+ *  - LANGUAGES: admin panel languages (English, Gujarati, Hindi — 2.5; Hindi falls back to English for
+ *    strings that have no Hindi translation yet).
+ *  - GUEST_LANGUAGES: TV / viewer-facing languages (TV, web player, guest web app).
  */
 final class I18n
 {
@@ -16,7 +17,7 @@ final class I18n
     /** @var array<string, array<string, string>> loaded string tables per language */
     private static array $tables = [];
 
-    public const LANGUAGES = ['en' => 'English', 'gu' => 'ગુજરાતી'];
+    public const LANGUAGES = ['en' => 'English', 'gu' => 'ગુજરાતી', 'hi' => 'हिन्दी'];
     public const GUEST_LANGUAGES = ['en' => 'English', 'gu' => 'ગુજરાતી', 'hi' => 'हिन्दी'];
 
     public static function lang(): string

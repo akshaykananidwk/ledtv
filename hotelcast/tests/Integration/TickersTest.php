@@ -401,7 +401,7 @@ final class TickersTest extends TestCase
         foreach ([
             [['message' => '   ', 'target_type' => 'all'], 'The ticker message is required.'],
             [['message' => str_repeat('a', 1001), 'target_type' => 'all'], 'at most 1000 characters'],
-            [['message' => 'x', 'target_type' => 'room', 'room_id' => ''], 'Choose a room.'],
+            [['message' => 'x', 'target_type' => 'room', 'room_id' => ''], 'Choose a screen.'],
             [['message' => 'x', 'target_type' => 'group', 'group_id' => '999999'], 'Choose a group.'],
             [['message' => 'x', 'target_type' => 'all', 'starts_at' => '2026-05-01T10:00', 'ends_at' => '2026-04-01T10:00'], 'The end date must be after the start date.'],
             [['message' => 'x', 'target_type' => 'all', 'starts_at' => 'tomorrow'], 'Invalid date'],

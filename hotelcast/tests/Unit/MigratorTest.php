@@ -29,4 +29,45 @@ final class MigratorTest extends TestCase
     {
         $this->assertSame([], Migrator::migrate());
     }
+
+    /** 031: old default product names become "Krishna Cloud TV Management"; custom white-label names stay. */
+    public function testProductNameMigration031(): void
+    {
+        $pdo = DB::pdo();
+        $run = require HC_ROOT . '/migrations/031_product_name_tv_management.php';
+        $get = static fn (): string => (string) DB::value("SELECT setting_value FROM system_settings WHERE hotel_id = 0 AND setting_key = 'platform_name'");
+        $set = static function (string $v): void {
+            DB::query("INSERT INTO system_settings (hotel_id, setting_key, setting_value) VALUES (0, 'platform_name', :v)
+                       ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)", ['v' => $v]);
+        };
+        $before = DB::value("SELECT setting_value FROM system_settings WHERE hotel_id = 0 AND setting_key = 'platform_name'");
+        $brand = DB::value('SELECT brand_name FROM hotels WHERE id = 1');
+        try {
+            foreach (['Krishna Cloud LED TV', 'HotelCast', ''] as $old) {
+                $set($old);
+                $run($pdo, static fn (string $m) => null);
+                $this->assertSame('Krishna Cloud TV Management', $get(), "old default '$old' renamed");
+                $run($pdo, static fn (string $m) => null); // idempotent
+                $this->assertSame('Krishna Cloud TV Management', $get());
+            }
+            $set('StayCast TV');
+            $run($pdo, static fn (string $m) => null);
+            $this->assertSame('StayCast TV', $get(), 'custom white-label name untouched');
+            DB::query("UPDATE hotels SET brand_name = 'Krishna Cloud LED TV' WHERE id = 1");
+            $run($pdo, static fn (string $m) => null);
+            $this->assertNull(DB::value('SELECT brand_name FROM hotels WHERE id = 1'), 'override with an old default name removed');
+            DB::query("UPDATE hotels SET brand_name = 'Alpha Signage' WHERE id = 1");
+            $run($pdo, static fn (string $m) => null);
+            $this->assertSame('Alpha Signage', DB::value('SELECT brand_name FROM hotels WHERE id = 1'), 'custom override untouched');
+            $this->assertSame('Krishna Cloud TV Management', Branding::DEFAULT_PRODUCT);
+        } finally {
+            if ($before === null || $before === false) {
+                DB::query("DELETE FROM system_settings WHERE hotel_id = 0 AND setting_key = 'platform_name'");
+            } else {
+                $set((string) $before);
+            }
+            DB::query('UPDATE hotels SET brand_name = :b WHERE id = 1', ['b' => $brand]);
+            Settings::flush();
+        }
+    }
 }

@@ -24,7 +24,7 @@ final class ReviewsApp extends WidgetApp
 
     public function description(): string
     {
-        return __('Your Google rating, number of reviews and rotating guest reviews with stars — typed by you or loaded from Google automatically.');
+        return __('Your Google rating, number of reviews and rotating customer reviews with stars — typed by you or loaded from Google automatically.');
     }
 
     public function icon(): string
@@ -35,7 +35,7 @@ final class ReviewsApp extends WidgetApp
     public function defaults(): array
     {
         return [
-            'heading' => __('What our guests say'),
+            'heading' => __('What our customers say'),
             'subtitle' => '',
             'mode' => 'manual',
             'place_id' => '',

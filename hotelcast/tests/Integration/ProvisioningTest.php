@@ -164,7 +164,7 @@ final class ProvisioningTest extends TestCase
 
         [$s, , $html] = self::s('qmgr1')->get('claim.php?done=' . $row['id']);
         $this->assertSame(200, $s);
-        $this->assertStringContainsString('TV assigned to room 102', $html);
+        $this->assertStringContainsString('TV assigned to screen 102', $html);
         [$s, $j] = self::s('qmgr1')->ajax('claim_status&id=' . $row['id']);
         $this->assertSame(200, $s);
         $this->assertSame('waiting', $j['data']['status']);
@@ -368,14 +368,14 @@ final class ProvisioningTest extends TestCase
         $this->assertSame(302, self::assign('qmgr1', $code, ['room' => self::$room['101']])[0]);
         [, , $html] = self::s('qmgr2')->get('claim.php?code=' . $code);
         $this->assertStringContainsString('already been assigned', $html);
-        $this->assertStringNotContainsString('room 101', $html);
+        $this->assertStringNotContainsString('screen 101', $html);
         [, , $html] = self::s('qmgr2')->get('claim.php?done=' . $prov['id']);
-        $this->assertStringNotContainsString('TV assigned to room', $html);
+        $this->assertStringNotContainsString('TV assigned to screen', $html);
         [$s] = self::s('qmgr2')->ajax('claim_status&id=' . $prov['id']);
         $this->assertSame(404, $s);
         // Manager 1 re-opening the code sees the success view.
         [, , $html] = self::s('qmgr1')->get('claim.php?code=' . $code);
-        $this->assertStringContainsString('TV assigned to room 101', $html);
+        $this->assertStringContainsString('TV assigned to screen 101', $html);
 
         // Hotel users never see the list of waiting TVs.
         [, , $html] = self::s('qmgr1')->get('claim.php');
@@ -396,7 +396,7 @@ final class ProvisioningTest extends TestCase
         $this->assertStringContainsString('Hotel Two', $html);
         $this->assertStringContainsString('Partner Hotel', $html);
         $this->assertStringNotContainsString('name="prov_id"', $html, 'no rooms before a hotel is chosen');
-        $this->assertStringContainsString('Choose the hotel first.', $html);
+        $this->assertStringContainsString('Choose the customer first.', $html);
 
         [, , $html] = self::s('qplat')->get('claim.php?code=' . $code . '&hotel=2');
         $this->assertStringContainsString('name="room" value="' . self::$room['777'] . '"', $html);
@@ -438,7 +438,7 @@ final class ProvisioningTest extends TestCase
         $this->assertStringContainsString('name="room" value="' . self::$room['301'] . '"', $html);
 
         [, , $html] = self::s('qres')->get('claim.php?code=' . $code . '&hotel=1');
-        $this->assertStringContainsString('You cannot manage this hotel.', $html);
+        $this->assertStringContainsString('You cannot manage this customer.', $html);
         $this->assertStringNotContainsString('name="room" value="' . self::$room['101'] . '"', $html);
 
         self::assign('qres', $code, ['hotel' => 1, 'room' => self::$room['101']]);

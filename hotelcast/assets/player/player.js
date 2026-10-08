@@ -426,7 +426,7 @@
         store.del('hc_hash');
         S.content = null;
         S.hash = '';
-        log('Registered in room ' + S.room);
+        log('Registered as screen ' + S.room);
         startPlayer();
         return;
       }

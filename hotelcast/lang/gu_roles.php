@@ -73,7 +73,7 @@ return [
     'Create and edit groups of screens.' => 'સ્ક્રીનના ગ્રુપ બનાવો અને બદલો.',
     'Manage video walls' => 'વિડિયો વોલ મેનેજ કરો',
     'Combine several TVs into one video wall.' => 'ઘણા TVને એક વિડિયો વોલમાં જોડો.',
-    'Volume rules, guest menu and remote commands for TVs.' => 'TV માટે વોલ્યુમ નિયમો, મહેમાન મેનુ અને રિમોટ કમાન્ડ.',
+    'Volume rules, TV menu and remote commands for TVs.' => 'TV માટે વોલ્યુમ નિયમો, TV મેનુ અને રિમોટ કમાન્ડ.',
     'TV setup files' => 'TV સેટઅપ ફાઇલો',
     'Download setup files for new TVs.' => 'નવા TV માટે સેટઅપ ફાઇલો ડાઉનલોડ કરો.',
     'Screenshots, logs and live view of a TV.' => 'TVના સ્ક્રીનશૉટ, લૉગ અને લાઇવ વ્યૂ.',

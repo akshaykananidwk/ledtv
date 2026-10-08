@@ -34,7 +34,7 @@ if (is_post()) {
                     flash_errors($errors);
                 } else {
                     ActivityLog::add('settings_update', 'settings', null, 'TV guest menu');
-                    flash('success', __('Saved. The guest menu on the TVs is updated within a few seconds.'));
+                    flash('success', __('Saved. The TV menu is updated within a few seconds.'));
                 }
                 break;
             case 'command':
@@ -70,7 +70,7 @@ function tvc_target(string $uid, string $label, string $confirm): string
 ?>
 <div class="page-head">
   <div><h1><i class="bi bi-sliders2"></i> <?= e(__('TV controls')) ?></h1>
-    <p class="lead-sm"><?= e(__('Volume limits, the guest menu on the TV (OK button) and quick commands.')) ?></p></div>
+    <p class="lead-sm"><?= e(__('Volume limits, the TV menu (OK button) and quick commands.')) ?></p></div>
 </div>
 
 <div class="row g-3">
@@ -108,21 +108,21 @@ function tvc_target(string $uid, string $label, string $confirm): string
           <label class="form-label" for="volume_night_to"><?= e(__('Night until')) ?></label>
           <input type="time" class="form-control" id="volume_night_to" name="volume_night_to" required value="<?= e($s('volume_night_to', '06:00')) ?>">
         </div>
-        <div class="col-12 form-text mt-0"><?= e(__('The TV lowers the volume to the limit when a guest turns it up. Some TVs control the speaker volume in their own firmware; there the rules cannot be applied.')) ?></div>
+        <div class="col-12 form-text mt-0"><?= e(__('The TV lowers the volume to the limit when someone turns it up. Some TVs control the speaker volume in their own firmware; there the rules cannot be applied.')) ?></div>
         <div class="col-12"><button class="btn btn-primary"><i class="bi bi-check-lg"></i> <?= e(__('Save')) ?></button></div>
       </div>
     </form>
 
     <form method="post" class="card mb-3" id="menu">
       <?= Csrf::field() ?><input type="hidden" name="op" value="save_menu">
-      <div class="card-header"><i class="bi bi-list-ul"></i> <?= e(__('Guest menu on the TV')) ?></div>
+      <div class="card-header"><i class="bi bi-list-ul"></i> <?= e(__('TV menu (OK button)')) ?></div>
       <div class="card-body">
-        <p class="small text-muted"><?= e(__('Guests open this menu with a short press of OK on the TV remote.')) ?></p>
+        <p class="small text-muted"><?= e(__('Viewers open this menu with a short press of OK on the TV remote.')) ?></p>
         <div class="form-check form-switch mb-3">
           <input class="form-check-input" type="checkbox" role="switch" id="guest_menu_live_tv" name="guest_menu_live_tv" value="1"<?= $s('guest_menu_live_tv') === '1' ? ' checked' : '' ?>>
           <label class="form-check-label" for="guest_menu_live_tv"><?= e(__('Live TV (set-top box / tuner)')) ?></label>
         </div>
-        <label class="form-label"><?= e(__('HDMI inputs shown to guests')) ?></label>
+        <label class="form-label"><?= e(__('HDMI inputs shown in the TV menu')) ?></label>
         <?php foreach (DeviceControlsExtension::INPUTS as $hdmi): $n = substr($hdmi, 4); ?>
           <div class="input-group input-group-sm mb-2">
             <div class="input-group-text"><input class="form-check-input mt-0" type="checkbox" name="input_<?= e($hdmi) ?>" value="1" id="in_<?= e($hdmi) ?>"<?= array_key_exists($hdmi, $inputs) ? ' checked' : '' ?>>
@@ -142,7 +142,7 @@ function tvc_target(string $uid, string $label, string $confirm): string
         <div class="row g-2 mb-3">
           <div class="col-sm-6"><label class="form-label" for="wifi_ssid"><?= e(__('Guest Wi-Fi name')) ?></label><input class="form-control" id="wifi_ssid" name="wifi_ssid" maxlength="64" value="<?= e($s('wifi_ssid')) ?>" autocomplete="off"></div>
           <div class="col-sm-6"><label class="form-label" for="wifi_password"><?= e(__('Guest Wi-Fi password')) ?></label><input class="form-control" id="wifi_password" name="wifi_password" maxlength="64" value="<?= e($s('wifi_password')) ?>" autocomplete="off"></div>
-          <?php if ($wifiFromGuests): ?><div class="col-12 form-text"><?= e(__('The same Wi-Fi details are used on the guest welcome screen.')) ?></div><?php endif; ?>
+          <?php if ($wifiFromGuests): ?><div class="col-12 form-text"><?= e(__('The same Wi-Fi details are used on the welcome screen.')) ?></div><?php endif; ?>
         </div>
         <button class="btn btn-primary"><i class="bi bi-check-lg"></i> <?= e(__('Save')) ?></button>
       </div>

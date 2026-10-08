@@ -63,7 +63,7 @@ final class Roles
             'rooms.manage' => ['screens', 'manage', __('Manage screens'), __('Add, edit and delete screens and pair new TVs.')],
             'groups.manage' => ['screens', 'manage', __('Manage groups'), __('Create and edit groups of screens.')],
             'video_walls.manage' => ['screens', 'manage', __('Manage video walls'), __('Combine several TVs into one video wall.')],
-            'devices.controls' => ['screens', 'manage', __('TV controls'), __('Volume rules, guest menu and remote commands for TVs.')],
+            'devices.controls' => ['screens', 'manage', __('TV controls'), __('Volume rules, TV menu and remote commands for TVs.')],
             'devices.setup' => ['screens', 'manage', __('TV setup files'), __('Download setup files for new TVs.')],
             'support.view' => ['screens', 'view', __('TV support'), __('Screenshots, logs and live view of a TV.')],
             'tv_health.view' => ['screens', 'view', __('TV health'), __('Health dashboard of the TVs.')],

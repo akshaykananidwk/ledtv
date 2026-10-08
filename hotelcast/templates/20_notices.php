@@ -1,6 +1,7 @@
 <?php
 /**
- * Template library — hotel notices (Wi-Fi, breakfast, checkout, no smoking, pool, menu board, offer, welcome).
+ * Template library — notices (Wi-Fi, breakfast, checkout, no smoking, pool, menu board, offer, welcome). Some are
+ * hospitality samples (checkout, pool, room service); customers edit the text anyway.
  * Definition format: see core/Templates.php. Not reachable from the web (templates/.htaccess).
  */
 declare(strict_types=1);
@@ -84,9 +85,9 @@ return [
         'fields' => [$title, $message, ['key' => 'big', 'type' => 'text', 'label' => 'Fine / extra line'], $footer, ...$colors],
         'colors' => ['bg_color' => '#B71C1C', 'accent_color' => '#FFFFFF'],
         'defaults' => [
-            'en' => ['title' => 'No Smoking', 'message' => 'This is a non-smoking room. Smoking is not allowed anywhere inside the hotel.', 'big' => 'A cleaning fee of ₹ 2,000 applies.'],
-            'gu' => ['title' => 'ધૂમ્રપાન નિષેધ', 'message' => 'આ નોન-સ્મોકિંગ રૂમ છે. હોટલની અંદર ક્યાંય ધૂમ્રપાનની મંજૂરી નથી.', 'big' => '₹ 2,000 સફાઈ ચાર્જ લાગુ પડશે.'],
-            'hi' => ['title' => 'धूम्रपान निषेध', 'message' => 'यह नॉन-स्मोकिंग कमरा है। होटल के अंदर कहीं भी धूम्रपान की अनुमति नहीं है।', 'big' => '₹ 2,000 सफ़ाई शुल्क लागू होगा।'],
+            'en' => ['title' => 'No Smoking', 'message' => 'This is a non-smoking area. Smoking is not allowed anywhere inside the premises.', 'big' => 'A cleaning fee of ₹ 2,000 applies.'],
+            'gu' => ['title' => 'ધૂમ્રપાન નિષેધ', 'message' => 'આ નોન-સ્મોકિંગ વિસ્તાર છે. પરિસરની અંદર ક્યાંય ધૂમ્રપાનની મંજૂરી નથી.', 'big' => '₹ 2,000 સફાઈ ચાર્જ લાગુ પડશે.'],
+            'hi' => ['title' => 'धूम्रपान निषेध', 'message' => 'यह नॉन-स्मोकिंग क्षेत्र है। परिसर के अंदर कहीं भी धूम्रपान की अनुमति नहीं है।', 'big' => '₹ 2,000 सफ़ाई शुल्क लागू होगा।'],
         ],
     ],
     [

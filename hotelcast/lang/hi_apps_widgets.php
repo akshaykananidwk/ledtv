@@ -285,8 +285,8 @@ return [
 
     // Google reviews (#30)
     'Google reviews' => 'Google समीक्षाएँ',
-    'Your Google rating, number of reviews and rotating guest reviews with stars — typed by you or loaded from Google automatically.' => 'आपकी Google रेटिंग, समीक्षाओं की संख्या और सितारों के साथ बदलती मेहमानों की समीक्षाएँ — आपकी लिखी या Google से अपने आप।',
-    'What our guests say' => 'हमारे मेहमान क्या कहते हैं',
+    'Your Google rating, number of reviews and rotating customer reviews with stars — typed by you or loaded from Google automatically.' => 'आपकी Google रेटिंग, समीक्षाओं की संख्या और सितारों के साथ बदलती ग्राहकों की समीक्षाएँ — आपकी लिखी या Google से अपने आप।',
+    'What our customers say' => 'हमारे ग्राहक क्या कहते हैं',
     'Review line :n: write "Author | rating 1-5 | date | text", e.g. "Ramesh P. | 5 | 2026-09-12 | Very clean and friendly".' => 'समीक्षा पंक्ति :n: "नाम | रेटिंग 1-5 | तारीख़ | पाठ" लिखें, जैसे "Ramesh P. | 5 | 2026-09-12 | बहुत साफ़ और विनम्र"।',
     'Enter the Google Place ID of your business (starts with "ChIJ…"), or use manual mode.' => 'अपने व्यवसाय का Google Place ID लिखें ("ChIJ…" से शुरू), या स्वयं लिखने वाला मोड उपयोग करें।',
     'The Place ID looks wrong.' => 'Place ID ग़लत लगता है।',

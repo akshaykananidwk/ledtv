@@ -1,7 +1,8 @@
 <?php
 /**
- * Hindi (हिन्दी) — guest-facing text (TV screens, guest web app). The admin panel stays English /
- * Gujarati. Modules add their strings in lang/hi_<module>.php (merged automatically by I18n).
+ * Hindi (हिन्दी) — TV / viewer-facing text (TV screens, guest web app). Since 2.5 Hindi is also an admin
+ * panel language: the main admin strings are in lang/hi_admin.php. Modules add their strings in
+ * lang/hi_<module>.php (merged automatically by I18n).
  * Use I18n::translate($key, 'hi') for a guest's language independent of the admin's.
  */
 return [

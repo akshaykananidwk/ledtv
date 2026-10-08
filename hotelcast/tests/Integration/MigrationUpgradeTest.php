@@ -154,7 +154,7 @@ final class MigrationUpgradeTest extends TestCase
         $this->assertStringEndsWith('uploads/media/2026/09/legacy.jpg', $c['items'][0]['url'], 'old media paths still valid');
         $this->assertSame('Legacy Palace દ્વારકા', $c['hotel']['name']);
         $this->assertSame(['Legacy ticker'], $c['overlay']['ticker']['messages'] ?? null, 'same ticker on the TV after the upgrade');
-        $this->assertSame('Krishna Cloud LED TV', $c['branding']['product']);
+        $this->assertSame('Krishna Cloud TV Management', $c['branding']['product'], 'old default product name renamed by migration 031');
         $this->assertSame([], Migrator::pending());
         $this->assertSame([], Migrator::migrate(), 'idempotent');
     }

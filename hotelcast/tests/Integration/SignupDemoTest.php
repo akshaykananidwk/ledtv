@@ -189,7 +189,7 @@ final class SignupDemoTest extends TestCase
         $before = (int) DB::value('SELECT COUNT(*) FROM signups');
         [$s, $body] = self::signup(self::form(['email' => 'not-an-email', 'password' => 'short', 'accept_terms' => '', 'mobile' => '12', 'hotel_name' => '', 'tv_estimate' => '0']));
         $this->assertSame(200, $s);
-        foreach (['Enter a valid email address.', 'Password must be at least 8 characters.', 'Please accept the terms to continue.', 'Enter a valid mobile number', 'Hotel name is required.', 'Enter the number of rooms / TVs'] as $msg) {
+        foreach (['Enter a valid email address.', 'Password must be at least 8 characters.', 'Please accept the terms to continue.', 'Enter a valid mobile number', 'Business name is required.', 'Enter the number of rooms / TVs'] as $msg) {
             $this->assertStringContainsString($msg, $body);
         }
         [, $body] = self::signup(self::form(['email' => 'someone@mailinator.com']));

@@ -82,7 +82,7 @@ return [
     'Manage video walls' => 'वीडियो वॉल मैनेज करें',
     'Combine several TVs into one video wall.' => 'कई TV को एक वीडियो वॉल में जोड़ें।',
     'TV controls' => 'TV कंट्रोल',
-    'Volume rules, guest menu and remote commands for TVs.' => 'TV के लिए वॉल्यूम नियम, मेहमान मेनू और रिमोट कमांड।',
+    'Volume rules, TV menu and remote commands for TVs.' => 'TV के लिए वॉल्यूम नियम, TV मेनू और रिमोट कमांड।',
     'TV setup files' => 'TV सेटअप फ़ाइलें',
     'Download setup files for new TVs.' => 'नए TV के लिए सेटअप फ़ाइलें डाउनलोड करें।',
     'TV support' => 'TV सपोर्ट',

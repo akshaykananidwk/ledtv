@@ -426,7 +426,7 @@ if ($action === 'new' || $action === 'edit') {
           </div>
           <div class="col-12">
             <label class="form-label" for="name"><?= e(__('Screen name')) ?></label>
-            <input class="form-control" id="name" name="name" value="<?= e($room['name']) ?>" maxlength="120" placeholder="<?= e(__('e.g. Deluxe 101')) ?>">
+            <input class="form-control" id="name" name="name" value="<?= e($room['name']) ?>" maxlength="120" placeholder="<?= e(__('e.g. Entrance')) ?>">
           </div>
           <div class="col-12">
             <label class="form-label" for="source"><?= e(__('What should this TV show?')) ?></label>
@@ -513,7 +513,7 @@ if ($action === 'bulk_add') {
         </div>
         <div class="col-sm-6">
           <label class="form-label" for="name_prefix"><?= e(__('Name prefix')) ?></label>
-          <input class="form-control" id="name_prefix" name="name_prefix" maxlength="60" placeholder="<?= e(__('e.g. Deluxe')) ?>">
+          <input class="form-control" id="name_prefix" name="name_prefix" maxlength="60" placeholder="<?= e(__('e.g. Counter')) ?>">
         </div>
         <?php if ($groupsAll): ?>
         <div class="col-12">
