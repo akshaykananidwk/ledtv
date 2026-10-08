@@ -467,6 +467,8 @@ final class PlatformScreensTest extends TestCase
         $this->assertSame('NOT_ASSIGNED', $j['error']['code']);
         [$s] = TestEnv::http('GET', self::$url . 'api/device/command/tv-ps-pool-0001', null, ['Authorization: Bearer wrong-token', 'X-Device-Id: tv-ps-pool-0001']);
         $this->assertSame(401, $s);
+        [$s] = TestEnv::http('GET', self::$url . 'api/device/command/tv-ps-other-0001', null, ['Authorization: Bearer ' . $token]);
+        $this->assertSame(403, $s, 'token of another device');
         // The pool is listed; the reseller never sees it.
         [, , $html] = $root->get('platform_screens.php');
         $this->assertStringContainsString('tv-ps-pool-0001', $html);

@@ -524,6 +524,14 @@ final class PlatformScreens
         return count($devs);
     }
 
+    /** A web player may only join a customer whose plan includes the web player (2.5 plans, core/Features.php). */
+    public static function assertPlatformAllowed(array $device, int $hotelId): void
+    {
+        if (DeviceManager::isWeb($device) && class_exists('Features') && Features::exists('web_player') && !Features::enabled('web_player', $hotelId)) {
+            throw new InvalidArgumentException(__('The web player is not included in the plan of :c.', ['c' => self::hotelName($hotelId)]));
+        }
+    }
+
     /**
      * Throw RuntimeException when $incoming more TVs would exceed the customer's screen limit
      * (hotels.max_tvs / plan / license, Tenant::maxTvs). Call inside the transaction after locking the hotel row.
@@ -616,6 +624,7 @@ final class PlatformScreens
             if ((int) $d['is_revoked']) {
                 throw new InvalidArgumentException(__('Revoked TVs cannot be moved: :u must register again.', ['u' => $d['device_uid']]));
             }
+            self::assertPlatformAllowed($d, $targetHotel);
         }
         $mode = (string) ($opt['mode'] ?? 'existing');
         $roomId = (int) ($opt['room_id'] ?? 0);

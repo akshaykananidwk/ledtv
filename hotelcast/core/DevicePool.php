@@ -186,6 +186,10 @@ final class DevicePool
         }
         $route = self::route();
         if ($route === 'device/command' || str_starts_with($route, 'device/command/')) {
+            $pathUid = substr($route, strlen('device/command/'));
+            if ($pathUid !== '' && $pathUid !== false && !hash_equals((string) $row['device_uid'], $pathUid)) {
+                Api::error('FORBIDDEN', 'Token does not belong to this device', 403);
+            }
             $content = self::waitingContent($row);
             $changed = $content['hash'] !== (string) ($_GET['hash'] ?? '');
             $data = [
@@ -310,6 +314,7 @@ final class DevicePool
             $many = count($rows) > 1;
             $hasPlatform = Migrator::hasColumn(DB::pdo(), 'devices', 'platform');
             foreach ($rows as $i => $r) {
+                PlatformScreens::assertPlatformAllowed($r, $hotelId);
                 $room = PlatformScreens::targetRoom($hotelId, $mode, (int) ($opt['room_id'] ?? 0),
                     $mode === 'new' && $many ? trim((string) ($opt['name'] ?? '')) . ' ' . ($i + 1) : (string) ($opt['name'] ?? ''),
                     (string) ($r['label'] ?? ''), ['name' => $r['label'] ?? '']);

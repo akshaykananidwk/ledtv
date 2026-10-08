@@ -107,4 +107,5 @@ return [
     'This screen is not assigned to a customer yet. Device ID: :id' => 'આ સ્ક્રીન હજી કોઈ ગ્રાહકને સોંપાઈ નથી. ડિવાઇસ ID: :id',
     'Customer details' => 'ગ્રાહકની વિગતો',
     'Screens (online/total)' => 'સ્ક્રીન (ઓનલાઇન/કુલ)',
+    'The web player is not included in the plan of :c.' => ':c ના પ્લાનમાં વેબ પ્લેયર સામેલ નથી.',
 ];

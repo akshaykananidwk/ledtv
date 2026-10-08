@@ -50,6 +50,15 @@ final class Features
      */
     public const PLATFORM_PAGE_PATTERN = '/^(platform_[a-z0-9_]+|chain(_[a-z0-9_]+)?|reseller)\.php$/';
 
+    /** Admin entry points that dispatch to registered actions (admin/ajax.php → ajax actions). */
+    public const DISPATCHERS = ['ajax.php'];
+
+    /**
+     * Content extensions that are not skipped as a whole: their fields are stripped per feature by
+     * filterContent() (usb_mode → usb_mode, cec_mode → cec).
+     */
+    public const FIELD_EXTENSIONS = ['DeviceFeaturesExtension'];
+
     /** Old 2.0 module names (plans.features before 2.5, Tenant::feature()) => new feature keys. */
     public const LEGACY_MODULES = [
         'guests' => ['guests', 'pms'],
@@ -130,7 +139,7 @@ final class Features
         'update' => ['label' => 'Auto-update', 'group' => 'core', 'core' => true, 'description' => 'Server updates (platform only).',
             'permissions' => ['update.manage'], 'pages' => ['update.php', 'ajax_update.php'], 'ajax' => ['update_*', 'rollback']],
         'platform' => ['label' => 'Platform', 'group' => 'core', 'core' => true, 'description' => 'Platform, reseller and hotel-chain administration.',
-            'permissions' => ['platform.manage', 'platform.hotels', 'reseller.panel', 'support.platform', 'signup.manage', 'demo.client', 'chains.manage', 'chain.view'],
+            'permissions' => ['platform.manage', 'platform.hotels', 'reseller.panel', 'support.platform', 'signup.manage', 'demo.client', 'chains.manage', 'chain.view', 'platform.screens', 'platform.pool'],
             'ajax' => ['platform_*', 'chain_*', 'signup_stats']],
 
         // ------------------------------------------------------------------ content
@@ -362,7 +371,7 @@ final class Features
     /** Is the page registered at all (some feature, core or platform)? */
     public static function pageKnown(string $basename): bool
     {
-        return (bool) preg_match(self::PLATFORM_PAGE_PATTERN, $basename) || self::owners('pages', $basename) !== [];
+        return in_array($basename, self::DISPATCHERS, true) || (bool) preg_match(self::PLATFORM_PAGE_PATTERN, $basename) || self::owners('pages', $basename) !== [];
     }
 
     /** Features registering an ajax action: exact name, else the longest matching "prefix_*". */

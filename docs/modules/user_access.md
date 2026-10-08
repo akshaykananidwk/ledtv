@@ -77,6 +77,11 @@ emergency on their own TVs (never "all rooms"). They may **stop** only emergenci
 theirs. A hotel-wide emergency started by an Admin still shows in their dashboard banner (it is on their TVs),
 but without a Stop button. "Stop all" stops only the emergencies they own; the Admin's keep running.
 
+### Custom roles (2.5)
+
+A user may also have a **custom role** (docs/modules/roles.md). Its `users.role` is always a limitable level
+(manager / staff / reception), so custom-role users can be limited to some TVs exactly like above.
+
 ## Hotel chains switch
 
 Hotel chains (`docs/modules/hotel_chains.md`) are off by default. They are switched on in **Platform settings →
