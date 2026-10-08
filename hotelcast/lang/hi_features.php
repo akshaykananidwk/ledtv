@@ -176,4 +176,6 @@ return [
     'Own roles with chosen permissions.' => 'चुनी गई अनुमतियों के साथ अपने रोल।',
     'Integrations API' => 'इंटीग्रेशन API',
     'REST API for PMS, KPI push and presence sensors.' => 'PMS, KPI पुश और प्रेज़ेंस सेंसर के लिए REST API।',
+    'This plan is not available. Choose another plan.' => 'यह प्लान उपलब्ध नहीं है। दूसरा प्लान चुनें।',
+    'Choose a plan.' => 'प्लान चुनें।',
 ];

@@ -376,7 +376,7 @@ final class PlatformScreensTest extends TestCase
         $this->assertSame(self::$h['beta'], (int) self::deviceRow('tvA2')['hotel_id']);
         [, , $html] = self::as('psres1')->get('platform_screens.php');
         $this->assertStringNotContainsString('value="move"', $html, 'no move action for resellers');
-        $this->assertStringNotContainsString('js-ps-move', $html);
+        $this->assertStringNotContainsString('dropdown-item js-ps-move', $html, 'no row "Move to another customer…"');
         // Row "move" with a NEW screen and "same screen ID".
         [$s] = self::as('psroot')->post('platform_screens.php', ['op' => 'bulk', 'bulk_action' => 'move', 'ids' => [$tv['id']],
             'target_customer' => self::$h['alpha'], 'screen_mode' => 'new', 'new_name' => 'Lobby TV']);

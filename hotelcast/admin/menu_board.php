@@ -150,6 +150,8 @@ if (is_post()) {
 
 $action = req_str('action', $_GET, 20);
 $activeNav = 'menu_board';
+// Shared with room service (Hospitality); customers without it only see the TV wording (2.5 rename review).
+$activeLabel = Features::enabled('room_service') ? __('Active (room service and TV)') : __('Active (shown on TV)');
 $pageTitle = __('Menu board');
 $extraScripts = ['js/menu-board-admin.js'];
 $categories = MenuBoard::categories();
@@ -184,7 +186,7 @@ if ($formCat !== null || $action === 'cat') {
       <div class="col-6 col-md-3"><label class="form-label" for="c_to"><?= e(__('Shown on TV until')) ?></label><input class="form-control" type="time" id="c_to" name="board_to" value="<?= e($hm($c['board_to'] ?? null)) ?>"></div>
       <div class="col-md-6 form-text align-self-end"><?= e(__('Dayparting: e.g. breakfast 07:00–11:00. Leave empty to show it all day. Uses your time zone.')) ?></div>
       <div class="col-md-6"><div class="form-check form-switch"><input class="form-check-input" type="checkbox" role="switch" id="c_board" name="show_on_board" value="1"<?= (int) $c['show_on_board'] ? ' checked' : '' ?>><label class="form-check-label" for="c_board"><?= e(__('Show on TV menu boards')) ?></label></div></div>
-      <div class="col-md-6"><div class="form-check form-switch"><input class="form-check-input" type="checkbox" role="switch" id="c_active" name="is_active" value="1"<?= (int) $c['is_active'] ? ' checked' : '' ?>><label class="form-check-label" for="c_active"><?= e(__('Active (room service and TV)')) ?></label></div></div>
+      <div class="col-md-6"><div class="form-check form-switch"><input class="form-check-input" type="checkbox" role="switch" id="c_active" name="is_active" value="1"<?= (int) $c['is_active'] ? ' checked' : '' ?>><label class="form-check-label" for="c_active"><?= e($activeLabel) ?></label></div></div>
       <div class="col-12"><button class="btn btn-primary btn-lg"><i class="bi bi-check-lg"></i> <?= e(__('Save')) ?></button></div>
     </div></form>
     <?php
@@ -210,7 +212,7 @@ if ($formItem !== null || $action === 'item') {
     $sw = static fn (string $name, string $label, bool $on): string => '<div class="col-sm-6"><div class="form-check form-switch"><input class="form-check-input" type="checkbox" role="switch" id="i_' . e($name) . '" name="' . e($name) . '" value="1"' . ($on ? ' checked' : '') . '><label class="form-check-label" for="i_' . e($name) . '">' . e($label) . '</label></div></div>';
     ?>
     <div class="page-head">
-      <div><h1><i class="bi bi-egg-fried"></i> <?= e($pageTitle) ?></h1><p class="lead-sm"><?= e(__('The same dish is shown on TV menu boards and in the room-service menu.')) ?></p></div>
+      <div><h1><i class="bi bi-egg-fried"></i> <?= e($pageTitle) ?></h1><?php if (Features::enabled('room_service')): ?><p class="lead-sm"><?= e(__('The same dish is shown on TV menu boards and in the room-service menu.')) ?></p><?php endif; ?></div>
       <a href="<?= e(admin_url('menu_board.php')) ?>" class="btn btn-light border"><i class="bi bi-arrow-left"></i> <?= e(__('Back')) ?></a>
     </div>
     <?php if ($formErrors): ?><div class="alert alert-danger" role="alert"><ul class="mb-0"><?php foreach ($formErrors as $err): ?><li><?= e($err) ?></li><?php endforeach; ?></ul></div><?php endif; ?>
@@ -247,7 +249,7 @@ if ($formItem !== null || $action === 'item') {
           <?= $sw('is_special', __("Today's special"), (bool) (int) $it['is_special']) ?>
           <?= $sw('is_sold_out', __('Sold out'), (bool) (int) $it['is_sold_out']) ?>
           <?= $sw('show_on_board', __('Show on TV menu boards'), (bool) (int) $it['show_on_board']) ?>
-          <?= $sw('is_active', __('Active (room service and TV)'), (bool) (int) $it['is_active']) ?>
+          <?= $sw('is_active', $activeLabel, (bool) (int) $it['is_active']) ?>
         </div></div></div>
         <div class="col-12 d-flex gap-2">
           <button class="btn btn-primary btn-lg"><i class="bi bi-check-lg"></i> <?= e(__('Save')) ?></button>

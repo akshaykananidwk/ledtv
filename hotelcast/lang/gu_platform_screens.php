@@ -108,4 +108,5 @@ return [
     'Customer details' => 'ગ્રાહકની વિગતો',
     'Screens (online/total)' => 'સ્ક્રીન (ઓનલાઇન/કુલ)',
     'The web player is not included in the plan of :c.' => ':c ના પ્લાનમાં વેબ પ્લેયર સામેલ નથી.',
+    'Only the platform admin can move TVs.' => 'ફક્ત પ્લેટફોર્મ એડમિન જ ટીવી ખસેડી શકે છે.',
 ];

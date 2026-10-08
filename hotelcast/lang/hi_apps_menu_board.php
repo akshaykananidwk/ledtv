@@ -98,4 +98,5 @@ return [
     'Spicy' => 'तीखा',
     'Healthy' => 'हेल्दी',
     'Not marked' => 'बिना चिह्न',
+    'Active (shown on TV)' => 'चालू (टीवी पर दिखे)',
 ];
