@@ -187,10 +187,10 @@ require __DIR__ . '/partials/header.php';
           <thead><tr><th><?= e(__('Room')) ?></th><th><?= e(__('App version')) ?></th><th><?= e(__('Status')) ?></th><th><?= e(__('Last update command')) ?></th></tr></thead>
           <tbody>
           <?php if (!$devices): ?><tr><td colspan="4" class="text-center text-muted py-4"><?= e(__('No TVs registered yet.')) ?></td></tr><?php endif; ?>
-          <?php foreach ($devices as $d): $old = $latestCode && (int) $d['app_version_code'] < $latestCode; ?>
+          <?php foreach ($devices as $d): $web = DeviceManager::isWeb($d); $old = !$web && $latestCode && (int) $d['app_version_code'] < $latestCode; ?>
             <tr>
               <td><a href="<?= e(admin_url('rooms.php', ['action' => 'device', 'id' => $d['id']])) ?>"><?= e($d['room_number'] ?? '-') ?></a></td>
-              <td class="<?= $old ? 'text-warning fw-semibold' : '' ?>">v<?= e($d['app_version'] ?? '?') ?> <span class="text-muted">(<?= e($d['app_version_code'] ?? '?') ?>)</span><?php if ($old): ?> <i class="bi bi-arrow-up-circle" title="<?= e(__('Update available')) ?>"></i><?php endif; ?></td>
+              <td class="<?= $old ? 'text-warning fw-semibold' : '' ?>">v<?= e($d['app_version'] ?? '?') ?> <span class="text-muted">(<?= e($d['app_version_code'] ?? '?') ?>)</span><?php if ($old): ?> <i class="bi bi-arrow-up-circle" title="<?= e(__('Update available')) ?>"></i><?php endif; ?><?php if ($web): ?> <span class="badge text-bg-info" title="<?= e(__('Web players update themselves on the next reload.')) ?>"><i class="bi bi-browser-chrome"></i> <?= e(__('Web player')) ?></span><?php endif; ?></td>
               <td><?= status_badge(DeviceManager::isOnline($d) ? 'online' : 'offline') ?></td>
               <td class="small"><?= cmd_status_badge($d['upd_status']) ?> <?= $d['upd_at'] ? e(time_ago($d['upd_at'])) : '' ?><?php if ($d['upd_msg']): ?><div class="text-muted"><?= e($d['upd_msg']) ?></div><?php endif; ?></td>
             </tr>

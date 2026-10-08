@@ -284,6 +284,18 @@ final class DeviceManager
         return ['platform' => $web ? 'web' : 'android', 'user_agent' => $web ? self::str($in['user_agent'] ?? null, 255) : null];
     }
 
+    /** 2.4: a web player (browser) — it cannot install APKs, so it is left out of app updates. */
+    public static function isWeb(?array $device): bool
+    {
+        return ($device['platform'] ?? 'android') === 'web';
+    }
+
+    /** SQL condition "not a web player" for $col (devices.platform), '' before migration 026. */
+    public static function notWebSql(string $col = 'platform'): string
+    {
+        return Migrator::hasColumn(DB::pdo(), 'devices', 'platform') ? " AND $col <> 'web'" : '';
+    }
+
     private static function str(mixed $v, int $max): ?string
     {
         if ($v === null || $v === '') {

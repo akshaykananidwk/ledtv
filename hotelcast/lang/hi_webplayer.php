@@ -61,4 +61,5 @@ return [
     'Operating system' => 'ऑपरेटिंग सिस्टम',
     'User agent' => 'यूज़र एजेंट (ब्राउज़र)',
     'Android version' => 'Android वर्ज़न',
+    'Web players update themselves on the next reload.' => 'वेब प्लेयर अगले रीलोड पर अपने आप अपडेट हो जाते हैं।',
 ];

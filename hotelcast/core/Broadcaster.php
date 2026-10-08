@@ -109,7 +109,9 @@ final class Broadcaster
             return 0;
         }
         [$in, $p] = DB::in($roomIds, 'r');
-        $devices = DB::all("SELECT id, room_id FROM devices WHERE hotel_id = :hid AND is_revoked = 0 AND room_id IN $in", $p + ['hid' => Tenant::id()]);
+        // 2.4: web players cannot install an APK — UPDATE_APP is not queued for them.
+        $notWeb = $command === 'UPDATE_APP' ? DeviceManager::notWebSql() : '';
+        $devices = DB::all("SELECT id, room_id FROM devices WHERE hotel_id = :hid AND is_revoked = 0 AND room_id IN $in" . $notWeb, $p + ['hid' => Tenant::id()]);
         $json = json_out((object) $payload);
         foreach ($devices as $d) {
             if ($command === 'SHOW_CONTENT') {

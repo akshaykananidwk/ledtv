@@ -235,7 +235,7 @@ require __DIR__ . '/partials/header.php';
       <thead><tr><th><?= e(__('Room')) ?></th><th><?= e(__('Status')) ?></th><th class="d-none d-md-table-cell"><?= e(__('App version')) ?></th><th><?= e(__('Crashes (7 days)')) ?></th><th class="d-none d-sm-table-cell"><?= e(__('Logs')) ?></th><th class="d-none d-lg-table-cell"><?= e(__('Last screenshot')) ?></th><th></th></tr></thead>
       <tbody>
       <?php if (!$rows): ?><tr><td colspan="7" class="text-center text-muted py-4"><?= e(__('No TVs registered yet.')) ?></td></tr><?php endif; ?>
-      <?php foreach ($rows as $d): $outdated = $newest && $d['app_version_code'] !== null && (int) $d['app_version_code'] < (int) $newest['version_code']; ?>
+      <?php foreach ($rows as $d): $outdated = $newest && !DeviceManager::isWeb($d) && $d['app_version_code'] !== null && (int) $d['app_version_code'] < (int) $newest['version_code']; ?>
         <tr>
           <td><strong><?= e($d['room_number'] ?? '-') ?></strong><div class="small text-muted mono"><?= e(substr((string) $d['device_uid'], 0, 13)) ?></div></td>
           <td><?= status_badge(DeviceManager::isOnline($d) ? 'online' : 'offline') ?></td>

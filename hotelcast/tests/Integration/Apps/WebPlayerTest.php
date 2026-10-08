@@ -299,6 +299,42 @@ final class WebPlayerTest extends TestCase
         $this->assertSame('', TestEnv::phpErrors());
     }
 
+    /**
+     * Regression (QA 2.4): web players report version code 11 but cannot install an APK. After a newer
+     * APK is uploaded they must not be listed as "Update available" and must not get UPDATE_APP.
+     * Runs after testWebDeviceRegistersPollsAndAcks (web player in 401, Android TV in 402).
+     */
+    public function testWebPlayersAreLeftOutOfApkUpdates(): void
+    {
+        $apk = DB::insert('apk_releases', ['version_name' => '2.5.0', 'version_code' => 12, 'file_path' => 'apk/test.apk', 'file_size' => 10,
+            'sha256' => str_repeat('a', 64), 'created_at' => now()]);
+        $webId = (int) DB::value('SELECT id FROM devices WHERE device_uid = :u', ['u' => self::$uid]);
+        $tvId = (int) DB::value('SELECT id FROM devices WHERE device_uid = :u', ['u' => 'android-tv-0001']);
+        $this->assertTrue(DeviceManager::isWeb(DB::one('SELECT * FROM devices WHERE id = :id', ['id' => $webId])));
+
+        [, $count] = Broadcaster::pushApk($apk, 'all', []);
+        $this->assertSame(1, $count, 'only the Android TV');
+        $cmds = DB::all("SELECT device_id FROM device_commands WHERE command = 'UPDATE_APP'");
+        $this->assertSame([$tvId], array_map('intval', array_column($cmds, 'device_id')));
+
+        $s = new AdminSession(self::$url, 'wpMgr');
+        [$code, , $html] = $s->get('apk.php');
+        $this->assertSame(200, $code);
+        $this->assertFalse(TestEnv::hasPhpError($html));
+        $this->assertSame(1, substr_count($html, 'bi-arrow-up-circle'), 'only the Android TV is "Update available"');
+        $this->assertStringContainsString('Web players update themselves on the next reload.', $html);
+        [$code, , $html] = $s->get('support.php');
+        $this->assertSame(200, $code);
+        $this->assertSame(1, substr_count($html, '>Update available</span>'), 'TV support: only the Android TV');
+        $stats = DeviceSupport::platformStats();
+        $this->assertSame(1, $stats['totals']['outdated']);
+        $web = array_values(array_filter($stats['versions'], static fn ($v) => $v['version'] === 'web-2.4.0'));
+        $this->assertCount(1, $web);
+        $this->assertFalse($web[0]['outdated']);
+        DB::delete('apk_releases', 'id = :id', ['id' => $apk]);
+        DB::query("DELETE FROM device_commands WHERE command = 'UPDATE_APP'");
+    }
+
     public function testTranslationsCoverTheNewStrings(): void
     {
         $keys = WebPlayer::strings();

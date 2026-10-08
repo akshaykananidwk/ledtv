@@ -51,4 +51,5 @@ return [
     'Android TV app' => 'Android TV એપ',
     'Operating system' => 'ઓપરેટિંગ સિસ્ટમ',
     'User agent' => 'યુઝર એજન્ટ (બ્રાઉઝર)',
+    'Web players update themselves on the next reload.' => 'વેબ પ્લેયર આગલા રીલોડ પર જાતે અપડેટ થાય છે.',
 ];

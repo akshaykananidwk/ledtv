@@ -275,7 +275,7 @@ final class DeviceSupport
         }
         $tv = DB::all(
             "SELECT hotel_id, COUNT(*) AS tvs, SUM(status = 'offline') AS offline,
-                    SUM(app_version_code IS NOT NULL AND app_version_code < :nc) AS outdated
+                    SUM(app_version_code IS NOT NULL AND app_version_code < :nc" . DeviceManager::notWebSql() . ") AS outdated
              FROM devices WHERE is_revoked = 0 AND room_id IS NOT NULL GROUP BY hotel_id",
             ['nc' => $newestCode ?? 0]
         );
@@ -311,10 +311,14 @@ final class DeviceSupport
             'version' => $r['app_version'] !== null ? (string) $r['app_version'] : '?',
             'code' => $r['app_version_code'] !== null ? (int) $r['app_version_code'] : null,
             'tvs' => (int) $r['n'],
-            'outdated' => $newestCode !== null && $r['app_version_code'] !== null && (int) $r['app_version_code'] < $newestCode,
+            'outdated' => $newestCode !== null && $r['app_version_code'] !== null && (int) $r['app_version_code'] < $newestCode && !DeviceManager::isWeb($r),
         ], DB::all(
-            'SELECT app_version_code, MAX(app_version) AS app_version, COUNT(*) AS n FROM devices
-             WHERE is_revoked = 0 AND room_id IS NOT NULL GROUP BY app_version_code ORDER BY app_version_code DESC'
+            // 2.4: web players (no APK) are listed apart from Android TVs of the same version code.
+            DeviceManager::notWebSql() !== ''
+                ? 'SELECT app_version_code, platform, MAX(app_version) AS app_version, COUNT(*) AS n FROM devices
+                   WHERE is_revoked = 0 AND room_id IS NOT NULL GROUP BY app_version_code, platform ORDER BY app_version_code DESC, platform'
+                : 'SELECT app_version_code, MAX(app_version) AS app_version, COUNT(*) AS n FROM devices
+                   WHERE is_revoked = 0 AND room_id IS NOT NULL GROUP BY app_version_code ORDER BY app_version_code DESC'
         ));
         $recent = DB::all(
             "SELECT f.id, f.hotel_id, h.name AS hotel, r.room_number, f.app_version, f.happened_at, f.created_at, f.meta
