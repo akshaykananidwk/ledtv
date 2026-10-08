@@ -299,12 +299,16 @@ final class ContentResolver
         // Raspberry Pi, a PC abroad) show the hotel's local time. Android TVs use their own zone.
         $content['tz_offset_min'] = intdiv((new DateTime())->getOffset(), 60);
         foreach (self::extensions() as $ext) {
+            if (!Features::extensionEnabled($ext)) {
+                continue; // 2.5 plans: modules outside the customer's plan never reach the TV
+            }
             try {
                 $ext->apply($content, $room);
             } catch (Throwable $e) {
                 Logger::error('Content extension ' . get_class($ext) . ' failed: ' . $e->getMessage());
             }
         }
+        Features::filterContent($content);
         self::sortGuestMenu($content);
         $content['hash'] = sha1(json_out($content));
         $content['generated_at'] = date('c');

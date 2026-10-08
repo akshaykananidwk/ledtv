@@ -33,6 +33,10 @@ final class DeviceManager
         // The registration key identifies the hotel (unique per hotel).
         $hotel = $key !== '' && strlen($key) <= 64 ? DB::one('SELECT id, registration_key FROM hotels WHERE registration_key = :k', ['k' => $key]) : null;
         if (!$hotel || !hash_equals((string) $hotel['registration_key'], $key)) {
+            // 2.5 platform registration key → unassigned pool (core/DevicePool.php, docs/modules/platform_screens.md).
+            if (class_exists('DevicePool') && DevicePool::isPoolKey($key)) {
+                return DevicePool::register($in);
+            }
             Logger::write('device', 'warning', 'Registration rejected (bad key)', ['uid' => $uid, 'room' => $roomNumber, 'ip' => client_ip()]);
             Api::error('INVALID_REGISTRATION_KEY', 'Registration key is wrong. Check Admin → Settings → Devices.', 401);
         }
@@ -42,6 +46,11 @@ final class DeviceManager
             Api::error('HOTEL_SUSPENDED', Tenant::suspendedMessage()['title'] . ': ' . Tenant::suspendedMessage()['message'], 403);
         }
         $hid = Tenant::id();
+        // 2.5 plans: browsers (web player) register only when the customer's plan includes it.
+        $wpType = $in['platform'] ?? $in['device_type'] ?? '';
+        if (is_string($wpType) && strtolower(trim($wpType)) === 'web' && !Features::enabled('web_player')) {
+            Api::error('FEATURE_DISABLED', 'The web player is not included in this plan. Contact your provider.', 403);
+        }
         $existing = DB::one('SELECT id, is_revoked, room_id FROM devices WHERE hotel_id = :h AND device_uid = :u', ['h' => $hid, 'u' => $uid]);
 
         // Plan / license limit: a new TV (or a revoked / unassigned one coming back) needs a free slot.
@@ -113,6 +122,9 @@ final class DeviceManager
             Api::error('UNAUTHENTICATED', 'Missing device token', 401);
         }
         $device = DB::one('SELECT * FROM devices WHERE token_hash = :h LIMIT 1', ['h' => self::hashToken($token)]);
+        if (!$device && class_exists('DevicePool')) {
+            DevicePool::handleRequest($token, $uid); // 2.5: a TV of the unassigned pool is answered there (exits)
+        }
         if (!$device || (int) $device['is_revoked'] || ($uid !== '' && !hash_equals($device['device_uid'], $uid))) {
             Api::error('INVALID_TOKEN', 'Device token invalid or revoked. Please register again.', 401);
         }

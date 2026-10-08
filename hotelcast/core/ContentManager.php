@@ -371,12 +371,18 @@ HTML;
                 ];
                 break;
             case 'layout': // split screen (2.3): zones, sources, audio zone — validated in core/Layouts.php
+                if (!Features::enabled('layouts')) { // 2.5 plans
+                    $errors[] = __('Split screen layouts are not included in your plan.');
+                }
                 [$data['settings'], $layoutErrors] = Layouts::validate($in);
                 array_push($errors, ...$layoutErrors);
                 break;
             case 'app': // display app (2.3): app, cfg[...], theme, font, accent, lang — core/DisplayApps.php
                 [$data['settings'], $appErrors] = DisplayApps::validateItem($in);
                 array_push($errors, ...$appErrors);
+                if (!$appErrors && !Features::itemAllowed(['type' => 'app', 'settings' => $data['settings']])) { // 2.5 plans
+                    $errors[] = __('This app is not included in your plan.');
+                }
                 break;
         }
         return [$data, $errors];

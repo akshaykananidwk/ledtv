@@ -278,7 +278,7 @@ require __DIR__ . '/partials/header.php';
   </div>
 </div>
 
-<?php foreach (DisplayApps::byCategory() as $cat => $catApps): if (!$catApps) { continue; } ?>
+<?php foreach (DisplayApps::byCategory() as $cat => $catApps): $catApps = array_filter($catApps, static fn ($k) => Features::enabled(Features::forApp((string) $k)), ARRAY_FILTER_USE_KEY); /* 2.5 plans: only app families in the plan */ if (!$catApps) { continue; } ?>
   <h2 class="h5 mt-3 mb-2"><?= e($catLabels[$cat] ?? $cat) ?></h2>
   <div class="row g-3 mb-2">
     <?php foreach ($catApps as $key => $app): $mine = $byApp[$key] ?? []; ?>

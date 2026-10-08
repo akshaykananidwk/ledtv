@@ -7,6 +7,9 @@
  */
 declare(strict_types=1);
 
+if (Tenant::has() && !Features::enabled('web_player')) {
+    return; // 2.5 plans: not in the customer's plan
+}
 $wpUrl = WebPlayer::url();
 try {
     $wpQr = QrCode::svg($wpUrl);

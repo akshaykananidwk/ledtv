@@ -7,8 +7,34 @@ $user = Auth::require('users.manage');
 Csrf::check();
 
 const ROLES = Auth::HOTEL_ROLES;
-/** Roles that can be limited to some TVs (core/Access.php). */
+/** Roles that can be limited to some TVs (core/Access.php). Custom roles keep one of these as users.role. */
 const LIMITABLE_ROLES = ['manager', 'staff', 'reception'];
+
+/**
+ * Roles the current user may give (custom roles / RBAC, core/Roles.php): spec => label. An Admin may give
+ * every role; others never the Admin role and only roles whose permissions they hold themselves.
+ */
+function role_options(): array
+{
+    $out = [];
+    foreach (ROLES as $r) {
+        if (Roles::canAssign($r)) {
+            $out[$r] = role_label($r);
+        }
+    }
+    foreach (Roles::all() as $c) {
+        if (Roles::canAssign($c['key'])) {
+            $out[$c['key']] = $c['name'];
+        }
+    }
+    return $out;
+}
+
+/** May the current user change / delete / unlock this user? (not a user whose role has more rights) */
+function can_manage_user(array $u): bool
+{
+    return Roles::canAssign(Roles::specOf($u));
+}
 
 /**
  * TV access from the form: [targets [['group', id] | ['room', id]], errors]. "all" → [].
@@ -16,7 +42,8 @@ const LIMITABLE_ROLES = ['manager', 'staff', 'reception'];
  */
 function access_from_post(string $role): array
 {
-    if (!in_array($role, LIMITABLE_ROLES, true) || ($_POST['tv_access'] ?? 'all') !== 'some') {
+    // 2.5 plans: without "Per-user screen access" every user controls all TVs.
+    if (!in_array($role, LIMITABLE_ROLES, true) || ($_POST['tv_access'] ?? 'all') !== 'some' || !Features::enabled('user_access')) {
         return [[], []];
     }
     $targets = [];
@@ -101,6 +128,10 @@ if (is_post()) {
     $target = $id ? hotel_user($id) : null;
     $me = (int) $user['id'];
 
+    if ($target && in_array($op, ['unlock', 'revoke_session', 'revoke_all'], true) && !can_manage_user($target)) {
+        flash('danger', __('You cannot change a user whose role has more rights than yours.'));
+        redirect(admin_url('users.php'));
+    }
     switch ($op) {
         case 'save':
             if ($id && !$target) {
@@ -109,7 +140,14 @@ if (is_post()) {
             }
             $username = req_str('username', $_POST, 60);
             $email = req_str('email', $_POST, 190);
-            $role = in_array($_POST['role'] ?? '', ROLES, true) ? $_POST['role'] : 'staff';
+            // Role: built-in key or "role:<id>" (custom role of this customer; another customer's id → 404).
+            $spec = is_string($_POST['role'] ?? null) ? $_POST['role'] : 'staff';
+            $parsed = Roles::parseSpec($spec);
+            if ($parsed === null) {
+                $spec = 'staff';
+                $parsed = ['staff', null];
+            }
+            [$role, $roleId] = $parsed;
             $lang = isset(I18n::LANGUAGES[$_POST['language'] ?? '']) ? $_POST['language'] : 'en';
             $active = !empty($_POST['is_active']) ? 1 : 0;
             $password = is_string($_POST['password'] ?? null) ? $_POST['password'] : '';
@@ -132,32 +170,50 @@ if (is_post()) {
                     $errors[] = __('The two passwords do not match.');
                 }
             }
-            if ($target && (int) $target['id'] === $me && (!$active || $role !== $user['role'])) {
+            if ($target && (int) $target['id'] === $me && (!$active || $spec !== Roles::specOf($user))) {
                 $errors[] = __('You cannot disable your own account or change your own role.');
+            } elseif ($target && !can_manage_user($target)) {
+                $errors[] = __('You cannot change a user whose role has more rights than yours.');
+            } elseif (!Roles::canAssign($spec)) {
+                $errors[] = $spec === 'super_admin' ? __('Only an Admin can give the Admin role.') : __('You cannot give a role with permissions you do not have yourself.');
+            }
+            if ($errors && ($target && !can_manage_user($target) || !Roles::canAssign($spec))) {
+                Logger::write('security', 'warning', 'Role escalation refused (users.php)', ['user' => $me, 'target' => $id, 'role' => $spec, 'ip' => client_ip()]);
             }
             if ($target && $target['role'] === 'super_admin' && ($role !== 'super_admin' || !$active) && other_active_super_admins((int) $target['id']) === 0) {
                 $errors[] = __('There must always be at least one active Admin.');
             }
             [$access, $accessErrors] = access_from_post($role);
             $errors = array_merge($errors, $accessErrors);
+            if (!$target && ($limitErr = Features::userLimitError())) { // 2.5 plans: max users
+                $errors[] = $limitErr;
+            }
             if ($errors) {
                 flash_errors($errors);
                 redirect(admin_url('users.php', $id ? ['action' => 'edit', 'id' => $id] : ['action' => 'new']));
             }
             $data = ['username' => $username, 'email' => $email, 'full_name' => req_str('full_name', $_POST, 120), 'role' => $role, 'language' => $lang, 'is_active' => $active];
+            if (Roles::available()) {
+                $data['role_id'] = $roleId;
+            }
+            $oldSpec = $target ? Roles::specOf($target) : '';
             if ($password !== '') {
                 $data['password_hash'] = Auth::hash($password);
             }
             if ($target) {
                 DB::update('users', $data, 'id = :id AND hotel_id = :hid', ['id' => $id] + hid());
-                if ($password !== '' || !$active || $role !== $target['role']) {
+                if ($password !== '' || !$active || $spec !== $oldSpec) {
                     Auth::revokeUserSessions($id, $id === $me);
                 }
                 ActivityLog::add('user_update', 'user', $id, $username . ($password !== '' ? ' (password reset)' : ''));
+                if ($spec !== $oldSpec) {
+                    ActivityLog::add('user_role', 'user', $id, $username . ': ' . Roles::specLabel($oldSpec) . ' → ' . Roles::specLabel($spec));
+                }
             } else {
                 $id = DB::insert('users', $data + ['hotel_id' => Tenant::id(), 'created_at' => now()]);
-                ActivityLog::add('user_create', 'user', $id, $username . ' (' . $role . ')');
+                ActivityLog::add('user_create', 'user', $id, $username . ' (' . ($roleId ? Roles::specLabel($spec) : $role) . ')');
             }
+            Auth::forgetPermissions();
             // TV access (manager / staff / reception): all TVs or only some groups / rooms.
             $before = access_log_text(Access::forUser($id));
             Access::setForUser($id, $access);
@@ -174,6 +230,8 @@ if (is_post()) {
             }
             if ((int) $target['id'] === $me) {
                 flash('danger', __('You cannot delete your own account.'));
+            } elseif (!can_manage_user($target)) {
+                flash('danger', __('You cannot change a user whose role has more rights than yours.'));
             } elseif ($target['role'] === 'super_admin' && other_active_super_admins((int) $target['id']) === 0) {
                 flash('danger', __('There must always be at least one active Admin.'));
             } else {
@@ -236,8 +294,17 @@ if ($action === 'new' || $action === 'edit') {
             flash('warning', __('User not found.'));
             redirect(admin_url('users.php'));
         }
+        if ((int) $u['id'] !== (int) $user['id'] && !can_manage_user($u)) {
+            flash('danger', __('You cannot change a user whose role has more rights than yours.'));
+            redirect(admin_url('users.php'));
+        }
     }
     $isSelf = (int) $u['id'] === (int) $user['id'];
+    $uSpec = $u['id'] ? Roles::specOf($u) : 'staff';
+    $roleOptions = role_options();
+    if (!isset($roleOptions[$uSpec])) {
+        $roleOptions = [$uSpec => Roles::specLabel($uSpec)] + $roleOptions; // own role (shown, not changeable)
+    }
     $assigned = $u['id'] ? Access::forUser((int) $u['id']) : [];
     $selGroups = array_map(fn ($r) => $r['id'], array_filter($assigned, fn ($r) => $r['type'] === 'group'));
     $selRooms = array_map(fn ($r) => $r['id'], array_filter($assigned, fn ($r) => $r['type'] === 'room'));
@@ -269,9 +336,17 @@ if ($action === 'new' || $action === 'edit') {
         <div class="col-md-3">
           <label class="form-label" for="role"><?= e(__('Role')) ?></label>
           <select class="form-select" id="role" name="role"<?= $isSelf ? ' disabled' : '' ?>>
-            <?php foreach (ROLES as $r): ?><option value="<?= e($r) ?>"<?= $u['role'] === $r ? ' selected' : '' ?>><?= e(role_label($r)) ?></option><?php endforeach; ?>
+            <?php $customOpts = array_filter($roleOptions, static fn ($k) => str_starts_with((string) $k, 'role:'), ARRAY_FILTER_USE_KEY); ?>
+            <optgroup label="<?= e(__('Built-in roles')) ?>">
+            <?php foreach (array_diff_key($roleOptions, $customOpts) as $k => $label): ?><option value="<?= e($k) ?>"<?= $uSpec === $k ? ' selected' : '' ?>><?= e($label) ?></option><?php endforeach; ?>
+            </optgroup>
+            <?php if ($customOpts): ?>
+            <optgroup label="<?= e(__('Custom roles')) ?>">
+            <?php foreach ($customOpts as $k => $label): ?><option value="<?= e($k) ?>"<?= $uSpec === $k ? ' selected' : '' ?>><?= e($label) ?></option><?php endforeach; ?>
+            </optgroup>
+            <?php endif; ?>
           </select>
-          <?php if ($isSelf): ?><input type="hidden" name="role" value="<?= e($u['role']) ?>"><?php endif; ?>
+          <?php if ($isSelf): ?><input type="hidden" name="role" value="<?= e($uSpec) ?>"><?php endif; ?>
         </div>
         <div class="col-md-3">
           <label class="form-label" for="lang"><?= e(__('Language')) ?></label>
@@ -284,8 +359,9 @@ if ($action === 'new' || $action === 'edit') {
           <strong><?= e(role_label('manager')) ?></strong>: <?= e(__('rooms, content, playlists, schedules, TV commands, APK, logs.')) ?>
           <strong><?= e(role_label('staff')) ?></strong>: <?= e(__('view rooms and content, send content and emergency messages.')) ?>
           <strong><?= e(role_label('reception')) ?></strong>: <?= e(__('front desk: guests check-in/out, service orders and requests, view rooms.')) ?>
+          <?php if (Auth::can('roles.manage')): ?><a href="<?= e(admin_url('roles.php')) ?>"><?= e(__('Custom roles and their permissions')) ?> →</a><?php endif; ?>
         </div>
-        <div class="col-12" id="tvAccess"<?= in_array($u['role'], LIMITABLE_ROLES, true) ? '' : ' hidden' ?>>
+        <div class="col-12<?= Features::enabled('user_access') ? '' : ' d-none' ?>" id="tvAccess"<?= in_array($u['role'], LIMITABLE_ROLES, true) ? '' : ' hidden' ?>>
           <div class="border rounded p-3">
             <label class="form-label fw-semibold mb-1"><i class="bi bi-tv"></i> <?= e(__('Which TVs can this user control?')) ?></label>
             <div class="form-text mt-0 mb-2"><?= e(__('Limit a Manager, Staff or Reception user to some rooms or groups. They then see and control only those TVs (rooms, dashboard, broadcasts, power, schedules, emergency, guests). Admins always have all TVs.')) ?></div>
@@ -352,7 +428,7 @@ if ($action === 'new' || $action === 'edit') {
       const box = document.getElementById('tvAccess');
       const pick = document.getElementById('tvAccessPick');
       const sync = () => {
-        box.hidden = !limitable.includes(role.value);
+        box.hidden = !(limitable.includes(role.value) || role.value.startsWith('role:'));
         pick.hidden = !document.getElementById('ta_some').checked;
       };
       role.addEventListener('change', sync);
@@ -380,7 +456,7 @@ if ($action === 'view') {
     require __DIR__ . '/partials/header.php';
     ?>
     <div class="page-head">
-      <div><h1><i class="bi bi-person"></i> <?= e($u['full_name'] ?: $u['username']) ?></h1><p class="lead-sm"><?= e($u['username']) ?> · <?= e($u['email']) ?> · <?= e(role_label($u['role'])) ?> · <i class="bi bi-tv"></i> <?= e(access_summary($u)) ?></p></div>
+      <div><h1><i class="bi bi-person"></i> <?= e($u['full_name'] ?: $u['username']) ?></h1><p class="lead-sm"><?= e($u['username']) ?> · <?= e($u['email']) ?> · <?= e(Auth::roleName($u)) ?> · <i class="bi bi-tv"></i> <?= e(access_summary($u)) ?></p></div>
       <div class="d-flex gap-2">
         <a href="<?= e(admin_url('users.php', ['action' => 'edit', 'id' => $u['id']])) ?>" class="btn btn-primary"><i class="bi bi-pencil"></i> <?= e(__('Edit')) ?></a>
         <a href="<?= e(admin_url('users.php')) ?>" class="btn btn-light border"><i class="bi bi-arrow-left"></i> <?= e(__('Back')) ?></a>
@@ -440,6 +516,11 @@ if ($action === 'view') {
 }
 
 $users = DB::all("SELECT * FROM users WHERE hotel_id = :hid AND role IN ('super_admin','manager','staff','reception') ORDER BY FIELD(role, 'super_admin', 'manager', 'staff', 'reception'), username", hid());
+$customRoles = [];
+foreach (Roles::all() as $c) {
+    $customRoles[(int) $c['id']] = $c;
+}
+$roleCounts = Roles::userCounts();
 require __DIR__ . '/partials/header.php';
 ?>
 <div class="page-head">
@@ -457,7 +538,9 @@ require __DIR__ . '/partials/header.php';
             <tr>
               <td><a href="<?= e(admin_url('users.php', ['action' => 'view', 'id' => $u['id']])) ?>" class="fw-semibold text-decoration-none"><?= e($u['full_name'] ?: $u['username']) ?></a>
                 <div class="small text-muted"><?= e($u['username']) ?> · <?= e($u['email']) ?></div></td>
-              <td><span class="badge <?= $u['role'] === 'super_admin' ? 'text-bg-dark' : ($u['role'] === 'manager' ? 'text-bg-primary' : ($u['role'] === 'reception' ? 'text-bg-info' : 'text-bg-secondary')) ?>"><?= e(role_label($u['role'])) ?></span></td>
+              <?php $crid = Auth::customRoleId($u); ?>
+              <td><?php if ($crid !== null): ?><span class="badge text-bg-success" title="<?= e(__('Custom role')) ?>"><i class="bi bi-person-gear"></i> <?= e($customRoles[$crid]['name'] ?? __('Unknown role')) ?></span>
+                <?php else: ?><span class="badge <?= $u['role'] === 'super_admin' ? 'text-bg-dark' : ($u['role'] === 'manager' ? 'text-bg-primary' : ($u['role'] === 'reception' ? 'text-bg-info' : 'text-bg-secondary')) ?>"><?= e(role_label($u['role'])) ?></span><?php endif; ?></td>
               <td class="small"><?php $acc = access_summary($u); ?><span class="<?= $acc === __('All TVs') ? 'text-muted' : 'badge text-bg-warning' ?>"><?= e($acc) ?></span></td>
               <td class="d-none d-md-table-cell small"><?= e(time_ago($u['last_login_at'])) ?><?php if ($u['last_login_ip']): ?><div class="text-muted"><?= e($u['last_login_ip']) ?></div><?php endif; ?></td>
               <td>
@@ -471,8 +554,10 @@ require __DIR__ . '/partials/header.php';
                     <button class="btn btn-sm btn-outline-warning" title="<?= e(__('Unlock')) ?>"><i class="bi bi-unlock"></i></button></form>
                 <?php endif; ?>
                 <a class="btn btn-sm btn-light border" href="<?= e(admin_url('users.php', ['action' => 'view', 'id' => $u['id']])) ?>" title="<?= e(__('Activity & sessions')) ?>"><i class="bi bi-clock-history"></i></a>
+                <?php if ((int) $u['id'] === (int) $user['id'] || can_manage_user($u)): ?>
                 <a class="btn btn-sm btn-primary" href="<?= e(admin_url('users.php', ['action' => 'edit', 'id' => $u['id']])) ?>" title="<?= e(__('Edit')) ?>"><i class="bi bi-pencil"></i></a>
-                <?php if ((int) $u['id'] !== (int) $user['id']): ?>
+                <?php endif; ?>
+                <?php if ((int) $u['id'] !== (int) $user['id'] && can_manage_user($u)): ?>
                   <form method="post" class="d-inline" data-confirm="<?= e(__('Delete user :u? This cannot be undone.', ['u' => $u['username']])) ?>">
                     <?= Csrf::field() ?><input type="hidden" name="op" value="delete"><input type="hidden" name="id" value="<?= (int) $u['id'] ?>">
                     <button class="btn btn-sm btn-outline-danger" title="<?= e(__('Delete')) ?>"><i class="bi bi-trash"></i></button>
@@ -487,6 +572,18 @@ require __DIR__ . '/partials/header.php';
     </div>
   </div>
   <div class="col-xl-4">
+    <div class="card mb-3">
+      <div class="card-header d-flex align-items-center"><span><i class="bi bi-shield-lock"></i> <?= e(__('Roles')) ?></span>
+        <?php if (Auth::can('roles.manage')): ?><a class="btn btn-sm btn-outline-primary ms-auto" href="<?= e(admin_url('roles.php')) ?>"><?= e(__('Manage roles')) ?></a><?php endif; ?></div>
+      <ul class="list-group list-group-flush small">
+        <?php foreach (ROLES as $r): ?>
+          <li class="list-group-item d-flex"><span><?= e(role_label($r)) ?></span><span class="ms-auto text-muted"><?= e(($roleCounts[$r] ?? 0) === 1 ? __('1 user') : __(':n users', ['n' => (int) ($roleCounts[$r] ?? 0)])) ?></span></li>
+        <?php endforeach; ?>
+        <?php foreach ($customRoles as $c): ?>
+          <li class="list-group-item d-flex"><span><i class="bi bi-person-gear text-success"></i> <?= e($c['name']) ?></span><span class="ms-auto text-muted"><?= e((int) $c['user_count'] === 1 ? __('1 user') : __(':n users', ['n' => (int) $c['user_count']])) ?></span></li>
+        <?php endforeach; ?>
+      </ul>
+    </div>
     <div class="card mb-3">
       <div class="card-header"><i class="bi bi-diagram-3"></i> <?= e(__('Who can do what')) ?></div>
       <div class="card-body small">

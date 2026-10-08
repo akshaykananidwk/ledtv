@@ -23,4 +23,9 @@ if (!Tenant::isActive()) {
     echo DisplayApps::neutralPage(Tenant::suspendedMessage()['title']);
     exit;
 }
+if (!Features::itemAllowed($item)) { // 2.5 plans: app family outside the customer's plan
+    http_response_code(403);
+    echo DisplayApps::neutralPage(__('This app is not available.'));
+    exit;
+}
 echo DisplayApps::renderPage($item, !empty($_GET['preview']));

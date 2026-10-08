@@ -131,7 +131,7 @@ $widgets = glob(__DIR__ . '/partials/dashboard.d/*.php') ?: [];
 sort($widgets);
 if ($widgets): ?>
 <div class="row g-3 mt-0">
-  <?php foreach ($widgets as $widget) { require $widget; } ?>
+  <?php foreach ($widgets as $widget) { if (Features::widgetVisible($widget)) { require $widget; } } // 2.5 plans ?>
 </div>
 <?php endif; ?>
 

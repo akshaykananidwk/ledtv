@@ -536,14 +536,14 @@ require __DIR__ . '/partials/header.php';
   </div>
   <?php if ($canEdit): ?>
   <div class="d-flex flex-wrap gap-2">
-  <?php if ($canManage && is_file(__DIR__ . '/designer.php')): // slide designer & PDF import (#11, #12) ?>
-    <a class="btn btn-outline-primary btn-lg" href="<?= e(admin_url('designer.php')) ?>"><i class="bi bi-brush"></i> <?= e(__('Design a slide')) ?></a>
-    <a class="btn btn-outline-primary btn-lg" href="<?= e(admin_url('pdf_import.php')) ?>"><i class="bi bi-file-earmark-pdf"></i> <?= e(__('Import PDF / slides')) ?></a>
+  <?php if ($canManage && is_file(__DIR__ . '/designer.php')): // slide designer & PDF import (#11, #12); 2.5: only when in the plan ?>
+    <?php if (Features::enabled('designer')): ?><a class="btn btn-outline-primary btn-lg" href="<?= e(admin_url('designer.php')) ?>"><i class="bi bi-brush"></i> <?= e(__('Design a slide')) ?></a><?php endif; ?>
+    <?php if (Features::enabled('pdf_import')): ?><a class="btn btn-outline-primary btn-lg" href="<?= e(admin_url('pdf_import.php')) ?>"><i class="bi bi-file-earmark-pdf"></i> <?= e(__('Import PDF / slides')) ?></a><?php endif; ?>
   <?php endif; ?>
   <div class="dropdown">
     <button class="btn btn-primary btn-lg dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-plus-lg"></i> <?= e(__('Add content')) ?></button>
     <ul class="dropdown-menu dropdown-menu-end">
-      <?php foreach (ContentManager::TYPES as $t => $label): if ($t === 'app' && !$canManage) { continue; } ?>
+      <?php foreach (ContentManager::TYPES as $t => $label): if (($t === 'app' && (!$canManage || !Features::enabled('apps'))) || ($t === 'layout' && !Features::enabled('layouts'))) { continue; } ?>
         <li><a class="dropdown-item py-2" href="<?= e($t === 'app' ? admin_url('apps.php') : admin_url('content.php', ['action' => 'new', 'type' => $t])) ?>"><i class="bi <?= e(ContentManager::TYPE_ICONS[$t]) ?> me-2"></i><?= e(__($label)) ?></a></li>
       <?php endforeach; ?>
       <?php if ($canManage && Auth::can('templates.manage') && Tenant::feature('templates') && is_file(__DIR__ . '/templates.php')): ?>

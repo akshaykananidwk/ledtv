@@ -56,7 +56,7 @@ if (!Tenant::isActive()) {
     http_response_code(403);
     $page(__('Service paused'), '<p class="m e">' . e(Tenant::suspendedMessage(I18n::lang())['title']) . '</p>');
 }
-$svc = DB::one('SELECT * FROM queue_services WHERE id = :id AND hotel_id = :h', ['id' => $sid, 'h' => $hid]);
+$svc = Features::enabled('app_queue') ? DB::one('SELECT * FROM queue_services WHERE id = :id AND hotel_id = :h', ['id' => $sid, 'h' => $hid]) : null; // 2.5 plans
 if (!$svc || !(int) $svc['is_active'] || !(int) $svc['self_service']) {
     $notFound();
 }

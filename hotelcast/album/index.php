@@ -51,6 +51,9 @@ if (!$album) {
 if (!Tenant::isActive()) {
     $isPost ? $fail('Service paused', 403, 'SUSPENDED') : $page(__('Service paused'), '<div class="ga-head"><h1>' . e(Tenant::suspendedMessage()['title']) . '</h1></div>', 403);
 }
+if (!Features::enabled('content_apps')) { // 2.5 plans: photo albums outside the customer's plan
+    $isPost ? $fail('Not found', 404, 'NOT_FOUND') : $page(__('Not found'), '<div class="ga-head"><h1>' . e(__('This link is not valid.')) . '</h1></div>', 404);
+}
 if (!(int) $album['guest_upload']) {
     $msg = __('Photo upload for this album is closed.');
     $isPost ? $fail($msg, 403, 'CLOSED') : $page($msg, '<div class="ga-head"><h1><i class="bi bi-lock"></i></h1><p class="lead">' . e($msg) . '</p></div>', 403);

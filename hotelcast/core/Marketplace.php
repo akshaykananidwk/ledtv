@@ -483,7 +483,7 @@ final class Marketplace
     private static function publicRow(array $r): ?array
     {
         $hid = (int) $r['hotel_id'];
-        if (!Tenant::feature('ads', $hid) || Tenant::state($hid) !== 'active') {
+        if (!Features::enabled('marketplace', $hid) || Tenant::state($hid) !== 'active') {
             return null;
         }
         $tvs = Tenant::tvCount($hid);

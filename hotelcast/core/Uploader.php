@@ -60,6 +60,10 @@ final class Uploader
         if ($file['size'] > $maxMb * 1024 * 1024) {
             throw new RuntimeException(__('File too large. Maximum is :m MB.', ['m' => $maxMb]));
         }
+        // 2.5 plans: the customer's storage limit (storage_mb, core/Features.php). Platform files are not counted.
+        if ($scope !== 'platform' && $kind !== 'apk' && Tenant::has()) {
+            Features::checkStorage((int) $file['size']);
+        }
 
         $ext = strtolower(pathinfo((string) $file['name'], PATHINFO_EXTENSION));
         $mime = (new finfo(FILEINFO_MIME_TYPE))->file($file['tmp_name']) ?: 'application/octet-stream';

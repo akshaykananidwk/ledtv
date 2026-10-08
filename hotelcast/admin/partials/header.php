@@ -129,7 +129,7 @@ foreach (glob(__DIR__ . '/head.d/*.php') ?: [] as $__hd) { include $__hd; } unse
             <i class="bi bi-person-circle"></i> <span class="d-none d-md-inline text-truncate" style="max-width:9rem"><?= e($user['full_name'] ?: $user['username']) ?></span>
           </button>
           <ul class="dropdown-menu dropdown-menu-end">
-            <li><h6 class="dropdown-header"><?= e($user['username']) ?> · <?= e(role_label($user['role'])) ?></h6></li>
+            <li><h6 class="dropdown-header"><?= e($user['username']) ?> · <?= e(Auth::roleName($user)) ?></h6></li>
             <li><a class="dropdown-item" href="<?= e(admin_url('profile.php')) ?>"><i class="bi bi-person-gear me-2"></i><?= e(__('My profile')) ?></a></li>
             <?php if (Auth::can('platform.manage') && License::mode() === 'saas'): ?><li><a class="dropdown-item" href="<?= e(admin_url('platform_hotels.php')) ?>"><i class="bi bi-buildings me-2"></i><?= e(__('Platform')) ?></a></li><?php endif; ?>
             <?php if (Auth::can('reseller.panel')): ?><li><a class="dropdown-item" href="<?= e(admin_url('reseller.php')) ?>"><i class="bi bi-briefcase me-2"></i><?= e(__('My hotels')) ?></a></li><?php endif; ?>
@@ -154,6 +154,11 @@ foreach (glob(__DIR__ . '/head.d/*.php') ?: [] as $__hd) { include $__hd; } unse
         <?= Csrf::field() ?><input type="hidden" name="op" value="leave">
         <button class="btn btn-sm btn-light"><i class="bi bi-arrow-left"></i> <?= e($hdrBack === 'chain.php' ? __('Back to chain') : (Auth::role() === 'reseller' ? __('Back to my hotels') : __('Back to platform'))) ?></button>
       </form>
+    </div>
+    <?php endif; ?>
+    <?php if ($inHotel && Features::bypass() && ($hdrOff = Features::disabledKeys())): // 2.5 plans: platform admin sees the customer's view ?>
+    <div class="alert alert-secondary rounded-0 mb-0 small" role="status" data-plan-banner>
+      <i class="bi bi-box-seam"></i> <?= e(__('Not in this customer\'s plan (hidden from the customer, open for you):')) ?> <?= e(implode(', ', array_map([Features::class, 'label'], $hdrOff))) ?>
     </div>
     <?php endif; ?>
     <?php if ($inHotel && $hdrHotelState !== 'active'): ?>

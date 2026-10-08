@@ -51,7 +51,7 @@ $pageTitle = __('My profile');
 $activeNav = '';
 require __DIR__ . '/partials/header.php';
 ?>
-<div class="page-head"><div><h1><?= e(__('My profile')) ?></h1><p class="lead-sm"><?= e($u['username']) ?> · <?= e(role_label($u['role'])) ?></p></div></div>
+<div class="page-head"><div><h1><?= e(__('My profile')) ?></h1><p class="lead-sm"><?= e($u['username']) ?> · <?= e(Auth::roleName($u)) ?></p></div></div>
 <div class="row g-3" style="max-width:1100px">
   <div class="col-lg-6">
     <form method="post" class="card h-100">

@@ -245,7 +245,10 @@ final class Hotels
         return (int) DB::value('SELECT COUNT(*) FROM hotels WHERE reseller_id = :r', ['r' => $resellerId]) < (int) $r['max_hotels'];
     }
 
-    /** Validate a plan form. Returns [data, errors]. */
+    /**
+     * Validate a plan form. Returns [data, errors]. Features (2.5, core/Features.php): features[] = feature
+     * keys; every optional feature ticked = NULL (everything, also features added later).
+     */
     public static function validatePlan(array $in): array
     {
         $errors = [];
@@ -253,19 +256,31 @@ final class Hotels
         if ($name === '') {
             $errors[] = __('Plan name is required.');
         }
-        $price = (float) str_replace(',', '', (string) ($in['price_per_tv_month'] ?? '0'));
+        $rawPrice = str_replace(',', '', is_string($in['price_per_tv_month'] ?? null) || is_numeric($in['price_per_tv_month'] ?? null) ? (string) $in['price_per_tv_month'] : '0');
+        $price = is_numeric($rawPrice) ? (float) $rawPrice : -1.0;
         if ($price < 0 || $price > 1000000) {
             $errors[] = __('Invalid price.');
         }
-        $max = trim((string) ($in['max_tvs'] ?? ''));
-        $features = array_values(array_intersect(array_keys(self::MODULES), (array) ($in['features'] ?? [])));
+        $maxTvs = Features::limitInput($in['max_tvs'] ?? '', __('Max TVs'), $errors);
+        $maxUsers = Features::limitInput($in['max_users'] ?? '', __('Max users'), $errors, 100000);
+        $storage = Features::limitInput($in['storage_mb'] ?? '', __('Storage (MB)'), $errors);
+        $keys = array_values(array_filter((array) ($in['features'] ?? []), 'is_string'));
+        $unknown = array_diff($keys, array_keys(Features::all()));
+        if ($unknown) {
+            $errors[] = __('Unknown feature: :f', ['f' => implode(', ', array_slice($unknown, 0, 5))]);
+        }
+        $keys = array_values(array_intersect(Features::optionalKeys(), $keys));
+        if (!$keys && !$errors) {
+            $errors[] = __('Choose at least one feature.');
+        }
         return [[
             'name' => $name,
             'description' => mb_substr(trim((string) ($in['description'] ?? '')), 0, 500) ?: null,
-            'price_per_tv_month' => round($price, 2),
-            'max_tvs' => $max === '' ? null : max(0, (int) $max),
-            // All modules ticked = no restriction (NULL).
-            'features' => count($features) === count(self::MODULES) || !$features ? null : json_out($features),
+            'price_per_tv_month' => round(max(0, $price), 2),
+            'max_tvs' => $maxTvs,
+            'max_users' => $maxUsers,
+            'storage_mb' => $storage,
+            'features' => Features::encodePlanKeys($keys),
             'is_active' => !empty($in['is_active']) ? 1 : 0,
         ], $errors];
     }

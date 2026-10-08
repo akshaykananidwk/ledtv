@@ -7,6 +7,7 @@ declare(strict_types=1);
  */
 
 require_once __DIR__ . '/common.php';
+require_once __DIR__ . '/features_ui.php'; // 2.5 plans: per-customer feature overrides + limits
 
 // Actions on platform / reseller pages are platform-level (never in a hotel's activity log).
 ActivityLog::$platformScope = true;
@@ -40,6 +41,11 @@ function platform_save_hotel(?array $existing, ?int $resellerId, string $backUrl
         }
     } elseif ($existing && !empty($_POST['remove_brand_logo'])) {
         $data['brand_logo'] = null;
+    }
+    // 2.5 plans (platform only): per-customer feature overrides and limit overrides.
+    if (!$byReseller && isset($_POST['feature_overrides_form'])) {
+        [$data['feature_overrides'], $data['max_users'], $data['storage_mb'], $foErrors] = features_override_input($_POST);
+        $errors = array_merge($errors, $foErrors);
     }
     if ($errors) {
         flash_errors($errors);
@@ -155,6 +161,7 @@ function hotel_form_fields(array $h, bool $byReseller, bool $isNew): string
         <?php endif; ?>
       </div>
     </div>
+    <?php if (!$byReseller): ?><?= features_override_fields($h) ?><?php endif; ?>
     <?php
     return (string) ob_get_clean();
 }

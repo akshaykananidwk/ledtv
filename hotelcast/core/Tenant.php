@@ -58,6 +58,10 @@ final class Tenant
             return;
         }
         self::$id = $hotelId;
+        // 2.5 plans: REST module routes are checked as soon as their customer is known (core/Features.php).
+        if ($hotelId !== null && defined('HC_API') && class_exists('Features', false)) {
+            Features::tenantChanged($hotelId);
+        }
         // Per-hotel time zone (falls back to the platform / config time zone).
         if (class_exists('Settings', false) && function_exists('hc_installed') && hc_installed()) {
             $tz = (string) Settings::get('timezone', (string) Config::get('timezone', 'Asia/Kolkata'));
@@ -125,6 +129,9 @@ final class Tenant
             self::$hotels = [];
         } else {
             unset(self::$hotels[$hotelId]);
+        }
+        if (class_exists('Features', false)) {
+            Features::forget(); // 2.5: effective entitlements depend on the hotel / plan rows
         }
     }
 
@@ -210,18 +217,15 @@ final class Tenant
         return (int) DB::value('SELECT COUNT(*) FROM devices WHERE hotel_id = :h AND is_revoked = 0 AND room_id IS NOT NULL', ['h' => $hotelId]);
     }
 
-    /** Is a plan feature/module enabled for the current hotel? (No plan / no feature list = everything.) */
+    /**
+     * Is a plan feature/module enabled for the current hotel? Thin wrapper of Features::enabled() (2.5,
+     * core/Features.php): the old module names (ads, analytics, guests, pwa, services, templates, support)
+     * map to feature keys; a feature key may be passed directly. Unknown names → true (no restriction).
+     */
     public static function feature(string $module, ?int $hotelId = null): bool
     {
-        $h = self::hotel($hotelId);
-        if (!$h || empty($h['plan_features'])) {
-            return true;
-        }
-        $f = json_decode((string) $h['plan_features'], true);
-        if (!is_array($f) || !$f) {
-            return true;
-        }
-        return in_array($module, $f, true) || (isset($f[$module]) && $f[$module]);
+        $key = Features::LEGACY_WRAPPER[$module] ?? $module;
+        return !Features::exists($key) || Features::enabled($key, $hotelId);
     }
 
     // ------------------------------------------------------------------ access helpers

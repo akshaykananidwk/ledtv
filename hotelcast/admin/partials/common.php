@@ -42,6 +42,10 @@ function hc_nav_sections(): array
             if (!Auth::can((string) $perm) || !is_file(HC_ROOT . '/admin/' . $file)) {
                 continue;
             }
+            // 2.5 plans: pages of features outside the customer's plan are hidden (also for the platform admin).
+            if ($section === 'hotel' && !Features::pageVisible((string) $file)) {
+                continue;
+            }
             $sections[$section] ??= [];
             $entry = [$key, $file, $perm, $icon, $label];
             $after = (string) ($flags['after'] ?? '');
@@ -718,3 +722,7 @@ function upload_limit(): int
     $lims = array_filter([$a, $b], fn ($x) => $x > 0);
     return $lims ? min($lims) : 0;
 }
+
+// 2.5 plans (core/Features.php): an admin page / ajax action of a feature outside the customer's plan
+// answers 403 "Not included in your plan" before the page runs (platform admins pass).
+Features::guardAdminRequest();

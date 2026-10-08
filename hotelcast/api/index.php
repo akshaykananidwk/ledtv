@@ -135,6 +135,9 @@ switch (true) {
 // Every api/routes/*.php returns callable(string $route, array $parts, string $method): bool.
 // A route handler responds itself (Api::ok / Api::error exit) or returns false when the route is
 // not its own. Files run in name order; built-in routes above always win.
+// 2.5 plans (core/Features.php): a module route of a feature outside the customer's plan answers
+// 403 FEATURE_DISABLED as soon as the route selects its customer. The device API above is never gated.
+Features::guardApiRoute($route);
 $routeFiles = glob(__DIR__ . '/routes/*.php') ?: [];
 sort($routeFiles);
 foreach ($routeFiles as $routeFile) {

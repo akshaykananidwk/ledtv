@@ -15,7 +15,7 @@ final class GuideExtension implements ContentExtension
     public function apply(array &$content, array $room): void
     {
         $id = Settings::int('local_guide_content_id', 0);
-        if ($id <= 0 || in_array($content['mode'] ?? '', self::SKIP_MODES, true) || !Tenant::feature('templates')) {
+        if ($id <= 0 || in_array($content['mode'] ?? '', self::SKIP_MODES, true) || !Features::enabled('guide')) {
             return;
         }
         $item = ContentManager::findOwn($id);

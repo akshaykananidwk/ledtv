@@ -80,7 +80,17 @@ final class StaffAlerts
                  WHERE u.hotel_id = :h AND u.is_active = 1',
                 ['h' => $hid]
             );
-            $subs = array_values(array_filter($subs, static fn ($s) => Auth::roleCan((string) $s['role'], $permission)));
+            // Custom roles (RBAC): the user's role list decides; built-in roles as before (Auth::userCan).
+            $roleIds = [];
+            if (Roles::available()) {
+                foreach (DB::all('SELECT id, role_id FROM users WHERE hotel_id = :h AND role_id IS NOT NULL', ['h' => $hid]) as $r) {
+                    $roleIds[(int) $r['id']] = (int) $r['role_id'];
+                }
+            }
+            $subs = array_values(array_filter($subs, static fn ($s) => Auth::userCan(
+                ['role' => (string) $s['role'], 'role_id' => $roleIds[(int) $s['user_id']] ?? null, 'hotel_id' => $hid],
+                $permission
+            )));
             return self::deliver($subs, $type, $title, $body, $url, $hid);
         } catch (Throwable $e) {
             Logger::error('StaffAlerts::send failed: ' . $e->getMessage());

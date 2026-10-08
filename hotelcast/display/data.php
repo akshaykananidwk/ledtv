@@ -23,4 +23,9 @@ if (!Tenant::isActive()) {
     echo json_out(['ok' => false, 'error' => ['code' => 'SUSPENDED', 'message' => 'Service paused']]);
     exit;
 }
+if (!Features::itemAllowed($item)) { // 2.5 plans: app family outside the customer's plan
+    http_response_code(403);
+    echo json_out(['ok' => false, 'error' => ['code' => 'FEATURE_DISABLED', 'message' => 'Not available']]);
+    exit;
+}
 echo json_out(DisplayApps::payload($item));

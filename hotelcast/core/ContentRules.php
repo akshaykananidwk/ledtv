@@ -29,7 +29,8 @@ final class ContentRules
     {
         return (int) ($item['is_active'] ?? 1) === 1
             && self::approved($item)
-            && self::validity($item, $ts) === 'live';
+            && self::validity($item, $ts) === 'live'
+            && Features::itemAllowed($item); // 2.5 plans: display-app family / layouts in the customer's plan
     }
 
     public static function approved(array $item): bool

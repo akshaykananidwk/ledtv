@@ -229,7 +229,7 @@ $formStart = fn (string $op, bool $multipart = false) => '<form method="post"' .
     . '<input type="hidden" name="op" value="' . e($op) . '"><input type="hidden" name="tab" value="' . e($tab) . '">';
 $saveBtn = '<div class="sticky-actions"><button class="btn btn-primary btn-lg"><i class="bi bi-check-lg"></i> ' . e(__('Save settings')) . '</button></div>';
 ?>
-<div class="page-head"><h1><?= e(__('Settings')) ?></h1></div>
+<div class="page-head"><h1><?= e(__('Settings')) ?></h1><a class="btn btn-light border" href="<?= e(admin_url('plan.php')) ?>"><i class="bi bi-box-seam"></i> <?= e(__('Your plan')) ?></a></div>
 <ul class="nav nav-tabs nav-tabs-scroll mb-3">
   <?php foreach ($tabs as $k => [$icon, $label]): ?>
     <li class="nav-item"><a class="nav-link<?= $tab === $k ? ' active' : '' ?>" href="<?= e(admin_url('settings.php', ['tab' => $k])) ?>"><i class="bi <?= e($icon) ?>"></i> <?= e($label) ?></a></li>
