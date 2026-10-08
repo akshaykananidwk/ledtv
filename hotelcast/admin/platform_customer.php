@@ -209,22 +209,15 @@ elseif ($tab === 'screens'):
 // ------------------------------------------------------------------ users
 elseif ($tab === 'users'):
     $users = DB::all(
-        "SELECT u.id, u.username, u.full_name, u.email, u.role, u.is_active, u.last_login_at, u.locked_until, u.created_at,
+        "SELECT u.*,
                 (SELECT COUNT(*) FROM user_access a WHERE a.user_id = u.id AND a.hotel_id = u.hotel_id AND a.target_type = 'room') AS acc_rooms,
                 (SELECT COUNT(*) FROM user_access a WHERE a.user_id = u.id AND a.hotel_id = u.hotel_id AND a.target_type = 'group') AS acc_groups
          FROM users u WHERE u.hotel_id = :h AND u.role NOT IN ('platform_admin','reseller','chain_admin')
          ORDER BY FIELD(u.role, 'super_admin', 'manager', 'staff', 'reception'), u.username",
         ['h' => $id]
     );
-    $roleText = static function (array $u): string {
-        if (class_exists('Roles') && method_exists('Roles', 'specOf') && method_exists('Roles', 'specLabel')) {
-            try {
-                return Roles::specLabel(Roles::specOf($u));
-            } catch (Throwable $e) {
-            }
-        }
-        return role_label((string) $u['role']);
-    };
+    // Custom roles (users.role_id) show their name; built-in roles their label (Auth::roleName).
+    $roleText = static fn (array $u): string => Auth::roleName($u);
     ?>
     <div class="card">
       <div class="table-responsive"><table class="table table-hc align-middle mb-0">

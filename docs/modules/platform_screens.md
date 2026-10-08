@@ -161,8 +161,8 @@ form stays on `platform_hotels.php`).
   details (plan, status, valid until, reseller, created, contact); billing summary for platform admins
   (price per screen, unpaid invoices, last invoice).
 * **Screens** — the customer's TVs with the same columns, counters and actions as All screens.
-* **Users** — the customer's users (customer roles only; custom role names when `core/Roles.php` is
-  present): role, last login, active / locked, screen access ("All screens" or ":r screens, :g groups"
+* **Users** — the customer's users (customer roles only; custom roles show their name via
+  `Auth::roleName()`): role, last login, active / locked, screen access ("All screens" or ":r screens, :g groups"
   from `user_access`). Actions: **Reset password** (new temporary password shown once, all sessions
   revoked, optionally emailed with the login link), **Deactivate / Activate** (deactivate logs the user
   out). Adding users / changing roles stays in the customer's own Users page (Login as this customer).

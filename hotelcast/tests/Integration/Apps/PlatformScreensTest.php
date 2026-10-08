@@ -541,8 +541,13 @@ final class PlatformScreensTest extends TestCase
                 $this->assertFalse(TestEnv::hasPhpError($html), "PHP error on tab $tab as $who");
             }
         }
+        // Custom role (users.role_id, core/Roles.php) → its name is shown (Auth::roleName).
+        DB::query("INSERT INTO roles (hotel_id, name, base_level, permissions) VALUES (:h, 'Lobby Operator', 'staff', '[]')", ['h' => self::$h['alpha']]);
+        $roleId = (int) DB::pdo()->lastInsertId();
+        DB::query("UPDATE users SET role_id = :r WHERE username = 'alphastaff'", ['r' => $roleId]);
         [, , $html] = self::as('psroot')->get('platform_customer.php?id=' . self::$h['alpha'] . '&tab=users');
         $this->assertStringContainsString('alphaboss', $html);
+        $this->assertStringContainsString('Lobby Operator', $html);
         $this->assertStringContainsString('alphastaff', $html);
         $this->assertStringNotContainsString('betaboss', $html);
         [, , $html] = self::as('psroot')->get('platform_customer.php?id=' . self::$h['alpha'] . '&tab=screens');
