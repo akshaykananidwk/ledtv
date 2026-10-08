@@ -83,6 +83,6 @@ CREATE TABLE IF NOT EXISTS presence_sensors (
   KEY idx_presence_sensors_hotel (hotel_id, is_active, state)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Proof of play report (admin/play_report.php): plays of one TV / one content item in a date range.
-ALTER TABLE broadcast_logs ADD KEY idx_bl_hotel_device (hotel_id, device_id, created_at);
+-- Proof of play report (admin/play_report.php): plays of one content item in a date range (the other filters use
+-- idx_bl_hotel_event (hotel_id, event, created_at) and idx_bl_room (room_id, created_at)).
 ALTER TABLE broadcast_logs ADD KEY idx_bl_hotel_content (hotel_id, content_id, created_at);

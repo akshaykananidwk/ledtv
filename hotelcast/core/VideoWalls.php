@@ -137,7 +137,9 @@ final class VideoWalls
         }
         if (!empty($wall['content_id'])) {
             $row = ContentManager::findOwn((int) $wall['content_id']);
-            if ($row && (int) $row['is_active'] && !in_array($row['type'], self::UNSUPPORTED_TYPES, true)) {
+            // Same rule as ContentResolver: active (+ 2.4 approved and inside its validity window).
+            $ok = $row && (class_exists('ContentRules') ? ContentRules::playable($row) : (int) $row['is_active']);
+            if ($ok && !in_array($row['type'], self::UNSUPPORTED_TYPES, true)) {
                 $tv = ContentManager::toTvItem($row);
                 if ($tv['type'] !== 'video') {
                     $tv['duration'] = 0; // a single item stays on screen

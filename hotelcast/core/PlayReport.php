@@ -8,7 +8,7 @@ declare(strict_types=1);
  *
  * Filters: date range (max 366 days, Analytics::range), content item, playlist (its items), room, group,
  * ad campaign. Users limited to some TVs (core/Access.php) only get plays of their rooms. Every query starts
- * on the index (hotel_id, event, created_at) or (hotel_id, content_id / device_id, created_at); the table is
+ * on the index (hotel_id, event, created_at), (room_id, created_at) or (hotel_id, content_id, created_at); the table is
  * paginated and the CSV is streamed in keyset chunks, so a year of plays stays fast.
  */
 final class PlayReport

@@ -52,21 +52,32 @@ final class ContentRules
         return 'live';
     }
 
-    /** Is a playlist item's daypart (time window + weekdays) active at $ts? No daypart = always. */
+    /**
+     * Is a playlist item's daypart (time window + weekdays) active at $ts? No daypart = always.
+     * An overnight window (from > until, e.g. 22:00–02:00) belongs to the day it starts: at 01:30 on
+     * Thursday it is "Wednesday night", so it plays when Wednesday is one of its days.
+     */
     public static function daypartActive(array $pli, ?int $ts = null): bool
     {
+        $ts ??= self::now();
         $from = (string) ($pli['daypart_from'] ?? '');
         $to = (string) ($pli['daypart_to'] ?? '');
-        $days = (string) ($pli['daypart_days'] ?? '');
-        if ($from === '' && $to === '' && $days === '') {
-            return true;
+        $days = array_filter(array_map('intval', explode(',', (string) ($pli['daypart_days'] ?? ''))));
+        $dow = (int) date('N', $ts);
+        $day = $dow;
+        if ($from !== '' && $to !== '') {
+            $t = date('H:i:s', $ts);
+            if ($from < $to) {
+                if ($t < $from || $t >= $to) {
+                    return false;
+                }
+            } elseif ($t < $to) {
+                $day = $dow === 1 ? 7 : $dow - 1; // after midnight: the night of the previous day
+            } elseif ($t < $from) {
+                return false;
+            }
         }
-        // Same rules as time-window broadcasts (repeat days + daily range, overnight aware).
-        return ContentResolver::windowActive([
-            'daily_start' => $from !== '' && $to !== '' ? $from : null,
-            'daily_end' => $from !== '' && $to !== '' ? $to : null,
-            'repeat_days' => $days !== '' ? $days : null,
-        ], $ts ?? self::now());
+        return !$days || in_array($day, $days, true);
     }
 
     /** Playlist rows (ContentManager::playlistItems) that may play now. */

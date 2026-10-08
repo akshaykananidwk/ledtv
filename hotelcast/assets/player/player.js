@@ -1694,11 +1694,11 @@
     var err = $('hc-pin-err');
     if (key === '⌫') { pin.value = pin.value.slice(0, -1); pinDots(); return; }
     if (key === 'OK') { pinCheck(); return; }
-    if (/^[0-9]$/.test(key) && pin.value.length < 8) {
+    if (/^[0-9]$/.test(key) && pin.value.length < 4) {
       pin.value += key;
       if (err) err.textContent = '';
       pinDots();
-      if (pin.value.length >= 4 && sha256(pin.value) === String(S.pinHash).toLowerCase()) pinCheck();
+      if (pin.value.length === 4) setTimeout(pinCheck, 150); // the settings PIN has 4 digits
     }
   }
   function pinCheck() {

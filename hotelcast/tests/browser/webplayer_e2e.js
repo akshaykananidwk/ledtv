@@ -59,7 +59,11 @@ async function shot(page, name) {
     const context = await browser.newContext({ viewport: { width: 1920, height: 1080 }, locale: 'en-IN' });
     const page = await context.newPage();
     page.on('pageerror', (e) => errors.push('pageerror: ' + e.message));
-    page.on('console', (m) => { if (m.type() === 'error') errors.push('console: ' + m.text()); });
+    // HTTP errors are listed by URL; the expected ones (wrong key 401, missing sound file 404, favicon) are ignored.
+    page.on('console', (m) => { if (m.type() === 'error' && !/^Failed to load resource/.test(m.text())) errors.push('console: ' + m.text()); });
+    page.on('response', (r) => {
+      if (r.status() >= 400 && !/missing-sound\.mp3|favicon\.ico/.test(r.url()) && !(r.status() === 401 && /device\/register/.test(r.url()))) errors.push('HTTP ' + r.status() + ' ' + r.url());
+    });
     const state = () => page.evaluate(() => window.HCPlayer.state());
     const waitItem = (id, ms) => page.waitForFunction((x) => window.HCPlayer.state().itemId === x, id, { timeout: ms || 30000 });
 
@@ -110,8 +114,12 @@ async function shot(page, name) {
     const src = await page.getAttribute('#hc-content iframe.hc-frame', 'src');
     check(/\/display\/\?c=\d+&s=[0-9a-f]{32}/.test(src || ''), 'display app in iframe', src);
     const appFrame = page.frames().find((f) => f.url().indexOf('/display/') >= 0);
-    if (appFrame) await appFrame.waitForSelector('body', { timeout: 10000 });
-    check(!!appFrame && /દિવાળી/.test(await appFrame.textContent('body')), 'display app rendered');
+    let appText = '';
+    if (appFrame) {
+      await appFrame.waitForSelector('#hc-stage', { timeout: 10000 });
+      appText = await appFrame.evaluate(() => document.body.innerText);
+    }
+    check(/દિવાળી/.test(appText), 'display app rendered', appText.slice(0, 80).replace(/\s+/g, ' '));
 
     await waitItem(info.ids.ann, 15000);
     check(/ચેક-આઉટ/.test(await page.textContent('.hc-ann-t')), 'announcement (Gujarati)');
@@ -185,7 +193,7 @@ async function shot(page, name) {
     for (const k of ['1', '2', '3', '4']) await page.keyboard.press(k);
     await page.waitForSelector('#hc-menu.hc-on .hc-pin');
     for (const k of ['0', '0', '0', '0']) await page.keyboard.press(k);
-    await page.keyboard.press('Enter');
+    await page.waitForFunction(() => document.getElementById('hc-pin-err').textContent.length > 0);
     check(/Wrong PIN/.test(await page.textContent('#hc-pin-err')), 'wrong PIN refused');
     for (const k of ['1', '2', '3', '4']) await page.keyboard.press(k);
     await page.waitForSelector('#hc-menu.hc-on [data-act="repair"]');
@@ -200,7 +208,6 @@ async function shot(page, name) {
     const after = await page.evaluate(() => ({ token: localStorage.getItem('hc_token'), st: window.HCPlayer.state() }));
     check(after.token === before && after.st.deviceId === uid && !(await page.$('#hc-setup')), 'reload keeps the token and the pairing');
 
-    // 8. Offline: the server goes away → the last content stays.
     check(errors.length === 0, 'no JS errors', errors.join(' | '));
   } catch (e) {
     check(false, 'exception', e && e.stack ? e.stack : String(e));

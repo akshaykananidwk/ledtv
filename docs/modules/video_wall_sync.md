@@ -103,6 +103,8 @@ retries and long polls only make the RTT bigger). Before the first poll the TV's
   corrected. Seeks land late (key frames), so the TV learns a seek lead (half-step, 0–1.5 s).
 - Streams and YouTube cannot be sought: they only start at the right time.
 - If `sync` does not match the playable items (e.g. an item the app cannot render), the app plays normally.
+- Items that are skipped by time (2.4 dayparts / validity windows) change the item list for **all** TVs at the
+  same moment; the new schedule (same epoch, new cycle) is sent with the new content and the TVs jump to it together.
 
 **Wall** (`WallGeometry`, `WallLayout`): in units of one screen the picture is `W = cols + (cols−1)·gapX` by
 `H = rows + (rows−1)·gapY`. Every item view is laid out at the wall's aspect ratio (`W·w/s × H·h/s`,
