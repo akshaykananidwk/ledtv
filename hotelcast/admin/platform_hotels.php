@@ -170,6 +170,7 @@ require __DIR__ . '/partials/header.php';
           <td class="text-end text-nowrap">
             <a class="btn btn-sm btn-primary" href="<?= e(admin_url('platform_customer.php', ['id' => $h['id']])) ?>" title="<?= e(__('Customer 360')) ?>"><i class="bi bi-card-list"></i> <span class="d-none d-sm-inline"><?= e(__('Manage')) ?></span></a>
             <?= panel_open_workspace((int) $h['id'], 'platform_hotels.php', 'sm') ?>
+            <button type="button" class="btn btn-sm btn-light border text-danger" data-delete-customer="<?= (int) $h['id'] ?>" data-name="<?= e($h['name']) ?>" title="<?= e(__('Delete customer')) ?>"><i class="bi bi-trash"></i></button>
             <a class="btn btn-sm btn-light border" href="<?= e(admin_url('platform_hotels.php', ['action' => 'edit', 'id' => $h['id']])) ?>" title="<?= e(__('Edit')) ?>"><i class="bi bi-pencil"></i></a>
           </td>
         </tr>
@@ -179,4 +180,5 @@ require __DIR__ . '/partials/header.php';
   </div>
 <?php endif; ?>
 </div>
+<?= panel_delete_customer_modal() ?>
 <?php require __DIR__ . '/partials/footer.php'; ?>

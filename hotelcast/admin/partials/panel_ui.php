@@ -96,3 +96,49 @@ function panel_recent_activity(?array $scope, int $limit = 15): array
     }
     return DB::all('SELECT a.*, h.name AS hotel_name FROM activity_logs a LEFT JOIN hotels h ON h.id = a.hotel_id' . $w . ' ORDER BY a.id DESC LIMIT ' . max(1, $limit), $p);
 }
+
+/**
+ * Confirmation modal for deleting a customer (Customers list / Customer 360). Opened by any
+ * [data-delete-customer="<id>" data-name="<name>"] button; the form posts op=delete to
+ * platform_customer.php and only submits when the typed name matches.
+ */
+function panel_delete_customer_modal(): string
+{
+    ob_start();
+    ?>
+    <div class="modal fade" id="hcDeleteCustomer" tabindex="-1" aria-hidden="true" data-delete-customer-modal>
+      <div class="modal-dialog modal-dialog-centered"><div class="modal-content">
+        <form method="post" action="<?= e(admin_url('platform_customer.php')) ?>" data-delete-form>
+          <?= Csrf::field() ?><input type="hidden" name="op" value="delete"><input type="hidden" name="id" value="0" data-delete-id>
+          <div class="modal-header"><h5 class="modal-title text-danger"><i class="bi bi-exclamation-octagon"></i> <?= e(__('Delete customer')) ?></h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="<?= e(__('Close')) ?>"></button></div>
+          <div class="modal-body">
+            <p><?= e(__('Deleting a customer removes its users, screens, TVs, content, playlists, logs and invoices permanently. Its TVs return to the setup screen. This cannot be undone.')) ?></p>
+            <label class="form-label" for="hcDelName"><?= e(__('Type the customer name to confirm:')) ?> <strong data-delete-name></strong></label>
+            <input class="form-control" id="hcDelName" name="confirm_name" autocomplete="off" required data-delete-input>
+          </div>
+          <div class="modal-footer"><button type="button" class="btn btn-light border" data-bs-dismiss="modal"><?= e(__('Cancel')) ?></button>
+            <button class="btn btn-danger" disabled data-delete-submit><i class="bi bi-trash"></i> <?= e(__('Delete customer')) ?></button></div>
+        </form>
+      </div></div>
+    </div>
+    <script>
+    document.addEventListener('click', function (ev) {
+      var b = ev.target.closest('[data-delete-customer]');
+      if (!b || !window.bootstrap) { return; }
+      var m = document.getElementById('hcDeleteCustomer');
+      m.querySelector('[data-delete-id]').value = b.getAttribute('data-delete-customer');
+      m.querySelector('[data-delete-name]').textContent = b.getAttribute('data-name');
+      var inp = m.querySelector('[data-delete-input]'); inp.value = '';
+      m.querySelector('[data-delete-submit]').disabled = true;
+      bootstrap.Modal.getOrCreateInstance(m).show();
+      setTimeout(function () { inp.focus(); }, 300);
+    });
+    document.addEventListener('input', function (ev) {
+      if (!ev.target.matches('[data-delete-input]')) { return; }
+      var m = ev.target.closest('[data-delete-customer-modal]');
+      m.querySelector('[data-delete-submit]').disabled = ev.target.value.trim() !== m.querySelector('[data-delete-name]').textContent.trim();
+    });
+    </script>
+    <?php
+    return (string) ob_get_clean();
+}

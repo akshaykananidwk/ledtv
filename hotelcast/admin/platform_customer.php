@@ -217,8 +217,8 @@ if (is_post()) {
                         Auth::leaveHotel();
                     }
                     $removed = Hotels::delete($id);
-                    ActivityLog::add('hotel_delete', 'hotel', $id, $h['name'] . ' deleted (' . array_sum($removed) . ' rows)');
-                    flash('success', __('Customer ":n" and all its data were deleted.', ['n' => $h['name']]));
+                    ActivityLog::add('hotel_delete', 'hotel', $id, $h['name'] . ' deleted: ' . json_out(array_diff_key($removed, ['rows' => 1])));
+                    flash('success', Hotels::deleteSummary($removed));
                     redirect(admin_url('platform_hotels.php'));
 
                 case 'user_role':
@@ -734,11 +734,8 @@ elseif ($tab === 'settings'):
         </div></div>
         <div class="card danger-zone"><div class="card-header"><i class="bi bi-exclamation-octagon"></i> <?= e(__('Danger zone')) ?></div><div class="card-body">
           <p class="small mb-2"><?= e(__('Deleting a customer removes its users, screens, TVs, content, playlists, logs and invoices permanently. Its TVs return to the setup screen. This cannot be undone.')) ?></p>
-          <form method="post" class="d-flex flex-wrap gap-2" data-confirm="<?= e(__('Delete this customer and ALL its data? This cannot be undone.')) ?>">
-            <?= Csrf::field() ?><input type="hidden" name="op" value="delete"><input type="hidden" name="id" value="<?= $id ?>">
-            <input class="form-control" style="max-width:18rem" name="confirm_name" placeholder="<?= e(__('Type the customer name: :n', ['n' => $h['name']])) ?>" required autocomplete="off">
-            <button class="btn btn-outline-danger"><i class="bi bi-trash"></i> <?= e(__('Delete customer')) ?></button>
-          </form>
+          <button type="button" class="btn btn-outline-danger" data-delete-customer="<?= $id ?>" data-name="<?= e($h['name']) ?>"><i class="bi bi-trash"></i> <?= e(__('Delete customer')) ?></button>
+          <?= panel_delete_customer_modal() ?>
         </div></div>
       </div>
     </div>

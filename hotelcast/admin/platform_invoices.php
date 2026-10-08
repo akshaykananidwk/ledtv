@@ -93,7 +93,7 @@ if ($fMonth !== '') {
     $where[] = 'i.period_from = :pf';
     $p['pf'] = $fMonth . '-01';
 }
-$invoices = DB::all('SELECT i.*, h.name AS hotel_name FROM invoices i JOIN hotels h ON h.id = i.hotel_id'
+$invoices = DB::all('SELECT i.*, COALESCE(h.name, i.customer_name) AS hotel_name, h.id AS hotel_exists FROM invoices i LEFT JOIN hotels h ON h.id = i.hotel_id'
     . ($where ? ' WHERE ' . implode(' AND ', $where) : '') . ' ORDER BY i.id DESC LIMIT 500', $p);
 $sum = DB::one("SELECT
     COALESCE(SUM(CASE WHEN status = 'unpaid' THEN total END), 0) AS unpaid,
@@ -155,7 +155,7 @@ require __DIR__ . '/partials/header.php';
   <?php foreach ($invoices as $inv): ?>
     <tr>
       <td><a class="fw-semibold" href="<?= e(admin_url('invoice.php', ['id' => $inv['id']])) ?>"><?= e($inv['number']) ?></a></td>
-      <td class="small"><?= e($inv['hotel_name']) ?></td>
+      <td class="small"><?= e((string) $inv['hotel_name']) ?><?= empty($inv['hotel_exists']) ? ' <span class="badge text-bg-secondary">' . e(__('deleted')) . '</span>' : '' ?></td>
       <td class="d-none d-md-table-cell small"><?= e(date('M Y', (int) strtotime($inv['period_from']))) ?></td>
       <td class="d-none d-lg-table-cell"><?= (int) $inv['tv_count'] ?></td>
       <td class="text-end text-nowrap"><?= e(money($inv['total'], $inv['currency'])) ?></td>

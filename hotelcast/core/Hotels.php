@@ -240,45 +240,116 @@ final class Hotels
      */
     public static function delete(int $id): array
     {
-        if ($id <= 0 || !DB::value('SELECT id FROM hotels WHERE id = :id', ['id' => $id])) {
+        $h = $id > 0 ? DB::one('SELECT * FROM hotels WHERE id = :id', ['id' => $id]) : null;
+        if (!$h) {
             throw new InvalidArgumentException(__('Customer not found.'));
         }
         if ((int) DB::value('SELECT COUNT(*) FROM hotels') <= 1) {
             throw new RuntimeException(__('The last customer cannot be deleted.'));
         }
-        $tables = array_map('strval', array_column(DB::all(
-            "SELECT TABLE_NAME AS t FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND COLUMN_NAME = 'hotel_id' AND TABLE_NAME <> 'hotels' ORDER BY TABLE_NAME"
-        ), 't'));
-        $pdo = DB::pdo();
-        $removed = [];
-        $pdo->exec('SET FOREIGN_KEY_CHECKS = 0');
+        // What is being removed (for the confirmation message and the log).
+        $summary = [
+            'name' => (string) $h['name'],
+            'screens' => (int) DB::value('SELECT COUNT(*) FROM rooms WHERE hotel_id = :h', ['h' => $id]),
+            'tvs' => (int) DB::value('SELECT COUNT(*) FROM devices WHERE hotel_id = :h AND is_revoked = 0', ['h' => $id]),
+            'content' => (int) DB::value('SELECT COUNT(*) FROM content_items WHERE hotel_id = :h', ['h' => $id]),
+            'users' => (int) DB::value("SELECT COUNT(*) FROM users WHERE hotel_id = :h AND role NOT IN ('platform_admin','reseller','chain_admin')", ['h' => $id]),
+            'invoices' => (int) DB::value('SELECT COUNT(*) FROM invoices WHERE hotel_id = :h', ['h' => $id]),
+            'bytes' => 0,
+            'rows' => [],
+        ];
+        $dirs = ['uploads/h' . $id, 'storage/apk/h' . $id, 'storage/support/h' . $id];
+        foreach ($dirs as $d) {
+            $summary['bytes'] += self::dirSize(HC_ROOT . '/' . $d);
+        }
+        // Every table with a hotel_id column except: hotels (last), invoices / licenses / signups / device_pool
+        // (FK ON DELETE SET NULL — invoices stay for accounting with customer_name as the snapshot).
+        $tables = DB::column(
+            "SELECT c.TABLE_NAME FROM information_schema.COLUMNS c
+             JOIN information_schema.TABLES t ON t.TABLE_SCHEMA = c.TABLE_SCHEMA AND t.TABLE_NAME = c.TABLE_NAME AND t.TABLE_TYPE = 'BASE TABLE'
+             WHERE c.TABLE_SCHEMA = DATABASE() AND c.COLUMN_NAME = 'hotel_id'
+               AND c.TABLE_NAME NOT IN ('hotels', 'invoices', 'licenses', 'signups', 'device_pool')"
+        );
+        $tables = array_values(array_filter(array_map('strval', $tables), static fn ($t) => preg_match('/^[a-z0-9_]+$/i', $t) === 1));
+        // Platform-level users that have this customer as their "own" business keep their login.
+        DB::query("UPDATE users SET hotel_id = NULL WHERE hotel_id = :h AND role IN ('platform_admin','reseller','chain_admin')", ['h' => $id]);
+        // Sessions of the customer's users end now (user rows go below; user_sessions cascades).
+        foreach (DB::column('SELECT id FROM users WHERE hotel_id = :h', ['h' => $id]) as $uid) {
+            Auth::revokeUserSessions((int) $uid);
+        }
+        // TVs: rotate the token first so a TV that polls during the delete is already refused.
+        DB::query("UPDATE devices SET is_revoked = 1, status = 'offline', token_hash = SHA2(CONCAT(id, :salt), 256) WHERE hotel_id = :h", ['salt' => random_token(16), 'h' => $id]);
         try {
-            DB::transaction(static function () use ($tables, $id, &$removed): void {
-                foreach ($tables as $t) {
-                    if (!preg_match('/^[a-z0-9_]+$/i', $t)) {
-                        continue;
-                    }
-                    if ($t === 'licenses') {
-                        DB::query('UPDATE licenses SET hotel_id = NULL WHERE hotel_id = :h', ['h' => $id]);
-                        continue;
-                    }
-                    $n = DB::query("DELETE FROM `$t` WHERE hotel_id = :h", ['h' => $id])->rowCount();
-                    if ($n) {
-                        $removed[$t] = $n;
+            DB::query('UPDATE invoices SET customer_name = :n WHERE hotel_id = :h AND customer_name IS NULL', ['n' => mb_substr((string) $h['name'], 0, 120), 'h' => $id]);
+        } catch (Throwable) {
+            // before migration 032: invoices are deleted with the customer
+            $tables[] = 'invoices';
+        }
+        DB::transaction(static function () use ($tables, $id, &$summary): void {
+            // FK order is resolved by retrying: a table still referenced (ON DELETE RESTRICT) is deleted in a later pass;
+            // child rows without hotel_id (playlist items, group members, sessions, device commands …) go with FK cascades.
+            $pending = $tables;
+            for ($pass = 0; $pass < 10 && $pending; $pass++) {
+                $next = [];
+                foreach ($pending as $t) {
+                    try {
+                        $n = DB::query("DELETE FROM `$t` WHERE hotel_id = :h", ['h' => $id])->rowCount();
+                        if ($n) {
+                            $summary['rows'][$t] = $n;
+                        }
+                    } catch (PDOException $e) {
+                        if ((int) ($e->errorInfo[1] ?? 0) !== 1451) {
+                            throw $e;
+                        }
+                        $next[] = $t;
                     }
                 }
-                DB::query('DELETE FROM hotels WHERE id = :h', ['h' => $id]);
-                $removed['hotels'] = 1;
-            });
-        } finally {
-            $pdo->exec('SET FOREIGN_KEY_CHECKS = 1');
+                $pending = $next;
+            }
+            if ($pending) {
+                throw new RuntimeException('Could not delete customer tables: ' . implode(', ', $pending));
+            }
+            DB::query('DELETE FROM hotels WHERE id = :h', ['h' => $id]);
+            $summary['rows']['hotels'] = 1;
+        });
+        // Files: media, thumbnails, branding, APKs, live-view frames / support uploads, per-customer caches.
+        foreach ($dirs as $d) {
+            if (is_dir(HC_ROOT . '/' . $d)) {
+                rrmdir(HC_ROOT . '/' . $d);
+            }
+        }
+        foreach (glob(HC_ROOT . '/storage/cache/*_h' . $id) ?: [] as $cacheDir) {
+            if (is_dir($cacheDir)) {
+                rrmdir($cacheDir);
+            }
         }
         Tenant::forget($id);
         Branding::flush();
         Settings::flush();
         Cache::clear();
-        Logger::write('platform', 'warning', 'Customer deleted', ['hotel' => $id, 'rows' => $removed]);
-        return $removed;
+        Logger::write('platform', 'warning', 'Customer deleted', ['hotel' => $id] + $summary);
+        return $summary;
+    }
+
+    /** Bytes used under a directory (0 when missing). */
+    private static function dirSize(string $dir): int
+    {
+        if (!is_dir($dir)) {
+            return 0;
+        }
+        $bytes = 0;
+        foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator($dir, FilesystemIterator::SKIP_DOTS)) as $f) {
+            $bytes += (int) $f->getSize();
+        }
+        return $bytes;
+    }
+
+    /** Human summary of a Hotels::delete() result. */
+    public static function deleteSummary(array $s): string
+    {
+        return __('Deleted customer ":n": :s screens, :t TVs, :c content items, :u users, :f of files.', [
+            'n' => $s['name'], 's' => $s['screens'], 't' => $s['tvs'], 'c' => $s['content'], 'u' => $s['users'], 'f' => human_bytes($s['bytes']),
+        ]) . ($s['invoices'] ? ' ' . __(':n invoice(s) kept for accounting.', ['n' => $s['invoices']]) : '');
     }
 
     /** Hotel row changed: refresh caches and the content of its TVs. */

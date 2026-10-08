@@ -121,8 +121,8 @@ final class Billing
     public static function find(int $id): ?array
     {
         return DB::one(
-            'SELECT i.*, h.name AS hotel_name, h.reseller_id, h.contact_email, h.contact_phone, h.status AS hotel_status
-             FROM invoices i JOIN hotels h ON h.id = i.hotel_id WHERE i.id = :id',
+            'SELECT i.*, COALESCE(h.name, i.customer_name) AS hotel_name, h.reseller_id, h.contact_email, h.contact_phone, h.status AS hotel_status
+             FROM invoices i LEFT JOIN hotels h ON h.id = i.hotel_id WHERE i.id = :id',
             ['id' => $id]
         );
     }
