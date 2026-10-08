@@ -151,8 +151,25 @@ final class ContentManager
 
     public static function youtubeEmbed(string $url): string
     {
+        // Playlists (2.3): /playlist?list=, /watch?list= without a video, /embed/videoseries?list= and a
+        // channel's uploads (/channel/UC… → list UU…) play as an embedded list that loops as a whole.
+        $parts = parse_url(trim($url));
+        $host = strtolower((string) ($parts['host'] ?? ''));
+        $path = rtrim((string) ($parts['path'] ?? ''), '/');
+        parse_str((string) ($parts['query'] ?? ''), $q);
+        $list = is_string($q['list'] ?? null) && preg_match('/^[A-Za-z0-9_-]{2,64}$/', $q['list']) ? $q['list'] : null;
+        if (in_array($host, ['youtube.com', 'www.youtube.com', 'm.youtube.com', 'youtube-nocookie.com', 'www.youtube-nocookie.com'], true)) {
+            if (preg_match('~^/channel/UC([A-Za-z0-9_-]{10,40})$~', $path, $m)) {
+                $list = 'UU' . $m[1];
+            } elseif (!in_array($path, ['/playlist', '/embed/videoseries'], true) && !($path === '/watch' && !isset($q['v']))) {
+                $list = null; // a video link that also names a list plays just that video
+            }
+            if ($list) {
+                return 'https://www.youtube.com/embed/videoseries?list=' . rawurlencode($list) . '&autoplay=1&mute=0&controls=0&loop=1&rel=0&modestbranding=1&playsinline=1';
+            }
+        }
         $id = null;
-        if (preg_match('~(?:youtu\.be/|youtube\.com/(?:watch\?(?:.*&)?v=|embed/|live/|shorts/))([A-Za-z0-9_-]{11})~', $url, $m)) {
+        if (preg_match('~(?:youtu\.be/|youtube\.com/(?:watch\?(?:.*&)?v=|embed/|live/|shorts/))([A-Za-z0-9_-]{11})~', $url, $m) && $m[1] !== 'videoseries') {
             $id = $m[1];
         }
         if (!$id) {
@@ -403,7 +420,7 @@ HTML;
         if ($item['type'] === 'image') {
             return $item['file_path'] ? media_url($item['file_path']) : ($item['url'] ?: null);
         }
-        if ($item['type'] === 'youtube' && preg_match('~([A-Za-z0-9_-]{11})~', (string) parse_url(self::youtubeEmbed((string) $item['url']), PHP_URL_PATH), $m)) {
+        if ($item['type'] === 'youtube' && preg_match('~/embed/([A-Za-z0-9_-]{11})$~', (string) parse_url(self::youtubeEmbed((string) $item['url']), PHP_URL_PATH), $m) && $m[1] !== 'videoseries') {
             return 'https://img.youtube.com/vi/' . $m[1] . '/mqdefault.jpg';
         }
         return null;

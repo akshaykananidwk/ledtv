@@ -343,9 +343,10 @@ if ($action === 'new' || $action === 'edit' || $formTicker !== null) {
         if (anim) anim.cancel();
         const from = bar.clientWidth, to = -txt.scrollWidth;
         const pxPerSec = (30 + speed * 25) * scale; // same formula as the TV app
-        if (txt.animate) {
+        const ms = (from - to) / pxPerSec * 1000;
+        if (txt.animate && isFinite(ms) && ms > 0) { // the preview has no size while hidden (0 px → NaN)
           anim = txt.animate([{ transform: 'translateX(' + from + 'px)' }, { transform: 'translateX(' + to + 'px)' }],
-            { duration: Math.max(500, (from - to) / pxPerSec * 1000), iterations: Infinity });
+            { duration: Math.max(500, ms), iterations: Infinity });
         }
       };
       f.querySelectorAll('input[name=target_type]').forEach((r) => r.addEventListener('change', syncTarget));

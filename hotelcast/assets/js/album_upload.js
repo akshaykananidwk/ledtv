@@ -96,7 +96,7 @@
   Uploader.prototype.state = function (job, text, cls, pct) {
     var st = job.row.querySelector('[data-st]'), bar = job.row.querySelector('[data-bar]');
     st.textContent = text;
-    st.className = 'text-nowrap ' + (cls || 'text-muted');
+    st.className = 'text-end ' + (cls || 'text-muted'); // long messages wrap instead of leaving the card on a phone
     if (pct !== undefined && bar) { bar.style.width = pct + '%'; }
     if (bar && cls === 'text-danger') { bar.className = 'progress-bar bg-danger'; bar.style.width = '100%'; }
     if (bar && cls === 'text-success') { bar.className = 'progress-bar bg-success'; }

@@ -46,6 +46,16 @@ final class ContentTest extends TestCase
         foreach (['https://www.youtube.com/watch?v=dQw4w9WgXcQ', 'https://youtu.be/dQw4w9WgXcQ', 'https://www.youtube.com/live/dQw4w9WgXcQ?si=1'] as $u) {
             $this->assertStringStartsWith('https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1', ContentManager::youtubeEmbed($u));
         }
+        // Playlists (#15): the server embed_url (used by TV apps before 2.3 and the TV simulator) must be an embed, not the playlist page.
+        $list = 'https://www.youtube.com/embed/videoseries?list=PL4fGSI1pDJn6puJdseH2Rt9sMvt9E2M4i&autoplay=1';
+        foreach (['https://www.youtube.com/playlist?list=PL4fGSI1pDJn6puJdseH2Rt9sMvt9E2M4i', 'https://m.youtube.com/watch?list=PL4fGSI1pDJn6puJdseH2Rt9sMvt9E2M4i',
+            'https://www.youtube.com/embed/videoseries?list=PL4fGSI1pDJn6puJdseH2Rt9sMvt9E2M4i'] as $u) {
+            $this->assertStringStartsWith($list, ContentManager::youtubeEmbed($u), $u);
+        }
+        $this->assertStringStartsWith('https://www.youtube.com/embed/videoseries?list=UUabcdefghijklmnopqrstuv&', ContentManager::youtubeEmbed('https://www.youtube.com/channel/UCabcdefghijklmnopqrstuv'));
+        $this->assertStringStartsWith('https://www.youtube.com/embed/dQw4w9WgXcQ?', ContentManager::youtubeEmbed('https://www.youtube.com/watch?v=dQw4w9WgXcQ&list=PL4fGSI1pDJn6puJdseH2Rt9sMvt9E2M4i'));
+        $this->assertSame('https://www.youtube.com/playlist?list=<x>', ContentManager::youtubeEmbed('https://www.youtube.com/playlist?list=<x>'), 'invalid list ids are left alone');
+        $this->assertNull(ContentManager::thumbUrl(['type' => 'youtube', 'url' => 'https://www.youtube.com/playlist?list=PL4fGSI1pDJn6puJdseH2Rt9sMvt9E2M4i', 'thumb_path' => null]));
     }
 
     public function testToTvItemPerType(): void

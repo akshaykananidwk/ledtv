@@ -293,7 +293,7 @@ body.embed .bar{display:none}body.embed .wrap{top:0}
     const bar = document.createElement('div');
     bar.className = 'ov ov-tick ' + (top ? 'pos-top' : 'pos-bottom');
     const col = (c, d) => (/^#[0-9a-f]{6}$/i.test(String(c)) ? c : d);
-    bar.style.cssText = 'background:' + col(tk.bg_color, '#000000') + ';color:' + col(tk.text_color, '#FFD700') + ';height:' + (height * DP) + 'em;font-size:' + (font * DP) + 'em';
+    bar.style.cssText = 'background:' + col(tk.bg_color, '#000000') + ';color:' + col(tk.text_color, '#FFD700') + ';height:' + (height / font) + 'em;font-size:' + (font * DP) + 'em'; // the bar's own em = its font size
     if (!reserve) bar.style.opacity = '.92';
     const span = document.createElement('span');
     span.textContent = Array.isArray(tk.messages) && tk.messages.length ? tk.messages.join('   ✦   ') : tk.text;
