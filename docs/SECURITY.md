@@ -87,3 +87,67 @@ verified by SHA-256 before installation.
 * Staff uploads keep GIFs unchanged (animation); they are served from `uploads/` with `nosniff` and a
   `default-src 'none'` CSP. Use Apache (or equivalent nginx rules) so these headers and the PHP / HTML / SVG
   block apply.
+
+## 2.4 additions
+
+Security review of the 2.4 code (scheduling / approvals, device schedules, presence sensors, video walls,
+device features, widgets 26–30, web player, Android 2.4). Regression tests:
+`hotelcast/tests/Integration/Apps/SecurityRegression24Test.php`.
+
+### Fixed findings
+
+| # | Severity | Finding | Fix |
+|---|---|---|---|
+| 1 | Medium | `PLAY_SOUND` (TV controls, crafted POST by a `devices.controls` user) accepted **any** http(s) URL. Every TV of the hotel then fetched it from inside the hotel LAN (router / NAS admin URLs, `169.254.169.254`, other sites): the TVs worked as a blind request proxy into the internal network. | `DeviceFeatures::playSoundPayload()` only accepts sounds of the current hotel's library: a `sound` reference (`b:school_bell`, `u:12` via `Sounds::resolve`, another hotel's id → 404) or exactly the URL of one of `Sounds::all()`. Bell schedules already used references. |
+| 2 | Low | Approval bypass: ad campaigns, the local-guide menu item and images referenced by display apps (slideshow library, app images) only checked `is_active`, so content **waiting for approval** (and expired content) reached the TVs. | `Ads::liveCampaigns()` and `GuideExtension` use `ContentRules::playable()` (approved + validity window); `ContentApps::librarySlides()` / `DisplayApp::imageUrl()` skip unapproved images. |
+| 3 | Low | Live view frames from the TV were stored byte for byte after a JPEG signature check (appended / polyglot payloads kept on the server). | Frames are decoded and re-encoded with GD before they are written (pixels only, no metadata). |
+| 4 | Low | Celebrations CSV import capped the uploaded file at 1 MB but not the pasted text (`post_max_size` is 260 MB): one request could keep a PHP worker busy and exhaust memory. | The pasted text has the same 1 MB limit. |
+
+### Reviewed and found sound (covered by tests)
+
+* **Presence webhook** (`POST /api/presence`): token `prs` + 48 hex, only SHA-256 stored (unique index), shown
+  once; 600 req/min/IP, 20 bad tokens/10 min/IP, 60 events/min/sensor; `Tenant::set()` from the sensor row, then
+  `Tenant::requireActive()` (suspended → 403); rooms are resolved per hotel at runtime (a tampered target id of
+  another hotel is ignored); never overrides an emergency or a room switched off; `override_schedule` only
+  bypasses power-off windows / holiday "TVs off".
+* **Live view**: one random 128-bit session per TV, bound to the device id and its hotel; frames ≤ 400 KB,
+  ≤ 960 px wide, JPEG only, ≥ 2 s apart, 1200/h; stored in web-denied `storage/support/h{hotel}/d{device}/live.jpg`,
+  served only by `admin/live_view.php` after `Tenant::find` + `Access::requireDevice` (`support.view`), with
+  `nosniff` + `CSP sandbox`; deleted 1 h after the session ends. The TV app uploads only to its own API base URL.
+* **Heartbeat health**: whitelisted keys, numbers clamped, strings pattern-checked / `strip_tags` + length
+  limits; everything rendered with `e()` (TV health page, TV detail card).
+* **Approvals**: TVs only get `ContentRules::playable()` items (rooms, groups, playlists, layout zones, holiday
+  "show content", schedules, pushes, video walls). Staff edits of approved content are revisions until approved.
+* **Tenancy / Access / CSRF**: all new tables are registered tenant tables; new admin pages / AJAX actions load ids
+  with `Tenant::find` and check `Access` (calendar drag & drop, holidays, device schedules, sensors, sounds,
+  video walls, play report, live view, TV health); every POST passes `Csrf::check()` (AJAX: `X-CSRF-Token`).
+* **Uploads**: sounds = extension + `finfo` + file signature, ≤ 5 MB, random names under `uploads/h{id}/sounds`
+  (inherits `uploads/.htaccess`: no PHP / HTML / SVG / JS, `nosniff`); festival / celebration images use the
+  Uploader image path (re-encoded).
+* **CSV export** (proof of play): cells starting with `= + - @ TAB CR` are prefixed with `'`.
+* **Data feeds** `open_meteo_aq` / `open_meteo_wx` / `google_places`: fixed hosts, lat/lon and place id
+  validated, host re-checked, no redirects with a key, key never in data / errors / HTML.
+* **Web player** (`player/`): public page, no admin session data or CSRF token; content is rendered with
+  `textContent` / `esc()`, colours whitelisted; HTML and timetable items run in `sandbox="allow-scripts"` srcdoc
+  frames (opaque origin: no access to the device token in `localStorage`); QR endpoint only encodes a valid
+  setup code. SPEAK text ≤ 500 characters (server) / 1000 (TV).
+* **Android**: `UsbPlayerActivity` is not exported; USB mode plays only image / video files listed directly in the
+  `KrishnaCloud` / `HotelCast` folder (playlist.txt names are reduced to base names and matched against that
+  listing); SPEAK / PLAY_SOUND / LIVE_VIEW payloads are validated (only http/https sound URLs, no `file:` /
+  `content:`; text and numbers clamped; bad payloads are acked as failed).
+
+### Operator notes (2.4)
+
+* **Web player**: the device token is kept in the browser's `localStorage` (like a TV app's token). Use a
+  dedicated browser profile / kiosk on each screen. The page allows being framed (`frame-ancestors *`, for kiosk
+  shells) and inline scripts (needed by HTML items, which inherit the CSP inside their sandbox); revoke a lost
+  screen in Rooms & TVs. `url` items run with `allow-same-origin` (web pages need their own cookies), YouTube items
+  without sandbox — only add web pages you trust.
+* **Presence sensors**: prefer the `Authorization: Bearer` header; `?token=` (for devices that cannot set headers)
+  ends up in web-server / proxy access logs. Revoke and renew a token after replacing a sensor.
+* **PLAY_SOUND**: sounds must be in the sound library (Device schedules → Sounds); external sound URLs are no
+  longer accepted.
+* **USB mode** shows whatever is on a USB drive plugged into that TV, without approval: enable it only for rooms
+  where the drive is under staff control.
+* Display apps for festivals / celebrations / notices show data managed on their own pages (`festivals.manage`
+  is staff+) without the content approval workflow, as in 2.3.
