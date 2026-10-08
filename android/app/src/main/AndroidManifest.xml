@@ -16,6 +16,11 @@
     <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
     <uses-permission android:name="android.permission.REBOOT"
         tools:ignore="ProtectedPermissions" />
+    <!-- 2.4 USB / offline mode: read the KrishnaCloud folder on a USB drive / SD card (UsbMedia). -->
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32" />
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
 
     <!-- Android TV: no touchscreen / leanback are optional so the app also installs on
          generic Android boxes and phones. -->
@@ -58,6 +63,7 @@
         android:label="@string/app_name"
         android:largeHeap="true"
         android:networkSecurityConfig="@xml/network_security_config"
+        android:requestLegacyExternalStorage="true"
         android:supportsRtl="true"
         android:theme="@style/Theme.HotelCast"
         android:usesCleartextTraffic="true"
@@ -108,6 +114,17 @@
             android:lockTaskMode="if_whitelisted"
             android:theme="@style/Theme.HotelCast.Settings"
             android:windowSoftInputMode="stateHidden" />
+
+        <!-- 2.4: plays the USB KrishnaCloud folder on a TV that is not registered (not exported). -->
+        <activity
+            android:name=".UsbPlayerActivity"
+            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboard|keyboardHidden|navigation|uiMode"
+            android:exported="false"
+            android:launchMode="singleTop"
+            android:lockTaskMode="if_whitelisted"
+            android:screenOrientation="sensorLandscape"
+            android:theme="@style/Theme.HotelCast.Fullscreen"
+            tools:ignore="DiscouragedApi,LockedOrientationActivity" />
 
         <service
             android:name=".PollService"

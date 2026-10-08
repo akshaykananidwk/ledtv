@@ -60,11 +60,16 @@ final class ContentManager
         return is_array($s) ? $s : [];
     }
 
-    /** Items of a playlist in order (with per-item duration override). */
+    /**
+     * Items of a playlist in order (with per-item duration override). $activeOnly (TVs, previews): only
+     * items that may play right now — active, approved, inside their validity window and their
+     * daypart (2.4, core/ContentRules.php).
+     */
     public static function playlistItems(int $playlistId, bool $activeOnly = true): array
     {
-        return DB::all(
-            'SELECT c.*, pi.id AS pli_id, pi.sort_order, pi.duration AS pli_duration
+        $rows = DB::all(
+            'SELECT c.*, pi.id AS pli_id, pi.sort_order, pi.duration AS pli_duration,
+                    pi.daypart_from, pi.daypart_to, pi.daypart_days
              FROM playlist_items pi
              JOIN content_playlists p ON p.id = pi.playlist_id AND p.hotel_id = :h
              JOIN content_items c ON c.id = pi.content_id AND c.hotel_id = :h2
@@ -72,6 +77,7 @@ final class ContentManager
              ORDER BY pi.sort_order, pi.id',
             ['p' => $playlistId, 'h' => Tenant::id(), 'h2' => Tenant::id()]
         );
+        return $activeOnly ? ContentRules::filterPlaylistRows($rows) : $rows;
     }
 
     /** Convert a DB row into the ContentItem JSON the TV understands. */
@@ -403,6 +409,7 @@ HTML;
         if (!$item) {
             return;
         }
+        Approvals::discardRevision($id, $item); // 2.4: files of a waiting staff edit
         DB::delete('content_items', 'id = :id', ['id' => $id]);
         Uploader::delete($item['file_path'], $item['thumb_path']);
         if ((string) Settings::get('default_content_id') === (string) $id) {

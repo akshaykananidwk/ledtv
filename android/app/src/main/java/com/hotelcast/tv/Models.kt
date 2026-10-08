@@ -111,6 +111,8 @@ data class HeartbeatRequest(
     @SerializedName("current_item_id") val currentItemId: Long?,
     @SerializedName("screen_on") val screenOn: Boolean,
     @SerializedName("uptime_sec") val uptimeSec: Long,
+    /** 2.4 TV health (DeviceHealth.collect): storage, RAM, temperature, Wi-Fi, resolution… */
+    @SerializedName("health") val health: Map<String, Any?>? = null,
 )
 
 data class HeartbeatResponse(
@@ -184,6 +186,11 @@ data class Content(
     @SerializedName("services") val services: Services? = null,
     @SerializedName("guest_menu") val guestMenu: List<GuestMenuItem>? = null,
     @SerializedName("volume") val volume: VolumeConfig? = null,
+    // ---- 2.4 device features (UsbMedia, CecControl) ----
+    /** Room forced to play the USB / SD `KrishnaCloud` folder (when one is plugged in). */
+    @SerializedName("usb_mode") val usbMode: Boolean? = null,
+    /** HDMI-CEC power mode of the room: auto | box | tv (null = auto). */
+    @SerializedName("cec_mode") val cecMode: String? = null,
 ) {
     val isOff: Boolean get() = mode == MODE_OFF || screenOn == false
     val isEmergency: Boolean get() = emergency != null || mode == MODE_EMERGENCY

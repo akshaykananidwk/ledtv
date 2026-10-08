@@ -218,11 +218,12 @@ object ScreenshotEncoder {
         return maxWidth to (h.toLong() * maxWidth / w).toInt().coerceAtLeast(1)
     }
 
-    fun toJpeg(src: Bitmap): ByteArray {
-        val (tw, th) = targetSize(src.width, src.height)
+    /** [maxWidth] / [quality]: 2.4 live view frames use 960 px and quality 60. */
+    fun toJpeg(src: Bitmap, maxWidth: Int = MAX_WIDTH, quality: Int = QUALITY): ByteArray {
+        val (tw, th) = targetSize(src.width, src.height, maxWidth)
         val scaled = if (tw != src.width) Bitmap.createScaledBitmap(src, tw, th, true) else src
         val out = ByteArrayOutputStream()
-        scaled.compress(Bitmap.CompressFormat.JPEG, QUALITY, out)
+        scaled.compress(Bitmap.CompressFormat.JPEG, quality, out)
         if (scaled !== src) scaled.recycle()
         return out.toByteArray()
     }

@@ -31,6 +31,15 @@ interface CommandActions {
     suspend fun showWelcome(): String = throw CommandFailedException("SHOW_WELCOME not supported")
     suspend fun showMessage(title: String?, message: String?, durationSec: Int): String =
         throw CommandFailedException("SHOW_MESSAGE not supported")
+
+    // ---- 2.4 commands (Announcer, LiveView)
+
+    /** SPEAK: queue a text-to-speech announcement; returns the voice used / fallback. */
+    suspend fun speak(req: SpeakRequest): String = throw CommandFailedException("SPEAK not supported")
+    /** PLAY_SOUND: queue a short clip (max 2 min). */
+    suspend fun playSound(req: SoundRequest): String = throw CommandFailedException("PLAY_SOUND not supported")
+    /** LIVE_VIEW: upload small screenshots every few seconds while the admin keeps the session alive. */
+    suspend fun startLiveView(req: LiveViewRequest): String = throw CommandFailedException("LIVE_VIEW not supported")
 }
 
 /**
@@ -135,6 +144,10 @@ class CommandHandler(
                     val dur = (cmd.payloadInt("duration_sec") ?: DEFAULT_MESSAGE_SEC).let { if (it <= 0) DEFAULT_MESSAGE_SEC else it }.coerceIn(3, 3600)
                     safeAck(id, STATUS_ACKED, actions.showMessage(title, message, dur))
                 }
+                // 2.4: invalid payloads throw CommandFailedException → acked as failed with the reason.
+                "SPEAK" -> safeAck(id, STATUS_ACKED, actions.speak(AnnounceSpec.speak(cmd)))
+                "PLAY_SOUND" -> safeAck(id, STATUS_ACKED, actions.playSound(AnnounceSpec.sound(cmd)))
+                "LIVE_VIEW" -> safeAck(id, STATUS_ACKED, actions.startLiveView(LiveViewSpec.from(cmd)))
                 else -> safeAck(id, STATUS_FAILED, "Unknown command: $name")
             }
         } catch (e: kotlinx.coroutines.CancellationException) {

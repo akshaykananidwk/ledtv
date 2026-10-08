@@ -465,6 +465,7 @@ class ContentPlayer(
         }
 
         exo.volume = if (item.mute == true || forceMute) 0f else 1f
+        AudioDuck.track(exo) // 2.4: lowered while a SPEAK / PLAY_SOUND announcement plays
         val loopVideo = !isStream && item.loop == true && (items.size == 1 || item.durationSec > 0)
         exo.repeatMode = if (loopVideo) Player.REPEAT_MODE_ONE else Player.REPEAT_MODE_OFF
         exo.addListener(object : Player.Listener {

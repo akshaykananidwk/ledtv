@@ -23,6 +23,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
@@ -94,8 +95,12 @@ object SyncManager : CommandActions {
     private val wake = Channel<Unit>(Channel.CONFLATED)
     private val pollMutex = Mutex()
 
+    /** Server content (or the cached copy of it). */
     private val _content = MutableStateFlow<Content?>(null)
-    val content: StateFlow<Content?> = _content
+    /** 2.4: what the player shows — the server content, or the USB folder (UsbPlaylist.effective). */
+    private val _effective = MutableStateFlow<Content?>(null)
+    val content: StateFlow<Content?> = _effective
+    private var liveJob: Job? = null
 
     private val _status = MutableStateFlow(SyncStatus())
     val status: StateFlow<SyncStatus> = _status
@@ -127,6 +132,16 @@ object SyncManager : CommandActions {
             if (Prefs.currentHash.isBlank()) Prefs.currentHash = cached.hash.orEmpty()
         }
         _status.value = _status.value.copy(registered = Prefs.isRegistered, lastPollTime = Prefs.lastPollTime)
+        // 2.4: USB / offline mode, announcements.
+        _effective.value = _content.value
+        Announcer.init(app)
+        UsbMedia.init(app)
+        scope.launch {
+            combine(_content, UsbMedia.items) { c, usb -> c to usb }.collect { (c, usb) ->
+                UsbMedia.mayNeedUsb = c == null || c.usbMode == true
+                _effective.value = UsbPlaylist.effective(c, usb, UsbMedia.hash)
+            }
+        }
     }
 
     val contentCache: ContentCache get() = cache
@@ -291,6 +306,15 @@ object SyncManager : CommandActions {
             currentItemId = currentItemId,
             screenOn = screenOn,
             uptimeSec = DeviceInfo.uptimeSec(),
+            health = try {
+                DeviceHealth.collect(app, mapOf(
+                    "usb" to UsbMedia.state(UsbPlaylist.decide(c, UsbMedia.items.value)),
+                    "cec" to CecControl.state(app, c),
+                    "live_view" to (liveJob?.isActive == true),
+                ))
+            } catch (e: Exception) {
+                null
+            },
         )
         val data = ApiClient.call { service.heartbeat(body) }
         _status.value = _status.value.copy(online = true, lastError = null)
@@ -493,6 +517,17 @@ object SyncManager : CommandActions {
     override suspend fun openInput(input: String): String = onPlayer { it.openInput(input) }
 
     override suspend fun takeScreenshot(): String {
+        val jpeg = captureJpeg(ScreenshotEncoder.MAX_WIDTH, ScreenshotEncoder.QUALITY)
+        val service = api() ?: throw CommandFailedException("Server not configured")
+        val part = MultipartBody.Part.createFormData(
+            "image", "screenshot-${System.currentTimeMillis()}.jpg", jpeg.toRequestBody("image/jpeg".toMediaType())
+        )
+        ApiClient.call { service.screenshot(part) }
+        return "Screenshot uploaded (${jpeg.size / 1024} KB)"
+    }
+
+    /** Captures the player window as JPEG (PixelCopy / View.draw, see MainActivity.captureScreen). */
+    private suspend fun captureJpeg(maxWidth: Int, quality: Int): ByteArray {
         val bitmap = withContext(Dispatchers.Main) {
             val p = UiBridge.player ?: throw CommandFailedException("Player screen is not open (TV in standby, settings or another app)")
             kotlinx.coroutines.suspendCancellableCoroutine<Bitmap?> { cont ->
@@ -503,17 +538,65 @@ object SyncManager : CommandActions {
                 }
             }
         } ?: throw CommandFailedException("Screen capture failed")
-        val jpeg = try {
-            withContext(Dispatchers.Default) { ScreenshotEncoder.toJpeg(bitmap) }
+        return try {
+            withContext(Dispatchers.Default) { ScreenshotEncoder.toJpeg(bitmap, maxWidth, quality) }
         } finally {
             bitmap.recycle()
         }
-        val service = api() ?: throw CommandFailedException("Server not configured")
-        val part = MultipartBody.Part.createFormData(
-            "image", "screenshot-${System.currentTimeMillis()}.jpg", jpeg.toRequestBody("image/jpeg".toMediaType())
-        )
-        ApiClient.call { service.screenshot(part) }
-        return "Screenshot uploaded (${jpeg.size / 1024} KB)"
+    }
+
+    // ---- 2.4 commands
+
+    override suspend fun speak(req: SpeakRequest): String = Announcer.speak(req)
+
+    override suspend fun playSound(req: SoundRequest): String = Announcer.playSound(req)
+
+    override suspend fun startLiveView(req: LiveViewRequest): String {
+        api() ?: throw CommandFailedException("Server not configured")
+        synchronized(this) {
+            liveJob?.cancel()
+            liveJob = scope.launch { liveViewLoop(req) }
+        }
+        val note = if (UiBridge.player == null) " – player not on screen yet (standby, settings or another app)" else ""
+        return "Live view started (every ${req.intervalSec} s, ≤ ${req.maxWidth} px)$note"
+    }
+
+    /** Live view: capture + upload until the server stops it or keepalives stop (LiveViewSpec). */
+    private suspend fun liveViewLoop(req: LiveViewRequest) {
+        var interval = req.intervalSec
+        var deadline = System.currentTimeMillis() + req.maxSec * 1000L
+        var failures = 0
+        var frames = 0
+        val session = req.session.toRequestBody("text/plain".toMediaType())
+        Log.i(TAG, "Live view ${req.session.take(6)}… started")
+        while (currentCoroutineContext().isActive) {
+            val started = System.currentTimeMillis()
+            var state: LiveState? = null
+            try {
+                val jpeg = captureJpeg(req.maxWidth, req.quality)
+                val service = api() ?: break
+                val part = MultipartBody.Part.createFormData("image", "live-$started.jpg", jpeg.toRequestBody("image/jpeg".toMediaType()))
+                state = ApiClient.call { service.liveFrame(part, session) }?.live
+                failures = 0
+                frames++
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                throw e
+            } catch (e: CommandFailedException) {
+                // Player not on screen / capture failed: keep trying until the deadline.
+                failures = 0
+            } catch (e: ApiException) {
+                if (e.isInvalidToken || e.httpStatus == 404 || e.httpStatus == 409) break
+                if (e.httpStatus == 429) delay((e.retryAfterSec ?: interval).coerceIn(1, 30) * 1000L) else failures++
+            } catch (e: Exception) {
+                failures++
+            }
+            val now = System.currentTimeMillis()
+            deadline = LiveViewSpec.deadlineAfter(now, deadline, state)
+            state?.interval?.let { interval = LiveViewSpec.clampInterval(it) }
+            if (!LiveViewSpec.keepGoing(now, deadline, state, failures)) break
+            delay((interval * 1000L - (now - started)).coerceAtLeast(1_000L))
+        }
+        Log.i(TAG, "Live view stopped after $frames frame(s)")
     }
 
     override suspend fun uploadLogs(): String {

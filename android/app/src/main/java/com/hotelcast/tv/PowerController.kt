@@ -135,7 +135,10 @@ object PowerController {
     }
 
     /** True when the hotel chose "black screen" instead of real standby (Admin → TV Power). */
-    fun blackMode(content: Content?): Boolean = content?.powerOffMode == "black"
+    fun blackMode(content: Content?): Boolean =
+        content?.powerOffMode == "black" &&
+            // 2.4 CEC box mode: a box must really sleep so HDMI-CEC switches the TV off (CecControl).
+            !CecControl.boxMode(if (::app.isInitialized) app else null, content)
 
     /**
      * Explicit SCREEN_ON / SCREEN_OFF command from the admin panel: always act, even if our remembered
@@ -151,10 +154,22 @@ object PowerController {
         }
         return if (on) {
             val how = wake()
-            if (isScreenInteractive()) "Screen on ($how)" else "Wake FAILED: TV did not switch on ($how)"
+            val cec = cecNote(content, true)
+            if (isScreenInteractive()) "Screen on ($how)$cec" else "Wake FAILED: TV did not switch on ($how)$cec"
         } else {
-            if (blackMode(content)) "Black screen (black-screen mode)" else "Screen off (" + sleep() + ")"
+            if (blackMode(content)) "Black screen (black-screen mode)" else "Screen off (" + sleep() + ")" + cecNote(content, false)
         }
+    }
+
+    /**
+     * 2.4 CEC box mode: the box sleeping / waking makes Android send HDMI-CEC Standby / One Touch
+     * Play (when CEC is enabled in the box settings). Also tries HdmiControlManager (system builds
+     * only). Returns a note for the ack, "" for a TV with a built-in panel.
+     */
+    private fun cecNote(content: Content?, on: Boolean): String {
+        if (!CecControl.boxMode(app, content)) return ""
+        val direct = CecControl.tryHdmiControl(app, standby = !on)
+        return "; CEC box: " + (direct ?: if (on) "TV follows via One Touch Play" else "TV follows to standby via HDMI-CEC")
     }
 
     /** Put the TV into standby (screen off). Returns a short description of the method used. */

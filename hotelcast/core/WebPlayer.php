@@ -77,6 +77,12 @@ final class WebPlayer
         return '../assets/' . ltrim($path, '/') . '?v=' . $v;
     }
 
+    /** JSON safe to put inside a <script type="application/json"> element (no "</script>" breakout). */
+    public static function embed(mixed $v): string
+    {
+        return json_encode($v, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_INVALID_UTF8_SUBSTITUTE) ?: 'null';
+    }
+
     /** UI language for the first screen: ?lang=, else the browser's Accept-Language (gu / hi), else en. */
     public static function language(array $get = [], string $acceptLanguage = ''): string
     {

@@ -234,6 +234,8 @@ class MainActivity : AppCompatActivity(), ContentPlayer.Listener, PlayerUi, Gues
     override fun onStart() {
         super.onStart()
         if (!Prefs.isRegistered) {
+            // 2.4: an unregistered TV with a USB "KrishnaCloud" folder plays it (UsbPlayerActivity).
+            if (UsbMedia.startPlayerIfUnregistered(this)) return
             showWelcome(null, getString(R.string.connecting))
             openSetup()
             return

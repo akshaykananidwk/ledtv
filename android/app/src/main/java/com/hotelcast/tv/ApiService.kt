@@ -45,6 +45,14 @@ interface ApiService {
     @POST("device/screenshot")
     suspend fun screenshot(@Part image: MultipartBody.Part): Response<ApiEnvelope<Any>>
 
+    /** 2.4 live view frame: same endpoint as SCREENSHOT plus the multipart field `live=<session>`. */
+    @Multipart
+    @POST("device/screenshot")
+    suspend fun liveFrame(
+        @Part image: MultipartBody.Part,
+        @Part("live") session: okhttp3.RequestBody,
+    ): Response<ApiEnvelope<LiveFrameResponse>>
+
     @POST("device/logs")
     suspend fun logs(@Body body: LogsRequest): Response<ApiEnvelope<Any>>
 

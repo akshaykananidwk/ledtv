@@ -37,6 +37,10 @@ final class DataFeeds
         'twelvedata' => ['feed' => 'market', 'name' => 'Twelve Data', 'host' => 'api.twelvedata.com', 'key' => true, 'ttl' => 900, 'min_ttl' => 60, 'cap' => 700, 'per_fetch' => 1, 'signup' => 'https://twelvedata.com/pricing'],
         'cricapi' => ['feed' => 'cricket', 'name' => 'CricketData.org (CricAPI)', 'host' => 'api.cricapi.com', 'key' => true, 'ttl' => 60, 'min_ttl' => 30, 'cap' => 100, 'per_fetch' => 1, 'signup' => 'https://cricketdata.org'],
         'aviationstack' => ['feed' => 'flights', 'name' => 'aviationstack', 'host' => 'api.aviationstack.com', 'key' => true, 'ttl' => 3600, 'min_ttl' => 300, 'cap' => 3, 'per_fetch' => 1, 'signup' => 'https://aviationstack.com'],
+        // #26 air quality + weather alerts, #30 Google reviews (core/AirQuality.php, core/GoogleReviews.php, docs/modules/widgets_26_30.md)
+        'open_meteo_aq' => ['feed' => 'air_quality', 'name' => 'Open-Meteo Air Quality', 'host' => 'air-quality-api.open-meteo.com', 'key' => false, 'ttl' => 3600, 'min_ttl' => 900, 'cap' => 0, 'per_fetch' => 1, 'signup' => 'https://open-meteo.com/en/docs/air-quality-api'],
+        'open_meteo_wx' => ['feed' => 'weather_alerts', 'name' => 'Open-Meteo Forecast', 'host' => 'api.open-meteo.com', 'key' => false, 'ttl' => 1800, 'min_ttl' => 900, 'cap' => 0, 'per_fetch' => 1, 'signup' => 'https://open-meteo.com/en/docs'],
+        'google_places' => ['feed' => 'reviews', 'name' => 'Google Places (Place Details)', 'host' => 'maps.googleapis.com', 'key' => true, 'ttl' => 43200, 'min_ttl' => 21600, 'cap' => 100, 'per_fetch' => 1, 'signup' => 'https://developers.google.com/maps/documentation/places/web-service/get-api-key'],
     ];
 
     /** Index labels → default Twelve Data symbols (editable in Platform settings → Data feeds). */
@@ -265,6 +269,18 @@ final class DataFeeds
             case 'goldapi':
             case 'cricapi':
                 return [];
+            case 'open_meteo_aq':
+            case 'open_meteo_wx':
+                $lat = $params['lat'] ?? null;
+                $lon = $params['lon'] ?? null;
+                if (!is_numeric($lat) || !is_numeric($lon) || abs((float) $lat) > 90 || abs((float) $lon) > 180) {
+                    return null;
+                }
+                return ['lat' => round((float) $lat, 2), 'lon' => round((float) $lon, 2)];
+            case 'google_places':
+                $id = (string) ($params['place_id'] ?? '');
+                $lang = (string) ($params['lang'] ?? 'en');
+                return GoogleReviews::validPlaceId($id) && in_array($lang, ['en', 'gu', 'hi'], true) ? ['place_id' => $id, 'lang' => $lang] : null;
         }
         return null;
     }
@@ -289,6 +305,13 @@ final class DataFeeds
             'cricapi' => [[$base . '/v1/currentMatches?' . http_build_query(['apikey' => $key, 'offset' => 0], '', '&', PHP_QUERY_RFC3986), []]],
             'aviationstack' => [[(Settings::platform('platform_feed_aviationstack_http', '0') === '1' ? 'http://' . $def['host'] : $base)
                 . '/v1/flights?' . http_build_query(['access_key' => $key, 'flight_iata' => $params['flight']], '', '&', PHP_QUERY_RFC3986), []]],
+            'open_meteo_aq' => [[$base . '/v1/air-quality?' . http_build_query(['latitude' => sprintf('%.2F', $params['lat']), 'longitude' => sprintf('%.2F', $params['lon']),
+                'current' => 'pm10,pm2_5,us_aqi,european_aqi', 'hourly' => 'pm10,pm2_5', 'past_days' => 1, 'forecast_days' => 1, 'timeformat' => 'unixtime', 'timezone' => 'GMT'], '', '&', PHP_QUERY_RFC3986), []]],
+            'open_meteo_wx' => [[$base . '/v1/forecast?' . http_build_query(['latitude' => sprintf('%.2F', $params['lat']), 'longitude' => sprintf('%.2F', $params['lon']),
+                'current' => 'temperature_2m,wind_speed_10m,wind_gusts_10m,weather_code', 'daily' => 'temperature_2m_max,precipitation_sum,wind_speed_10m_max,wind_gusts_10m_max,weather_code',
+                'forecast_days' => 2, 'timeformat' => 'unixtime', 'timezone' => 'auto', 'wind_speed_unit' => 'kmh'], '', '&', PHP_QUERY_RFC3986), []]],
+            'google_places' => [[$base . '/maps/api/place/details/json?' . http_build_query(['place_id' => $params['place_id'], 'fields' => 'name,rating,user_ratings_total,reviews',
+                'reviews_sort' => 'newest', 'language' => $params['lang'], 'key' => $key], '', '&', PHP_QUERY_RFC3986), []]],
         };
         foreach ($list as [$url]) {
             if (strtolower((string) parse_url($url, PHP_URL_HOST)) !== $def['host'] || parse_url($url, PHP_URL_USER) !== null || parse_url($url, PHP_URL_PORT) !== null) {
@@ -375,6 +398,9 @@ final class DataFeeds
             'twelvedata' => self::parseTwelveData($json[0], $params),
             'cricapi' => self::parseCricApi($json[0]),
             'aviationstack' => self::parseAviationstack($json[0], $params),
+            'open_meteo_aq' => AirQuality::parseAq($json[0]),
+            'open_meteo_wx' => AirQuality::parseForecast($json[0]),
+            'google_places' => GoogleReviews::parse($json[0]),
             default => throw new DataFeedError('Unknown provider'),
         };
     }

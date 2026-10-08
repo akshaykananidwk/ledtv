@@ -146,6 +146,9 @@ final class Broadcaster
         if (!$contentId && !$playlistId) {
             throw new InvalidArgumentException(__('Select content or a playlist.'));
         }
+        if (!$playlistId && !ContentRules::approved((array) ContentManager::find($contentId))) { // 2.4 approvals (#32)
+            throw new InvalidArgumentException(__('This content is waiting for approval and cannot be used yet.'));
+        }
         Access::requireTargetList($targetType, $ids);
         $rooms = self::targetRooms($targetType, $ids);
         if (!$rooms) {
@@ -243,6 +246,8 @@ final class Broadcaster
         }
         if (!$contentId && !$playlistId) {
             $errors[] = __('Select content or a playlist.');
+        } elseif (!$playlistId && !ContentRules::approved((array) ContentManager::find($contentId))) { // 2.4 approvals (#32)
+            $errors[] = __('This content is waiting for approval and cannot be used yet.');
         }
         if ($type !== 'all' && !$ids) {
             $errors[] = __('Select at least one target.');
@@ -280,6 +285,34 @@ final class Broadcaster
             'daily_end' => $mode === 'window' ? $de : null,
             'repeat_days' => $mode === 'window' && $days ? implode(',', $days) : null,
         ], $errors];
+    }
+
+    /**
+     * Save validated schedule data (validateSchedule) over an existing schedule row: it becomes
+     * 'scheduled' again, TVs that were showing it re-evaluate, then schedules are processed.
+     * Used by the calendar (2.4, core/Calendar.php).
+     */
+    public static function updateSchedule(array $b, array $data): void
+    {
+        DB::update('broadcast_commands', [
+            'title' => mb_substr((string) $data['title'], 0, 190),
+            'target_type' => $data['target_type'],
+            'target_ids' => json_out($data['target_ids']),
+            'content_id' => $data['content_id'] ?: null,
+            'playlist_id' => $data['playlist_id'] ?: null,
+            'mode' => $data['mode'],
+            'status' => 'scheduled',
+            'start_at' => $data['start_at'] ?: null,
+            'end_at' => $data['end_at'] ?: null,
+            'daily_start' => $data['daily_start'] ?: null,
+            'daily_end' => $data['daily_end'] ?: null,
+            'repeat_days' => $data['repeat_days'] ?: null,
+        ], 'id = :id', ['id' => $b['id']]);
+        Settings::bumpContentVersion();
+        if ($b['status'] === 'active') {
+            self::queueForRooms(self::targetRooms($b['target_type'], json_decode((string) $b['target_ids'], true) ?: []), 'SHOW_CONTENT', [], (int) $b['id']);
+        }
+        self::processSchedules();
     }
 
     public static function parseDateTime(?string $v): ?string

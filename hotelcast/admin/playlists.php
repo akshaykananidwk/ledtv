@@ -34,7 +34,12 @@ if (is_post()) {
                 continue;
             }
             $dur = is_string($row['duration'] ?? null) && $row['duration'] !== '' && ctype_digit($row['duration']) ? min(86400, (int) $row['duration']) : null;
-            $items[] = [$cid, $dur];
+            // 2.4 dayparting (#34): optional daily time window + weekdays per item (core/ContentRules.php).
+            [$dpFrom, $dpTo, $dpDays, $dpError] = ContentRules::parseDaypart($row);
+            if ($dpError) {
+                flash('warning', $dpError);
+            }
+            $items[] = [$cid, $dur, $dpFrom, $dpTo, $dpDays];
             if (count($items) >= 300) {
                 break;
             }
@@ -44,8 +49,16 @@ if (is_post()) {
             [$in, $p] = DB::in(array_values(array_unique(array_column($items, 0))), 'c');
             $validIds = Tenant::assertOwnsAll('content_items', array_values(array_unique(array_column($items, 0))));
         }
-        DB::transaction(function () use (&$id, $existing, $name, $transition, $items, $validIds) {
-            $data = ['name' => $name, 'description' => req_str('description', $_POST, 500) ?: null, 'transition' => $transition];
+        // 2.4 "Sync playback" (#37, core/SyncPlayback.php): every item needs a fixed length; otherwise it stays off.
+        $sync = !empty($_POST['sync_playback']);
+        $syncMissing = $sync ? SyncPlayback::missingDurations(array_values(array_filter($items, fn ($it) => in_array($it[0], $validIds, true)))) : [];
+        if ($syncMissing) {
+            $sync = false;
+            flash('warning', __('Sync playback was not switched on. Enter the seconds for these videos: :t', ['t' => implode(', ', $syncMissing)]));
+        }
+        DB::transaction(function () use (&$id, $existing, $name, $transition, $items, $validIds, $sync) {
+            $data = ['name' => $name, 'description' => req_str('description', $_POST, 500) ?: null, 'transition' => $transition,
+                'sync_playback' => $sync ? 1 : 0, 'sync_epoch_ms' => $sync ? SyncPlayback::nowMs() : null];
             if ($existing) {
                 DB::update('content_playlists', $data, 'id = :id', ['id' => $id]);
             } else {
@@ -53,9 +66,10 @@ if (is_post()) {
             }
             DB::delete('playlist_items', 'playlist_id = :p', ['p' => $id]);
             $order = 0;
-            foreach ($items as [$cid, $dur]) {
+            foreach ($items as [$cid, $dur, $dpFrom, $dpTo, $dpDays]) {
                 if (in_array($cid, $validIds, true)) {
-                    DB::insert('playlist_items', ['playlist_id' => $id, 'content_id' => $cid, 'sort_order' => $order++, 'duration' => $dur]);
+                    DB::insert('playlist_items', ['playlist_id' => $id, 'content_id' => $cid, 'sort_order' => $order++, 'duration' => $dur,
+                        'daypart_from' => $dpFrom, 'daypart_to' => $dpTo, 'daypart_days' => $dpDays]);
                 }
             }
         });
@@ -98,11 +112,12 @@ if ($action === 'new' || $action === 'edit') {
         }
         $plItems = ContentManager::playlistItems((int) $pl['id'], false);
     }
-    $library = DB::all('SELECT id, title, type, duration, is_active, file_path, thumb_path, url FROM content_items WHERE hotel_id = :hid ORDER BY title', hid());
+    $library = DB::all('SELECT id, title, type, duration, is_active, file_path, thumb_path, url, approval_status FROM content_items WHERE hotel_id = :hid ORDER BY title', hid());
     $libJs = [];
     foreach ($library as $c) {
         $libJs[$c['id']] = ['id' => (int) $c['id'], 'title' => $c['title'], 'type' => __(ContentManager::TYPES[$c['type']]), 'icon' => ContentManager::TYPE_ICONS[$c['type']],
-            'duration' => (int) $c['duration'], 'thumb' => ContentManager::thumbUrl($c), 'active' => (bool) (int) $c['is_active']];
+            'duration' => (int) $c['duration'], 'thumb' => ContentManager::thumbUrl($c), 'active' => (bool) (int) $c['is_active'], 'raw' => $c['type'],
+            'pending' => ($c['approval_status'] ?? 'approved') !== 'approved']; // 2.4: skipped on TVs until approved
     }
     $usage = $pl['id'] ? [
         'rooms' => (int) DB::value('SELECT COUNT(*) FROM rooms WHERE hotel_id = :hid AND playlist_id = :p', ['p' => $pl['id']] + hid()),
@@ -140,6 +155,13 @@ if ($action === 'new' || $action === 'edit') {
                 <option value="slide"<?= $pl['transition'] === 'slide' ? ' selected' : '' ?>><?= e(__('Slide')) ?></option>
               </select>
             </div>
+            <div class="col-12">
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" role="switch" id="plsync" name="sync_playback" value="1"<?= !empty($pl['sync_playback']) ? ' checked' : '' ?>>
+                <label class="form-check-label" for="plsync"><i class="bi bi-arrow-repeat"></i> <?= e(__('Sync playback')) ?></label>
+              </div>
+              <div class="form-text"><?= e(__('All TVs playing this playlist show the same item at the same moment (lobby, restaurant, several TVs side by side). Every video needs its length in seconds. Needs TV app 2.4 or newer.')) ?></div>
+            </div>
             <?php if ($pl['id'] && ($usage['rooms'] || $usage['groups'])): ?>
               <div class="col-12 small text-muted"><i class="bi bi-info-circle"></i> <?= e(__('Used by :r rooms and :g groups. Changes appear on their TVs automatically.', ['r' => $usage['rooms'], 'g' => $usage['groups']])) ?></div>
             <?php endif; ?>
@@ -176,13 +198,29 @@ if ($action === 'new' || $action === 'edit') {
         </div>
       </div>
     </form>
-    <script type="application/json" id="plData"><?= json_embed(['library' => (object) $libJs, 'items' => array_map(fn ($r) => ['content_id' => (int) $r['id'], 'duration' => $r['pli_duration']], $plItems)]) ?></script>
+    <script type="application/json" id="plData"><?= json_embed(['library' => (object) $libJs, 'items' => array_map(fn ($r) => ['content_id' => (int) $r['id'], 'duration' => $r['pli_duration'],
+        'dp_from' => $r['daypart_from'] ? substr((string) $r['daypart_from'], 0, 5) : '', 'dp_to' => $r['daypart_to'] ? substr((string) $r['daypart_to'], 0, 5) : '', 'dp_days' => (string) ($r['daypart_days'] ?? '')], $plItems),
+        'days' => day_names()]) ?></script>
     <script>
     document.addEventListener('DOMContentLoaded', () => {
       const data = JSON.parse(document.getElementById('plData').textContent);
       const list = document.getElementById('plList');
       if (!list) return;
-      const T = { secs: <?= json_embed(__('seconds')) ?>, remove: <?= json_embed(__('Remove')) ?>, inactive: <?= json_embed(__('inactive')) ?>, total: <?= json_embed(__('total :t')) ?> };
+      const T = { secs: <?= json_embed(__('seconds')) ?>, remove: <?= json_embed(__('Remove')) ?>, inactive: <?= json_embed(__('inactive')) ?>, total: <?= json_embed(__('total :t')) ?>,
+        dp: <?= json_embed(__('Time window')) ?>, dpFrom: <?= json_embed(__('Only from')) ?>, dpTo: <?= json_embed(__('until')) ?>, dpDays: <?= json_embed(__('on')) ?>,
+        dpHelp: <?= json_embed(__('Leave empty to show it all day, every day. Overnight (e.g. 22:00 until 02:00) is allowed.')) ?>, pending: <?= json_embed(__('waiting for approval')) ?> };
+      // 2.4 dayparting: keep the hidden daypart_days field and the summary in step with the controls.
+      const dpSync = (row) => {
+        const days = Array.from(row.querySelectorAll('[data-dp-day]:checked')).map((c) => c.value);
+        row.querySelector('[data-name=daypart_days]').value = days.join(',');
+        const f = row.querySelector('[data-name=daypart_from]').value, t = row.querySelector('[data-name=daypart_to]').value;
+        const sum = [];
+        if (f && t) sum.push(f + '–' + t);
+        if (days.length && days.length < 7) sum.push(days.map((d) => data.days[d]).join(', '));
+        const el = row.querySelector('[data-dp-summary]');
+        el.textContent = sum.join(' · ');
+        el.hidden = !sum.length;
+      };
       const update = () => {
         const rows = Array.from(list.querySelectorAll('.pl-item'));
         let total = 0;
@@ -195,25 +233,51 @@ if ($action === 'new' || $action === 'edit') {
         const m = Math.floor(total / 60), s = total % 60;
         document.getElementById('plTotal').textContent = T.total.replace(':t', (m ? m + 'm ' : '') + s + 's');
         document.getElementById('plEmpty').hidden = rows.length > 0;
+        // Sync playback (2.4): videos without seconds cannot be synced — mark them and require a value.
+        const sync = document.getElementById('plsync');
+        rows.forEach((row) => {
+          const d = row.querySelector('[data-name=duration]');
+          const need = !!(sync && sync.checked) && row.dataset.raw === 'video' && !(parseInt(d.value || d.placeholder || '0', 10) > 0);
+          d.classList.toggle('is-invalid', need);
+          d.required = need;
+          if (need) d.min = '1'; else d.min = '0';
+        });
       };
-      const add = (cid, dur) => {
+      const add = (cid, dur, dp) => {
+        dp = dp || {};
         const c = data.library[cid];
         if (!c) return;
         const row = document.createElement('div');
         row.className = 'pl-item';
+        row.dataset.raw = c.raw || '';
         row.innerHTML = '<span class="drag-handle" title="drag"><i class="bi bi-grip-vertical"></i></span>'
           + (c.thumb ? '<img class="thumb-sm" alt="" src="' + HC.esc(c.thumb) + '">' : '<span class="thumb-sm"><i class="bi ' + HC.esc(c.icon) + '"></i></span>')
-          + '<div class="pl-title"><div class="fw-semibold text-truncate">' + HC.esc(c.title) + '</div><div class="small text-muted">' + HC.esc(c.type) + (c.active ? '' : ' · <span class="text-danger">' + HC.esc(T.inactive) + '</span>') + '</div></div>'
+          + '<div class="pl-title"><div class="fw-semibold text-truncate">' + HC.esc(c.title) + '</div><div class="small text-muted">' + HC.esc(c.type) + (c.active ? '' : ' · <span class="text-danger">' + HC.esc(T.inactive) + '</span>') + (c.pending ? ' · <span class="text-warning">' + HC.esc(T.pending) + '</span>' : '') + ' <span class="badge text-bg-info" data-dp-summary hidden></span></div></div>'
           + '<input type="hidden" data-name="content_id" value="' + c.id + '">'
           + '<div class="input-group input-group-sm" style="width:auto"><input type="number" class="form-control" min="0" max="86400" data-name="duration" placeholder="' + c.duration + '" value="' + (dur === null || dur === undefined ? '' : dur) + '" aria-label="' + HC.esc(T.secs) + '"><span class="input-group-text d-none d-sm-inline-flex">' + HC.esc(T.secs) + '</span></div>'
-          + '<button type="button" class="btn btn-sm btn-outline-danger" data-remove title="' + HC.esc(T.remove) + '"><i class="bi bi-x-lg"></i></button>';
+          + '<button type="button" class="btn btn-sm btn-light border" data-dp-toggle title="' + HC.esc(T.dp) + '" aria-label="' + HC.esc(T.dp) + '"><i class="bi bi-clock"></i></button>'
+          + '<button type="button" class="btn btn-sm btn-outline-danger" data-remove title="' + HC.esc(T.remove) + '"><i class="bi bi-x-lg"></i></button>'
+          + '<div class="pl-daypart small border-top pt-2 mt-1" style="flex-basis:100%" data-dp-panel hidden>'
+          + '<div class="d-flex flex-wrap align-items-center gap-2"><span>' + HC.esc(T.dpFrom) + '</span>'
+          + '<input type="time" class="form-control form-control-sm" style="width:auto" data-name="daypart_from" value="' + HC.esc(dp.dp_from || '') + '" aria-label="' + HC.esc(T.dpFrom) + '">'
+          + '<span>' + HC.esc(T.dpTo) + '</span><input type="time" class="form-control form-control-sm" style="width:auto" data-name="daypart_to" value="' + HC.esc(dp.dp_to || '') + '" aria-label="' + HC.esc(T.dpTo) + '">'
+          + '<span>' + HC.esc(T.dpDays) + '</span>'
+          + Object.keys(data.days).map((d) => '<label class="form-check form-check-inline m-0"><input class="form-check-input" type="checkbox" data-dp-day value="' + d + '"' + ((',' + (dp.dp_days || '') + ',').indexOf(',' + d + ',') >= 0 ? ' checked' : '') + '> ' + HC.esc(data.days[d]) + '</label>').join('')
+          + '<input type="hidden" data-name="daypart_days" value="' + HC.esc(dp.dp_days || '') + '"></div>'
+          + '<div class="text-muted mt-1">' + HC.esc(T.dpHelp) + '</div></div>';
+        row.style.flexWrap = 'wrap';
         list.appendChild(row);
+        dpSync(row);
       };
-      data.items.forEach((it) => add(it.content_id, it.duration));
+      data.items.forEach((it) => add(it.content_id, it.duration, it));
+      list.addEventListener('click', (ev) => { const b = ev.target.closest('[data-dp-toggle]'); if (b) { const p = b.closest('.pl-item').querySelector('[data-dp-panel]'); p.hidden = !p.hidden; } });
+      list.addEventListener('change', (ev) => { const r = ev.target.closest('.pl-item'); if (r && ev.target.closest('[data-dp-panel]')) dpSync(r); });
       update();
       document.getElementById('plAddBtn').addEventListener('click', () => { add(document.getElementById('plAddSel').value, null); update(); });
       list.addEventListener('click', (ev) => { const b = ev.target.closest('[data-remove]'); if (b) { b.closest('.pl-item').remove(); update(); } });
       list.addEventListener('input', update);
+      const syncSw = document.getElementById('plsync');
+      if (syncSw) syncSw.addEventListener('change', update);
       if (window.Sortable) Sortable.create(list, { handle: '.drag-handle', animation: 150, onEnd: update });
       document.getElementById('plForm').addEventListener('submit', update);
     });
@@ -256,7 +320,7 @@ require __DIR__ . '/partials/header.php';
       <tbody>
       <?php foreach ($playlists as $p): $t = (int) $p['total_sec']; ?>
         <tr>
-          <td><strong><?= e($p['name']) ?></strong><?php if ($p['description']): ?><div class="small text-muted"><?= e($p['description']) ?></div><?php endif; ?><?= Layouts::usageNote($layoutUse, 'p', (int) $p['id']) ?></td>
+          <td><strong><?= e($p['name']) ?></strong><?php if (!empty($p['sync_playback'])): ?> <span class="badge text-bg-info" title="<?= e(__('All TVs playing this playlist show the same item at the same moment.')) ?>"><i class="bi bi-arrow-repeat"></i> <?= e(__('Synced')) ?></span><?php endif; ?><?php if ($p['description']): ?><div class="small text-muted"><?= e($p['description']) ?></div><?php endif; ?><?= Layouts::usageNote($layoutUse, 'p', (int) $p['id']) ?></td>
           <td><?= (int) $p['items'] ?></td>
           <td class="d-none d-sm-table-cell"><?= e(($t >= 60 ? floor($t / 60) . 'm ' : '') . ($t % 60) . 's') ?></td>
           <td class="d-none d-md-table-cell"><?= e(__(ucfirst($p['transition']))) ?></td>

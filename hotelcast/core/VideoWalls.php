@@ -221,8 +221,8 @@ final class VideoWalls
         $src = (string) ($in['source'] ?? '');
         if (preg_match('/^c:(\d+)$/', $src, $m)) {
             $row = ContentManager::find((int) $m[1]);
-            if (!$row) {
-                $errors[] = __('Choose what the wall plays.');
+            if (!$row || (class_exists('ContentRules') && !ContentRules::approved($row))) {
+                $errors[] = __('Choose what the wall plays.'); // missing, or (2.4 approvals) still waiting for approval
             } elseif (in_array($row['type'], self::UNSUPPORTED_TYPES, true)) {
                 $errors[] = __('A split screen layout cannot be shown on a video wall.');
             } else {

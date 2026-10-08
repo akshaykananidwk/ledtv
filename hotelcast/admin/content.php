@@ -3,7 +3,11 @@ declare(strict_types=1);
 require __DIR__ . '/../core/bootstrap.php';
 require_once __DIR__ . '/partials/common.php';
 
-$user = Auth::require('content.view');
+// Staff / reception may add and edit content while the hotel requires approval (2.4, core/Approvals.php).
+$user = Auth::require(Auth::can('content.view') ? 'content.view' : 'content.submit');
+if (!Auth::can('content.view') && !Approvals::canEdit()) {
+    require_can('content.view');
+}
 
 // A POST bigger than post_max_size arrives empty (and would fail CSRF confusingly).
 if (post_too_large()) {
@@ -31,8 +35,10 @@ function content_done(bool $ok, string $message, string $redirect): never
 }
 
 if (is_post()) {
-    require_can('content.manage');
     $op = req_str('op', $_POST, 20);
+    if (!in_array($op, ['save', 'submit'], true) || !Approvals::canEdit()) {
+        require_can('content.manage');
+    }
 
     if ($op === 'save') {
         $id = req_int('id', $_POST);
@@ -48,8 +54,12 @@ if (is_post()) {
         $hasFile = in_array($type, ['image', 'video'], true) && isset($_FILES['file']) && is_array($_FILES['file'])
             && ($_FILES['file']['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE;
         $in = $_POST;
-        $in['_existing_file'] = $existing['file_path'] ?? null;
+        // A staff member edits the waiting version of approved content (2.4 approvals).
+        $formBase = $existing && Approvals::needsApproval() ? Approvals::merged($existing) : $existing;
+        $in['_existing_file'] = $formBase['file_path'] ?? null;
         [$data, $errors] = ContentManager::validate($in, $type, $hasFile);
+        [$validFrom, $validTo, $windowErrors] = ContentRules::validateWindow($_POST); // 2.4 start / expiry dates
+        $errors = array_merge($errors, $windowErrors);
         if ($errors) {
             content_done(false, implode("\n", $errors), $formUrl);
         }
@@ -61,7 +71,12 @@ if (is_post()) {
             'body' => $data['body'],
             'settings' => json_out((object) $data['settings']),
             'is_active' => !empty($_POST['is_active']) ? 1 : 0,
+            'valid_from' => $validFrom,
+            'valid_to' => $validTo,
         ];
+        if (!$existing || (string) $existing['valid_to'] !== (string) $validTo) {
+            $row['expiry_warned_for'] = null; // re-arm the "expires soon" warning
+        }
         $oldFiles = null;
         if ($hasFile) {
             try {
@@ -77,17 +92,22 @@ if (is_post()) {
             $oldFiles = [$existing['file_path'], $existing['thumb_path']];
         }
 
-        if ($existing) {
-            DB::update('content_items', $row, 'id = :id', ['id' => $id]);
-        } else {
-            $id = DB::insert('content_items', $row + ['type' => $type, 'created_by' => Auth::id(), 'created_at' => now()]);
-        }
-        if ($oldFiles) {
-            Uploader::delete($oldFiles[0], $oldFiles[1]);
-        }
-        Settings::bumpContentVersion();
+        // Insert / update — or, for staff while approval is required, a pending item / revision (2.4).
+        [$id, $outcome] = Approvals::save($existing, $row, $type, !empty($_POST['draft']), $oldFiles);
         ActivityLog::add($existing ? 'content_update' : 'content_create', 'content', $id, $type . ': ' . $data['title']);
-        content_done(true, __('":t" saved.', ['t' => $data['title']]), admin_url('content.php'));
+        content_done(true, match ($outcome) {
+            'pending' => __('":t" was sent for approval. It appears on TVs once a manager approves it.', ['t' => $data['title']]),
+            'revision' => __('Your changes to ":t" were sent for approval. TVs keep showing the approved version until then.', ['t' => $data['title']]),
+            'draft', 'revision_draft' => __('":t" saved as a draft.', ['t' => $data['title']]),
+            default => __('":t" saved.', ['t' => $data['title']]),
+        }, admin_url('content.php'));
+    }
+
+    if ($op === 'submit') { // send a draft / rejected item for approval (2.4)
+        $id = req_int('id', $_POST);
+        $sent = Approvals::submit($id);
+        flash($sent ? 'success' : 'warning', $sent ? __('Sent for approval.') : __('Nothing to send for approval.'));
+        redirect(admin_url('content.php'));
     }
 
     if ($op === 'delete') {
@@ -134,6 +154,7 @@ if (is_post()) {
 
 $action = req_str('action', $_GET, 20);
 $canManage = Auth::can('content.manage');
+$canEdit = Approvals::canEdit(); // 2.4: staff may add / edit (sent for approval) while approval is required
 $pageTitle = __('Content Library');
 $activeNav = 'content';
 $limitText = human_bytes(upload_limit());
@@ -185,7 +206,11 @@ if ($action === 'delete') {
 
 // ---------------------------------------------------------------- add / edit form
 if ($action === 'new' || $action === 'edit') {
-    require_can('content.manage');
+    if (!Approvals::canEdit()) {
+        require_can('content.manage');
+    }
+    $approvalNeeded = Approvals::needsApproval();
+    $revision = null;
     if ($action === 'edit') {
         $item = ContentManager::find(req_int('id', $_GET));
         if (!$item) {
@@ -198,7 +223,7 @@ if ($action === 'new' || $action === 'edit') {
             redirect(admin_url('templates.php', ['action' => 'edit', 'id' => $item['id']]));
         }
         // Designer slides (#11) open in the designer; ?raw=1 keeps the plain image form.
-        if (empty($_GET['raw']) && $type === 'image' && class_exists('Designer') && Designer::designFor((int) $item['id'])) {
+        if (empty($_GET['raw']) && $type === 'image' && Auth::can('content.manage') && class_exists('Designer') && Designer::designFor((int) $item['id'])) {
             redirect(admin_url('designer.php', ['id' => $item['id']]));
         }
     } else {
@@ -206,7 +231,14 @@ if ($action === 'new' || $action === 'edit') {
         if (!isset(ContentManager::TYPES[$type])) {
             redirect(admin_url('content.php'));
         }
-        $item = ['id' => 0, 'title' => '', 'type' => $type, 'url' => '', 'body' => '', 'settings' => null, 'duration' => $type === 'layout' ? 60 : 10, 'is_active' => 1, 'file_path' => null, 'thumb_path' => null, 'file_size' => null];
+        $item = ['id' => 0, 'title' => '', 'type' => $type, 'url' => '', 'body' => '', 'settings' => null, 'duration' => $type === 'layout' ? 60 : 10, 'is_active' => 1, 'file_path' => null, 'thumb_path' => null, 'file_size' => null,
+            'valid_from' => null, 'valid_to' => null, 'approval_status' => 'approved', 'approval_note' => null];
+    }
+    if ($item['id']) {
+        $revision = Approvals::revision((int) $item['id']);
+        if ($approvalNeeded) {
+            $item = Approvals::merged($item, $revision); // staff continue editing their waiting change
+        }
     }
     // Display apps (2.3) have their own form with a live preview: admin/apps.php.
     if ($type === 'app') {
@@ -392,10 +424,38 @@ if ($action === 'new' || $action === 'edit') {
               <label class="form-check-label" for="is_active"><?= e(__('Active (can be shown on TVs)')) ?></label>
             </div>
           </div></div>
+          <?php $dtLocal = static fn (?string $d): string => $d ? date('Y-m-d\\TH:i', (int) strtotime($d)) : ''; // 2.4 start / expiry dates ?>
+          <div class="card mt-3"><div class="card-body">
+            <div class="fw-semibold mb-2"><i class="bi bi-hourglass-split"></i> <?= e(__('Show only between')) ?> <?= ContentRules::validityBadge($item) ?></div>
+            <label class="form-label small" for="valid_from"><?= e(__('Show from (optional)')) ?></label>
+            <input class="form-control mb-2" type="datetime-local" id="valid_from" name="valid_from" value="<?= e($dtLocal($item['valid_from'] ?? null)) ?>">
+            <label class="form-label small" for="valid_to"><?= e(__('Show until (optional)')) ?></label>
+            <input class="form-control" type="datetime-local" id="valid_to" name="valid_to" value="<?= e($dtLocal($item['valid_to'] ?? null)) ?>">
+            <div class="form-text"><?= e(__('Hotel time (:tz). Outside these dates the item is skipped everywhere: rooms, groups, playlists and layouts.', ['tz' => date_default_timezone_get()])) ?></div>
+          </div></div>
+          <?php if (!$isNew && (Approvals::enabled() || ($item['approval_status'] ?? 'approved') !== 'approved' || $revision)): // 2.4 approvals ?>
+          <div class="card mt-3"><div class="card-body small">
+            <div class="fw-semibold mb-1"><i class="bi bi-patch-check"></i> <?= e(__('Approval')) ?></div>
+            <?= Approvals::badge((string) ($item['approval_status'] ?? 'approved'), $revision) ?: '<span class="badge text-bg-success">' . e(__('Approved')) . '</span>' ?>
+            <?php $note = $revision ? ($revision['note'] ?? null) : ($item['approval_note'] ?? null); if ($note): ?>
+              <div class="alert alert-danger mt-2 mb-0 py-2"><strong><?= e(__('Reason')) ?>:</strong> <?= e($note) ?></div>
+            <?php endif; ?>
+            <?php if ($revision && !$approvalNeeded): ?>
+              <div class="mt-2 text-muted"><?= e(__('A staff member changed this item. Saving here replaces that waiting change.')) ?> <a href="<?= e(admin_url('approvals.php')) ?>"><?= e(__('Review it')) ?></a></div>
+            <?php elseif ($revision): ?>
+              <div class="mt-2 text-muted"><?= e(__('TVs keep showing the approved version until your change is approved.')) ?></div>
+            <?php endif; ?>
+          </div></div>
+          <?php endif; ?>
         </div>
 
         <div class="col-12 d-flex gap-2 flex-wrap">
+          <?php if ($approvalNeeded): // 2.4: staff send their content for approval ?>
+          <button class="btn btn-primary btn-lg" type="submit"><i class="bi bi-send-check"></i> <?= e(__('Send for approval')) ?></button>
+          <button class="btn btn-outline-primary btn-lg" type="submit" name="draft" value="1"><i class="bi bi-pencil"></i> <?= e(__('Save as draft')) ?></button>
+          <?php else: ?>
           <button class="btn btn-primary btn-lg" type="submit"><i class="bi bi-check-lg"></i> <?= e(__('Save')) ?></button>
+          <?php endif; ?>
           <a class="btn btn-light border btn-lg" href="<?= e(admin_url('content.php')) ?>"><?= e(__('Cancel')) ?></a>
         </div>
       </div>
@@ -444,6 +504,21 @@ if ($q !== '') {
     $where[] = 'title LIKE :q';
     $params['q'] = '%' . $q . '%';
 }
+// 2.4: validity (Scheduled / Live / Expired) and approval filters.
+$states = ['live' => __('Live'), 'scheduled' => __('Scheduled'), 'expired' => __('Expired'), 'waiting' => __('Waiting for approval'), 'draft' => __('Draft'), 'rejected' => __('Rejected')];
+$fState = isset($states[$_GET['state'] ?? '']) ? (string) $_GET['state'] : '';
+if ($fState !== '') {
+    $snow = ['snow' => now()];
+    [$cond, $extra] = match ($fState) {
+        'live' => ["approval_status = 'approved' AND (valid_from IS NULL OR valid_from <= :snow) AND (valid_to IS NULL OR valid_to > :snow2)", $snow + ['snow2' => now()]],
+        'scheduled' => ['valid_from > :snow', $snow],
+        'expired' => ['valid_to <= :snow', $snow],
+        'waiting' => ["(approval_status = 'pending' OR id IN (SELECT content_id FROM content_revisions WHERE hotel_id = :shid AND status = 'pending'))", ['shid' => Tenant::id()]],
+        default => ['approval_status = :sst', ['sst' => $fState]],
+    };
+    $where[] = $cond;
+    $params += $extra;
+}
 $items = DB::all('SELECT * FROM content_items' . ($where ? ' WHERE ' . implode(' AND ', $where) : '') . ' ORDER BY created_at DESC, id DESC LIMIT 500', $params);
 $counts = [];
 foreach (DB::all('SELECT type, COUNT(*) AS n FROM content_items WHERE hotel_id = :hid GROUP BY type', hid()) as $c) {
@@ -451,6 +526,7 @@ foreach (DB::all('SELECT type, COUNT(*) AS n FROM content_items WHERE hotel_id =
 }
 $total = array_sum($counts);
 $layoutUse = Layouts::usageMap(); // "used in layout X" notes (2.3)
+$revisions = Approvals::revisionMap(); // 2.4
 require __DIR__ . '/partials/header.php';
 ?>
 <div class="page-head">
@@ -458,19 +534,19 @@ require __DIR__ . '/partials/header.php';
     <h1><?= e(__('Content Library')) ?></h1>
     <p class="lead-sm"><?= e(__(':n items', ['n' => $total])) ?> · <?= e(__('Server upload limit: :s.', ['s' => $limitText])) ?></p>
   </div>
-  <?php if ($canManage): ?>
+  <?php if ($canEdit): ?>
   <div class="d-flex flex-wrap gap-2">
-  <?php if (is_file(__DIR__ . '/designer.php')): // slide designer & PDF import (#11, #12) ?>
+  <?php if ($canManage && is_file(__DIR__ . '/designer.php')): // slide designer & PDF import (#11, #12) ?>
     <a class="btn btn-outline-primary btn-lg" href="<?= e(admin_url('designer.php')) ?>"><i class="bi bi-brush"></i> <?= e(__('Design a slide')) ?></a>
     <a class="btn btn-outline-primary btn-lg" href="<?= e(admin_url('pdf_import.php')) ?>"><i class="bi bi-file-earmark-pdf"></i> <?= e(__('Import PDF / slides')) ?></a>
   <?php endif; ?>
   <div class="dropdown">
     <button class="btn btn-primary btn-lg dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-plus-lg"></i> <?= e(__('Add content')) ?></button>
     <ul class="dropdown-menu dropdown-menu-end">
-      <?php foreach (ContentManager::TYPES as $t => $label): ?>
+      <?php foreach (ContentManager::TYPES as $t => $label): if ($t === 'app' && !$canManage) { continue; } ?>
         <li><a class="dropdown-item py-2" href="<?= e($t === 'app' ? admin_url('apps.php') : admin_url('content.php', ['action' => 'new', 'type' => $t])) ?>"><i class="bi <?= e(ContentManager::TYPE_ICONS[$t]) ?> me-2"></i><?= e(__($label)) ?></a></li>
       <?php endforeach; ?>
-      <?php if (Auth::can('templates.manage') && Tenant::feature('templates') && is_file(__DIR__ . '/templates.php')): ?>
+      <?php if ($canManage && Auth::can('templates.manage') && Tenant::feature('templates') && is_file(__DIR__ . '/templates.php')): ?>
         <li><hr class="dropdown-divider"></li>
         <li><a class="dropdown-item py-2" href="<?= e(admin_url('templates.php')) ?>"><i class="bi bi-palette me-2"></i><?= e(__('From a template…')) ?></a></li>
       <?php endif; ?>
@@ -487,6 +563,12 @@ require __DIR__ . '/partials/header.php';
       <select class="form-select" name="type" aria-label="<?= e(__('Type')) ?>" onchange="this.form.submit()">
         <option value=""><?= e(__('All types')) ?> (<?= $total ?>)</option>
         <?php foreach (ContentManager::TYPES as $t => $label): ?><option value="<?= e($t) ?>"<?= $fType === $t ? ' selected' : '' ?>><?= e(__($label)) ?> (<?= $counts[$t] ?? 0 ?>)</option><?php endforeach; ?>
+      </select>
+    </div>
+    <div class="col-12 col-md-3 order-md-last">
+      <select class="form-select" name="state" aria-label="<?= e(__('Status')) ?>" onchange="this.form.submit()">
+        <option value=""><?= e(__('Any status')) ?></option>
+        <?php foreach ($states as $k => $lbl): ?><option value="<?= e($k) ?>"<?= $fState === $k ? ' selected' : '' ?>><?= e($lbl) ?></option><?php endforeach; ?>
       </select>
     </div>
     <input type="hidden" name="view" value="<?= e($view) ?>">
@@ -520,6 +602,7 @@ require __DIR__ . '/partials/header.php';
         <div class="card-body p-2 d-flex flex-column">
           <div class="fw-semibold text-truncate" title="<?= e($it['title']) ?>"><?= e($it['title']) ?></div>
           <?= Layouts::usageNote($layoutUse, 'c', (int) $it['id']) ?>
+          <div class="d-flex flex-wrap gap-1"><?= Approvals::badge((string) ($it['approval_status'] ?? 'approved'), $revisions[(int) $it['id']] ?? null) ?><?= ContentRules::validityBadge($it) ?></div>
           <div class="small text-muted">
             <?= (int) $it['duration'] ? e((int) $it['duration'] . 's') : '∞' ?>
             <?php if ($it['file_size']): ?> · <?= e(human_bytes($it['file_size'])) ?><?php endif; ?>
@@ -527,6 +610,9 @@ require __DIR__ . '/partials/header.php';
           </div>
           <div class="d-flex gap-1 mt-2">
             <a class="btn btn-sm btn-light border" href="<?= e(admin_url('preview.php', ['content_id' => $it['id']])) ?>" target="_blank" rel="noopener" title="<?= e(__('Preview')) ?>"><i class="bi bi-eye"></i></a>
+            <?php if ($canEdit && !$canManage): ?>
+              <a class="btn btn-sm btn-primary flex-grow-1" href="<?= e(admin_url('content.php', ['action' => 'edit', 'id' => $it['id']])) ?>"><i class="bi bi-pencil"></i> <?= e(__('Edit')) ?></a>
+            <?php endif; ?>
             <?php if ($canManage): ?>
               <a class="btn btn-sm btn-primary flex-grow-1" href="<?= e(admin_url('content.php', ['action' => 'edit', 'id' => $it['id']])) ?>"><i class="bi bi-pencil"></i> <?= e(__('Edit')) ?></a>
               <form method="post" class="d-inline">
@@ -548,13 +634,16 @@ require __DIR__ . '/partials/header.php';
       <?php foreach ($items as $it): $thumb = ContentManager::thumbUrl($it); ?>
         <tr class="<?= (int) $it['is_active'] ? '' : 'text-muted' ?>">
           <td><?php if ($thumb): ?><img class="thumb-sm" src="<?= e($thumb) ?>" alt="" loading="lazy"><?php else: ?><span class="thumb-sm"><i class="bi <?= e(ContentManager::TYPE_ICONS[$it['type']]) ?>"></i></span><?php endif; ?></td>
-          <td><strong><?= e($it['title']) ?></strong><?php if (!(int) $it['is_active']): ?> <span class="badge text-bg-secondary"><?= e(__('inactive')) ?></span><?php endif; ?><?= Layouts::usageNote($layoutUse, 'c', (int) $it['id']) ?></td>
+          <td><strong><?= e($it['title']) ?></strong><?php if (!(int) $it['is_active']): ?> <span class="badge text-bg-secondary"><?= e(__('inactive')) ?></span><?php endif; ?> <?= Approvals::badge((string) ($it['approval_status'] ?? 'approved'), $revisions[(int) $it['id']] ?? null) ?> <?= ContentRules::validityBadge($it) ?><?= Layouts::usageNote($layoutUse, 'c', (int) $it['id']) ?></td>
           <td class="small"><?= e(__(ContentManager::TYPES[$it['type']])) ?></td>
           <td class="d-none d-md-table-cell"><?= (int) $it['duration'] ? e((int) $it['duration'] . 's') : '∞' ?></td>
           <td class="d-none d-md-table-cell small"><?= $it['file_size'] ? e(human_bytes($it['file_size'])) : '-' ?></td>
           <td class="d-none d-lg-table-cell small"><?= e(time_ago($it['updated_at'])) ?></td>
           <td class="text-end text-nowrap">
             <a class="btn btn-sm btn-light border" href="<?= e(admin_url('preview.php', ['content_id' => $it['id']])) ?>" target="_blank" rel="noopener" title="<?= e(__('Preview')) ?>"><i class="bi bi-eye"></i></a>
+            <?php if ($canEdit && !$canManage): ?>
+              <a class="btn btn-sm btn-primary" href="<?= e(admin_url('content.php', ['action' => 'edit', 'id' => $it['id']])) ?>" title="<?= e(__('Edit')) ?>"><i class="bi bi-pencil"></i></a>
+            <?php endif; ?>
             <?php if ($canManage): ?>
               <a class="btn btn-sm btn-primary" href="<?= e(admin_url('content.php', ['action' => 'edit', 'id' => $it['id']])) ?>" title="<?= e(__('Edit')) ?>"><i class="bi bi-pencil"></i></a>
               <?php if (!$it['file_path']): ?>

@@ -165,7 +165,7 @@ function hc_floors(): array
 
 function hc_content_list(bool $activeOnly = false): array
 {
-    return DB::all('SELECT id, title, type, is_active FROM content_items WHERE hotel_id = :hid' . ($activeOnly ? ' AND is_active = 1' : '') . ' ORDER BY title', hid());
+    return DB::all('SELECT id, title, type, is_active, approval_status FROM content_items WHERE hotel_id = :hid' . ($activeOnly ? ' AND is_active = 1' : '') . ' ORDER BY title', hid());
 }
 
 function hc_playlist_list(): array
@@ -186,8 +186,9 @@ function source_value(mixed $contentId, mixed $playlistId): string
 function parse_source(mixed $value): array
 {
     $value = is_string($value) ? $value : '';
-    if (preg_match('/^c:(\d{1,9})$/', $value, $m) && Tenant::find('content_items', (int) $m[1])) {
-        return [(int) $m[1], null];
+    if (preg_match('/^c:(\d{1,9})$/', $value, $m) && ($c = Tenant::find('content_items', (int) $m[1]))) {
+        // 2.4 approvals (#32): content waiting for approval cannot be assigned, pushed or scheduled.
+        return ContentRules::approved($c) ? [(int) $m[1], null] : [null, null];
     }
     if (preg_match('/^p:(\d{1,9})$/', $value, $m) && Tenant::find('content_playlists', (int) $m[1])) {
         return [null, (int) $m[1]];
@@ -226,7 +227,8 @@ function source_select(string $name, string $selected = '', ?string $noneLabel =
         $html .= '<optgroup label="' . e(__($label)) . '">';
         foreach ($byType[$type] as $c) {
             $v = 'c:' . $c['id'];
-            $html .= '<option value="' . e($v) . '"' . ($v === $selected ? ' selected' : '') . '>' . e($c['title']) . ((int) $c['is_active'] ? '' : ' (' . e(__('inactive')) . ')') . '</option>';
+            $approved = ($c['approval_status'] ?? 'approved') === 'approved'; // 2.4: pending content cannot be chosen
+            $html .= '<option value="' . e($v) . '"' . ($v === $selected ? ' selected' : '') . ($approved ? '' : ' disabled') . '>' . e($c['title']) . ((int) $c['is_active'] ? '' : ' (' . e(__('inactive')) . ')') . ($approved ? '' : ' (' . e(__('waiting for approval')) . ')') . '</option>';
         }
         $html .= '</optgroup>';
     }
@@ -430,6 +432,7 @@ function mode_label(string $mode): string
         'off' => __('Screen off'),
         'suspended' => __('Service paused'),
         'empty' => __('Welcome screen'),
+        'wall' => __('Video wall'), // 2.4, core/VideoWalls.php
         default => '-',
     };
 }

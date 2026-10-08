@@ -4,8 +4,10 @@ declare(strict_types=1);
 /**
  * Decides what a room's TV should show right now and builds the Content object.
  *
- * Priority: emergency → hotel suspended → room off / scheduled power-off window → active time-window broadcast → room assignment
- *           → group assignment → hotel default → empty (welcome screen).
+ * Priority: emergency → hotel suspended → room off / scheduled power-off window → holiday "TVs off" → active time-window
+ *           broadcast → holiday "show content" → room assignment → group assignment → hotel default → empty (welcome screen).
+ * Items that are not approved, outside their validity window or (in playlists) outside their daypart never
+ * play (2.4, core/ContentRules.php, core/Holidays.php).
  */
 final class ContentResolver
 {
@@ -119,6 +121,15 @@ final class ContentResolver
                 return self::finish($content, $room);
             }
         }
+        // 2b. Holiday calendar (2.4): "TVs off" works like a power-off window for the whole day.
+        $holiday = Holidays::forRoom($room, $groupIds);
+        if ($holiday && $holiday['action'] === 'tv_off') {
+            $content['mode'] = 'off';
+            $content['screen_on'] = false;
+            $content['off_reason'] = 'holiday';
+            $content['holiday_id'] = (int) $holiday['id'];
+            return self::finish($content, $room);
+        }
 
         // 3. Time-window broadcasts
         $windows = DB::all(
@@ -135,6 +146,13 @@ final class ContentResolver
                 $content['broadcast_id'] = (int) $b['id'];
                 return self::finish($content, $room);
             }
+        }
+        // 3b. Holiday "show content" (2.4)
+        if ($holiday && $holiday['action'] === 'show_content'
+            && self::fill($content, $holiday['content_id'] ? (int) $holiday['content_id'] : null, $holiday['playlist_id'] ? (int) $holiday['playlist_id'] : null)) {
+            $content['mode'] = 'scheduled';
+            $content['holiday_id'] = (int) $holiday['id'];
+            return self::finish($content, $room);
         }
 
         // 4. Room assignment
@@ -195,7 +213,7 @@ final class ContentResolver
         }
         if ($contentId) {
             $item = ContentManager::findOwn($contentId);
-            if ($item && (int) $item['is_active']) {
+            if ($item && ContentRules::playable($item)) { // active + approved + validity window (2.4)
                 $tv = ContentManager::toTvItem($item);
                 // A single item stays on screen; duration only matters inside playlists.
                 $tv['duration'] = 0;

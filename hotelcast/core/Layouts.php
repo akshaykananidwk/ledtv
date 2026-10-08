@@ -212,7 +212,7 @@ final class Layouts
             }
         } elseif ($cid) {
             $row = ContentManager::findOwn($cid);
-            if ($row && (int) $row['is_active'] && $row['type'] !== 'layout') {
+            if ($row && ContentRules::playable($row) && $row['type'] !== 'layout') { // 2.4: approved + validity window
                 $tv = ContentManager::toTvItem($row);
                 $tv['duration'] = 0; // a single item stays in its zone
                 $items[] = $tv;
