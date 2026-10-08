@@ -61,7 +61,7 @@ endpoints exactly like the TV app (docs/API.md, docs/modules/qr_setup.md).
 | key | where | content |
 |---|---|---|
 | `hc_device_id` | localStorage **and** cookie (10 years) | `web-<uuid v4>` (crypto.getRandomValues) |
-| `hc_token` | localStorage + cookie | device token (the cookie is a fallback for browsers that lose localStorage) |
+| `hc_token` | localStorage (a cookie only when localStorage is not available) | device token |
 | `hc_content`, `hc_hash` | localStorage | the last Content object and its hash (offline playback) |
 | `hc_room`, `hc_pin` | localStorage | room number, SHA-256 of the settings PIN (from register / heartbeat) |
 | `hc_done` | localStorage | ids of the last 200 executed commands (de-duplication, survives reloads) |

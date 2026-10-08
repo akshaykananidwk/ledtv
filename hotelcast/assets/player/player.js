@@ -419,7 +419,7 @@
         S.pinHash = d.settings_pin_hash || '';
         if (d.poll_interval > 0) S.pollInterval = clamp(d.poll_interval, 3, 60);
         if (d.heartbeat_interval > 0) S.hbInterval = clamp(d.heartbeat_interval, 15, 3600);
-        store.set('hc_token', S.token, true);
+        store.set('hc_token', S.token); // cookie copy only when localStorage is not available
         store.set('hc_room', S.room);
         store.set('hc_pin', S.pinHash);
         store.del('hc_content');
