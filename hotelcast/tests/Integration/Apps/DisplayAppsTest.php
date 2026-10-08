@@ -440,6 +440,17 @@ final class DisplayAppsTest extends TestCase
 
     // ------------------------------------------------------------------ rendering
 
+    /** QA 2.3: regressions found on the TV pages in a real browser (headings 2x too big, fitText shrinking every heading). */
+    public function testRuntimeAssetsKeepHeadingsAndFitTextSane(): void
+    {
+        $css = (string) file_get_contents(HC_ROOT . '/assets/display/app.css');
+        $this->assertStringContainsString('.hc-title h1{font-size:1em}', $css, 'h1 inside .hc-title must not double the 2.6rem heading size');
+        $js = (string) file_get_contents(HC_ROOT . '/assets/display/app.js');
+        $this->assertMatchesRegularExpression('/el\.scrollHeight > el\.clientHeight \+ 1 \+ size \* root \* 0\.\d+/', $js, 'HC.fitText tolerates glyph overflow of a tight line-height');
+        $sim = (string) file_get_contents(HC_ROOT . '/admin/partials/tv_simulator.php');
+        $this->assertStringContainsString("';height:' + (height / font) + 'em;font-size:'", $sim, 'the simulator ticker bar height is in its own em (font size)');
+    }
+
     public function testEveryRegisteredAppRendersInEveryLanguage(): void
     {
         $words = ['gu' => 'ગુજરાતી', 'hi' => 'हिन्दी'];

@@ -500,4 +500,24 @@ final class QueueTest extends TestCase
         $this->assertStringContainsString('No counters yet.', $html);
         $this->assertSame('', TestEnv::phpErrors());
     }
+
+    /** QA 2.3: two self-service services must not push the side panel off the TV (one panel, codes side by side). */
+    public function testTwoSelfServiceQrCodesShareOnePanel(): void
+    {
+        self::wipe();
+        [$a] = Queue::saveService(['name' => 'OPD', 'prefix' => 'A', 'self_service' => 1, 'is_active' => 1]);
+        [$b] = Queue::saveService(['name' => 'Pharmacy <b>', 'prefix' => 'P', 'self_service' => 1, 'is_active' => 1, 'sort_order' => 1]);
+        Queue::saveCounter(['name' => 'Counter 1', 'service_id' => $a, 'is_active' => 1]);
+        $item = DisplayAppsTestKit::createItem('queue_display');
+        $html = DisplayAppsTestKit::assertRenders($this, self::$url, $item);
+        $this->assertSame(1, substr_count($html, 'qd-qr qd-qr2'));
+        $this->assertSame(2, substr_count($html, 'class="qd-qr-cell"'));
+        $this->assertStringContainsString('<span>Pharmacy &lt;b&gt;</span>', $html);
+        $this->assertSame(2, substr_count($html, 'qd-panel qd-list'), 'the lists are the panels that give way');
+        DB::update('queue_services', ['self_service' => 0], 'id = :id', ['id' => $b]);
+        [, $html] = DisplayAppsTestKit::page(self::$url, $item);
+        $this->assertStringNotContainsString('qd-qr2', $html);
+        $this->assertSame(1, substr_count($html, 'class="qd-qr-img"'));
+        $this->assertSame('', TestEnv::phpErrors());
+    }
 }
