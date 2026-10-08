@@ -234,8 +234,10 @@ Users with `platform.screens` get a view switch at the top of Screens & TVs:
 
 * Platform admins default to **All customers** (the page title reads "Screens — all customers"); the
   choice (`?view=all|customer`) is remembered in the session (`hc_rooms_view`). Without an open customer
-  only All customers is possible. Resellers default to This customer when inside a customer, and see only
-  their own customers (`PlatformScreens::scopeHotelIds`).
+  only All customers is possible. Resellers default to This customer (the title reads "Screens — your
+  customers" in their All view) and see only their own customers (`PlatformScreens::scopeHotelIds`);
+  without an open customer they keep the old redirect to their panel until they pick
+  `rooms.php?view=all`.
 * All customers = the All screens table (`ps_table`, `PlatformScreens::list` / `decorate`): customer (link to
   the customer details), screen, location / group, device, status + last seen, now showing, health; search,
   customer and status filters (active, online, offline, revoked, all, **screens without TV** —
