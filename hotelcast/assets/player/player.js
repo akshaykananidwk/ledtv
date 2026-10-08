@@ -371,7 +371,7 @@
         if (img) img.innerHTML = '<img alt="QR" src="' + esc((CFG.qr || 'qr.php') + '?code=' + encodeURIComponent(prov.code)) + '">';
         var code = document.getElementById('hc-code');
         if (code) code.textContent = prov.code;
-        qrStatus(t('Scan with your phone'));
+        qrStatus('');
         S.provTimer = setTimeout(provStatus, clamp(num(prov.poll_interval, 3), 2, 30) * 1000);
       } else {
         qrStatus(t('QR setup is not available. Use the manual setup.'));

@@ -113,10 +113,10 @@ async function shot(page, name) {
     await waitItem(info.ids.app, 15000);
     const src = await page.getAttribute('#hc-content iframe.hc-frame', 'src');
     check(/\/display\/\?c=\d+&s=[0-9a-f]{32}/.test(src || ''), 'display app in iframe', src);
-    const appFrame = page.frames().find((f) => f.url().indexOf('/display/') >= 0);
+    const appFrame = await (await page.$('#hc-content iframe.hc-frame')).contentFrame();
     let appText = '';
     if (appFrame) {
-      await appFrame.waitForSelector('#hc-stage', { timeout: 10000 });
+      await appFrame.waitForFunction(() => document.body && /દિવાળી/.test(document.body.innerText), null, { timeout: 10000 }).catch(() => null);
       appText = await appFrame.evaluate(() => document.body.innerText);
     }
     check(/દિવાળી/.test(appText), 'display app rendered', (appFrame ? appFrame.url() : 'no frame') + ' :: ' + appText.slice(0, 80).replace(/\s+/g, ' '));

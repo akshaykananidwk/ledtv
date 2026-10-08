@@ -305,7 +305,8 @@ final class DeviceFeaturesTest extends TestCase
             $this->assertSame(403, $s, $name);
         }
         // CSRF: POST without the token is refused.
-        [$s] = TestEnv::http('POST', self::$url . 'admin/ajax.php?action=live_start', ['device_id' => $tv101], ['X-Requested-With: XMLHttpRequest'], (new AdminSession(self::$url, 'fmgr'))->jar);
+        $csrfLess = new AdminSession(self::$url, 'fmgr');
+        [$s] = TestEnv::http('POST', self::$url . 'admin/ajax.php?action=live_start', ['device_id' => $tv101], ['X-Requested-With: XMLHttpRequest'], $csrfLess->jar);
         $this->assertSame(419, $s);
 
         // A TV of hotel 2 cannot feed hotel 1's session with its token.
@@ -459,7 +460,8 @@ final class DeviceFeaturesTest extends TestCase
         $this->assertStringNotContainsString('Storage low', $mails[1][2]);
         // Alerts off: state still advances, nothing mailed. Stale health (offline TV) is not alerted.
         Settings::set('notify_health', '0');
-        $this->assertSame(1, Tenant::run(1, fn () => DeviceHealth::checkAlerts($now + 90000)));
+        DB::query('UPDATE devices SET health_at = :t WHERE id = :id', ['t' => date('Y-m-d H:i:s', $now + 90000), 'id' => self::$tv['tv101']['id']]);
+        $this->assertSame(1, Tenant::run(1, fn () => DeviceHealth::checkAlerts($now + 90000)), 'reminder after 24 h');
         $this->assertCount(2, $mails);
         DB::query('UPDATE devices SET health_alerts = NULL, health_at = :t WHERE id = :id', ['t' => date('Y-m-d H:i:s', $now - 7200), 'id' => self::$tv['tv101']['id']]);
         Settings::set('notify_health', '1');

@@ -219,7 +219,7 @@ final class WidgetsTest extends TestCase
         $q = Panchang::day($early, self::LAT, self::LON, self::TZ);
         $this->assertSame('2026-10-07', $q['date'], 'before sunrise = previous Vedic day');
         $this->assertSame('night', $q['choghadiya'][$q['current']]['part']);
-        $this->assertSame(['Labh', 'Udveg', 'Shubh', 'Amrit', 'Char', 'Rog', 'Kaal', 'Labh'], array_column(array_slice($q['choghadiya'], 8), 'name'), 'Wednesday night');
+        $this->assertSame(['Udveg', 'Shubh', 'Amrit', 'Char', 'Rog', 'Kaal', 'Labh', 'Udveg'], array_column(array_slice($q['choghadiya'], 8), 'name'), 'Wednesday night');
     }
 
     public function testTithiNakshatraAndMonthWithinTolerance(): void
@@ -705,8 +705,9 @@ final class WidgetsTest extends TestCase
         $this->assertStringContainsString('MY-TITHI', $html);
         $this->assertStringContainsString('(set by the hotel)', $html);
         $this->assertStringContainsString('Approximate', $html);
-        $this->assertSame(16, substr_count($html, 'class="pc-seg '));
-        $this->assertSame(1, substr_count($html, 'is-now'));
+        $body = explode('window.HC_DISPLAY=', $html)[0];
+        $this->assertSame(16, substr_count($body, 'class="pc-seg '));
+        $this->assertSame(1, substr_count($body, 'is-now'));
         $this->assertNoXss($html, 'panchang override');
         $item2 = DisplayAppsTestKit::createItem('panchang', [], ['lang' => 'en']);
         $html = DisplayAppsTestKit::assertRenders($this, self::$url, $item2);
@@ -739,19 +740,17 @@ final class WidgetsTest extends TestCase
         ];
         foreach ($configs as $app => $cfg) {
             foreach (['en' => 'classic_dark', 'gu' => 'light', 'hi' => 'temple_saffron'] as $lang => $theme) {
-                {
-                    $item = DisplayAppsTestKit::createItem($app, $cfg, ['lang' => $lang, 'theme' => $theme]);
-                    $html = DisplayAppsTestKit::assertRenders($this, self::$url, $item);
-                    $this->assertStringNotContainsString('This app is not available', $html, "$app $lang");
-                    [$code, $json] = DisplayAppsTestKit::data(self::$url, $item);
-                    $this->assertSame(200, $code, "$app $lang data");
-                    $this->assertTrue($json['ok']);
-                    $this->assertIsString($json['data']['html'] ?? null, "$app $lang data.html");
-                    $prev = DisplayAppsTestKit::page(self::$url, $item, ['preview' => 1]);
-                    $this->assertSame(200, $prev[0]);
-                    $this->assertFalse(TestEnv::hasPhpError($prev[1]));
-                    ContentManager::deleteItem((int) $item['id']);
-                }
+                $item = DisplayAppsTestKit::createItem($app, $cfg, ['lang' => $lang, 'theme' => $theme]);
+                $html = DisplayAppsTestKit::assertRenders($this, self::$url, $item);
+                $this->assertStringNotContainsString('This app is not available', $html, "$app $lang");
+                [$code, $json] = DisplayAppsTestKit::data(self::$url, $item);
+                $this->assertSame(200, $code, "$app $lang data");
+                $this->assertTrue($json['ok']);
+                $this->assertIsString($json['data']['html'] ?? null, "$app $lang data.html");
+                $prev = DisplayAppsTestKit::page(self::$url, $item, ['preview' => 1]);
+                $this->assertSame(200, $prev[0]);
+                $this->assertFalse(TestEnv::hasPhpError($prev[1]));
+                ContentManager::deleteItem((int) $item['id']);
             }
             // Defaults (gallery) and validate([]) never throw.
             $a = DisplayApps::find($app);

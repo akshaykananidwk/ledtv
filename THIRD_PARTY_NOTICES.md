@@ -31,7 +31,12 @@ file (and the license texts linked below) with every copy you distribute.
 ## External services (not bundled)
 
 * Open-Meteo weather API — free for non-commercial use; **commercial use requires an Open-Meteo API
-  subscription** (https://open-meteo.com/en/pricing) or switching the weather overlay off.
+  subscription** (https://open-meteo.com/en/pricing) or switching the weather overlay off. The same applies
+  to the Air quality app (#26), which uses the Open-Meteo Air Quality and Forecast APIs (data: CAMS /
+  Copernicus, attribution "Open-Meteo" shown on the TV).
+* Google Places API (Reviews app #30, optional) — needs the hotel's / platform's own Google Maps Platform
+  API key and billing account; subject to the Google Maps Platform Terms (attribution "Reviews from
+  Google" is shown; review content is cached only for the refresh interval).
 * YouTube embeds — subject to YouTube Terms of Service (embed only; no downloading).
 * Live darshan / temple streams — obtain permission from the stream owner (temple trust) before showing
   them commercially.

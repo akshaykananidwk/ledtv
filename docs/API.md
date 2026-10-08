@@ -133,6 +133,9 @@ the TV must de-duplicate by `id`). Commands not acked within 24 h expire.
 | `SCREEN_ON`      | `{}`                                          | Resume normal content. |
 | `RELOAD`         | `{}`                                          | Restart the main activity. |
 | `PING`           | `{}`                                          | Ack only (connectivity test). |
+| `SPEAK`          | `{text, lang: gu\|hi\|en\|auto, rate: 0.5–2, repeat: 1–3, volume?: 0–100, chime_before}` | (2.4) Text-to-speech announcement (gu-IN / hi-IN / en-IN voice, default voice when missing — named in the ack), video sound ducked, queued (never overlapping). |
+| `PLAY_SOUND`     | `{url, volume: 0–100, repeat: 1–10}`          | (2.4) Short clip in its own player (max 2 min), video sound ducked, same queue as `SPEAK`. |
+| `LIVE_VIEW`      | `{session, interval, max_sec, max_width, quality}` | (2.4) Upload small screenshots (`device/screenshot` + field `live`) every `interval` s while the server keeps the session alive. See docs/modules/device_features.md. |
 
 ---
 
@@ -169,6 +172,10 @@ Sent every `heartbeat_interval` seconds (default 60).
 ```
 
 Response `data`: `{ "server_time": "...", "poll_interval": 8, "heartbeat_interval": 60, "settings_pin_hash": "..." }`
+
+2.4 apps add `"health": { … }` (storage / cache free + total MB, RAM available / total MB, CPU °C,
+Wi-Fi RSSI and link speed, network, uptime, app memory, resolution, Android version, device owner, last
+crash, USB / CEC state) — stored per TV for the TV health page, see docs/modules/device_features.md.
 
 ---
 
@@ -254,6 +261,10 @@ content is a synced playlist or a video wall: `{ "epoch_ms": 1791206990000, "cyc
 `(server_now - epoch_ms) mod cycle_ms` falls. `wall` (2.4) is `{ "id", "rows", "cols", "row", "col",
 "bezel_x_pct", "bezel_y_pct", "audio" }` (0-based tile; bezel gap in percent of one picture; `audio` = this
 tile plays sound). Apps before 2.4.0 ignore both and play the items normally.
+
+`usb_mode` (2.4, only when true) — the room plays the TV's USB / SD `KrishnaCloud` folder; `cec_mode`
+(2.4, only when not `auto`) — `box` (Android box: real sleep / wake so HDMI-CEC follows) or `tv`. See
+docs/modules/device_features.md.
 
 Modules may add more fields through content extensions (see docs/DEVELOPER.md); the TV must ignore
 unknown fields.
@@ -383,6 +394,7 @@ Roles inside a hotel: `super_admin` > `manager` > `staff` > `reception`. Platfor
 * Guests, PMS and guest web app: [modules/guests_services.md](modules/guests_services.md)
 * Ads, analytics, templates: [modules/ads_analytics_templates.md](modules/ads_analytics_templates.md)
 * Device support (screenshot, logs, crash, events), web push: [modules/pwa_support_devices.md](modules/pwa_support_devices.md)
+* 2.4 live view, TV health, USB mode, announcements, HDMI-CEC: [modules/device_features.md](modules/device_features.md)
 
 * QR TV setup (provision start/status): [modules/qr_setup.md](modules/qr_setup.md)
 * Ad marketplace (advertiser portal): [modules/ad_marketplace.md](modules/ad_marketplace.md)
