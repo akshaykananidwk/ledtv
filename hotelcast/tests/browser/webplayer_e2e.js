@@ -119,7 +119,7 @@ async function shot(page, name) {
       await appFrame.waitForSelector('#hc-stage', { timeout: 10000 });
       appText = await appFrame.evaluate(() => document.body.innerText);
     }
-    check(/દિવાળી/.test(appText), 'display app rendered', appText.slice(0, 80).replace(/\s+/g, ' '));
+    check(/દિવાળી/.test(appText), 'display app rendered', (appFrame ? appFrame.url() : 'no frame') + ' :: ' + appText.slice(0, 80).replace(/\s+/g, ' '));
 
     await waitItem(info.ids.ann, 15000);
     check(/ચેક-આઉટ/.test(await page.textContent('.hc-ann-t')), 'announcement (Gujarati)');
