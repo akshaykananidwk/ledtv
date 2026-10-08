@@ -27,6 +27,23 @@ schedule karo, emergency message moklo, TV reboot/update karo.*
 | Android TV app | [`android/`](android) | Kotlin, ExoPlayer 2.19, Retrofit, OkHttp, Glide, WorkManager — min SDK 21, target 34 |
 | Documentation | [`docs/`](docs) | Install guide, TV setup, admin guide, API, developer guide (tenancy + extension points), security, test report |
 
+## What's new in 2.3 — 25 new features
+
+| # | Feature | Where |
+|---|---|---|
+| 1 | Restaurant menu board (sold-out switch, today's special, veg/non-veg, dayparting) | Apps → Menu board · [menu_board.md](docs/modules/menu_board.md) |
+| 2, 5 | Token / queue system for hospitals, clinics, banks, offices (NEXT/RECALL, chime + voice, tickets, phone self-service) | Apps → Token display · [queue.md](docs/modules/queue.md) |
+| 3 | School / office notice board | Apps → Notice board |
+| 4, 6, 7, 8 | Shop offers with countdown, gym/class schedule, bus/rail/airport departures, factory KPI dashboard (+ machine push API) | [business_apps.md](docs/modules/business_apps.md) |
+| 9, 10 | Real-estate showcase, wedding/event welcome | [content_apps.md](docs/modules/content_apps.md) |
+| 11, 12 | Drag & drop slide designer (14 templates), PDF → slides import | Content → Design a slide / Import PDF · [designer_pdf.md](docs/modules/designer_pdf.md) |
+| 13 | Split-screen layouts (up to 6 zones) | Content → Split screen · [layouts.md](docs/modules/layouts.md) |
+| 14, 16, 19 | Google Sheet live table, Instagram/Facebook wall, phone photo album (+ guest upload link) | [content_apps.md](docs/modules/content_apps.md) |
+| 15 | YouTube playlists and channels | Content → YouTube |
+| 17, 18 | Countdown, QR (URL / UPI / WhatsApp / Wi-Fi) | Apps |
+| 20 | 12 themes (Diwali, Navratri, Janmashtami, wedding …) + bundled Gujarati/Hindi fonts | every app · [display_apps.md](docs/modules/display_apps.md) |
+| 21–25 | Gold/silver rates, stock market, cricket, currency, train/flight status (manual or API key) + ticker placeholders `{gold_24k}` `{usd_inr}` … | [data_feeds.md](docs/modules/data_feeds.md) |
+
 ## What's new in 2.2
 
 | Feature | Where |

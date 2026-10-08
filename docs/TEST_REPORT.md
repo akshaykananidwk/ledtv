@@ -1,3 +1,16 @@
+# 2.3.0 — 25 new features (2026-10-08)
+
+| Area | Result |
+|------|--------|
+| PHPUnit full suite | ✅ **442 tests, 16,072 assertions, 0 failures** |
+| Android unit tests (layouts, decoder planner, YouTube URLs, ticker) | ✅ **173 tests, 0 failures**; lint 0 errors; APK `KrishnaCloud-TV-2.3.0.apk` (code 10), same signing key |
+| Browser QA (headless Chromium, live sandbox): all 19 display apps × en/gu × 1080p/720p, 3 themes, live updates, queue end-to-end with two counters, every admin page × 5 roles, phone-width pages, designer, PDF import, album, layout editor, TV poll API (new + old app) | ✅ 12 bugs found and fixed (heading sizes, text fitting, offers overflow, YouTube playlist embeds, simulator ticker height, queue/gold/currency/KPI overflow, kiosk number wrap, ticker preview JS error) |
+| Security review of new public endpoints (display/, queue self-service, guest album upload, KPI push API, SSRF in sheet/data feeds, uploads, tenancy, CSRF) | ✅ 3 issues fixed (shared API quota from previews, refresh TTL, guest GIF re-encode) + regression tests |
+
+Screenshots: `docs/screenshots/2.3/`. Not verified here: real TV hardware (multi-video decoders, speech, autoplay), real provider APIs, YouTube/Instagram/Facebook embeds (no internet in the test environment), thermal printers.
+
+---
+
 # 2.2.2 — no black side bars next to the ticker (2026-10-06)
 
 With "Do not cover the video" on, the video used to keep its shape in the smaller area, which left black bars at the left and right. New ticker option **video_scale** (`fill` default / `fit` / `zoom`): `fill` uses the whole width and height (nothing cut, slightly squeezed). Migration `012_ticker_video_scale.sql`.

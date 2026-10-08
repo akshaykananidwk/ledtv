@@ -186,7 +186,18 @@
     }
     function addText(kind) {
       const spec = { heading: [L.heading, 120, 'bold', 1500], subheading: [L.subheading, 72, 'bold', 1300], body: [L.body, 48, 'normal', 1000] }[kind];
-      place(new fabric.Textbox(spec[0], { width: spec[3], fontSize: spec[1], fontWeight: spec[2], fill: textColor(), fontFamily: FONT, textAlign: 'center', lineHeight: 1.16 }));
+      const tb = new fabric.Textbox(spec[0], { width: spec[3], fontSize: spec[1], fontWeight: spec[2], fill: textColor(), fontFamily: FONT, textAlign: 'center', lineHeight: 1.16 });
+      // Heading near the top, subheading in the middle, body below, so new texts don't land on top of each other.
+      const r = tb.getBoundingRect();
+      const left = (W - r.width) / 2;
+      let top = H * { heading: 0.16, subheading: 0.42, body: 0.64 }[kind] - r.height / 2;
+      // Same kind added again: cascade below the previous one instead of covering it.
+      const taken = () => canvas.getObjects().some((o) => {
+        const b = o.getBoundingRect();
+        return Math.abs(b.top - top) < 24 && Math.abs(b.left - left) < 24;
+      });
+      for (let i = 0; i < 12 && taken(); i++) top += 48;
+      place(tb, { left, top: Math.min(top, H - r.height) });
     }
     function star(r) {
       const pts = [];
