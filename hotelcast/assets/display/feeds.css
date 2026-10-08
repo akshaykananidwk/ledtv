@@ -14,14 +14,14 @@
 .df-flat{color:var(--hc-muted)}
 
 /* Gold & silver (#21) */
-.gr-board{-webkit-flex:1;flex:1;display:-webkit-flex;display:flex;-webkit-flex-direction:column;flex-direction:column;-webkit-justify-content:center;justify-content:center}
-.gr-row{display:-webkit-flex;display:flex;-webkit-align-items:center;align-items:center;-webkit-justify-content:space-between;justify-content:space-between;margin-bottom:1rem;padding:1.2rem 2rem;border-left:.5rem solid var(--hc-accent)}
+.gr-board{-webkit-flex:1;flex:1;min-height:0;display:-webkit-flex;display:flex;-webkit-flex-direction:column;flex-direction:column;-webkit-justify-content:center;justify-content:center}
+.gr-row{display:-webkit-flex;display:flex;-webkit-align-items:center;align-items:center;-webkit-justify-content:space-between;justify-content:space-between;margin-bottom:.5rem;padding:.4rem 2rem;border-left:.5rem solid var(--hc-accent)}
 .gr-silver{border-left-color:#B0BEC5}
-.gr-name b{display:block;font-size:2.4rem;line-height:1.1}
-.gr-name span{font-size:1.1rem;color:var(--hc-muted)}
-.gr-price{font-size:3.6rem;font-weight:700;color:var(--hc-accent);white-space:nowrap;font-variant-numeric:tabular-nums}
+.gr-name b{display:block;font-size:2rem;line-height:1.1}
+.gr-name span{font-size:1rem;color:var(--hc-muted)}
+.gr-price{font-size:3rem;line-height:1.15;font-weight:700;color:var(--hc-accent);white-space:nowrap;font-variant-numeric:tabular-nums}
 .gr-silver .gr-price{color:var(--hc-card-fg)}
-.gr-price span{font-size:2rem;vertical-align:middle}
+.gr-price span{font-size:1.7rem;vertical-align:middle}
 .gr-note{font-size:1.3rem;text-align:center;color:var(--hc-fg);margin-top:.3rem}
 
 /* Market (#22) */
