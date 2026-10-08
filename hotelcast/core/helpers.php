@@ -151,16 +151,17 @@ function time_ago(?string $datetime): string
     if ($diff < 0) {
         $diff = 0;
     }
+    // Whole phrases (2.5 QA): "5h પહેલાં" mixed English units into the Gujarati / Hindi UI.
     if ($diff < 60) {
-        return $diff . 's ' . __('ago');
+        return __(':ns ago', ['n' => $diff]);
     }
     if ($diff < 3600) {
-        return floor($diff / 60) . 'm ' . __('ago');
+        return __(':nm ago', ['n' => (int) floor($diff / 60)]);
     }
     if ($diff < 86400) {
-        return floor($diff / 3600) . 'h ' . __('ago');
+        return __(':nh ago', ['n' => (int) floor($diff / 3600)]);
     }
-    return floor($diff / 86400) . 'd ' . __('ago');
+    return __(':nd ago', ['n' => (int) floor($diff / 86400)]);
 }
 
 /** Translate a key (English / Gujarati). */

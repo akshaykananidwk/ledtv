@@ -189,6 +189,7 @@
       const wrap = document.querySelector(inp.dataset.strength);
       if (!wrap) return;
       const bar = wrap.querySelector('span');
+      if (!bar) return;
       const label = wrap.parentElement.querySelector('[data-strength-label]');
       const colors = ['#ef4444', '#ef4444', '#f59e0b', '#22c55e', '#15803d'];
       const names = [T.weak, T.weak, T.fair, T.good, T.strong];

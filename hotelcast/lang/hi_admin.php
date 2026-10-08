@@ -528,4 +528,8 @@ return [
     '— None (use default content) —' => '— कोई नहीं (डिफ़ॉल्ट कंटेंट इस्तेमाल करें) —',
     '— Welcome screen (business logo) —' => '— स्वागत स्क्रीन (व्यवसाय का लोगो) —',
     '…or use a web address (URL) instead' => '…या इसकी जगह वेब पता (URL) इस्तेमाल करें',
+    ':ns ago' => ':n सेकंड पहले',
+    ':nm ago' => ':n मिनट पहले',
+    ':nh ago' => ':n घंटे पहले',
+    ':nd ago' => ':n दिन पहले',
 ];
