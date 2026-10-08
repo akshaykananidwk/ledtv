@@ -4,7 +4,7 @@ declare(strict_types=1);
 /** Hindi — Google Sheet table (#14): core/Apps/SheetTableApp.php, core/SheetFeed.php. */
 return [
     'Google Sheet table' => 'Google शीट टेबल',
-    'Show a published Google Sheet as a big table: price lists, room rates, timetables. Edit the sheet and the TVs follow.' => 'प्रकाशित Google शीट को बड़ी टेबल के रूप में दिखाएँ: रेट लिस्ट, रूम किराया, समय-सारणी। शीट बदलें और टीवी भी बदल जाते हैं।',
+    'Show a published Google Sheet as a big table: price lists, rates, timetables. Edit the sheet and the TVs follow.' => 'प्रकाशित Google शीट को बड़ी टेबल के रूप में दिखाएँ: रेट लिस्ट, दरें, समय-सारणी। शीट बदलें और टीवी भी बदल जाते हैं।',
     'Paste the Google Sheets link (File → Share → Publish to web → CSV).' => 'Google Sheets लिंक पेस्ट करें (File → Share → Publish to web → CSV)।',
     'Only Google Sheets links (https://docs.google.com/spreadsheets/…) are allowed.' => 'केवल Google Sheets लिंक (https://docs.google.com/spreadsheets/…) मान्य हैं।',
     'Google Sheets link' => 'Google Sheets लिंक',

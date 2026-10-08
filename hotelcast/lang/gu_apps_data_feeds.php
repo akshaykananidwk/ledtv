@@ -198,7 +198,7 @@ return [
     'Write them in a ticker message; TVs show the current value. Trains have no official live API — use manual rows in the Train & flight status app.' => 'તેને ટિકર સંદેશમાં લખો; TV વર્તમાન મૂલ્ય બતાવે છે. ટ્રેન માટે સત્તાવાર લાઇવ API નથી — ટ્રેન અને ફ્લાઇટ સ્થિતિ એપમાં હાથે લાઇનો વાપરો.',
 
     // Platform settings → Data feeds
-    'External data for the gold, market, cricket, currency and flight widgets and for ticker placeholders. Keys are stored encrypted and used only by the server; TVs never see them. Hotels may also enter their own key (Data feeds page). Every widget also works with values typed by the hotel.' => 'સોનું, બજાર, ક્રિકેટ, ચલણ અને ફ્લાઇટ વિજેટ તથા ટિકર પ્લેસહોલ્ડર માટે બાહ્ય ડેટા. કી એન્ક્રિપ્ટ કરીને સાચવાય છે અને માત્ર સર્વર વાપરે છે; TV ક્યારેય જોતા નથી. હોટલ પોતાની કી પણ લખી શકે છે (ડેટા ફીડ પેજ). દરેક વિજેટ હોટલે લખેલાં મૂલ્યોથી પણ ચાલે છે.',
+    'External data for the gold, market, cricket, currency and flight widgets and for ticker placeholders. Keys are stored encrypted and used only by the server; TVs never see them. Customers may also enter their own key (Data feeds page). Every widget also works with values typed by the customer.' => 'સોનું, બજાર, ક્રિકેટ, ચલણ અને ફ્લાઇટ વિજેટ તથા ટિકર પ્લેસહોલ્ડર માટે બાહ્ય ડેટા. કી એન્ક્રિપ્ટ કરીને સાચવાય છે અને માત્ર સર્વર વાપરે છે; TV ક્યારેય જોતા નથી. ગ્રાહક પોતાની કી પણ લખી શકે છે (ડેટા ફીડ પેજ). દરેક વિજેટ ગ્રાહકે લખેલાં મૂલ્યોથી પણ ચાલે છે.',
     'Currency rates provider (free, no key)' => 'ચલણ દર પ્રદાતા (મફત, કી વગર)',
     'Requests per minute (all providers)' => 'પ્રતિ મિનિટ વિનંતીઓ (બધા પ્રદાતા)',
     'The background task never sends more requests than this.' => 'બેકગ્રાઉન્ડ કાર્ય ક્યારેય આનાથી વધુ વિનંતીઓ મોકલતું નથી.',

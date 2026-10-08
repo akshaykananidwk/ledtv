@@ -178,7 +178,7 @@ final class Tenant
             if (defined('HC_API')) {
                 Api::error('HOTEL_SUSPENDED', self::suspendedMessage()['message'], 403);
             }
-            throw new TenantException('Hotel is suspended');
+            throw new TenantException('Customer is suspended');
         }
     }
 
@@ -189,7 +189,7 @@ final class Tenant
         $custom = trim((string) Settings::get('suspended_message', ''));
         return [
             'title' => I18n::translate('Service paused', $lang),
-            'message' => $custom !== '' ? $custom : I18n::translate('This TV service is temporarily paused. Please contact reception.', $lang),
+            'message' => $custom !== '' ? $custom : I18n::translate('This TV service is temporarily paused. Please contact the administrator.', $lang),
         ];
     }
 

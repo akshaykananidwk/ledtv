@@ -121,7 +121,7 @@ if (is_post()) {
                 Settings::bumpContentVersion();
                 $room = Tenant::find('rooms', (int) $id);
                 Broadcaster::queueForRooms([$room], 'SHOW_CONTENT');
-                ActivityLog::add($existing ? 'room_update' : 'room_create', 'room', $id, 'Room ' . $number);
+                ActivityLog::add($existing ? 'room_update' : 'room_create', 'room', $id, 'Screen ' . $number);
                 flash('success', $existing ? __('Screen :n saved.', ['n' => $number]) : __('Screen :n added.', ['n' => $number]));
                 redirect(admin_url('rooms.php'));
 
@@ -133,7 +133,7 @@ if (is_post()) {
                 if ($room) {
                     DB::delete('rooms', 'id = :id', ['id' => $id]);
                     Settings::bumpContentVersion();
-                    ActivityLog::add('room_delete', 'room', $id, 'Room ' . $room['room_number']);
+                    ActivityLog::add('room_delete', 'room', $id, 'Screen ' . $room['room_number']);
                     flash('success', __('Screen :n deleted.', ['n' => $room['room_number']]));
                 }
                 redirect(admin_url('rooms.php'));
@@ -170,7 +170,7 @@ if (is_post()) {
                     }
                 });
                 Settings::bumpContentVersion();
-                ActivityLog::add('room_bulk_add', 'room', null, "Added $added rooms: " . implode(', ', array_slice($numbers, 0, 30)));
+                ActivityLog::add('room_bulk_add', 'room', null, "Added $added screens: " . implode(', ', array_slice($numbers, 0, 30)));
                 flash('success', __(':n screens added.', ['n' => $added]) . ($skipped ? ' ' . __('Already existed: :list', ['list' => implode(', ', array_slice($skipped, 0, 20))]) : ''));
                 redirect(admin_url('rooms.php'));
 
@@ -208,7 +208,7 @@ if (is_post()) {
                     case 'PING':
                         require_can('broadcast.device_commands');
                         [$bid, $dev] = Broadcaster::sendCommand($do, 'rooms', $ids, [], Auth::id());
-                        ActivityLog::add('device_command', 'broadcast', $bid, "$do → $count rooms ($dev TVs)");
+                        ActivityLog::add('device_command', 'broadcast', $bid, "$do → $count screens ($dev TVs)");
                         flash('success', __(':cmd sent to :n TVs.', ['cmd' => command_label($do), 'n' => $dev]));
                         break;
                     case 'enable':
@@ -227,7 +227,7 @@ if (is_post()) {
                         $nums = DB::column("SELECT room_number FROM rooms WHERE hotel_id = :hid AND id IN $in", $p + hid());
                         DB::query("DELETE FROM rooms WHERE hotel_id = :hid AND id IN $in", $p + hid());
                         Settings::bumpContentVersion();
-                        ActivityLog::add('room_bulk_delete', 'room', null, 'Deleted rooms: ' . implode(', ', $nums));
+                        ActivityLog::add('room_bulk_delete', 'room', null, 'Deleted screens: ' . implode(', ', $nums));
                         flash('success', __(':n screens deleted.', ['n' => count($nums)]));
                         break;
                     default:
@@ -641,7 +641,7 @@ require __DIR__ . '/partials/header.php';
     <div class="flex-grow-1">
       <strong><?= e(__('How to connect a new TV')) ?></strong>
       <ol class="mb-1 small ps-3">
-        <li><?= e(__('Install the Krishna Cloud LED TV app on the TV and open it.')) ?></li>
+        <li><?= e(__('Install the Krishna Cloud TV app on the TV and open it.')) ?></li>
         <li><?= e(__('Enter the server address:')) ?> <code><?= e(base_url()) ?></code> <button type="button" class="btn btn-xs btn-light border" data-copy="<?= e(base_url()) ?>"><i class="bi bi-clipboard"></i></button></li>
         <?php if ($canManage && !$limited): ?>
           <li><?= e(__('Enter the registration key:')) ?> <code><?= e((string) Settings::get('registration_key', '') ?: __('(not set — open Settings → Devices)')) ?></code>

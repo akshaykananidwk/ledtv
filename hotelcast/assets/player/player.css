@@ -1,4 +1,4 @@
-/* Krishna Cloud LED TV web player 2.4 — see assets/player/player.js and docs/modules/web_player.md.
+/* Krishna Cloud TV Management web player 2.4 — see assets/player/player.js and docs/modules/web_player.md.
    Sizes inside the stage are in em: the stage font-size is 5 dp of a 960 dp wide TV (1 dp = 0.2em). */
 @font-face{font-family:"Noto Sans Gujarati";font-style:normal;font-weight:400;font-display:swap;src:url(../fonts/noto-sans-gujarati-gujarati-400-normal.woff2) format("woff2");unicode-range:U+0951-0952,U+0964-0965,U+0A80-0AFF,U+200C-200D,U+20B9,U+25CC,U+A830-A839}
 @font-face{font-family:"Noto Sans Gujarati";font-style:normal;font-weight:700;font-display:swap;src:url(../fonts/noto-sans-gujarati-gujarati-700-normal.woff2) format("woff2");unicode-range:U+0951-0952,U+0964-0965,U+0A80-0AFF,U+200C-200D,U+20B9,U+25CC,U+A830-A839}

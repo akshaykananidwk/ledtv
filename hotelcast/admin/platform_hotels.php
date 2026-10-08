@@ -73,7 +73,7 @@ if (is_post()) {
                     flash_errors($errors);
                 } else {
                     $uid = Hotels::createHotelUser($id, $admin, 'super_admin');
-                    ActivityLog::add('user_create', 'user', $uid, $admin['username'] . ' (super_admin of hotel #' . $id . ')');
+                    ActivityLog::add('user_create', 'user', $uid, $admin['username'] . ' (super_admin of customer #' . $id . ')');
                     flash('success', __('Super admin :u created.', ['u' => $admin['username']]));
                 }
                 redirect(admin_url('platform_hotels.php', ['action' => 'view', 'id' => $id]));

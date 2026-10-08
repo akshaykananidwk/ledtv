@@ -58,7 +58,7 @@ return [
     'Name (Hindi)' => 'नाम (हिन्दी)',
     'Shown on TV from' => 'टीवी पर कब से',
     'Shown on TV until' => 'टीवी पर कब तक',
-    'Dayparting: e.g. breakfast 07:00–11:00. Leave empty to show it all day. Uses the hotel time zone.' => 'समय के अनुसार: जैसे नाश्ता 07:00–11:00. पूरे दिन दिखाने के लिए खाली छोड़ें. होटल का टाइम ज़ोन इस्तेमाल होता है.',
+    'Dayparting: e.g. breakfast 07:00–11:00. Leave empty to show it all day. Uses your time zone.' => 'समय के अनुसार: जैसे नाश्ता 07:00–11:00. पूरे दिन दिखाने के लिए खाली छोड़ें. आपका टाइम ज़ोन इस्तेमाल होता है.',
     'Show on TV menu boards' => 'टीवी मेनू बोर्ड पर दिखाएँ',
     'Active (room service and TV)' => 'चालू (रूम सर्विस और टीवी)',
     'Add a category first.' => 'पहले श्रेणी जोड़ें.',

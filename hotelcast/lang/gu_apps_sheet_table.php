@@ -4,7 +4,7 @@ declare(strict_types=1);
 /** Gujarati — Google Sheet table (#14): core/Apps/SheetTableApp.php, core/SheetFeed.php. */
 return [
     'Google Sheet table' => 'Google શીટ ટેબલ',
-    'Show a published Google Sheet as a big table: price lists, room rates, timetables. Edit the sheet and the TVs follow.' => 'પ્રકાશિત Google શીટને મોટા ટેબલ તરીકે બતાવો: ભાવ યાદી, રૂમ ભાડાં, સમયપત્રક. શીટ બદલો અને ટીવી પણ બદલાય.',
+    'Show a published Google Sheet as a big table: price lists, rates, timetables. Edit the sheet and the TVs follow.' => 'પ્રકાશિત Google શીટને મોટા ટેબલ તરીકે બતાવો: ભાવ યાદી, દરો, સમયપત્રક. શીટ બદલો અને ટીવી પણ બદલાય.',
     'Paste the Google Sheets link (File → Share → Publish to web → CSV).' => 'Google Sheets લિંક પેસ્ટ કરો (File → Share → Publish to web → CSV).',
     'Only Google Sheets links (https://docs.google.com/spreadsheets/…) are allowed.' => 'ફક્ત Google Sheets લિંક (https://docs.google.com/spreadsheets/…) ચાલે છે.',
     'Google Sheets link' => 'Google Sheets લિંક',

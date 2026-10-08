@@ -247,7 +247,7 @@ final class Billing
             }
             $admin = trim((string) Settings::platform('platform_notify_email', ''));
             if ($out['suspended'] && $admin !== '') {
-                Notifier::email($admin, $brand . ': ' . $out['suspended'] . ' hotel(s) auto-suspended', 'Hotels auto-suspended for overdue invoices: ' . implode(', ', $hotels), (string) Settings::platform('platform_from_email', ''), $brand);
+                Notifier::email($admin, $brand . ': ' . $out['suspended'] . ' customer(s) auto-suspended', 'Customers auto-suspended for overdue invoices: ' . implode(', ', $hotels), (string) Settings::platform('platform_from_email', ''), $brand);
             }
         }
         return $out;

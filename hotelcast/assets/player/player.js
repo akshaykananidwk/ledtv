@@ -1,5 +1,5 @@
 /*!
- * Krishna Cloud LED TV — web player 2.4 (HotelCast #45).
+ * Krishna Cloud TV Management — web player 2.5 (HotelCast #45).
  * Plain ES5 (old Samsung Tizen / LG webOS browsers), no build step, no dependencies
  * (hls.js is loaded from assets/vendor only when an HLS stream needs it).
  *
@@ -290,17 +290,17 @@
     var server = trim(store.get('hc_server') || pageRoot());
     var html = '<div class="hc-setup" id="hc-setup">' +
       '<div class="hc-setup-head">' + (CFG.logo ? '<img alt="" src="' + esc(CFG.logo) + '">' : '') +
-      '<div><div class="hc-product">' + esc(CFG.product || 'Krishna Cloud LED TV') + '</div><h1>' + esc(t('Set up this screen')) + '</h1></div></div>' +
+      '<div><div class="hc-product">' + esc(CFG.product || 'Krishna Cloud TV Management') + '</div><h1>' + esc(t('Set up this screen')) + '</h1></div></div>' +
       (note ? '<div class="hc-note">' + esc(note) + '</div>' : '') +
       '<div class="hc-setup-cols">' +
       '<div class="hc-card hc-qr"><h2>' + esc(t('Scan with your phone')) + '</h2>' +
       '<div class="hc-qr-img" id="hc-qr-img"><div class="hc-spinner"></div></div>' +
       '<div class="hc-code-label">' + esc(t('Setup code')) + '</div><div class="hc-code" id="hc-code">······</div>' +
-      '<p>' + esc(t('Open the camera on your phone, scan the code and choose the room. This screen starts by itself.')) + '</p>' +
+      '<p>' + esc(t('Open the camera on your phone, scan the code and choose the screen. This screen starts by itself.')) + '</p>' +
       '<div class="hc-status" id="hc-qr-status">' + esc(t('Getting a setup code…')) + '</div></div>' +
       '<form class="hc-card hc-manual" id="hc-form" autocomplete="off"><h2>' + esc(t('Or enter the details')) + '</h2>' +
       '<label>' + esc(t('Server address')) + '<input id="hc-f-server" type="url" inputmode="url" spellcheck="false" value="' + esc(server) + '"></label>' +
-      '<label>' + esc(t('Room number')) + '<input id="hc-f-room" type="text" maxlength="20" spellcheck="false" value="' + esc(query('room') || S.room || '') + '"></label>' +
+      '<label>' + esc(t('Screen name / ID')) + '<input id="hc-f-room" type="text" maxlength="20" spellcheck="false" value="' + esc(query('room') || S.room || '') + '"></label>' +
       '<label>' + esc(t('Registration key')) + '<input id="hc-f-key" type="text" maxlength="64" spellcheck="false" autocapitalize="off"></label>' +
       '<div class="hc-help">' + esc(t('Find the registration key in Admin → Settings → Devices.')) + '</div>' +
       '<button type="submit" id="hc-f-go">' + esc(t('Connect')) + '</button>' +
@@ -343,7 +343,7 @@
     var server = normServer(document.getElementById('hc-f-server').value);
     var room = trim(document.getElementById('hc-f-room').value);
     var key = trim(document.getElementById('hc-f-key').value);
-    if (room === '' || key === '') { setupError(t('Please fill in the room number and the registration key.')); return; }
+    if (room === '' || key === '') { setupError(t('Please fill in the screen name / ID and the registration key.')); return; }
     if (server !== '' && server !== normServer(pageRoot())) {
       // Another server: open that server's web player (same origin as its API, no CORS needed) and hand
       // over the values in the fragment, which is never sent over the network.
@@ -388,7 +388,7 @@
       if (S.mode !== 'setup') return;
       var d = st === 200 && j && j.ok ? j.data : null;
       if (d && d.status === 'claimed') {
-        qrStatus(t('Assigned to room :room. Connecting…', { room: d.room_number }));
+        qrStatus(t('Assigned to screen :room. Connecting…', { room: d.room_number }));
         register(String(d.room_number), String(d.registration_key), function (msg) {
           qrStatus(msg);
           S.provTimer = setTimeout(provStatus, 10000);
@@ -432,9 +432,9 @@
       }
       var code = errCode(j);
       var msg = code === 'INVALID_REGISTRATION_KEY' ? t('The registration key is wrong.')
-        : code === 'ROOM_NOT_FOUND' ? t('Room :room does not exist. Add it in the admin panel first.', { room: room })
+        : code === 'ROOM_NOT_FOUND' ? t('Screen :room does not exist. Add it in the admin panel first.', { room: room })
           : code === 'LICENSE_LIMIT' ? t('TV limit reached. Remove an old TV in the admin panel or upgrade your plan.')
-            : code === 'HOTEL_SUSPENDED' ? t('Service paused') + ' — ' + t('Please contact reception.')
+            : code === 'HOTEL_SUSPENDED' ? t('Service paused') + ' — ' + t('Please contact the administrator.')
               : st === 429 ? t('Too many attempts. Please try again in a minute.')
                 : st === 0 ? t('Cannot reach the server. Check the address and the network.')
                   : (j && j.error && j.error.message) || ('HTTP ' + st);
@@ -778,7 +778,7 @@
     var logo = (b.logo_url) || (c.hotel && c.hotel.logo_url);
     showFull('hc-suspended', '<div class="hc-welcome">' + (logo ? '<img alt="" src="' + esc(logo) + '">' : '') +
       '<div class="hc-w1">' + esc(s.title || t('Service paused')) + '</div>' +
-      '<div class="hc-w2">' + esc(s.message || t('Please contact reception.')) + '</div>' +
+      '<div class="hc-w2">' + esc(s.message || t('Please contact the administrator.')) + '</div>' +
       (b.support ? '<div class="hc-w3" style="color:' + color(b.color, '#FFB300') + '">' + esc(t('Support: :s', { s: b.support })) + '</div>' : '') + '</div>');
   }
   function showWelcome(c, status) {
@@ -788,7 +788,7 @@
     var logo = brandLogo(c);
     var layer = el('div', 'hc-layer', '<div class="hc-welcome">' + (logo ? '<img alt="" src="' + esc(logo) + '">' : '') +
       '<div class="hc-w1">' + esc(status || (hotel ? t('Welcome to :name', { name: hotel }) : t('Welcome'))) + '</div>' +
-      (room ? '<div class="hc-w2" style="color:' + color(c && c.branding && c.branding.color, '#FFB300') + '">' + esc(t('Room :room', { room: room })) + '</div>' : '') +
+      (room ? '<div class="hc-w2" style="color:' + color(c && c.branding && c.branding.color, '#FFB300') + '">' + esc(t('Screen :room', { room: room })) + '</div>' : '') +
       (product && product !== hotel ? '<div class="hc-w3">' + esc(product) + '</div>' : '') + '</div>');
     $('hc-content').appendChild(layer);
   }
@@ -1866,7 +1866,7 @@
     menu.confirm = null;
     var c = S.content || {};
     var info = [
-      [t('Room'), (c.room && c.room.number) || S.room || '-'],
+      [t('Screen'), (c.room && c.room.number) || S.room || '-'],
       [t('Server'), pageRoot()],
       [t('Device ID'), S.deviceId],
       [t('Version'), 'web-' + VERSION + ' · ' + OS],

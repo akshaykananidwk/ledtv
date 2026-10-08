@@ -21,7 +21,7 @@ if (is_post()) {
         switch ($op) {
             case 'approve':
                 [$hid] = Signup::approve($id, Auth::id());
-                ActivityLog::add('signup_approve', 'signup', $id, 'Hotel #' . $hid);
+                ActivityLog::add('signup_approve', 'signup', $id, 'Customer #' . $hid);
                 flash('success', __('Sign-up approved: the trial customer was created and the owner was informed.'));
                 break;
             case 'reject':

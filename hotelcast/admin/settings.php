@@ -166,7 +166,7 @@ if (is_post()) {
                         if (!$emails && $wa === '') {
                             flash('warning', __('Enter an email address or WhatsApp URL first.'));
                         } else {
-                            $res = Notifier::send(Branding::get()['product'] . ': ' . __('Test notification'), sprintf('[%s] %s (%s)', Settings::get('hotel_name', Branding::DEFAULT_PRODUCT), __('This is a test message from Krishna Cloud LED TV.'), date('d M H:i')));
+                            $res = Notifier::send(Branding::get()['product'] . ': ' . __('Test notification'), sprintf('[%s] %s (%s)', Settings::get('hotel_name', Branding::DEFAULT_PRODUCT), __('This is a test message from :product.', ['product' => Branding::get()['product']]), date('d M H:i')));
                             $parts = [];
                             foreach ($res as $ch => $ok) {
                                 $parts[] = ($ch === 'email' ? __('Email') : 'WhatsApp') . ': ' . ($ok ? __('sent') : __('failed'));

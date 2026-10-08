@@ -64,10 +64,10 @@ final class DeviceManager
         $room = DB::one('SELECT * FROM rooms WHERE hotel_id = :h AND room_number = :n', ['h' => $hid, 'n' => $roomNumber]);
         if (!$room) {
             if (!Settings::bool('auto_create_rooms')) {
-                Api::error('ROOM_NOT_FOUND', 'Room ' . $roomNumber . ' does not exist. Add it in the admin panel first.', 404);
+                Api::error('ROOM_NOT_FOUND', 'Screen ' . $roomNumber . ' does not exist. Add it in the admin panel first.', 404);
             }
             $floor = preg_match('/^(\d+)\d{2}$/', $roomNumber, $m) ? $m[1] : null;
-            $rid = DB::insert('rooms', ['room_number' => $roomNumber, 'name' => 'Room ' . $roomNumber, 'floor' => $floor, 'created_at' => now()]);
+            $rid = DB::insert('rooms', ['room_number' => $roomNumber, 'name' => 'Screen ' . $roomNumber, 'floor' => $floor, 'created_at' => now()]);
             $room = DB::one('SELECT * FROM rooms WHERE id = :id AND hotel_id = :h', ['id' => $rid, 'h' => $hid]);
             ActivityLog::add('room_auto_created', 'room', $rid, 'Created by TV registration ' . $uid);
         }
@@ -151,7 +151,7 @@ final class DeviceManager
     {
         $room = $device['room_id'] ? DB::one('SELECT * FROM rooms WHERE id = :id AND hotel_id = :h', ['id' => $device['room_id'], 'h' => (int) $device['hotel_id']]) : null;
         if (!$room) {
-            Api::error('ROOM_NOT_FOUND', 'This TV is not assigned to a room. Register it again.', 404);
+            Api::error('ROOM_NOT_FOUND', 'This TV is not assigned to a screen. Register it again.', 404);
         }
         return $room;
     }

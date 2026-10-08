@@ -38,9 +38,9 @@ function setup_file_text(array $rooms): string
     }
     $hotel = setup_cell((string) Settings::get('hotel_name', ''));
     $lines = [
-        '# Krishna Cloud LED TV bulk setup file - ' . $hotel . ' - ' . date('Y-m-d H:i'),
-        '# Contains the registration key of the hotel: keep it private and delete it after the setup.',
-        '# One TV per line: tv_address,room_number. tv_address = TV IP (port 5555 is used) or IP:PORT shown in',
+        '# Krishna Cloud TV Management bulk setup file - ' . $hotel . ' - ' . date('Y-m-d H:i'),
+        '# Contains the registration key of this customer: keep it private and delete it after the setup.',
+        '# One TV per line: tv_address,room (room = screen name / ID). tv_address = TV IP (port 5555 is used) or IP:PORT shown in',
         '# Wireless debugging (Android 11+). Fill in the address where it is blank - rows without one are skipped.',
         'server,' . setup_cell(rtrim(base_url(), '/')),
         'key,' . setup_cell((string) Settings::get('registration_key', '')),

@@ -321,7 +321,7 @@ final class Auth
         unset($_SESSION['hc_back']); // set again by the page that wants its own "back" link (chain.php)
         Tenant::set($hotelId);
         // Logged in the entered hotel: its staff can see when the platform / reseller worked in it.
-        ActivityLog::add('hotel_enter', 'hotel', $hotelId, 'Entered hotel #' . $hotelId, $hotelId);
+        ActivityLog::add('hotel_enter', 'hotel', $hotelId, 'Entered customer #' . $hotelId, $hotelId);
         return true;
     }
 
@@ -641,7 +641,7 @@ final class Auth
             if (self::isAjax()) {
                 http_response_code(409);
                 header('Content-Type: application/json; charset=utf-8');
-                echo json_out(['ok' => false, 'error' => ['code' => 'NO_HOTEL', 'message' => 'Select a hotel first']]);
+                echo json_out(['ok' => false, 'error' => ['code' => 'NO_HOTEL', 'message' => 'Select a customer first']]);
                 exit;
             }
             redirect(admin_url(self::homePage()));

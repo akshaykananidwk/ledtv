@@ -1,6 +1,6 @@
 <?php
 /**
- * HotelCast one-click installer.
+ * Krishna Cloud TV Management (code name HotelCast) one-click installer.
  * Upload the files, open /install in a browser and follow the 7 steps.
  */
 declare(strict_types=1);
@@ -13,7 +13,7 @@ require __DIR__ . '/Installer.php';
 if (is_file(HC_ROOT . '/installed.lock')) {
     http_response_code(403);
     echo '<!DOCTYPE html><meta charset="utf-8"><title>Already installed</title><body style="font-family:sans-serif;padding:40px">'
-        . '<h1>Krishna Cloud LED TV is already installed</h1><p>The installer is locked. For security, delete the <code>/install</code> folder.</p>'
+        . '<h1>Krishna Cloud TV Management is already installed</h1><p>The installer is locked. For security, delete the <code>/install</code> folder.</p>'
         . '<p><a href="../admin/">Go to the admin panel →</a></p></body>';
     exit;
 }
@@ -189,7 +189,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $errors[] = 'Choose a valid time zone.';
                     }
                     if (!ContentManager::validUrl($baseUrl, ['http', 'https'])) {
-                        $errors[] = 'Enter the full website address, e.g. https://hotel.com/hotelcast/';
+                        $errors[] = 'Enter the full website address, e.g. https://example.com/hotelcast/';
                     }
                     $brand = mb_substr(trim((string) ($_POST['brand_name'] ?? '')), 0, 120);
                     $S['hotel_form'] = ['hotel_name' => $hotel, 'timezone' => $tz, 'language' => $lang, 'base_url' => $baseUrl, 'brand_name' => $brand];
@@ -270,7 +270,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             'github' => (string) Settings::get('github_repo', ''),
                         ];
                         Version::write(['installed_at' => date('c')]);
-                        ActivityLog::add('installed', null, null, 'Krishna Cloud LED TV ' . Version::current()['version'] . ' installed');
+                        ActivityLog::add('installed', null, null, 'Krishna Cloud TV Management ' . Version::current()['version'] . ' installed');
                         $S['finish_msg'] = Installer::finish();
                         $S['step'] = 7;
                     }
@@ -289,7 +289,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $csrf = $S['csrf'];
-$steps = [1 => 'Requirements', 2 => 'Database', 3 => 'Tables', 4 => 'Admin', 5 => 'Hotel', 6 => 'Update & License', 7 => 'Done'];
+$steps = [1 => 'Requirements', 2 => 'Database', 3 => 'Tables', 4 => 'Admin', 5 => 'Business', 6 => 'Update & License', 7 => 'Done'];
 $brandName = Branding::installerName();
 ?><!DOCTYPE html>
 <html lang="en">
@@ -331,7 +331,7 @@ code{background:#f3e5f5;padding:2px 6px;border-radius:5px;font-size:.92em}
 </head>
 <body>
 <div class="wrap">
-  <div class="brand"><div class="logo">📺</div><div><h1><?= e($brandName) ?> Installer</h1><small>Hotel TV Remote Management · v<?= e(Version::current()['version']) ?></small></div></div>
+  <div class="brand"><div class="logo">📺</div><div><h1><?= e($brandName) ?> Installer</h1><small>TV &amp; Digital Signage Management · v<?= e(Version::current()['version']) ?></small></div></div>
   <ol class="steps">
     <?php foreach ($steps as $n => $label): ?>
       <li class="<?= $n === $step ? 'on' : ($n < $step ? 'done' : '') ?>"><?= $n ?>. <?= e($label) ?></li>
@@ -339,11 +339,11 @@ code{background:#f3e5f5;padding:2px 6px;border-radius:5px;font-size:.92em}
   </ol>
   <div class="card">
     <?php foreach ($errors as $err): ?><div class="alert err">✘ <?= e($err) ?></div><?php endforeach; ?>
-    <?php if (!is_https() && $step < 7): ?><div class="alert warn">⚠ You are not using HTTPS. It is strongly recommended to install an SSL certificate (free with Let's Encrypt on most hosts) before using Krishna Cloud LED TV.</div><?php endif; ?>
+    <?php if (!is_https() && $step < 7): ?><div class="alert warn">⚠ You are not using HTTPS. It is strongly recommended to install an SSL certificate (free with Let's Encrypt on most hosts) before using Krishna Cloud TV Management.</div><?php endif; ?>
 
 <?php if ($step === 1): $checks = Installer::requirements(); $met = Installer::requirementsMet(); ?>
     <h2>Welcome! Let's check your server</h2>
-    <p class="lead">Krishna Cloud LED TV needs PHP 8.1+, MySQL/MariaDB and a few standard PHP extensions. Everything else is automatic.</p>
+    <p class="lead">Krishna Cloud TV Management needs PHP 8.1+, MySQL/MariaDB and a few standard PHP extensions. Everything else is automatic.</p>
     <ul class="checks">
       <?php foreach ($checks as $c): $cls = $c['ok'] ? 'ok' : ($c['required'] ? 'bad' : 'warn'); ?>
         <li><span class="i <?= $cls ?>"><?= $c['ok'] ? '✔' : ($c['required'] ? '✘' : '!') ?></span><span><?= e($c['label']) ?><?= !$c['ok'] && !$c['required'] ? ' <em style="color:#999">(recommended)</em>' : '' ?></span></li>
@@ -381,14 +381,14 @@ code{background:#f3e5f5;padding:2px 6px;border-radius:5px;font-size:.92em}
     <p class="lead"><?= e($S['db_info'] ?? '') ?>. Click below to create all tables automatically — no phpMyAdmin needed.</p>
     <form method="post"><input type="hidden" name="_csrf" value="<?= e($csrf) ?>">
       <label class="chk"><input type="checkbox" name="demo" value="1" checked>
-        <span><b>Load demo data</b><br><span class="hint">20 sample rooms (101–110, 201–210), floor groups, Dwarkadhish darshan timetable, welcome message, offer, clock, and a default playlist. You can delete or edit everything later.</span></span></label>
+        <span><b>Load demo data</b><br><span class="hint">Sample screens (Entrance, counters, waiting area …), area groups, a temple darshan timetable, welcome message, offer, clock, and a default playlist. You can delete or edit everything later.</span></span></label>
       <div class="btns"><button class="ghost" name="back" value="1">← Back</button><button class="primary">Create tables →</button></div>
     </form>
 
 <?php elseif ($step === 4): $f = ($S['admin_form'] ?? []) + ['username' => 'admin', 'email' => '', 'full_name' => '']; ?>
     <?php if (!empty($S['setup_log'])): ?><pre class="log"><?= e(implode("\n", $S['setup_log'])) ?></pre><?php endif; ?>
     <h2>Administrator account</h2>
-    <p class="lead">This account has full access: it is the platform admin (auto-update, hotels, billing) and the super admin of this hotel. You can add Manager, Staff and Reception users later.</p>
+    <p class="lead">This account has full access: it is the platform admin (auto-update, customers, billing) and the super admin of this business. You can add Manager, Staff and Reception users later.</p>
     <form method="post"><input type="hidden" name="_csrf" value="<?= e($csrf) ?>">
       <div class="row">
         <div><label>Username</label><input type="text" name="username" value="<?= e($f['username']) ?>" required pattern="[A-Za-z0-9_.\-]{3,50}"></div>
@@ -407,11 +407,11 @@ code{background:#f3e5f5;padding:2px 6px;border-radius:5px;font-size:.92em}
     </script>
 
 <?php elseif ($step === 5): $f = ($S['hotel_form'] ?? []) + ['hotel_name' => '', 'timezone' => 'Asia/Kolkata', 'language' => 'en', 'base_url' => Installer::detectBaseUrl()]; ?>
-    <h2>Hotel details</h2>
+    <h2>Business details</h2>
     <p class="lead">Shown on every TV screen and in the admin panel.</p>
     <form method="post" enctype="multipart/form-data"><input type="hidden" name="_csrf" value="<?= e($csrf) ?>">
-      <label>Hotel name</label><input type="text" name="hotel_name" value="<?= e($f['hotel_name']) ?>" required placeholder="e.g. Hotel Dwarka Palace">
-      <label>Hotel logo (optional, PNG/JPG)</label><input type="file" name="logo" accept="image/png,image/jpeg,image/webp">
+      <label>Business name</label><input type="text" name="hotel_name" value="<?= e($f['hotel_name']) ?>" required placeholder="e.g. Krishna Showroom">
+      <label>Business logo (optional, PNG/JPG)</label><input type="file" name="logo" accept="image/png,image/jpeg,image/webp">
       <div class="row">
         <div><label>Time zone</label><select name="timezone">
           <?php foreach (timezone_identifiers_list() as $tz): ?><option <?= $tz === $f['timezone'] ? 'selected' : '' ?>><?= e($tz) ?></option><?php endforeach; ?>
@@ -419,8 +419,8 @@ code{background:#f3e5f5;padding:2px 6px;border-radius:5px;font-size:.92em}
         <div><label>Admin panel language</label><select name="language"><option value="en">English</option><option value="gu" <?= $f['language'] === 'gu' ? 'selected' : '' ?>>ગુજરાતી (Gujarati)</option></select></div>
       </div>
       <label>Weather city (for TV weather widget)</label><input type="text" name="weather_city" value="Dwarka">
-      <label>Product name <span style="font-weight:400;color:#888">(optional, white-label)</span></label><input type="text" name="brand_name" value="<?= e($f['brand_name'] ?? '') ?>" placeholder="Krishna Cloud LED TV" maxlength="120">
-      <div class="hint">Replaces "Krishna Cloud LED TV" on the login page, admin panel and TVs. Logo and colour: Admin → Platform settings.</div>
+      <label>Product name <span style="font-weight:400;color:#888">(optional, white-label)</span></label><input type="text" name="brand_name" value="<?= e($f['brand_name'] ?? '') ?>" placeholder="Krishna Cloud TV Management" maxlength="120">
+      <div class="hint">Replaces "Krishna Cloud TV Management" on the login page, admin panel and TVs. Logo and colour: Admin → Platform settings.</div>
       <label>Website address of this installation</label><input type="url" name="base_url" value="<?= e($f['base_url']) ?>" required>
       <div class="hint">TVs use this address to connect. Detected automatically — change only if you use a different domain.</div>
       <div class="btns"><button class="ghost" name="back" value="1" formnovalidate>← Back</button><button class="primary">Save →</button></div>
@@ -428,10 +428,10 @@ code{background:#f3e5f5;padding:2px 6px;border-radius:5px;font-size:.92em}
 
 <?php elseif ($step === 6): ?>
     <h2>Installation type &amp; license</h2>
-    <p class="lead">Choose <b>Platform (SaaS)</b> if this server hosts one or many hotels and is managed by you. Choose <b>Self-hosted</b> if this is a single hotel installation licensed from a Krishna Cloud LED TV provider.</p>
+    <p class="lead">Choose <b>Platform (SaaS)</b> if this server hosts one or many customers and is managed by you. Choose <b>Self-hosted</b> if this is a single-customer installation licensed from a Krishna Cloud TV Management provider.</p>
     <form method="post"><input type="hidden" name="_csrf" value="<?= e($csrf) ?>">
       <div class="row">
-        <div><label>Installation type</label><select name="mode" id="instMode"><option value="saas">Platform (SaaS, no license needed)</option><option value="standalone">Self-hosted single hotel (license key)</option></select></div>
+        <div><label>Installation type</label><select name="mode" id="instMode"><option value="saas">Platform (SaaS, no license needed)</option><option value="standalone">Self-hosted single customer (license key)</option></select></div>
         <div><label>License key <span style="font-weight:400;color:#888">(self-hosted)</span></label><input type="text" name="license_key" placeholder="HC-XXXXX-XXXXX-XXXXX-XXXXX" autocomplete="off"></div>
       </div>
       <label>License server address <span style="font-weight:400;color:#888">(self-hosted)</span></label><input type="url" name="license_server" placeholder="https://tv.your-provider.com/hotelcast/">
@@ -451,7 +451,7 @@ code{background:#f3e5f5;padding:2px 6px;border-radius:5px;font-size:.92em}
 
 <?php else: $sum = $S['summary'] ?? []; ?>
     <h2>🎉 Installation complete!</h2>
-    <p class="lead">Krishna Cloud LED TV is ready. <?= e($S['finish_msg'] ?? '') ?></p>
+    <p class="lead">Krishna Cloud TV Management is ready. <?= e($S['finish_msg'] ?? '') ?></p>
     <div class="kv">
       <b>Admin panel</b><span><a href="<?= e(($sum['url'] ?? '../') . 'admin/') ?>"><?= e(($sum['url'] ?? '') . 'admin/') ?></a></span>
       <b>Admin username</b><span><?= e($sum['admin'] ?? '') ?></span>
@@ -461,7 +461,7 @@ code{background:#f3e5f5;padding:2px 6px;border-radius:5px;font-size:.92em}
       <b>TV server address</b><span><code><?= e($sum['url'] ?? '') ?></code></span>
       <b>TV registration key</b><span class="big"><?= e($sum['key'] ?? '') ?></span>
     </div>
-    <div class="alert ok" style="margin-top:18px">Next: install the Krishna Cloud LED TV app (APK) on each TV, open it, enter the server address, room number and the registration key above. The TV appears in Admin → Rooms within seconds.</div>
+    <div class="alert ok" style="margin-top:18px">Next: install the Krishna Cloud TV app (APK) on each TV, open it, enter the server address, a screen name / ID and the registration key above. The TV appears in Admin → Screens within seconds.</div>
     <div class="btns"><span></span><a class="btn primary" href="<?= e(($sum['url'] ?? '../') . 'admin/login.php') ?>">Open admin panel →</a></div>
     <?php $_SESSION = []; session_destroy(); ?>
 <?php endif; ?>

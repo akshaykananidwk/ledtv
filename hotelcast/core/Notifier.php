@@ -15,7 +15,7 @@ final class Notifier
         }
         $rooms = array_map(fn ($d) => $d['room_number'] ?? ('#' . $d['id']), $devices);
         $hotel = (string) Settings::get('hotel_name', Branding::DEFAULT_PRODUCT);
-        $msg = sprintf('[%s] TV offline in room(s): %s (since %s)', $hotel, implode(', ', $rooms), date('d M H:i'));
+        $msg = sprintf('[%s] TV offline on screen(s): %s (since %s)', $hotel, implode(', ', $rooms), date('d M H:i'));
         self::send(Branding::get()['product'] . ': ' . count($devices) . ' TV(s) offline', $msg);
     }
 
@@ -31,7 +31,7 @@ final class Notifier
         }
         $room = $device['room_id'] ? (string) DB::value('SELECT room_number FROM rooms WHERE id = :id AND hotel_id = :h', ['id' => $device['room_id'], 'h' => (int) $device['hotel_id']]) : '#' . $device['id'];
         $hotel = (string) Settings::get('hotel_name', Branding::DEFAULT_PRODUCT);
-        self::send(Branding::get()['product'] . ': TV back online', sprintf('[%s] TV in room %s is back online (%s)', $hotel, $room, date('d M H:i')));
+        self::send(Branding::get()['product'] . ': TV back online', sprintf('[%s] TV on screen %s is back online (%s)', $hotel, $room, date('d M H:i')));
     }
 
     /** Devices offline for longer than the configured delay that were not yet reported. */

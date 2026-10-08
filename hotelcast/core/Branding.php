@@ -8,7 +8,7 @@ declare(strict_types=1);
 final class Branding
 {
     /** Product name shown everywhere unless a white-label name is set (Platform settings / reseller / hotel). */
-    public const DEFAULT_PRODUCT = 'Krishna Cloud LED TV';
+    public const DEFAULT_PRODUCT = 'Krishna Cloud TV Management';
 
     private static array $cache = [];
 
@@ -82,7 +82,7 @@ final class Branding
         ];
     }
 
-    /** Product name for the installer (before the database exists): config 'brand_name' or HotelCast. */
+    /** Product name for the installer (before the database exists): config 'brand_name' or DEFAULT_PRODUCT. */
     public static function installerName(): string
     {
         $n = trim((string) Config::get('brand_name', ''));

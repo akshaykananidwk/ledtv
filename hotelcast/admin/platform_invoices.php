@@ -33,7 +33,7 @@ if (is_post()) {
                 $tv = trim(req_str('tv_count', $_POST, 10));
                 $price = trim(req_str('unit_price', $_POST, 20));
                 $iid = Billing::createInvoice($hid, $from, $to, Auth::id(), $tv === '' ? null : max(0, (int) $tv), $price === '' ? null : max(0.0, (float) $price), req_str('notes', $_POST, 1000));
-                ActivityLog::add('invoice_create', 'invoice', $iid, 'Hotel #' . $hid);
+                ActivityLog::add('invoice_create', 'invoice', $iid, 'Customer #' . $hid);
                 flash('success', __('Invoice created.'));
                 $back = admin_url('invoice.php', ['id' => $iid]);
                 break;

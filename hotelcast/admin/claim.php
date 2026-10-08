@@ -95,7 +95,7 @@ if (is_post()) {
             $room = Tenant::find('rooms', $rid);
             $created = true;
             Settings::bumpContentVersion();
-            ActivityLog::add('room_create', 'room', $rid, 'Room ' . $number . ' (QR setup)');
+            ActivityLog::add('room_create', 'room', $rid, 'Screen ' . $number . ' (QR setup)');
         }
     } else {
         $room = ctype_digit($roomSel) ? Tenant::find('rooms', (int) $roomSel) : null;   // another hotel's id → 404
@@ -111,7 +111,7 @@ if (is_post()) {
         flash('danger', __('This setup code has expired. The TV shows a new code after a restart of the setup.'));
         redirect($back);
     }
-    ActivityLog::add('tv_qr_assign', 'room', (int) $room['id'], 'QR setup ' . $prov['code'] . ' → room ' . $room['room_number']
+    ActivityLog::add('tv_qr_assign', 'room', (int) $room['id'], 'QR setup ' . $prov['code'] . ' → screen ' . $room['room_number']
         . ' (' . ($prov['model'] ?: $prov['device_uid']) . ')' . ($created ? ' [new room]' : ''));
     redirect(admin_url('claim.php', ['done' => (int) $prov['id']] + $hotelQ));
 }
@@ -397,7 +397,7 @@ require __DIR__ . '/partials/header.php';
   <div class="card mb-3">
     <div class="card-body">
       <ol class="mb-3 ps-3">
-        <li><?= e(__('Install the Krishna Cloud LED TV app on the TV and open it. The TV shows a QR code and a 6-character code.')) ?></li>
+        <li><?= e(__('Install the Krishna Cloud TV app on the TV and open it. The TV shows a QR code and a 6-character code.')) ?></li>
         <li><?= e(__('Scan the QR code with your phone camera — this page opens with the TV already selected.')) ?></li>
         <li><?= e(__('Or type the code from the TV screen here:')) ?></li>
       </ol>

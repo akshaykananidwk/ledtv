@@ -118,7 +118,7 @@ final class WebPlayer
             'TV limit reached. Remove an old TV in the admin panel or upgrade your plan.',
             'Cannot reach the server. Check the address and the network.',
             'Too many attempts. Please try again in a minute.',
-            'Welcome', 'Welcome to :name', 'Screen :room', 'Service paused', 'Please contact reception.', 'Support: :s',
+            'Welcome', 'Welcome to :name', 'Screen :room', 'Service paused', 'Please contact the administrator.', 'Support: :s',
             'Emergency', 'Press OK to enable sound', 'Offline — showing the last content',
             'This stream cannot play in a web browser.', 'This video cannot play in this browser.',
             'This web page does not allow being shown inside another page.',

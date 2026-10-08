@@ -275,7 +275,7 @@ if (is_post()) {
                 flash('danger', __('The PIN must be exactly 4 digits.'));
             } else {
                 Settings::set('tv_settings_pin', $pin);
-                ActivityLog::add('tv_pin_change', 'settings', null, 'Hotel TV settings PIN changed');
+                ActivityLog::add('tv_pin_change', 'settings', null, 'TV settings PIN changed (all screens)');
                 flash('success', __('TV settings PIN saved. TVs pick it up within a minute.'));
             }
             break;

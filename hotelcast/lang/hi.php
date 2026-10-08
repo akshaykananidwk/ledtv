@@ -6,7 +6,7 @@
  */
 return [
     'Service paused' => 'सेवा अस्थायी रूप से बंद है',
-    'This TV service is temporarily paused. Please contact reception.' => 'यह टीवी सेवा अस्थायी रूप से बंद है। कृपया रिसेप्शन से संपर्क करें।',
+    'This TV service is temporarily paused. Please contact the administrator.' => 'यह टीवी सेवा अस्थायी रूप से बंद है। कृपया एडमिनिस्ट्रेटर से संपर्क करें।',
     'Welcome' => 'स्वागत है',
     'Room' => 'कमरा',
     'Reception' => 'रिसेप्शन',

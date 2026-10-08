@@ -449,7 +449,7 @@ final class Signup
         }
         $brand = Branding::get(0)['product'];
         $subject = $what === 'pending' ? $brand . ': sign-up waiting for approval — ' . $s['hotel_name'] : $brand . ': new free trial — ' . $s['hotel_name'];
-        $body = sprintf("Hotel: %s (%s)\nOwner: %s\nMobile: %s\nEmail: %s\nRooms / TVs: %d\nLanguage: %s%s\n\n%s",
+        $body = sprintf("Business: %s (%s)\nOwner: %s\nMobile: %s\nEmail: %s\nScreens / TVs: %d\nLanguage: %s%s\n\n%s",
             $s['hotel_name'], $s['city'], $s['owner_name'], $s['mobile'], $s['email'], $s['tv_estimate'], $s['language'],
             (int) $s['duplicate'] ? "\nNOTE: email or mobile already belongs to an existing account." : '',
             admin_url('platform_signups.php'));

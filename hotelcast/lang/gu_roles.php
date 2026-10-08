@@ -47,7 +47,7 @@ return [
     // core/Roles.php — groups
     'Dashboard and getting started.' => 'ડેશબોર્ડ અને શરૂઆત.',
     'Screens' => 'સ્ક્રીન',
-    'Screens (rooms & TVs), groups, video walls and TV tools.' => 'સ્ક્રીન (રૂમ અને TV), ગ્રુપ, વિડિયો વોલ અને TV ટૂલ્સ.',
+    'Screens & TVs, groups, video walls and TV tools.' => 'સ્ક્રીન અને TV, ગ્રુપ, વિડિયો વોલ અને TV ટૂલ્સ.',
     'Content library, playlists, designs and templates.' => 'કન્ટેન્ટ લાઇબ્રેરી, પ્લેલિસ્ટ, ડિઝાઇન અને ટેમ્પ્લેટ.',
     'Apps & widgets' => 'એપ્સ અને વિજેટ',
     'Notice board, menu board, tickers and other display apps.' => 'નોટિસ બોર્ડ, મેનુ બોર્ડ, ટિકર અને બીજી ડિસ્પ્લે એપ્સ.',

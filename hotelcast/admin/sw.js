@@ -63,9 +63,9 @@ self.addEventListener('push', (event) => {
   try {
     data = event.data ? event.data.json() : {};
   } catch (e) {
-    data = { title: 'Krishna Cloud LED TV', body: event.data ? event.data.text() : '' };
+    data = { title: 'Krishna Cloud TV Management', body: event.data ? event.data.text() : '' };
   }
-  const title = data.title || 'Krishna Cloud LED TV';
+  const title = data.title || 'Krishna Cloud TV Management';
   const options = {
     body: data.body || '',
     icon: data.icon || ICON,

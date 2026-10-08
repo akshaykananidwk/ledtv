@@ -139,7 +139,7 @@ function hotel_form_fields(array $h, bool $byReseller, bool $isNew): string
       <div class="col-lg-5">
         <div class="card mb-3"><div class="card-header"><?= e(__('Branding override')) ?></div><div class="card-body row g-3">
           <div class="col-12 small text-muted"><?= e(__('Optional. Replaces the platform / reseller name, logo and colour for this customer (login page with ?b=slug, admin panel, TVs).')) ?></div>
-          <div class="col-sm-7"><label class="form-label" for="h_bn"><?= e(__('Product name')) ?></label><input class="form-control" id="h_bn" name="brand_name" value="<?= $v('brand_name') ?>" maxlength="120" placeholder="Krishna Cloud LED TV"></div>
+          <div class="col-sm-7"><label class="form-label" for="h_bn"><?= e(__('Product name')) ?></label><input class="form-control" id="h_bn" name="brand_name" value="<?= $v('brand_name') ?>" maxlength="120" placeholder="Krishna Cloud TV Management"></div>
           <div class="col-sm-5"><label class="form-label" for="h_bc"><?= e(__('Colour')) ?></label><input class="form-control" id="h_bc" name="brand_color" value="<?= $v('brand_color') ?>" pattern="#[0-9A-Fa-f]{6}" maxlength="7" placeholder="#7B1FA2"></div>
           <div class="col-12">
             <label class="form-label" for="h_bl"><?= e(__('Logo')) ?></label>

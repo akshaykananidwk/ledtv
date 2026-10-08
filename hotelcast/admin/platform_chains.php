@@ -72,7 +72,7 @@ if (is_post()) {
                 $c = $ownChain($id);
                 $hid = req_int('hotel_id', $_POST);
                 Chains::assignHotel($id, $hid, $op === 'add_hotel');
-                ActivityLog::add($op === 'add_hotel' ? 'chain_hotel_add' : 'chain_hotel_remove', 'chain', $id, $c['name'] . ' ↔ hotel #' . $hid);
+                ActivityLog::add($op === 'add_hotel' ? 'chain_hotel_add' : 'chain_hotel_remove', 'chain', $id, $c['name'] . ' ↔ customer #' . $hid);
                 flash('success', $op === 'add_hotel' ? __('Customer added to the chain.') : __('Customer removed from the chain.'));
                 break;
 

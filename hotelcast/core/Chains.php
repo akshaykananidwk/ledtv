@@ -173,7 +173,7 @@ final class Chains
             return;
         }
         if (PHP_SAPI === 'cli') {
-            throw new TenantException('Hotel chains are switched off');
+            throw new TenantException('Chains are switched off');
         }
         if (!headers_sent()) {
             http_response_code(404);

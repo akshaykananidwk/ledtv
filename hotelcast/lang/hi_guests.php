@@ -40,6 +40,7 @@ return [
     'Info' => 'जानकारी',
     'Welcome :name' => 'स्वागत है :name',
     'Room :room' => 'कमरा :room',
+    'Screen :room' => 'स्क्रीन :room',
     'Your cart' => 'आपकी टोकरी',
     'Place order' => 'ऑर्डर करें',
     'Notes for the kitchen (optional)' => 'रसोई के लिए नोट (वैकल्पिक)',

@@ -11,7 +11,7 @@ return [
     'Enter a Facebook page and / or at least one Instagram or Facebook post link.' => 'Facebook પેજ અને / અથવા ઓછામાં ઓછી એક Instagram કે Facebook પોસ્ટ લિંક લખો.',
     'Works without a token: posts must be public and the TV needs internet. Videos may not autoplay. New posts are not added automatically — paste the links of the posts you want to show.' => 'ટોકન વગર ચાલે છે: પોસ્ટ જાહેર હોવી જોઈએ અને ટીવીને ઇન્ટરનેટ જોઈએ. વીડિયો આપોઆપ ન પણ ચાલે. નવી પોસ્ટ આપોઆપ ઉમેરાતી નથી — બતાવવી હોય તે પોસ્ટની લિંક પેસ્ટ કરો.',
     'Heading (optional)' => 'મથાળું (વૈકલ્પિક)',
-    'Follow us @yourhotel' => 'અમને ફૉલો કરો @yourhotel',
+    'Follow us @yourbusiness' => 'અમને ફૉલો કરો @yourbusiness',
     'Facebook page (timeline)' => 'Facebook પેજ (ટાઇમલાઇન)',
     'Optional. Shows the page\'s latest public posts with the official Facebook Page Plugin.' => 'વૈકલ્પિક. સત્તાવાર Facebook Page Plugin થી પેજની તાજી જાહેર પોસ્ટ બતાવે છે.',
     'Instagram / Facebook post links (one per line)' => 'Instagram / Facebook પોસ્ટ લિંક (દરેક લીટીમાં એક)',

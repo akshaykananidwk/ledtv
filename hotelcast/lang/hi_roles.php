@@ -52,7 +52,7 @@ return [
     'Overview' => 'अवलोकन',
     'Dashboard and getting started.' => 'डैशबोर्ड और शुरुआत।',
     'Screens' => 'स्क्रीन',
-    'Screens (rooms & TVs), groups, video walls and TV tools.' => 'स्क्रीन (रूम और TV), ग्रुप, वीडियो वॉल और TV टूल।',
+    'Screens & TVs, groups, video walls and TV tools.' => 'स्क्रीन और TV, ग्रुप, वीडियो वॉल और TV टूल।',
     'Content library, playlists, designs and templates.' => 'कंटेंट लाइब्रेरी, प्लेलिस्ट, डिज़ाइन और टेम्पलेट।',
     'Apps & widgets' => 'ऐप्स और विजेट',
     'Notice board, menu board, tickers and other display apps.' => 'नोटिस बोर्ड, मेनू बोर्ड, टिकर और अन्य डिस्प्ले ऐप्स।',
@@ -159,10 +159,10 @@ return [
     'This name is used by a built-in role. Choose another name.' => 'यह नाम बिल्ट-इन रोल का है। दूसरा नाम चुनें।',
     'A role with this name already exists.' => 'इस नाम का रोल पहले से है।',
     'Unknown role' => 'अज्ञात रोल',
-    'everything in this hotel, including users, settings and billing.' => 'इस होटल में सब कुछ, यूज़र, सेटिंग्स और बिलिंग सहित।',
-    'rooms, content, playlists, schedules, TV commands, APK, logs.' => 'रूम, कंटेंट, प्लेलिस्ट, शेड्यूल, TV कमांड, APK, लॉग।',
-    'view rooms and content, send content and emergency messages.' => 'रूम और कंटेंट देखें, कंटेंट और इमरजेंसी संदेश भेजें।',
-    'front desk: guests check-in/out, service orders and requests, view rooms.' => 'फ्रंट डेस्क: मेहमान चेक-इन/आउट, सेवा ऑर्डर और अनुरोध, रूम देखें।',
+    'everything of this customer, including users, settings and billing.' => 'इस ग्राहक का सब कुछ, यूज़र, सेटिंग्स और बिलिंग सहित।',
+    'screens, content, playlists, schedules, TV commands, APK, logs.' => 'स्क्रीन, कंटेंट, प्लेलिस्ट, शेड्यूल, TV कमांड, APK, लॉग।',
+    'view screens and content, send content and emergency messages.' => 'स्क्रीन और कंटेंट देखें, कंटेंट और इमरजेंसी संदेश भेजें।',
+    'front desk: guests check-in/out, service orders and requests, view screens.' => 'फ्रंट डेस्क: मेहमान चेक-इन/आउट, सेवा ऑर्डर और अनुरोध, स्क्रीन देखें।',
 
     // admin/users.php
     'You cannot change a user whose role has more rights than yours.' => 'जिस यूज़र के रोल में आपसे ज़्यादा अधिकार हों, उसे आप नहीं बदल सकते।',
