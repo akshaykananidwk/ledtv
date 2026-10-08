@@ -55,12 +55,12 @@
 
 /* Currency (#24) */
 .cx-table{-webkit-flex:1;flex:1;min-height:0;overflow:hidden}
-.cx-row{display:-webkit-flex;display:flex;-webkit-align-items:center;align-items:center;margin-bottom:.6rem;padding:.7rem 1.5rem}
+.cx-row{display:-webkit-flex;display:flex;-webkit-align-items:center;align-items:center;margin-bottom:.45rem;padding:.45rem 1.5rem}
 .cx-row>div{-webkit-flex:1;flex:1;text-align:right;font-size:2rem;font-weight:700;font-variant-numeric:tabular-nums}
 .cx-row>.cx-cur{-webkit-flex:1.3;flex:1.3;text-align:left}
 .cx-head{padding:.2rem 1.5rem;margin-bottom:.3rem}
 .cx-head>div{font-size:1.1rem;color:var(--hc-muted);text-transform:uppercase;letter-spacing:.04em}
-.cx-flag{font-size:2.2rem;margin-right:.7rem;vertical-align:middle}
+.cx-flag{font-size:1.9rem;margin-right:.7rem;vertical-align:middle}
 .cx-cur span.hc-muted{font-size:1.2rem;font-weight:400}
 
 /* Travel status (#25) */
