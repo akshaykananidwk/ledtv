@@ -393,4 +393,27 @@ final class SecurityReview25Test extends TestCase
         $this->assertStringContainsString('Active (room service and TV)', $html);
         $this->assertSame('', TestEnv::phpErrors());
     }
+
+    // ------------------------------------------------------------------ browser QA findings (2.5)
+
+    public function testBrowserQaFixes(): void
+    {
+        // Relative times are whole translated phrases (no "5h પહેલાં").
+        $ts = date('Y-m-d H:i:s', time() - 5 * 3600 - 60);
+        $this->assertSame('5h ago', time_ago($ts));
+        $this->assertSame('5 કલાક પહેલાં', I18n::translate(':nh ago', 'gu', ['n' => 5]));
+        $this->assertSame('3 मिनट पहले', I18n::translate(':nm ago', 'hi', ['n' => 3]));
+        // Hindi dashboard widgets and access-denied text are translated.
+        foreach (['Plan & TV limit', 'Today at a glance', 'Invalid username or password.', 'TV preview'] as $k) {
+            $this->assertNotSame($k, I18n::translate($k, 'hi'), $k);
+        }
+        // Password strength meter of the customer form (JS error "reading 'style'" before).
+        [, , $html] = self::as('srRoot')->get('platform_hotels.php?action=new');
+        $this->assertStringContainsString('<div class="strength-bar" id="apBar"><span></span></div>', $html);
+        // Customer detail header: no empty " · · " part when the city is empty.
+        [$code, , $html] = self::as('srRoot')->get('platform_customer.php?id=' . self::$id['h2']);
+        $this->assertSame(200, $code);
+        $this->assertStringNotContainsString('·  ·', $html);
+        $this->assertStringNotContainsString('· ·', $html);
+    }
 }

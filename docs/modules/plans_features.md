@@ -94,10 +94,20 @@ NULL = unlimited. Each refusal has a clear message ("Your plan allows at most 5 
   guide, video wall, sync, TV controls) and `Features::filterContent()` strips `usb_mode`, `cec_mode`
   and the emergency alarm sound (the emergency message itself always shows). `ContentRules::playable()`
   skips display-app items of a disabled family and split-screen layouts, like inactive items.
+* **Downgrade: time-based rules** (2.5 security review) — rules of a module that is no longer in the plan
+  stop applying but are **kept** (they work again after an upgrade): TV power schedules
+  (`power_schedules`) and holidays (`holidays`) are ignored by `ContentResolver`; scheduled content windows
+  are ignored and one-time scheduled pushes wait (`schedule`, `Broadcaster::processSchedules`); device
+  schedules (`DeviceSchedules::tick`) and presence idle-off (`Presence::idleTick`) do not fire; the
+  "require approval" setting has no effect without `approvals` (`Approvals::enabled`). Scheduling content
+  on the Broadcast page needs `schedule` itself (the permission `schedule.manage` is shared with TV power).
 * **Display pages** — `display/` of a disabled app family shows the neutral "This app is not available."
   page (403); `display/data.php` answers 403; `display/queue.php` and `album/` answer "not found".
 * **Web player** — `device/register` with `platform: web` → 403 when `web_player` is off.
 * **RBAC** — `Auth::can()` (custom roles module) asks `Features::permissionEnabled()`.
+* **Plan choice** — resellers must give their customers an **active** plan (or keep the current one): "No
+  plan" means every feature, unlimited and not billed. The customer form keeps a deactivated current plan
+  selectable, so saving the form never drops a customer to "No plan".
 
 ## UI
 

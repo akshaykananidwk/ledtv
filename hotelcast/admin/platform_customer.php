@@ -96,7 +96,7 @@ require __DIR__ . '/partials/header.php';
 <div class="page-head">
   <div>
     <h1><i class="bi bi-building"></i> <?= e($h['name']) ?> <?= Hotels::statusBadge($state) ?></h1>
-    <p class="lead-sm"><?= e(dot_trim(__('Customer') . ' #' . $id . ' · ' . ($h['city'] ?? '') . ' · ' . ($h['plan_name'] ?? __('No plan')) . ($h['reseller_name'] ? ' · ' . __('Reseller') . ': ' . $h['reseller_name'] : ''))) ?></p>
+    <p class="lead-sm"><?= e(implode(' · ', array_filter([__('Customer') . ' #' . $id, (string) ($h['city'] ?? ''), (string) ($h['plan_name'] ?? __('No plan')), $h['reseller_name'] ? __('Reseller') . ': ' . $h['reseller_name'] : ''], static fn ($p) => trim($p) !== ''))) ?></p>
   </div>
   <div class="d-flex flex-wrap gap-2">
     <form method="post"><?= Csrf::field() ?><input type="hidden" name="op" value="enter"><input type="hidden" name="id" value="<?= $id ?>">

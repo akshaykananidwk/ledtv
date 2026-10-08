@@ -19,7 +19,8 @@ pages for **their own customers only**.
 
 | permission | roles | used for |
 |---|---|---|
-| `platform.screens` | platform_admin, reseller | All screens, customer detail, commands, revoke, move (reseller: own customers only) |
+| `platform.screens` | platform_admin, reseller | All screens, customer detail, commands, revoke (reseller: own customers only) |
+| `platform.move` | platform_admin | move TVs to another customer / screen (2.5 security review: not for resellers) |
 | `platform.pool` | platform_admin | unassigned pool, platform registration key, "Move to unassigned pool" |
 
 Customer users (super_admin … reception, chain admins) get **403** on every page of this module.
@@ -93,7 +94,9 @@ From the row ("Move to another customer…") or in bulk: choose the **target cus
 2. refuses revoked TVs (they must register again) and web players for a plan without the web player;
 3. `(hotel_id, device_uid)` is unique: an old revoked / screen-less record of the same TV in the target
    is deleted; an active one blocks the move;
-4. clears what belongs to the old customer: pending / delivered `device_commands` → `expired`, the
+4. clears what belongs to the old customer: **all** `device_commands` of the TV are deleted (the table
+   has no `hotel_id`; message texts / announcements of the old customer would otherwise show on the new
+   customer's TV page — the old customer no longer sees the TV anyway), the
    `device_live_views` session + frame file, `device_health_history` rows, `devices.health_alerts`,
    `current_hash`, `offline_notified`;
 5. `UPDATE devices SET hotel_id = target, room_id = screen` (same row / id), a `device_status_logs` row
@@ -121,7 +124,9 @@ could use it before the move could use it before as well. When a TV must really 
 ---------------------------------------------------------------------------------------------------
 ## 3. Unassigned pool (pre-configure TVs before selling)
 
-Platform admins only (`platform.pool`), card "Unassigned pool" on All screens.
+Platform admins only (`platform.pool`), card "Unassigned pool" on All screens. At most
+`DevicePool::MAX_WAITING` (500) TVs wait in the pool: a new TV beyond that gets `409 POOL_FULL` (a leaked
+key cannot fill the table; registration is also limited per IP). "New key" rotates the key.
 
 1. **Turn on platform registration**: a platform registration key is created
    (`system_settings` hotel 0: `platform_pool_key` = `P` + 16 hex, `platform_pool_enabled`). "New key"
