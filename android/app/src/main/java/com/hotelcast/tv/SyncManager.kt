@@ -478,7 +478,20 @@ object SyncManager : CommandActions {
     }
 
     override fun reload() {
-        _events.tryEmit(SyncEvent.Reload)
+        // 2.4: also "back to the player" when Live TV / HDMI / another app is in front (PlayerFront).
+        when (PlayerFront.reloadAction(UiBridge.player != null, KioskHelper.externalAppActive)) {
+            PlayerFront.ReloadAction.RESTART_PLAYER -> _events.tryEmit(SyncEvent.Reload)
+            PlayerFront.ReloadAction.BRING_TO_FRONT -> {
+                if (KioskHelper.isDeviceOwner(app)) {
+                    try {
+                        KioskHelper.restoreKioskPackages(app)
+                    } catch (e: Exception) {
+                        Log.w(TAG, "restore kiosk packages failed: ${e.message}")
+                    }
+                }
+                bringPlayerToFront() // MainActivity.onResume re-enters lock task (enterKioskIfPossible)
+            }
+        }
     }
 
     override fun reboot() {

@@ -35,7 +35,7 @@ class DeviceFeatures24Test {
     // ------------------------------------------------------------------ playlist.txt
 
     @Test fun playlistParsingFormats() {
-        val txt = "﻿# lobby loop\n" +
+        val txt = "\uFEFF# lobby loop\n" +
             "01 welcome.jpg, 8\n" +
             "offer.png 15\n" +
             "hotel-film.mp4\n" +
@@ -289,6 +289,15 @@ class DeviceFeatures24Test {
             health = mapOf("ram_avail_mb" to 512L, "cpu_temp_c" to 55.5, "device_owner" to true))
         val json = ApiClient.gson.toJson(hb)
         assertTrue(json, json.contains("\"health\":{\"ram_avail_mb\":512,\"cpu_temp_c\":55.5,\"device_owner\":true}"))
+    }
+
+    // ------------------------------------------------------------------ RELOAD = back to the player
+
+    @Test fun reloadBringsThePlayerBackWhenAnotherAppIsInFront() {
+        assertEquals(PlayerFront.ReloadAction.RESTART_PLAYER, PlayerFront.reloadAction(playerOnScreen = true, externalAppActive = false))
+        assertEquals(PlayerFront.ReloadAction.BRING_TO_FRONT, PlayerFront.reloadAction(playerOnScreen = false, externalAppActive = false))
+        assertEquals(PlayerFront.ReloadAction.BRING_TO_FRONT, PlayerFront.reloadAction(playerOnScreen = true, externalAppActive = true))
+        assertEquals(PlayerFront.ReloadAction.BRING_TO_FRONT, PlayerFront.reloadAction(playerOnScreen = false, externalAppActive = true))
     }
 
     // ------------------------------------------------------------------ CEC

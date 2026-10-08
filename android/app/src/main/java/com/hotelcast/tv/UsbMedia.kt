@@ -113,7 +113,7 @@ object UsbPlaylist {
     /** Parses playlist.txt. Unknown / empty lines are skipped; never throws. */
     fun parsePlaylist(text: String): List<Entry> {
         val out = mutableListOf<Entry>()
-        for (raw in text.removePrefix("﻿").lineSequence()) {
+        for (raw in text.removePrefix("\uFEFF").lineSequence()) {
             val line = raw.substringBefore('#').trim()
             if (line.isEmpty()) continue
             var name = line

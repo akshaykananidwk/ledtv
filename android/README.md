@@ -9,9 +9,19 @@ in [`../docs/API.md`](../docs/API.md).
 | | |
 |---|---|
 | Package / applicationId | `com.hotelcast.tv` |
-| Version | 2.3.0 (versionCode 10) |
+| Version | 2.4.0 (versionCode 11) |
 | Android | 5.0 (API 21) and newer, targetSdk 34 |
-| Signed release APK | `release/KrishnaCloud-TV-2.3.0.apk` (same signing key as 1.x / 2.x, signer SHA-256 `b0f2c899…1a156c`, so OTA `UPDATE_APP` from older versions works) |
+| Signed release APK | `release/KrishnaCloud-TV-2.4.0.apk` (same signing key as 1.x / 2.x, signer SHA-256 `b0f2c899…1a156c`, so OTA `UPDATE_APP` from older versions works) |
+
+What is new in 2.4 (device features, see [`../docs/modules/device_features.md`](../docs/modules/device_features.md)):
+**live screen view** (`LIVE_VIEW`: small screenshots every 4 s while the admin page is open),
+**USB / offline mode** (a `KrishnaCloud` folder on a USB drive / SD card plays when there is no
+content yet, when the TV is not registered, or when the room's *USB mode* is on; optional
+`playlist.txt`), **TV health** in every heartbeat (storage, RAM, CPU temperature, Wi-Fi, uptime,
+resolution, device owner, last crash), **spoken announcements** (`SPEAK` with gu-IN / hi-IN / en-IN
+voices, `PLAY_SOUND`; content audio is ducked meanwhile), **HDMI-CEC box mode** (an Android box really
+sleeps / wakes so CEC switches the TV off / on) and `RELOAD` also brings the player back to the front
+from Live TV / HDMI / another app.
 
 What is new in 2.3: **split-screen layouts** (up to 6 zones, each looping its own items, see
 [Split-screen layouts (2.3)](#split-screen-layouts-23)), **YouTube playlists and channels**
@@ -77,7 +87,7 @@ If that file does not exist, it falls back to environment variables (useful on C
 Check a signature with:
 
 ```bash
-$ANDROID_HOME/build-tools/34.0.0/apksigner verify --print-certs release/KrishnaCloud-TV-2.3.0.apk
+$ANDROID_HOME/build-tools/34.0.0/apksigner verify --print-certs release/KrishnaCloud-TV-2.4.0.apk
 ```
 
 ---
@@ -93,12 +103,12 @@ $ANDROID_HOME/build-tools/34.0.0/apksigner verify --print-certs release/KrishnaC
 3. From a PC on the same network:
    ```bash
    adb connect 192.168.1.45:5555          # the TV's IP address
-   adb install -r KrishnaCloud-TV-2.3.0.apk
+   adb install -r KrishnaCloud-TV-2.4.0.apk
    ```
 
 ### b) With a USB pen drive and a file manager
 
-1. Copy `KrishnaCloud-TV-2.3.0.apk` to a FAT32/exFAT pen drive and plug it into the TV.
+1. Copy `KrishnaCloud-TV-2.4.0.apk` to a FAT32/exFAT pen drive and plug it into the TV.
 2. Install a file manager on the TV, such as *File Commander*, *X-plore* or *FX File Explorer*.
 3. Allow unknown sources:
    * Android 8 and newer: *Settings → Apps → Security & restrictions → Unknown sources* (or *Install
@@ -228,7 +238,7 @@ Device-owner mode enables these features:
 Setup: the TV must have **no Google or other accounts** (factory reset it if needed). Then run:
 
 ```bash
-adb install -r KrishnaCloud-TV-2.3.0.apk
+adb install -r KrishnaCloud-TV-2.4.0.apk
 adb shell dpm set-device-owner com.hotelcast.tv/.AdminReceiver
 adb shell am start -n com.hotelcast.tv/.MainActivity
 ```
