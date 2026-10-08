@@ -256,7 +256,7 @@ final class Demo
     {
         $prospect = mb_substr(trim(preg_replace('/\s+/u', ' ', $prospect) ?? ''), 0, 100);
         if (mb_strlen($prospect) < 2) {
-            throw new InvalidArgumentException(__('Enter the prospect\'s hotel name.'));
+            throw new InvalidArgumentException(__('Enter the prospect\'s business name.'));
         }
         if ($email !== '' && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
             throw new InvalidArgumentException(__('Enter a valid email address.'));

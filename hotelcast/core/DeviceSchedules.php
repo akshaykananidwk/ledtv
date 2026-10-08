@@ -465,7 +465,7 @@ final class DeviceSchedules
         $emergency = self::emergencyRoomIds();
         $all = Broadcaster::targetRooms((string) $s['target_type'], (array) $ids);
         $rooms = array_values(array_filter($all, fn ($r) => !isset($emergency[(int) $r['id']])));
-        $held = count($rooms) < count($all) ? ' · ' . __(':n room(s) with an emergency skipped', ['n' => count($all) - count($rooms)]) : '';
+        $held = count($rooms) < count($all) ? ' · ' . __(':n screen(s) with an emergency skipped', ['n' => count($all) - count($rooms)]) : '';
         if ($s['action'] === 'reboot') {
             return self::planRestarts($s, $occ, $rooms, $now, $held);
         }

@@ -148,7 +148,7 @@ require __DIR__ . '/partials/header.php';
   <div class="col-12">
     <form method="post" class="card">
       <?= Csrf::field() ?><input type="hidden" name="op" value="channels">
-      <div class="card-header"><i class="bi bi-envelope"></i> <?= e(__('Email and WhatsApp alerts (whole hotel)')) ?></div>
+      <div class="card-header"><i class="bi bi-envelope"></i> <?= e(__('Email and WhatsApp alerts (whole business)')) ?></div>
       <div class="card-body">
         <p class="small text-muted"><?= e(__('Sent to the email address and WhatsApp gateway set in Settings → Notifications, in addition to push notifications.')) ?></p>
         <div class="table-responsive">

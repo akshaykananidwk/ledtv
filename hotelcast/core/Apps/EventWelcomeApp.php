@@ -122,9 +122,9 @@ final class EventWelcomeApp extends DisplayApp
             . self::input('names', __('Names'), $config['names'], 'text', ['maxlength' => 160, 'placeholder' => __('e.g. Riya & Aarav')])
             . self::input('family', __('Family / host line'), $config['family'], 'text', ['maxlength' => 190, 'placeholder' => __('e.g. Shah and Patel families welcome you')])
             . self::input('event_date', __('Date'), $config['event_date'], 'date', [], '', 'col-md-3')
-            . self::input('venue', __('Venue'), $config['venue'], 'text', ['maxlength' => 190, 'placeholder' => __('e.g. Lawn, Hotel Krishna')], '', 'col-md-3')
+            . self::input('venue', __('Venue'), $config['venue'], 'text', ['maxlength' => 190, 'placeholder' => __('e.g. Lawn, Krishna Party Plot')], '', 'col-md-3')
             . self::textarea('schedule', __('Programme (one per line: time | name | place)'), (string) $config['schedule'], 6,
-                __('e.g. "10:00 | Haldi | Garden", "18:00 | Baraat". For a different day write the date first: "2026-12-11 19:30 | Reception". Times in the hotel time zone; the current and next item are highlighted.'), 'col-12', 4000)
+                __('e.g. "10:00 | Haldi | Garden", "18:00 | Baraat". For a different day write the date first: "2026-12-11 19:30 | Reception". Times in your time zone; the current and next item are highlighted.'), 'col-12', 4000)
             . self::select('album_id', __('Photo album (slideshow)'), $albums, (string) $config['album_id'], __('Upload photos from a phone on the Photo albums page; guests can add photos with a QR code.'), 'col-md-4')
             . self::imagePicker('bg_image', __('Or one image from the library'), (int) $config['bg_image'], '', 'col-md-4')
             . self::input('interval', __('Change photo every (seconds)'), $config['interval'], 'number', ['min' => 3, 'max' => 120], '', 'col-md-4')

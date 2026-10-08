@@ -173,7 +173,7 @@ if ($action === 'new' || $action === 'edit' || $formTicker !== null) {
               <input type="radio" class="btn-check" name="target_type" value="group" id="tt_group"<?= $t['target_type'] === 'group' ? ' checked' : '' ?>>
               <label class="btn btn-outline-primary" for="tt_group"><i class="bi bi-collection"></i> <?= e(__('Group')) ?></label>
               <input type="radio" class="btn-check" name="target_type" value="room" id="tt_room"<?= $t['target_type'] === 'room' ? ' checked' : '' ?>>
-              <label class="btn btn-outline-primary" for="tt_room"><i class="bi bi-door-closed"></i> <?= e(__('Room')) ?></label>
+              <label class="btn btn-outline-primary" for="tt_room"><i class="bi bi-door-closed"></i> <?= e(__('Screen')) ?></label>
             </div>
           </div>
           <div class="col-md-6" data-target="group">
@@ -184,9 +184,9 @@ if ($action === 'new' || $action === 'edit' || $formTicker !== null) {
             </select>
           </div>
           <div class="col-md-6" data-target="room">
-            <label class="form-label" for="tk_room"><?= e(__('Room')) ?></label>
+            <label class="form-label" for="tk_room"><?= e(__('Screen')) ?></label>
             <select class="form-select" id="tk_room" name="room_id">
-              <option value=""><?= e(__('— Choose a room —')) ?></option>
+              <option value=""><?= e(__('— Choose a screen —')) ?></option>
               <?php foreach ($formRooms as $r): ?><option value="<?= (int) $r['id'] ?>"<?= $t['target_type'] === 'room' && $tid === (int) $r['id'] ? ' selected' : '' ?>><?= e(trim($r['room_number'] . ' ' . ($r['name'] ?? ''))) ?></option><?php endforeach; ?>
             </select>
           </div>
@@ -195,7 +195,7 @@ if ($action === 'new' || $action === 'edit' || $formTicker !== null) {
               <input class="form-check-input" type="checkbox" role="switch" id="tk_override" name="override_lower" value="1"<?= (int) $t['override_lower'] ? ' checked' : '' ?>>
               <label class="form-check-label" for="tk_override"><?= e(__('Hide the less specific tickers on these TVs')) ?></label>
             </div>
-            <div class="form-text"><?= e(__('Room tickers are more specific than group tickers, group tickers more than "All TVs". Without this option all of them are shown one after the other.')) ?></div>
+            <div class="form-text"><?= e(__('Screen tickers are more specific than group tickers, group tickers more than "All TVs". Without this option all of them are shown one after the other.')) ?></div>
           </div>
         </div></div>
 
@@ -377,14 +377,14 @@ require __DIR__ . '/partials/header.php';
 <div class="page-head">
   <div>
     <h1><?= e(__('Ticker bar')) ?></h1>
-    <p class="lead-sm"><?= e(__('Scrolling text on the TVs: the same for all TVs, per group or per room. The video shrinks so the bar never covers it.')) ?></p>
+    <p class="lead-sm"><?= e(__('Scrolling text on the TVs: the same for all TVs, per group or per screen. The video shrinks so the bar never covers it.')) ?></p>
   </div>
   <a class="btn btn-primary" href="<?= e(admin_url('tickers.php', ['action' => 'new'])) ?>"><i class="bi bi-plus-lg"></i> <?= e(__('New ticker')) ?></a>
 </div>
 
 <?php if ($legacy && !$restricted): ?>
   <div class="alert alert-info small"><i class="bi bi-info-circle"></i>
-    <?= e(__('A ticker text from the hotel settings or a chain template is also shown on all TVs (after the tickers below):')) ?>
+    <?= e(__('A ticker text from the settings or a chain template is also shown on all TVs (after the tickers below):')) ?>
     <strong><?= e($legacy['message']) ?></strong>
   </div>
 <?php endif; ?>
@@ -430,11 +430,11 @@ require __DIR__ . '/partials/header.php';
 <div class="card">
   <div class="card-header"><?= e(__('What each TV shows now')) ?></div>
   <?php if (!$overviewRooms): ?>
-    <div class="card-body text-muted"><?= e(__('No rooms yet.')) ?></div>
+    <div class="card-body text-muted"><?= e(__('No screens yet.')) ?></div>
   <?php else: ?>
   <div class="table-responsive" style="max-height:480px">
     <table class="table table-sm table-hc mb-0">
-      <thead><tr><th><?= e(__('Room')) ?></th><th><?= e(__('Ticker text')) ?></th></tr></thead>
+      <thead><tr><th><?= e(__('Screen')) ?></th><th><?= e(__('Ticker text')) ?></th></tr></thead>
       <tbody>
       <?php foreach (array_slice($overviewRooms, 0, $overviewLimit) as $r): $tk = $overview[(int) $r['id']] ?? null; ?>
         <tr data-room="<?= (int) $r['id'] ?>">
@@ -445,7 +445,7 @@ require __DIR__ . '/partials/header.php';
       </tbody>
     </table>
   </div>
-  <?php if (count($overviewRooms) > $overviewLimit): ?><div class="card-footer small text-muted"><?= e(__('Showing the first :n rooms.', ['n' => $overviewLimit])) ?></div><?php endif; ?>
+  <?php if (count($overviewRooms) > $overviewLimit): ?><div class="card-footer small text-muted"><?= e(__('Showing the first :n screens.', ['n' => $overviewLimit])) ?></div><?php endif; ?>
   <?php endif; ?>
 </div>
 <?php require __DIR__ . '/partials/footer.php'; ?>

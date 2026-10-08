@@ -35,12 +35,12 @@ if (is_post()) {
                 redirect(admin_url('chain_content.php', $cq + ($existing ? ['action' => 'edit', 'id' => $id] : ['action' => 'new', 'type' => req_str('type', $_POST, 20)])));
             }
             $pub = Chains::publications($cid, 'content', (int) $newId);
-            flash('success', __('Saved.') . ($pub ? ' ' . __('Publish again to update the copies in :n hotels.', ['n' => count($pub)]) : ''));
+            flash('success', __('Saved.') . ($pub ? ' ' . __('Publish again to update the copies at :n customers.', ['n' => count($pub)]) : ''));
             redirect(admin_url('chain_content.php', $cq + ['action' => 'publish', 'type' => 'content', 'id' => $newId]));
 
         case 'delete_content':
             Chains::deleteContent($cid, $id);
-            flash('success', __('Deleted from the chain library. Copies in the hotels stay until a hotel deletes them.'));
+            flash('success', __('Deleted from the chain library. Copies at the customers stay until a customer deletes them.'));
             redirect(admin_url('chain_content.php', $cq));
 
         case 'save_playlist':
@@ -64,14 +64,14 @@ if (is_post()) {
 
         case 'delete_playlist':
             Chains::deletePlaylist($cid, $id);
-            flash('success', __('Deleted from the chain library. Copies in the hotels stay until a hotel deletes them.'));
+            flash('success', __('Deleted from the chain library. Copies at the customers stay until a customer deletes them.'));
             redirect(admin_url('chain_content.php', $cq + ['tab' => 'playlists']));
 
         case 'publish':
             $type = req_str('type', $_POST, 10) === 'playlist' ? 'playlist' : 'content';
             $hotels = int_ids($_POST['hotels'] ?? []);
             if (!$hotels) {
-                flash('warning', __('Select at least one hotel.'));
+                flash('warning', __('Select at least one customer.'));
                 redirect(admin_url('chain_content.php', $cq + ['action' => 'publish', 'type' => $type, 'id' => $id]));
             }
             $res = Chains::publish($cid, $type, $id, $hotels, Auth::id());
@@ -158,7 +158,7 @@ if ($action === 'new' || $action === 'edit') {
         <div class="col-6 col-md-3 d-flex align-items-end"><input type="hidden" name="is_active" value="0">
           <div class="form-check form-switch"><input class="form-check-input" type="checkbox" role="switch" id="is_active" name="is_active" value="1"<?= (int) $item['is_active'] ? ' checked' : '' ?>><label class="form-check-label" for="is_active"><?= e(__('Active')) ?></label></div></div>
       </div>
-      <div class="mt-3"><button class="btn btn-primary"><i class="bi bi-check-lg"></i> <?= e(__('Save and choose hotels')) ?></button></div>
+      <div class="mt-3"><button class="btn btn-primary"><i class="bi bi-check-lg"></i> <?= e(__('Save and choose customers')) ?></button></div>
     </form>
     <?php
     require __DIR__ . '/partials/footer.php';
@@ -200,7 +200,7 @@ if ($action === 'playlist') {
           </div>
         </div>
       </div>
-      <div class="mt-3"><button class="btn btn-primary"><i class="bi bi-check-lg"></i> <?= e(__('Save and choose hotels')) ?></button></div>
+      <div class="mt-3"><button class="btn btn-primary"><i class="bi bi-check-lg"></i> <?= e(__('Save and choose customers')) ?></button></div>
     </form>
     <?php
     require __DIR__ . '/partials/footer.php';
@@ -215,17 +215,17 @@ if ($action === 'publish') {
     require __DIR__ . '/partials/header.php';
     ?>
     <div class="page-head">
-      <div class="min-w-0"><h1 class="text-truncate"><i class="bi bi-send"></i> <?= e(__('Publish to hotels')) ?></h1>
+      <div class="min-w-0"><h1 class="text-truncate"><i class="bi bi-send"></i> <?= e(__('Publish to customers')) ?></h1>
         <p class="lead-sm mb-0"><?= e($type === 'playlist' ? '▶ ' . $src['name'] : $src['title']) ?></p></div>
       <a class="btn btn-light border" href="<?= e(admin_url('chain_content.php', $cq + ($type === 'playlist' ? ['tab' => 'playlists'] : []))) ?>"><i class="bi bi-arrow-left"></i> <?= e(__('Back')) ?></a>
     </div>
     <form method="post" class="card">
       <?= Csrf::field() ?><input type="hidden" name="op" value="publish"><input type="hidden" name="chain" value="<?= $cid ?>">
       <input type="hidden" name="type" value="<?= e($type) ?>"><input type="hidden" name="id" value="<?= (int) $src['id'] ?>">
-      <div class="card-header d-flex align-items-center gap-2"><span><?= e(__('Hotels')) ?></span>
+      <div class="card-header d-flex align-items-center gap-2"><span><?= e(__('Customers')) ?></span>
         <button type="button" class="btn btn-sm btn-light border ms-auto" data-check-all="hotels[]"><?= e(__('Select all')) ?></button></div>
       <ul class="list-group list-group-flush">
-        <?php if (!$hotels): ?><li class="list-group-item text-muted"><?= e(__('No hotels in this chain yet.')) ?></li><?php endif; ?>
+        <?php if (!$hotels): ?><li class="list-group-item text-muted"><?= e(__('No customers in this chain yet.')) ?></li><?php endif; ?>
         <?php foreach ($hotels as $h): $st = Tenant::state((int) $h['id']); ?>
           <li class="list-group-item d-flex align-items-center gap-2">
             <input class="form-check-input" type="checkbox" name="hotels[]" value="<?= (int) $h['id'] ?>" id="ph<?= (int) $h['id'] ?>"<?= isset($pub[(int) $h['id']]) || !$pub ? ' checked' : '' ?><?= $st !== 'active' ? ' disabled' : '' ?>>
@@ -236,8 +236,8 @@ if ($action === 'publish') {
         <?php endforeach; ?>
       </ul>
       <div class="card-body">
-        <p class="small text-muted"><?= e(__('Publishing copies the item (and its media file) into each hotel. Publishing again updates the copies; hotels can then use it like their own content.')) ?></p>
-        <button class="btn btn-primary"<?= $hotels ? '' : ' disabled' ?>><i class="bi bi-send"></i> <?= e(__('Publish to selected hotels')) ?></button>
+        <p class="small text-muted"><?= e(__('Publishing copies the item (and its media file) to each customer. Publishing again updates the copies; customers can then use it like their own content.')) ?></p>
+        <button class="btn btn-primary"<?= $hotels ? '' : ' disabled' ?>><i class="bi bi-send"></i> <?= e(__('Publish to selected customers')) ?></button>
       </div>
     </form>
     <?php
@@ -252,7 +252,7 @@ require __DIR__ . '/partials/header.php';
 ?>
 <div class="page-head">
   <div class="min-w-0"><h1 class="text-truncate"><i class="bi bi-collection-play"></i> <?= e(__('Chain content')) ?></h1>
-    <p class="lead-sm mb-0"><?= e($chain['name']) ?> · <?= e(__('Create once, publish to every hotel of the chain.')) ?></p></div>
+    <p class="lead-sm mb-0"><?= e($chain['name']) ?> · <?= e(__('Create once, publish to every customer of the chain.')) ?></p></div>
   <div class="d-flex flex-wrap gap-2">
     <div class="dropdown">
       <button class="btn btn-primary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-plus-lg"></i> <?= e(__('Add content')) ?></button>
@@ -279,12 +279,12 @@ require __DIR__ . '/partials/header.php';
           <div class="fw-semibold text-truncate"><i class="bi <?= e($isPl ? 'bi-collection-play' : (ContentManager::TYPE_ICONS[$r['type']] ?? 'bi-file')) ?>"></i> <?= e($isPl ? $r['name'] : $r['title']) ?>
             <?= !$isPl && !(int) $r['is_active'] ? '<span class="badge text-bg-secondary">' . e(__('inactive')) . '</span>' : '' ?></div>
           <div class="small text-muted"><?= e($isPl ? __(':n items', ['n' => $r['item_count']]) : __(ContentManager::TYPES[$r['type']])) ?> ·
-            <?= e(__('published in :n of :t hotels', ['n' => $r['published'], 't' => count($hotels)])) ?></div>
+            <?= e(__('published at :n of :t customers', ['n' => $r['published'], 't' => count($hotels)])) ?></div>
         </div>
         <div class="d-flex gap-1 text-nowrap">
           <a class="btn btn-sm btn-primary" href="<?= e(admin_url('chain_content.php', $cq + ['action' => 'publish', 'type' => $isPl ? 'playlist' : 'content', 'id' => $r['id']])) ?>"><i class="bi bi-send"></i> <span class="d-none d-sm-inline"><?= e(__('Publish')) ?></span></a>
           <a class="btn btn-sm btn-light border" href="<?= e(admin_url('chain_content.php', $cq + ($isPl ? ['action' => 'playlist', 'id' => $r['id']] : ['action' => 'edit', 'id' => $r['id']]))) ?>" title="<?= e(__('Edit')) ?>"><i class="bi bi-pencil"></i></a>
-          <form method="post" class="d-inline" data-confirm="<?= e(__('Delete from the chain library? Copies in the hotels stay.')) ?>"><?= Csrf::field() ?>
+          <form method="post" class="d-inline" data-confirm="<?= e(__('Delete from the chain library? Copies at the customers stay.')) ?>"><?= Csrf::field() ?>
             <input type="hidden" name="op" value="<?= $isPl ? 'delete_playlist' : 'delete_content' ?>"><input type="hidden" name="chain" value="<?= $cid ?>"><input type="hidden" name="id" value="<?= (int) $r['id'] ?>">
             <button class="btn btn-sm btn-outline-danger" title="<?= e(__('Delete')) ?>"><i class="bi bi-trash"></i></button></form>
         </div>

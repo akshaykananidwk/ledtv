@@ -161,7 +161,7 @@ require __DIR__ . '/partials/header.php';
 <div class="page-head">
   <div>
     <h1><?= e(__('Holidays')) ?></h1>
-    <p class="lead-sm"><?= e(__('Days on which TVs switch off or show special content. Hotel time (:tz).', ['tz' => date_default_timezone_get()])) ?></p>
+    <p class="lead-sm"><?= e(__('Days on which TVs switch off or show special content. Local time (:tz).', ['tz' => date_default_timezone_get()])) ?></p>
   </div>
   <div class="d-flex flex-wrap gap-2">
     <?php if (Auth::can('schedule.manage')): ?><a class="btn btn-light border" href="<?= e(admin_url('calendar.php')) ?>"><i class="bi bi-calendar3"></i> <?= e(__('Calendar')) ?></a><?php endif; ?>

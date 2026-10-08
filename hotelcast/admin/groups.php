@@ -90,7 +90,7 @@ if (is_post()) {
             });
             Settings::bumpContentVersion();
             ActivityLog::add('group_auto_floors', 'group', null, "Created $created floor groups, $assigned memberships");
-            flash('success', __('Floor groups ready: :c created, :a rooms added.', ['c' => $created, 'a' => $assigned]));
+            flash('success', __('Area / floor groups ready: :c created, :a screens added.', ['c' => $created, 'a' => $assigned]));
             redirect(admin_url('groups.php'));
     }
     flash('warning', __('Unknown action.'));
@@ -147,19 +147,19 @@ if ($action === 'new' || $action === 'edit') {
           </div>
           <div class="col-12">
             <label class="form-label" for="gsource"><?= e(__('Content for this group')) ?></label>
-            <?= source_select('source', source_value($g['content_id'], $g['playlist_id']), __('— None (use hotel default) —'), ['id' => 'gsource']) ?>
-            <div class="form-text"><?= e(__('Rooms in this group show this unless the room has its own content.')) ?></div>
+            <?= source_select('source', source_value($g['content_id'], $g['playlist_id']), __('— None (use default content) —'), ['id' => 'gsource']) ?>
+            <div class="form-text"><?= e(__('Screens in this group show this unless the screen has its own content.')) ?></div>
           </div>
         </div></div>
       </div>
       <div class="col-lg-7">
         <div class="card">
           <div class="card-header d-flex align-items-center">
-            <span><?= e(__('Rooms in this group')) ?></span>
+            <span><?= e(__('Screens in this group')) ?></span>
             <label class="ms-auto small fw-normal"><input type="checkbox" class="form-check-input me-1" data-check-all=".member-cb"> <?= e(__('Select all')) ?></label>
           </div>
           <div class="card-body" style="max-height:60vh;overflow:auto">
-            <?php if (!$byFloor): ?><div class="text-muted"><?= e(__('No rooms yet.')) ?></div><?php endif; ?>
+            <?php if (!$byFloor): ?><div class="text-muted"><?= e(__('No screens yet.')) ?></div><?php endif; ?>
             <?php foreach ($byFloor as $floor => $list): $floor = (string) $floor; ?>
               <div class="mb-2">
                 <div class="small fw-semibold text-muted mb-1">
@@ -202,12 +202,12 @@ require __DIR__ . '/partials/header.php';
 <div class="page-head">
   <div>
     <h1><?= e(__('Groups')) ?></h1>
-    <p class="lead-sm"><?= e(__('Group rooms by floor, zone or any way you like, then send content to a whole group at once.')) ?></p>
+    <p class="lead-sm"><?= e(__('Group screens by area, floor, zone or any way you like, then send content to a whole group at once.')) ?></p>
   </div>
   <?php if (!$limited): ?>
   <div class="d-flex flex-wrap gap-2">
     <a class="btn btn-primary" href="<?= e(admin_url('groups.php', ['action' => 'new'])) ?>"><i class="bi bi-plus-lg"></i> <?= e(__('New group')) ?></a>
-    <form method="post" data-confirm="<?= e(__('Create one group per floor and add each room to its floor group?')) ?>" data-confirm-safe="1">
+    <form method="post" data-confirm="<?= e(__('Create one group per area / floor and add each screen to its group?')) ?>" data-confirm-safe="1">
       <?= Csrf::field() ?><input type="hidden" name="op" value="auto_floors">
       <button class="btn btn-outline-primary"><i class="bi bi-magic"></i> <?= e(__('Auto-create floor groups')) ?></button>
     </form>
@@ -224,18 +224,18 @@ require __DIR__ . '/partials/header.php';
 <?php else: ?>
   <div class="table-responsive">
     <table class="table table-hc table-hover">
-      <thead><tr><th><?= e(__('Name')) ?></th><th><?= e(__('Type')) ?></th><th><?= e(__('Rooms')) ?></th><th><?= e(__('Content')) ?></th><th class="text-end"><?= e(__('Actions')) ?></th></tr></thead>
+      <thead><tr><th><?= e(__('Name')) ?></th><th><?= e(__('Type')) ?></th><th><?= e(__('Screens')) ?></th><th><?= e(__('Content')) ?></th><th class="text-end"><?= e(__('Actions')) ?></th></tr></thead>
       <tbody>
       <?php foreach ($groups as $g): ?>
         <tr>
           <td><strong><?= e($g['name']) ?></strong><?php if ($g['description']): ?><div class="small text-muted"><?= e($g['description']) ?></div><?php endif; ?></td>
           <td><span class="badge text-bg-light border"><?= e(__(ucfirst($g['type']))) ?></span></td>
           <td><?= (int) $g['members'] ?></td>
-          <td class="small"><?= e(source_label($g['content_id'], $g['playlist_id']) ?: __('Hotel default')) ?></td>
+          <td class="small"><?= e(source_label($g['content_id'], $g['playlist_id']) ?: __('Default content')) ?></td>
           <td class="text-end text-nowrap">
             <a class="btn btn-sm btn-primary" href="<?= e(admin_url('groups.php', ['action' => 'edit', 'id' => $g['id']])) ?>"><i class="bi bi-pencil"></i> <span class="d-none d-sm-inline"><?= e(__('Edit')) ?></span></a>
             <?php if (!$limited): ?>
-            <form method="post" class="d-inline" data-confirm="<?= e(__('Delete group ":n"? The rooms themselves are not deleted.', ['n' => $g['name']])) ?>">
+            <form method="post" class="d-inline" data-confirm="<?= e(__('Delete group ":n"? The screens themselves are not deleted.', ['n' => $g['name']])) ?>">
               <?= Csrf::field() ?><input type="hidden" name="op" value="delete"><input type="hidden" name="id" value="<?= (int) $g['id'] ?>">
               <button class="btn btn-sm btn-outline-danger" title="<?= e(__('Delete')) ?>"><i class="bi bi-trash"></i></button>
             </form>

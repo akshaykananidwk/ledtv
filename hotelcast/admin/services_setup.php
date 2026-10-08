@@ -314,7 +314,7 @@ require __DIR__ . '/partials/header.php';
       <div class="card h-100">
         <div class="card-header"><i class="bi bi-phone"></i> <?= e(__('Guest app (scan QR on TV)')) ?></div>
         <div class="card-body">
-          <?php foreach (['guest_services_enabled' => __('Room-service menu & orders'), 'guest_requests_enabled' => __('Service requests (water, towels, wake-up call…)'), 'guest_feedback_enabled' => __('Feedback (stars + comment)'), 'guest_tv_notify' => __('Tell the guest on the TV when an order / request status changes'), 'guest_notify_external' => __('Also send new orders by email / WhatsApp (hotel notification settings)')] as $k => $label): ?>
+          <?php foreach (['guest_services_enabled' => __('Room-service menu & orders'), 'guest_requests_enabled' => __('Service requests (water, towels, wake-up call…)'), 'guest_feedback_enabled' => __('Feedback (stars + comment)'), 'guest_tv_notify' => __('Tell the guest on the TV when an order / request status changes'), 'guest_notify_external' => __('Also send new orders by email / WhatsApp (property notification settings)')] as $k => $label): ?>
             <div class="form-check form-switch mb-1"><input class="form-check-input" type="checkbox" name="<?= e($k) ?>" value="1" id="s<?= e($k) ?>" <?= $gset($k) === '1' ? 'checked' : '' ?>>
               <label class="form-check-label" for="s<?= e($k) ?>"><?= e($label) ?></label></div>
           <?php endforeach; ?>

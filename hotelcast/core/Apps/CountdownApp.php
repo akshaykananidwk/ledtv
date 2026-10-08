@@ -75,7 +75,7 @@ final class CountdownApp extends DisplayApp
         $ts = strtotime((string) $config['target']) ?: time();
         return self::input('title', __('Title'), $config['title'], 'text', ['maxlength' => 120, 'required' => true])
             . self::input('subtitle', __('Sub-heading'), $config['subtitle'], 'text', ['maxlength' => 190])
-            . self::input('target', __('Count down to'), date('Y-m-d\TH:i', $ts), 'datetime-local', ['required' => true], __('Date and time in the hotel time zone.'))
+            . self::input('target', __('Count down to'), date('Y-m-d\TH:i', $ts), 'datetime-local', ['required' => true], __('Date and time in your time zone.'))
             . self::input('done_message', __('Message after zero'), $config['done_message'], 'text', ['maxlength' => 190])
             . self::imagePicker('bg_image', __('Background image (optional)'), (int) $config['bg_image'], __('An image from the content library.'))
             . self::checkbox('show_seconds', __('Show seconds'), (bool) $config['show_seconds']);

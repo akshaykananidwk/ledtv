@@ -22,11 +22,11 @@ if ($csv !== '') {
     match ($csv) {
         'days' => csv_download($base . '-days.csv', [__('Date'), __('Plays'), __('Airtime (seconds)'), __('TVs')],
             array_map(fn ($r) => [$r['day'], $r['plays'], $r['seconds'], $r['tvs']], PlayReport::perDay($f))),
-        'tvs' => csv_download($base . '-tvs.csv', [__('Room'), __('TV'), __('Plays'), __('Airtime (seconds)'), __('Different items'), __('First play'), __('Last play')],
+        'tvs' => csv_download($base . '-tvs.csv', [__('Screen'), __('TV'), __('Plays'), __('Airtime (seconds)'), __('Different items'), __('First play'), __('Last play')],
             array_map(fn ($r) => [$r['room'], $r['tv'], $r['plays'], $r['seconds'], $r['items'], $r['first_at'], $r['last_at']], PlayReport::perTv($f))),
         'content' => csv_download($base . '-content.csv', [__('Content'), __('Type'), __('Plays'), __('Airtime (seconds)'), __('TVs')],
             array_map(fn ($r) => [$r['title'], $r['type'], $r['plays'], $r['seconds'], $r['tvs']], PlayReport::perContent($f, 5000))),
-        default => csv_download($base . '.csv', [__('Played at'), __('Room'), __('TV'), __('Content'), __('Type'), __('Seconds on screen'), __('Ad campaign')],
+        default => csv_download($base . '.csv', [__('Played at'), __('Screen'), __('TV'), __('Content'), __('Type'), __('Seconds on screen'), __('Ad campaign')],
             (static function () use ($f): Generator {
                 foreach (PlayReport::iterate($f) as $r) {
                     yield [$r['played_at'], $r['room'], $r['tv'], $r['title'], $r['type'], $r['seconds'], $r['campaign']];
@@ -96,7 +96,7 @@ tr{page-break-inside:avoid}
   <?php endforeach; ?>
   </tbody></table>
   <h2><?= e(__('Per TV')) ?></h2>
-  <table><thead><tr><th><?= e(__('Room')) ?></th><th><?= e(__('TV')) ?></th><th class="r"><?= e(__('Plays')) ?></th><th class="r"><?= e(__('Airtime')) ?></th><th><?= e(__('First play')) ?></th><th><?= e(__('Last play')) ?></th></tr></thead><tbody>
+  <table><thead><tr><th><?= e(__('Screen')) ?></th><th><?= e(__('TV')) ?></th><th class="r"><?= e(__('Plays')) ?></th><th class="r"><?= e(__('Airtime')) ?></th><th><?= e(__('First play')) ?></th><th><?= e(__('Last play')) ?></th></tr></thead><tbody>
   <?php foreach ($perTv as $r): ?>
     <tr><td><?= e($r['room']) ?></td><td><?= e($r['tv']) ?></td><td class="r"><?= number_format($r['plays']) ?></td><td class="r"><?= e($hm($r['seconds'])) ?></td>
       <td><?= e(date('d M H:i', (int) strtotime($r['first_at']))) ?></td><td><?= e(date('d M H:i', (int) strtotime($r['last_at']))) ?></td></tr>
@@ -151,8 +151,8 @@ $sel = static fn (string $name, array $opts, int $current, string $all): string 
       <?= $sel('content_id', array_column($contentList, 'title', 'id'), $f['content_id'], __('All content')) ?></div>
     <div class="col-md-4"><label class="form-label small" for="pr_playlist_id"><?= e(__('Playlist')) ?></label>
       <?= $sel('playlist_id', array_column($playlists, 'name', 'id'), $f['playlist_id'], __('All playlists')) ?></div>
-    <div class="col-md-3"><label class="form-label small" for="pr_room_id"><?= e(__('Room')) ?></label>
-      <?= $sel('room_id', array_column($rooms, 'room_number', 'id'), $f['room_id'], __('All rooms')) ?></div>
+    <div class="col-md-3"><label class="form-label small" for="pr_room_id"><?= e(__('Screen')) ?></label>
+      <?= $sel('room_id', array_column($rooms, 'room_number', 'id'), $f['room_id'], __('All screens')) ?></div>
     <div class="col-md-3"><label class="form-label small" for="pr_group_id"><?= e(__('Group')) ?></label>
       <?= $sel('group_id', array_column($groups, 'name', 'id'), $f['group_id'], __('All groups')) ?></div>
     <?php if ($campaigns): ?>
@@ -177,7 +177,7 @@ $sel = static fn (string $name, array $opts, int $current, string $all): string 
       <div class="card-header d-flex justify-content-between"><span><i class="bi bi-tv"></i> <?= e(__('Per TV')) ?></span><a class="small" href="<?= e(admin_url('play_report.php', $query + ['csv' => 'tvs'])) ?>">CSV</a></div>
       <div class="table-responsive" style="max-height:360px">
         <table class="table table-sm align-middle mb-0">
-          <thead class="table-light"><tr><th><?= e(__('Room')) ?></th><th><?= e(__('TV')) ?></th><th class="text-end"><?= e(__('Plays')) ?></th><th class="text-end"><?= e(__('Airtime')) ?></th></tr></thead>
+          <thead class="table-light"><tr><th><?= e(__('Screen')) ?></th><th><?= e(__('TV')) ?></th><th class="text-end"><?= e(__('Plays')) ?></th><th class="text-end"><?= e(__('Airtime')) ?></th></tr></thead>
           <tbody>
           <?php if (!$perTv): ?><tr><td colspan="4" class="text-center text-muted py-3"><?= e(__('No plays in this period.')) ?></td></tr><?php endif; ?>
           <?php foreach ($perTv as $r): ?><tr><td><?= e($r['room']) ?></td><td class="small"><?= e($r['tv']) ?></td><td class="text-end"><?= number_format($r['plays']) ?></td><td class="text-end"><?= e($hm($r['seconds'])) ?></td></tr><?php endforeach; ?>
@@ -218,7 +218,7 @@ $sel = static fn (string $name, array $opts, int $current, string $all): string 
   <div class="card-header"><i class="bi bi-list-ul"></i> <?= e(__('All plays')) ?> <span class="badge text-bg-light border"><?= number_format($total) ?></span></div>
   <div class="table-responsive">
     <table class="table table-sm table-hover align-middle mb-0" id="playRows">
-      <thead class="table-light"><tr><th><?= e(__('Played at')) ?></th><th><?= e(__('Room')) ?></th><th><?= e(__('TV')) ?></th><th><?= e(__('Content')) ?></th><th class="text-end"><?= e(__('Seconds')) ?></th><th><?= e(__('Ad campaign')) ?></th></tr></thead>
+      <thead class="table-light"><tr><th><?= e(__('Played at')) ?></th><th><?= e(__('Screen')) ?></th><th><?= e(__('TV')) ?></th><th><?= e(__('Content')) ?></th><th class="text-end"><?= e(__('Seconds')) ?></th><th><?= e(__('Ad campaign')) ?></th></tr></thead>
       <tbody>
       <?php if (!$rows): ?><tr><td colspan="6" class="text-center text-muted py-3"><?= e(__('No plays in this period.')) ?></td></tr><?php endif; ?>
       <?php foreach ($rows as $r): ?>

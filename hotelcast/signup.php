@@ -198,13 +198,13 @@ $err = static fn (string $k) => isset($errors[$k]) ? '<div class="invalid-feedba
 $cls = static fn (string $k) => isset($errors[$k]) ? ' is-invalid' : '';
 signup_page(__('Start your :n-day free trial', ['n' => $days]), static function () use ($v, $err, $cls, $errors, $captcha, $terms, $old, $lang): void {
     ?>
-    <p class="text-center text-muted small"><?= e(__('No payment details needed. Your hotel is ready in a minute, with sample rooms and content.')) ?></p>
+    <p class="text-center text-muted small"><?= e(__('No payment details needed. Your account is ready in a minute, with sample screens and content.')) ?></p>
     <?php if (!empty($errors['_'])): ?><div class="alert alert-danger" role="alert"><?= e($errors['_']) ?></div><?php endif; ?>
     <?php if ($errors && empty($errors['_'])): ?><div class="alert alert-danger" role="alert"><?= e(__('Please correct the marked fields.')) ?></div><?php endif; ?>
     <form method="post" action="<?= e(base_url('signup.php')) ?>" class="row g-3" novalidate autocomplete="on">
       <?= Csrf::field() ?><input type="hidden" name="op" value="register"><input type="hidden" name="ts" value="<?= e(Signup::formToken()) ?>">
       <div class="hc-hp" aria-hidden="true"><label for="website">Website</label><input type="text" id="website" name="website" tabindex="-1" autocomplete="off" value=""></div>
-      <div class="col-sm-7"><label class="form-label" for="hotel_name"><?= e(__('Hotel name')) ?> *</label>
+      <div class="col-sm-7"><label class="form-label" for="hotel_name"><?= e(__('Business name')) ?> *</label>
         <input class="form-control<?= $cls('hotel_name') ?>" id="hotel_name" name="hotel_name" value="<?= $v('hotel_name') ?>" required maxlength="120" autocomplete="organization"><?= $err('hotel_name') ?></div>
       <div class="col-sm-5"><label class="form-label" for="city"><?= e(__('City')) ?> *</label>
         <input class="form-control<?= $cls('city') ?>" id="city" name="city" value="<?= $v('city') ?>" required maxlength="80" autocomplete="address-level2"><?= $err('city') ?></div>
@@ -214,7 +214,7 @@ signup_page(__('Start your :n-day free trial', ['n' => $days]), static function 
         <input class="form-control<?= $cls('mobile') ?>" type="tel" id="mobile" name="mobile" value="<?= $v('mobile') ?>" required maxlength="20" inputmode="tel" autocomplete="tel" placeholder="+91 98xxx xxxxx"><?= $err('mobile') ?></div>
       <div class="col-sm-8"><label class="form-label" for="email"><?= e(__('Email')) ?> *</label>
         <input class="form-control<?= $cls('email') ?>" type="email" id="email" name="email" value="<?= $v('email') ?>" required maxlength="190" autocomplete="email" autocapitalize="none" spellcheck="false"><?= $err('email') ?></div>
-      <div class="col-sm-4"><label class="form-label" for="tv_estimate"><?= e(__('Rooms / TVs')) ?> *</label>
+      <div class="col-sm-4"><label class="form-label" for="tv_estimate"><?= e(__('Screens / TVs')) ?> *</label>
         <input class="form-control<?= $cls('tv_estimate') ?>" type="number" id="tv_estimate" name="tv_estimate" value="<?= $v('tv_estimate') ?>" min="1" max="2000" required inputmode="numeric"><?= $err('tv_estimate') ?></div>
       <div class="col-sm-8"><label class="form-label" for="password"><?= e(__('Choose a password')) ?> *</label>
         <div class="input-group"><input class="form-control<?= $cls('password') ?>" type="password" id="password" name="password" required autocomplete="new-password" minlength="8" aria-describedby="pwHelp">

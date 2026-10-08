@@ -21,13 +21,13 @@ if (is_post()) {
                 $r = Billing::generateMonthly(preg_match('/^\d{4}-\d{2}$/', $ym) ? $ym : null, Auth::id());
                 ActivityLog::add('invoices_generate', 'invoice', null, $r['period'][0] . ': ' . count($r['created']) . ' created');
                 flash('success', __(':n invoices created for :p.', ['n' => count($r['created']), 'p' => date('M Y', (int) strtotime($r['period'][0]))])
-                    . ($r['skipped'] ? ' ' . __(':n hotels skipped (no plan, no TVs or already invoiced).', ['n' => count($r['skipped'])]) : ''));
+                    . ($r['skipped'] ? ' ' . __(':n customers skipped (no plan, no TVs or already invoiced).', ['n' => count($r['skipped'])]) : ''));
                 break;
 
             case 'create':
                 $hid = req_int('hotel_id', $_POST);
                 if (!Hotels::find($hid)) {
-                    throw new InvalidArgumentException(__('Hotel not found.'));
+                    throw new InvalidArgumentException(__('Customer not found.'));
                 }
                 [$from, $to] = Billing::monthRange(req_str('month', $_POST, 7) ?: null);
                 $tv = trim(req_str('tv_count', $_POST, 10));
@@ -58,13 +58,13 @@ if (is_post()) {
                         sprintf("Dear %s,\n\nInvoice %s (%s) is due on %s. Please pay at your earliest convenience.\n\nThank you,\n%s",
                             $inv['hotel_name'], $inv['number'], money($inv['total'], $inv['currency']), date('d M Y', (int) strtotime($inv['due_date'])), $brand));
                     DB::query('UPDATE invoices SET reminders_sent = reminders_sent + 1, last_reminder_at = :n WHERE id = :id', ['n' => now(), 'id' => $id]);
-                    flash($res ? 'success' : 'warning', $res ? __('Reminder sent.') : __('No email / WhatsApp contact for this hotel.'));
+                    flash($res ? 'success' : 'warning', $res ? __('Reminder sent.') : __('No email / WhatsApp contact for this customer.'));
                 }
                 break;
 
             case 'run_billing':
                 $r = Billing::processOverdue();
-                flash('success', __('Overdue check done: :r reminders, :s hotels suspended.', ['r' => $r['reminded'], 's' => $r['suspended']]));
+                flash('success', __('Overdue check done: :r reminders, :s customers suspended.', ['r' => $r['reminded'], 's' => $r['suspended']]));
                 break;
         }
     } catch (InvalidArgumentException | RuntimeException $e) {
@@ -123,13 +123,13 @@ require __DIR__ . '/partials/header.php';
 <div class="collapse mb-3" id="genBox"><div class="card"><div class="card-body">
   <form method="post" class="row g-2 align-items-end"><?= Csrf::field() ?><input type="hidden" name="op" value="generate">
     <div class="col-sm-4"><label class="form-label" for="g_m"><?= e(__('Month')) ?></label><input class="form-control" type="month" id="g_m" name="month" value="<?= e($prevMonth) ?>"></div>
-    <div class="col-sm-8"><button class="btn btn-primary"><i class="bi bi-lightning-charge"></i> <?= e(__('Generate for all active hotels')) ?></button>
-      <div class="form-text"><?= e(__('Hotels that already have an invoice for this month are skipped. Runs automatically on the 1st when enabled in Platform settings.')) ?></div></div>
+    <div class="col-sm-8"><button class="btn btn-primary"><i class="bi bi-lightning-charge"></i> <?= e(__('Generate for all active customers')) ?></button>
+      <div class="form-text"><?= e(__('Customers that already have an invoice for this month are skipped. Runs automatically on the 1st when enabled in Platform settings.')) ?></div></div>
   </form>
 </div></div></div>
 <div class="collapse mb-3" id="newBox"><div class="card"><div class="card-body">
   <form method="post" class="row g-2 align-items-end"><?= Csrf::field() ?><input type="hidden" name="op" value="create">
-    <div class="col-md-4"><label class="form-label" for="n_h"><?= e(__('Hotel')) ?></label><select class="form-select" id="n_h" name="hotel_id" required>
+    <div class="col-md-4"><label class="form-label" for="n_h"><?= e(__('Customer')) ?></label><select class="form-select" id="n_h" name="hotel_id" required>
       <?php foreach ($hotels as $h): ?><option value="<?= (int) $h['id'] ?>"><?= e($h['name']) ?></option><?php endforeach; ?></select></div>
     <div class="col-md-2"><label class="form-label" for="n_m"><?= e(__('Month')) ?></label><input class="form-control" type="month" id="n_m" name="month" value="<?= e(date('Y-m')) ?>"></div>
     <div class="col-md-2"><label class="form-label" for="n_tv"><?= e(__('TVs')) ?></label><input class="form-control" type="number" min="0" id="n_tv" name="tv_count" placeholder="<?= e(__('auto')) ?>"></div>
@@ -143,13 +143,13 @@ require __DIR__ . '/partials/header.php';
     <option value=""><?= e(__('All statuses')) ?></option>
     <?php foreach (['unpaid' => __('Unpaid'), 'overdue' => __('Overdue'), 'paid' => __('Paid'), 'cancelled' => __('Cancelled')] as $k => $l): ?><option value="<?= e($k) ?>"<?= $fStatus === $k ? ' selected' : '' ?>><?= e($l) ?></option><?php endforeach; ?>
   </select>
-  <select class="form-select" style="max-width:16rem" name="hotel"><option value=""><?= e(__('All hotels')) ?></option>
+  <select class="form-select" style="max-width:16rem" name="hotel"><option value=""><?= e(__('All customers')) ?></option>
     <?php foreach ($hotels as $h): ?><option value="<?= (int) $h['id'] ?>"<?= $fHotel === (int) $h['id'] ? ' selected' : '' ?>><?= e($h['name']) ?></option><?php endforeach; ?></select>
   <input class="form-control" style="max-width:11rem" type="month" name="month" value="<?= e($fMonth) ?>">
   <button class="btn btn-outline-primary"><i class="bi bi-funnel"></i> <?= e(__('Filter')) ?></button>
 </form>
 <div class="card"><div class="table-responsive"><table class="table table-hc table-hover align-middle">
-  <thead><tr><th><?= e(__('Number')) ?></th><th><?= e(__('Hotel')) ?></th><th class="d-none d-md-table-cell"><?= e(__('Period')) ?></th><th class="d-none d-lg-table-cell"><?= e(__('TVs')) ?></th><th class="text-end"><?= e(__('Total')) ?></th><th><?= e(__('Due')) ?></th><th><?= e(__('Status')) ?></th><th class="text-end"><?= e(__('Actions')) ?></th></tr></thead>
+  <thead><tr><th><?= e(__('Number')) ?></th><th><?= e(__('Customer')) ?></th><th class="d-none d-md-table-cell"><?= e(__('Period')) ?></th><th class="d-none d-lg-table-cell"><?= e(__('TVs')) ?></th><th class="text-end"><?= e(__('Total')) ?></th><th><?= e(__('Due')) ?></th><th><?= e(__('Status')) ?></th><th class="text-end"><?= e(__('Actions')) ?></th></tr></thead>
   <tbody>
   <?php if (!$invoices): ?><tr><td colspan="8" class="text-center text-muted py-4"><?= e(__('No invoices yet.')) ?></td></tr><?php endif; ?>
   <?php foreach ($invoices as $inv): ?>
@@ -181,7 +181,7 @@ require __DIR__ . '/partials/header.php';
     <div class="col-sm-6"><label class="form-label" for="pm_m"><?= e(__('Method')) ?></label><select class="form-select" id="pm_m" name="payment_method">
       <?php foreach (['UPI', 'Bank transfer', 'Cheque', 'Cash', 'Other'] as $m): ?><option value="<?= e($m) ?>"><?= e(__($m)) ?></option><?php endforeach; ?></select></div>
     <div class="col-12"><label class="form-label" for="pm_r"><?= e(__('Payment reference')) ?></label><input class="form-control" id="pm_r" name="payment_ref" maxlength="120" placeholder="<?= e(__('UTR / cheque no.')) ?>"></div>
-    <div class="col-12 small text-muted"><?= e(__('A hotel that was suspended for non-payment is reactivated automatically.')) ?></div>
+    <div class="col-12 small text-muted"><?= e(__('A customer that was suspended for non-payment is reactivated automatically.')) ?></div>
   </div>
   <div class="modal-footer"><button type="button" class="btn btn-light border" data-bs-dismiss="modal"><?= e(__('Cancel')) ?></button><button class="btn btn-success"><i class="bi bi-check2-circle"></i> <?= e(__('Mark paid')) ?></button></div>
 </form></div></div>

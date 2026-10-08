@@ -163,7 +163,7 @@ if ($action === 'new' || $action === 'edit') {
               <div class="form-text"><?= e(__('All TVs playing this playlist show the same item at the same moment (lobby, restaurant, several TVs side by side). Every video needs its length in seconds. Needs TV app 2.4 or newer.')) ?></div>
             </div>
             <?php if ($pl['id'] && ($usage['rooms'] || $usage['groups'])): ?>
-              <div class="col-12 small text-muted"><i class="bi bi-info-circle"></i> <?= e(__('Used by :r rooms and :g groups. Changes appear on their TVs automatically.', ['r' => $usage['rooms'], 'g' => $usage['groups']])) ?></div>
+              <div class="col-12 small text-muted"><i class="bi bi-info-circle"></i> <?= e(__('Used by :r screens and :g groups. Changes appear on their TVs automatically.', ['r' => $usage['rooms'], 'g' => $usage['groups']])) ?></div>
             <?php endif; ?>
           </div></div>
         </div>
@@ -316,7 +316,7 @@ require __DIR__ . '/partials/header.php';
 <?php else: ?>
   <div class="table-responsive">
     <table class="table table-hc table-hover">
-      <thead><tr><th><?= e(__('Name')) ?></th><th><?= e(__('Items')) ?></th><th class="d-none d-sm-table-cell"><?= e(__('Length')) ?></th><th class="d-none d-md-table-cell"><?= e(__('Transition')) ?></th><th class="d-none d-md-table-cell"><?= e(__('Rooms')) ?></th><th class="text-end"><?= e(__('Actions')) ?></th></tr></thead>
+      <thead><tr><th><?= e(__('Name')) ?></th><th><?= e(__('Items')) ?></th><th class="d-none d-sm-table-cell"><?= e(__('Length')) ?></th><th class="d-none d-md-table-cell"><?= e(__('Transition')) ?></th><th class="d-none d-md-table-cell"><?= e(__('Screens')) ?></th><th class="text-end"><?= e(__('Actions')) ?></th></tr></thead>
       <tbody>
       <?php foreach ($playlists as $p): $t = (int) $p['total_sec']; ?>
         <tr>
@@ -328,7 +328,7 @@ require __DIR__ . '/partials/header.php';
           <td class="text-end text-nowrap">
             <a class="btn btn-sm btn-light border" href="<?= e(admin_url('preview.php', ['playlist_id' => $p['id']])) ?>" target="_blank" rel="noopener" title="<?= e(__('Preview')) ?>"><i class="bi bi-eye"></i></a>
             <a class="btn btn-sm btn-primary" href="<?= e(admin_url('playlists.php', ['action' => 'edit', 'id' => $p['id']])) ?>"><i class="bi bi-pencil"></i> <span class="d-none d-sm-inline"><?= e(__('Edit')) ?></span></a>
-            <form method="post" class="d-inline" data-confirm="<?= e(__('Delete playlist ":n"? Rooms using it will fall back to their group or hotel default content.', ['n' => $p['name']])) ?>">
+            <form method="post" class="d-inline" data-confirm="<?= e(__('Delete playlist ":n"? Screens using it will fall back to their group or default content.', ['n' => $p['name']])) ?>">
               <?= Csrf::field() ?><input type="hidden" name="op" value="delete"><input type="hidden" name="id" value="<?= (int) $p['id'] ?>">
               <button class="btn btn-sm btn-outline-danger" title="<?= e(__('Delete')) ?>"><i class="bi bi-trash"></i></button>
             </form>

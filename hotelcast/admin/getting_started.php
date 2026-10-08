@@ -30,7 +30,7 @@ require __DIR__ . '/partials/header.php';
   <?= e(__('Your free trial has started.')) ?>
   <?php if ($left !== null): ?><?= e(__('It runs until :d.', ['d' => date('d M Y', (int) strtotime((string) $hotel['expires_at']))])) ?><?php endif; ?>
   <?= e(__('Your login: :u (or your email address).', ['u' => $user['username']])) ?>
-  <?= e(__('We added sample rooms, a playlist and a timetable so you can see how it works.')) ?>
+  <?= e(__('We added sample screens, a playlist and a timetable so you can see how it works.')) ?>
 </div></div>
 <?php endif; ?>
 
@@ -56,7 +56,7 @@ require __DIR__ . '/partials/header.php';
     <?php endforeach; ?>
   </ol>
   <?php if ($done === count($steps)): ?>
-    <div class="alert alert-success mt-3 mb-0"><i class="bi bi-stars"></i> <?= e(__('All done — your hotel TVs are ready!')) ?></div>
+    <div class="alert alert-success mt-3 mb-0"><i class="bi bi-stars"></i> <?= e(__('All done — your TVs are ready!')) ?></div>
   <?php endif; ?>
 </div></div>
 

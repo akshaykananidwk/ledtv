@@ -25,7 +25,7 @@ function platform_save_hotel(?array $existing, ?int $resellerId, string $backUrl
         [$admin, $adminErrors] = Hotels::validateAdmin($_POST, $byReseller);
         $errors = array_merge($errors, $adminErrors);
         if ($byReseller && !Hotels::resellerCanCreate($resellerId)) {
-            $errors[] = __('Your hotel allowance is used up. Ask the platform to raise it.');
+            $errors[] = __('Your customer allowance is used up. Ask the platform to raise it.');
         }
     }
     // Branding logo override (stored with the platform files).
@@ -62,7 +62,7 @@ function platform_save_hotel(?array $existing, ?int $resellerId, string $backUrl
             Hotels::setStatus((int) $existing['id'], $statusChange, 'manual');
         }
         ActivityLog::add('hotel_update', 'hotel', (int) $existing['id'], $data['name']);
-        flash('success', __('Hotel ":n" saved.', ['n' => $data['name']]));
+        flash('success', __('Customer ":n" saved.', ['n' => $data['name']]));
         return (int) $existing['id'];
     }
     $status = $data['status'] ?? 'active';
@@ -72,7 +72,7 @@ function platform_save_hotel(?array $existing, ?int $resellerId, string $backUrl
         Hotels::setStatus($id, $status, 'manual');
     }
     ActivityLog::add('hotel_create', 'hotel', $id, $data['name'] . ($admin ? ' (admin ' . $admin['username'] . ')' : ''));
-    flash('success', __('Hotel ":n" created.', ['n' => $data['name']]) . ($admin ? ' ' . __('Super admin :u can log in now.', ['u' => $admin['username']]) : ''));
+    flash('success', __('Customer ":n" created.', ['n' => $data['name']]) . ($admin ? ' ' . __('Super admin :u can log in now.', ['u' => $admin['username']]) : ''));
     return $id;
 }
 
@@ -86,9 +86,9 @@ function hotel_form_fields(array $h, bool $byReseller, bool $isNew): string
     ?>
     <div class="row g-3">
       <div class="col-lg-7">
-        <div class="card"><div class="card-header"><?= e(__('Hotel')) ?></div><div class="card-body row g-3">
+        <div class="card"><div class="card-header"><?= e(__('Customer')) ?></div><div class="card-body row g-3">
           <div class="col-12">
-            <label class="form-label" for="h_name"><?= e(__('Hotel name')) ?> *</label>
+            <label class="form-label" for="h_name"><?= e(__('Business name')) ?> *</label>
             <input class="form-control" id="h_name" name="name" value="<?= $v('name') ?>" required maxlength="120">
           </div>
           <div class="col-sm-6">
@@ -138,7 +138,7 @@ function hotel_form_fields(array $h, bool $byReseller, bool $isNew): string
       </div>
       <div class="col-lg-5">
         <div class="card mb-3"><div class="card-header"><?= e(__('Branding override')) ?></div><div class="card-body row g-3">
-          <div class="col-12 small text-muted"><?= e(__('Optional. Replaces the platform / reseller name, logo and colour for this hotel (login page with ?b=slug, admin panel, TVs).')) ?></div>
+          <div class="col-12 small text-muted"><?= e(__('Optional. Replaces the platform / reseller name, logo and colour for this customer (login page with ?b=slug, admin panel, TVs).')) ?></div>
           <div class="col-sm-7"><label class="form-label" for="h_bn"><?= e(__('Product name')) ?></label><input class="form-control" id="h_bn" name="brand_name" value="<?= $v('brand_name') ?>" maxlength="120" placeholder="Krishna Cloud LED TV"></div>
           <div class="col-sm-5"><label class="form-label" for="h_bc"><?= e(__('Colour')) ?></label><input class="form-control" id="h_bc" name="brand_color" value="<?= $v('brand_color') ?>" pattern="#[0-9A-Fa-f]{6}" maxlength="7" placeholder="#7B1FA2"></div>
           <div class="col-12">
@@ -151,8 +151,8 @@ function hotel_form_fields(array $h, bool $byReseller, bool $isNew): string
           </div>
         </div></div>
         <?php if ($isNew): ?>
-        <div class="card"><div class="card-header"><?= e(__('First super admin of the hotel')) ?></div><div class="card-body row g-3">
-          <div class="col-12 small text-muted"><?= e($byReseller ? __('Required. The hotel owner logs in with this account.') : __('Optional — you can also enter the hotel and add users later.')) ?></div>
+        <div class="card"><div class="card-header"><?= e(__('First super admin of the customer')) ?></div><div class="card-body row g-3">
+          <div class="col-12 small text-muted"><?= e($byReseller ? __('Required. The business owner logs in with this account.') : __('Optional — you can also enter the customer and add users later.')) ?></div>
           <div class="col-sm-6"><label class="form-label" for="a_u"><?= e(__('Username')) ?></label><input class="form-control" id="a_u" name="admin_username" maxlength="50" autocomplete="off" pattern="[A-Za-z0-9_.\-]{3,50}"></div>
           <div class="col-sm-6"><label class="form-label" for="a_n"><?= e(__('Full name')) ?></label><input class="form-control" id="a_n" name="admin_name" maxlength="120"></div>
           <div class="col-12"><label class="form-label" for="a_e"><?= e(__('Email')) ?></label><input class="form-control" type="email" id="a_e" name="admin_email" maxlength="190" autocomplete="off"></div>

@@ -21,7 +21,7 @@ if ($isPlatform) {
     $wanted = req_int('hotel');
     if ($wanted && !Auth::canAccessHotel($wanted)) {
         Logger::write('security', 'warning', 'QR setup: hotel not allowed', ['user' => Auth::id(), 'hotel' => $wanted, 'ip' => client_ip()]);
-        flash('danger', __('You cannot manage this hotel.'));
+        flash('danger', __('You cannot manage this customer.'));
         $wanted = 0;
     }
     $hid = $wanted ?: (int) (Tenant::current() ?? 0);
@@ -51,7 +51,7 @@ if (is_post()) {
     $code = Provisioning::normalizeCode($_POST['code'] ?? '') ?? '';
     $back = admin_url('claim.php', array_filter(['code' => $code] + $hotelQ));
     if ($op !== 'assign' || !$hid) {
-        flash('warning', $hid ? __('Unknown action.') : __('Choose the hotel first.'));
+        flash('warning', $hid ? __('Unknown action.') : __('Choose the customer first.'));
         redirect($back);
     }
     $prov = Provisioning::find(req_int('prov_id', $_POST));
@@ -62,7 +62,7 @@ if (is_post()) {
     if ($prov['status'] !== 'pending') {
         flash('danger', $prov['status'] === 'expired'
             ? __('This setup code has expired. The TV shows a new code after a restart of the setup.')
-            : __('This TV has already been assigned to a room.'));
+            : __('This TV has already been assigned to a screen.'));
         redirect($back);
     }
     $problems = Provisioning::hotelProblems($hid, (string) $prov['device_uid']);
@@ -79,7 +79,7 @@ if (is_post()) {
         $number = req_str('new_room_number', $_POST, 40);
         $floor = req_str('new_floor', $_POST, 20);
         if ($number === '' || mb_strlen($number) > 20 || !preg_match('/^[\p{L}\p{N} _.-]+$/u', $number)) {
-            flash('danger', __('Room number is required (max 20 letters/numbers).'));
+            flash('danger', __('Screen name / ID is required (max 20 letters/numbers).'));
             redirect($back);
         }
         $existing = DB::one('SELECT * FROM rooms WHERE hotel_id = :hid AND room_number = :n', ['n' => $number] + hid());
@@ -104,7 +104,7 @@ if (is_post()) {
         }
     }
     if (!$room) {
-        flash('danger', __('Choose a room for this TV.'));
+        flash('danger', __('Choose a screen for this TV.'));
         redirect($back);
     }
     if (!Provisioning::claim((int) $prov['id'], $hid, (int) $room['id'], (int) Auth::id())) {
@@ -154,7 +154,7 @@ if (req_int('done', $_GET)) {
                     Tenant::set($hid);
                 }
             } else {
-                $codeError = __('This TV has already been assigned to a room.');
+                $codeError = __('This TV has already been assigned to a screen.');
             }
             $prov = null;
         }
@@ -193,7 +193,7 @@ require __DIR__ . '/partials/header.php';
 <div class="page-head">
   <div>
     <h1><i class="bi bi-qr-code-scan"></i> <?= e(__('Add TV with QR')) ?></h1>
-    <p class="lead-sm"><?= e(__('Scan the QR code on the new TV with your phone camera, pick the room and press Assign. Nothing needs to be typed on the TV.')) ?></p>
+    <p class="lead-sm"><?= e(__('Scan the QR code on the new TV with your phone camera, pick the screen and press Assign. Nothing needs to be typed on the TV.')) ?></p>
   </div>
   <div><?php require __DIR__ . '/partials/web_player_link.php'; // 2.4 web player (#45) ?></div>
 </div>
@@ -207,7 +207,7 @@ require __DIR__ . '/partials/header.php';
   <div class="card border-success mb-3" id="qrDone" data-id="<?= (int) $done['id'] ?>" data-status="<?= e($done['status']) ?>">
     <div class="card-body text-center py-4">
       <i class="bi bi-check-circle-fill text-success display-4"></i>
-      <h2 class="h4 mt-2"><?= e(__('TV assigned to room :n', ['n' => $doneRoom['room_number'] ?? '-'])) ?></h2>
+      <h2 class="h4 mt-2"><?= e(__('TV assigned to screen :n', ['n' => $doneRoom['room_number'] ?? '-'])) ?></h2>
       <p class="text-muted mb-3"><?= e(__('The TV will start in a few seconds. Keep it switched on and connected to the internet.')) ?></p>
       <div class="qr-status" id="qrStatus" aria-live="polite">
         <?php if ($doneOk): ?>
@@ -223,7 +223,7 @@ require __DIR__ . '/partials/header.php';
   </div>
   <div class="d-grid gap-2 mb-4">
     <a class="btn btn-primary btn-lg" href="<?= e(admin_url('claim.php', $hotelQ)) ?>"><i class="bi bi-plus-lg"></i> <?= e(__('Add another TV')) ?></a>
-    <a class="btn btn-light border btn-lg" href="<?= e(admin_url('rooms.php')) ?>"><i class="bi bi-tv"></i> <?= e(__('Rooms & TVs')) ?></a>
+    <a class="btn btn-light border btn-lg" href="<?= e(admin_url('rooms.php')) ?>"><i class="bi bi-tv"></i> <?= e(__('Screens & TVs')) ?></a>
   </div>
   <script>
   document.addEventListener('DOMContentLoaded', () => {
@@ -232,7 +232,7 @@ require __DIR__ . '/partials/header.php';
     const out = document.getElementById('qrStatus');
     const L = <?= json_embed([
         'registered' => __('Registered — the TV is working.'),
-        'online' => __('Registered — the TV is online in room :n.'),
+        'online' => __('Registered — the TV is online as screen :n.'),
         'expired' => __('The TV did not register in time. Restart the setup on the TV and scan the new code.'),
     ]) ?>;
     const started = Date.now();
@@ -265,10 +265,10 @@ require __DIR__ . '/partials/header.php';
   <?php if ($isPlatform): ?>
   <form method="get" class="card mb-3"><div class="card-body">
     <input type="hidden" name="code" value="<?= e($prov['code']) ?>">
-    <label class="form-label fw-bold" for="qrHotel"><?= e(__('Hotel')) ?></label>
+    <label class="form-label fw-bold" for="qrHotel"><?= e(__('Customer')) ?></label>
     <div class="d-flex gap-2">
       <select class="form-select form-select-lg" name="hotel" id="qrHotel" onchange="this.form.submit()">
-        <option value=""><?= e(__('Choose the hotel…')) ?></option>
+        <option value=""><?= e(__('Choose the customer…')) ?></option>
         <?php foreach ($hotels as $h): ?>
           <option value="<?= (int) $h['id'] ?>" <?= (int) $h['id'] === $hid ? 'selected' : '' ?>><?= e($h['name']) ?><?= $h['status'] !== 'active' ? ' (' . e(__($h['status'])) . ')' : '' ?></option>
         <?php endforeach; ?>
@@ -279,7 +279,7 @@ require __DIR__ . '/partials/header.php';
   <?php endif; ?>
 
   <?php if (!$hid): ?>
-    <div class="alert alert-info"><i class="bi bi-info-circle"></i> <?= e(__('Choose the hotel first.')) ?></div>
+    <div class="alert alert-info"><i class="bi bi-info-circle"></i> <?= e(__('Choose the customer first.')) ?></div>
   <?php else: ?>
     <?php if ($problems): ?>
       <div class="alert alert-danger" role="alert">
@@ -295,16 +295,16 @@ require __DIR__ . '/partials/header.php';
       <?php if ($isPlatform): ?><input type="hidden" name="hotel" value="<?= (int) $hid ?>"><?php endif; ?>
       <div class="card mb-3">
         <div class="card-header d-flex justify-content-between align-items-center">
-          <span><i class="bi bi-door-closed"></i> <?= e(__('Room for this TV')) ?><?= $isPlatform ? ' · ' . e($hotelName) : '' ?></span>
+          <span><i class="bi bi-door-closed"></i> <?= e(__('Screen for this TV')) ?><?= $isPlatform ? ' · ' . e($hotelName) : '' ?></span>
           <span class="badge text-bg-light border"><?= count($rooms) ?></span>
         </div>
         <div class="p-2 border-bottom">
-          <input type="search" class="form-control form-control-lg" id="qrSearch" placeholder="<?= e(__('Search room…')) ?>" autocomplete="off" aria-label="<?= e(__('Search room…')) ?>">
+          <input type="search" class="form-control form-control-lg" id="qrSearch" placeholder="<?= e(__('Search screen…')) ?>" autocomplete="off" aria-label="<?= e(__('Search screen…')) ?>">
         </div>
         <div class="list-group list-group-flush qr-rooms" id="qrRooms">
           <?php $shownSep = false; foreach ($rooms as $r): $hasTv = (int) $r['tv_count'] > 0; ?>
             <?php if ($hasTv && !$shownSep): $shownSep = true; ?>
-              <div class="list-group-item small text-muted bg-light qr-sep"><?= e(__('Rooms that already have a TV')) ?></div>
+              <div class="list-group-item small text-muted bg-light qr-sep"><?= e(__('Screens that already have a TV')) ?></div>
             <?php endif; ?>
             <label class="list-group-item qr-room" data-search="<?= e(mb_strtolower($r['room_number'] . ' ' . $r['name'] . ' ' . $r['floor'])) ?>">
               <input type="radio" class="form-check-input" name="room" value="<?= (int) $r['id'] ?>" data-has-tv="<?= $hasTv ? '1' : '0' ?>">
@@ -318,19 +318,19 @@ require __DIR__ . '/partials/header.php';
             </label>
           <?php endforeach; ?>
           <?php if (!$rooms): ?>
-            <div class="list-group-item text-muted"><?= e(__('No rooms yet. Create the room below.')) ?></div>
+            <div class="list-group-item text-muted"><?= e(__('No screens yet. Create the screen below.')) ?></div>
           <?php endif; ?>
           <?php if (!$limited): ?>
           <label class="list-group-item qr-room">
             <input type="radio" class="form-check-input" name="room" value="new" id="qrNew" <?= !$rooms ? 'checked' : '' ?>>
-            <span class="fw-bold"><i class="bi bi-plus-circle"></i> <?= e(__('Create new room')) ?></span>
+            <span class="fw-bold"><i class="bi bi-plus-circle"></i> <?= e(__('Create new screen')) ?></span>
           </label>
           <?php endif; ?>
         </div>
         <div class="card-body border-top <?= $rooms || $limited ? 'd-none' : '' ?>" id="qrNewFields">
           <div class="row g-2">
             <div class="col-7">
-              <label class="form-label" for="qrNewNumber"><?= e(__('Room number')) ?> *</label>
+              <label class="form-label" for="qrNewNumber"><?= e(__('Screen name / ID')) ?> *</label>
               <input class="form-control form-control-lg" id="qrNewNumber" name="new_room_number" maxlength="20" placeholder="101">
             </div>
             <div class="col-5">
@@ -341,7 +341,7 @@ require __DIR__ . '/partials/header.php';
         </div>
       </div>
       <div class="alert alert-warning d-none" id="qrReplace"><i class="bi bi-exclamation-triangle"></i>
-        <?= e(__('This room already has a TV. The new TV is added to the room; if it replaces the old TV, revoke the old one in Rooms & TVs afterwards.')) ?></div>
+        <?= e(__('This screen already has a TV. The new TV is added to the screen; if it replaces the old TV, revoke the old one in Screens & TVs afterwards.')) ?></div>
       <div class="qr-sticky">
         <button class="btn btn-primary w-100" id="qrAssign" <?= $problems ? 'disabled' : '' ?>><i class="bi bi-check2-circle"></i> <?= e(__('Assign')) ?></button>
       </div>
@@ -387,7 +387,7 @@ require __DIR__ . '/partials/header.php';
       const sel = form.querySelector('input[name="room"]:checked');
       if (!sel || (sel.value === 'new' && document.getElementById('qrNewNumber').value.trim() === '')) {
         ev.preventDefault();
-        HC.toast(<?= json_embed(__('Choose a room for this TV.')) ?>, 'danger');
+        HC.toast(<?= json_embed(__('Choose a screen for this TV.')) ?>, 'danger');
       }
     });
   });
@@ -413,7 +413,7 @@ require __DIR__ . '/partials/header.php';
 
   <?php if (Auth::role() === 'platform_admin'): ?>
   <div class="card mb-3">
-    <div class="card-header"><i class="bi bi-hourglass-split"></i> <?= e(__('TVs waiting for setup')) ?> <span class="small text-muted">(<?= e(__('last 15 minutes, all hotels')) ?>)</span></div>
+    <div class="card-header"><i class="bi bi-hourglass-split"></i> <?= e(__('TVs waiting for setup')) ?> <span class="small text-muted">(<?= e(__('last 15 minutes, all customers')) ?>)</span></div>
     <div class="list-group list-group-flush">
       <?php if (!$waiting): ?><div class="list-group-item text-muted"><?= e(__('No TV is waiting right now.')) ?></div><?php endif; ?>
       <?php foreach ($waiting as $w): ?>

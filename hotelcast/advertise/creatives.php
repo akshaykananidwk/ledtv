@@ -66,7 +66,7 @@ MarketplacePortal::header(__('My ads'), 'creatives');
       <label class="form-label mb-0" for="t_title"><?= e(__('Title')) ?></label>
       <input class="form-control" id="t_title" name="title" maxlength="150" required>
       <label class="form-label mb-0" for="t_text"><?= e(__('Text on the TV')) ?></label>
-      <textarea class="form-control" id="t_text" name="text" maxlength="200" rows="2" required placeholder="<?= e(__('e.g. Krishna Sweets — fresh kaju katli, 10% off for hotel guests')) ?>"></textarea>
+      <textarea class="form-control" id="t_text" name="text" maxlength="200" rows="2" required placeholder="<?= e(__('e.g. Krishna Sweets — fresh kaju katli, 10% off this week')) ?>"></textarea>
       <label class="form-label mb-0" for="t_sub"><?= e(__('Second line (address, phone)')) ?></label>
       <input class="form-control" id="t_sub" name="subtitle" maxlength="120">
       <div class="row g-2">

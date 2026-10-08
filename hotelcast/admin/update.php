@@ -266,7 +266,7 @@ require __DIR__ . '/partials/header.php';
   <div class="modal-header"><h5 class="modal-title"><?= e(__('Restore backup')) ?></h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
   <div class="modal-body">
     <p><?= e(__('Restore')) ?> <strong id="restoreName"></strong>?</p>
-    <div class="form-check"><input class="form-check-input" type="checkbox" id="restoreDb" checked><label class="form-check-label" for="restoreDb"><?= e(__('Also restore the database (rooms, content, settings, users)')) ?></label></div>
+    <div class="form-check"><input class="form-check-input" type="checkbox" id="restoreDb" checked><label class="form-check-label" for="restoreDb"><?= e(__('Also restore the database (screens, content, settings, users)')) ?></label></div>
     <div class="alert alert-warning small mt-3 mb-0"><?= e(__('A safety backup of the current state is created first, so this can be undone.')) ?></div>
   </div>
   <div class="modal-footer"><button class="btn btn-light border" data-bs-dismiss="modal"><?= e(__('Cancel')) ?></button><button class="btn btn-warning" id="restoreGo"><?= e(__('Restore now')) ?></button></div>

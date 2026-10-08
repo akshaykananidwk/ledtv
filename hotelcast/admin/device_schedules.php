@@ -43,7 +43,7 @@ if (is_post()) {
                 [$bid, $count] = DeviceSchedules::announce($_POST, Auth::id());
                 flash($count ? 'success' : 'warning', $count
                     ? __('Announcement sent to :n TV(s).', ['n' => $count])
-                    : __('No TV is registered in the selected rooms.'));
+                    : __('No TV is registered on the selected screens.'));
                 $back .= '#announce';
                 break;
 
@@ -370,7 +370,7 @@ function ds_sound_options(array $sounds, string $selected): string
             <div class="form-check form-check-inline"><input class="form-check-input" type="checkbox" name="days[]" value="<?= $n ?>" id="ds_d<?= $n ?>"<?= in_array($n, $fDays, true) ? ' checked' : '' ?>><label class="form-check-label" for="ds_d<?= $n ?>"><?= e($label) ?></label></div>
           <?php endforeach; ?>
         </div>
-        <div class="form-text mb-3"><?= e(__('Times are in the hotel time zone (:tz).', ['tz' => date_default_timezone_get()])) ?></div>
+        <div class="form-text mb-3"><?= e(__('Times are in your time zone (:tz).', ['tz' => date_default_timezone_get()])) ?></div>
         <div class="mb-3"><label class="form-label"><?= e(__('On which TVs')) ?></label><?= target_picker('ds', $fTarget) ?></div>
         <button class="btn btn-primary"><i class="bi bi-save"></i> <?= e(__('Save schedule')) ?></button>
         <?php if ((int) $fv('id', 0)): ?><a class="btn btn-light border" href="<?= e($self) ?>"><?= e(__('Cancel')) ?></a><?php endif; ?>
@@ -509,10 +509,10 @@ document.addEventListener('DOMContentLoaded', () => {
         <div class="mb-2"><label class="form-label" for="ps_idle"><?= e(__('Switch off after no motion for (minutes)')) ?></label><input type="number" class="form-control" id="ps_idle" name="idle_minutes" min="1" max="1440" value="<?= e((string) ($so['idle_minutes'] ?? 10)) ?>" style="max-width:160px"></div>
         <div class="form-check"><input class="form-check-input" type="checkbox" name="is_active" value="1" id="ps_active"<?= !empty($so['is_active']) ? ' checked' : '' ?>><label class="form-check-label" for="ps_active"><?= e(__('Presence mode on (motion switches the TVs on, no motion switches them off)')) ?></label></div>
         <div class="form-check mb-3"><input class="form-check-input" type="checkbox" name="override_schedule" value="1" id="ps_over"<?= !empty($so['override_schedule']) ? ' checked' : '' ?>><label class="form-check-label" for="ps_over"><?= e(__('Presence overrides schedule (switch on even inside a power-off schedule)')) ?></label></div>
-        <div class="mb-3"><label class="form-label"><?= e(__('Rooms or groups of this sensor')) ?></label><?= target_picker('ps', $soTarget) ?></div>
+        <div class="mb-3"><label class="form-label"><?= e(__('Screens or groups of this sensor')) ?></label><?= target_picker('ps', $soTarget) ?></div>
         <button class="btn btn-primary"><i class="bi bi-save"></i> <?= e(__('Save sensor')) ?></button>
         <?php if ((int) $so['id']): ?><a class="btn btn-light border" href="<?= e($self . '?tab=presence') ?>"><?= e(__('Cancel')) ?></a><?php endif; ?>
-        <div class="form-text"><?= e(__('Emergency messages always win. A room switched off in TV Power is never switched on by a sensor.')) ?></div>
+        <div class="form-text"><?= e(__('Emergency messages always win. A screen switched off in TV Power is never switched on by a sensor.')) ?></div>
       </div>
     </form>
   </div>

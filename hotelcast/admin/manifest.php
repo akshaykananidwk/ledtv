@@ -41,7 +41,7 @@ echo json_out([
         ['src' => 'pwa_icon.php?s=512&m=1&v=' . $v, 'sizes' => '512x512', 'type' => 'image/png', 'purpose' => 'maskable'],
     ],
     'shortcuts' => [
-        ['name' => __('Rooms & TVs'), 'url' => './rooms.php', 'icons' => [['src' => 'pwa_icon.php?s=96&v=' . $v, 'sizes' => '96x96', 'type' => 'image/png']]],
+        ['name' => __('Screens & TVs'), 'url' => './rooms.php', 'icons' => [['src' => 'pwa_icon.php?s=96&v=' . $v, 'sizes' => '96x96', 'type' => 'image/png']]],
         ['name' => __('Notifications'), 'url' => './push.php', 'icons' => [['src' => 'pwa_icon.php?s=96&v=' . $v, 'sizes' => '96x96', 'type' => 'image/png']]],
     ],
 ]);

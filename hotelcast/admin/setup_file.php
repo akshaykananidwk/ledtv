@@ -66,7 +66,7 @@ if (($_GET['download'] ?? '') === 'all') {
     Access::requireTargetList('rooms', $ids); // users limited to some TVs: only their rooms (hc_rooms() is limited too)
     $download = array_values(array_filter(hc_rooms(), static fn ($r) => in_array((int) $r['id'], $ids, true)));
     if (!$download) {
-        flash('warning', __('Select at least one room.'));
+        flash('warning', __('Select at least one screen.'));
         redirect(admin_url('setup_file.php'));
     }
 }
@@ -94,7 +94,7 @@ require __DIR__ . '/partials/header.php';
     <p class="lead-sm"><?= e(__('tvs.csv for the Windows bulk setup tool (tools/windows/KrishnaCloud-Setup.bat).')) ?></p></div>
   <div class="d-flex gap-2 flex-wrap">
     <a href="<?= e(admin_url('rooms.php')) ?>" class="btn btn-light border"><i class="bi bi-arrow-left"></i> <?= e(__('Back')) ?></a>
-    <?php if ($key !== '' && $rooms): ?><a href="<?= e(admin_url('setup_file.php', ['download' => 'all'])) ?>" class="btn btn-primary"><i class="bi bi-download"></i> <?= e(__('Download for all rooms')) ?></a><?php endif; ?>
+    <?php if ($key !== '' && $rooms): ?><a href="<?= e(admin_url('setup_file.php', ['download' => 'all'])) ?>" class="btn btn-primary"><i class="bi bi-download"></i> <?= e(__('Download for all screens')) ?></a><?php endif; ?>
   </div>
 </div>
 <?php if ($key === ''): ?>
@@ -102,19 +102,19 @@ require __DIR__ . '/partials/header.php';
 <?php endif; ?>
 <div class="hint-box mb-3 small">
   <ol class="mb-0 ps-3">
-    <li><?= e(__('Download the file and put it next to KrishnaCloud-Setup.bat and the TV app APK on a Windows PC in the hotel network.')) ?></li>
+    <li><?= e(__('Download the file and put it next to KrishnaCloud-Setup.bat and the TV app APK on a Windows PC in the same network as the TVs.')) ?></li>
     <li><?= e(__('Fill in the IP address of each TV where it is blank (TV: Settings → Network). Android 11+ TVs: use IP:PORT from Developer options → Wireless debugging.')) ?></li>
-    <li><?= e(__('Run KrishnaCloud-Setup.bat. It installs the app and registers every TV with this server and its room number.')) ?></li>
+    <li><?= e(__('Run KrishnaCloud-Setup.bat. It installs the app and registers every TV with this server and its screen name / ID.')) ?></li>
   </ol>
   <div class="mt-2 text-danger"><i class="bi bi-shield-lock"></i> <?= e(__('The file contains the registration key. Keep it private and delete it after the setup.')) ?></div>
 </div>
 <?php if (!$rooms): ?>
-  <p class="text-muted"><?= e(__('No rooms yet.')) ?></p>
+  <p class="text-muted"><?= e(__('No screens yet.')) ?></p>
 <?php else: ?>
 <form method="post" class="card">
   <?= Csrf::field() ?>
   <div class="card-header d-flex flex-wrap gap-2 align-items-center">
-    <span class="me-auto"><?= e(__('Selected rooms')) ?></span>
+    <span class="me-auto"><?= e(__('Selected screens')) ?></span>
     <button type="button" class="btn btn-sm btn-light border" data-sel="1"><?= e(__('Select all')) ?></button>
     <button type="button" class="btn btn-sm btn-light border" data-sel="0"><?= e(__('Clear')) ?></button>
   </div>
@@ -126,7 +126,7 @@ require __DIR__ . '/partials/header.php';
       <?php endforeach; ?>
     </div>
   </div>
-  <div class="card-footer"><button class="btn btn-primary"<?= $key === '' ? ' disabled' : '' ?>><i class="bi bi-download"></i> <?= e(__('Download for selected rooms')) ?></button></div>
+  <div class="card-footer"><button class="btn btn-primary"<?= $key === '' ? ' disabled' : '' ?>><i class="bi bi-download"></i> <?= e(__('Download for selected screens')) ?></button></div>
 </form>
 <script>
 document.querySelectorAll('[data-sel]').forEach((b) => b.addEventListener('click', () => {

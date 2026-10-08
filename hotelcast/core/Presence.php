@@ -45,7 +45,7 @@ final class Presence
         }
         [$type, $ids] = Broadcaster::parseTarget($in);
         if (!$ids) {
-            $errors[] = __('Choose the rooms or groups of this sensor.');
+            $errors[] = __('Choose the screens or groups of this sensor.');
         }
         $idle = $in['idle_minutes'] ?? '';
         if (!is_numeric($idle) || (int) $idle < 1 || (int) $idle > 1440 || (float) $idle != (int) $idle) {

@@ -14,7 +14,7 @@ if (!in_array($action, ['guests_alerts', 'guests_board', 'guests_order_status', 
 }
 require_can('services.manage');
 if (!GuestServices::enabled()) {
-    ajax_error(__('Guest services are not part of this hotel\'s plan.'), 403, 'FEATURE_DISABLED');
+    ajax_error(__('Guest services are not part of this customer\'s plan.'), 403, 'FEATURE_DISABLED');
 }
 
 switch ($action) {

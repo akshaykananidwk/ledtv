@@ -264,7 +264,7 @@ function target_picker(string $uid, array $opts = []): string
     $rooms = hc_rooms();
     $groups = hc_groups();
     $floors = hc_floors();
-    $types = ['all' => __('All rooms'), 'rooms' => __('Selected rooms'), 'groups' => __('Groups'), 'floors' => __('Floors')];
+    $types = ['all' => __('All screens'), 'rooms' => __('Selected screens'), 'groups' => __('Groups'), 'floors' => __('Floors')];
     if (Access::restricted()) {
         // Limited users never target the whole hotel; floors only when every room of the floor is theirs.
         unset($types['all']);
@@ -291,7 +291,7 @@ function target_picker(string $uid, array $opts = []): string
     // Rooms
     $h .= '<div class="target-panel border rounded p-2" data-panel="rooms"' . ($type === 'rooms' ? '' : ' hidden') . '>';
     if (!$rooms) {
-        $h .= '<div class="text-muted small">' . e(__('No rooms yet.')) . '</div>';
+        $h .= '<div class="text-muted small">' . e(__('No screens yet.')) . '</div>';
     } else {
         $h .= '<div class="d-flex flex-wrap gap-1 mb-2 align-items-center">'
             . '<button type="button" class="btn btn-sm btn-light border" data-select="all">' . e(__('Select all')) . '</button>'
@@ -326,7 +326,7 @@ function target_picker(string $uid, array $opts = []): string
     // Floors
     $h .= '<div class="target-panel border rounded p-2" data-panel="floors"' . ($type === 'floors' ? '' : ' hidden') . '>';
     if (!$floors) {
-        $h .= '<div class="text-muted small">' . e(__('No floors set on rooms yet.')) . '</div>';
+        $h .= '<div class="text-muted small">' . e(__('No area / floor set on screens yet.')) . '</div>';
     }
     foreach ($floors as $f) {
         $id = e($uid . '_f_' . md5($f));

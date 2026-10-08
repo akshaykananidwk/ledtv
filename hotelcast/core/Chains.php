@@ -412,7 +412,7 @@ final class Chains
         $chain = self::find($chainId);
         $h = DB::one('SELECT id, chain_id, reseller_id FROM hotels WHERE id = :h', ['h' => $hotelId]);
         if (!$chain || !$h) {
-            throw new InvalidArgumentException(__('Hotel not found.'));
+            throw new InvalidArgumentException(__('Customer not found.'));
         }
         $u = self::actor();
         if ($u && $u['role'] === 'reseller' && (int) $h['reseller_id'] !== (int) $u['reseller_id']) {
@@ -420,10 +420,10 @@ final class Chains
         }
         if ($add) {
             if ($chain['reseller_id'] !== null && (int) $h['reseller_id'] !== (int) $chain['reseller_id']) {
-                throw new InvalidArgumentException(__('A reseller\'s chain can only contain hotels of that reseller.'));
+                throw new InvalidArgumentException(__('A reseller\'s chain can only contain customers of that reseller.'));
             }
             if ($h['chain_id'] !== null && (int) $h['chain_id'] !== $chainId) {
-                throw new InvalidArgumentException(__('This hotel already belongs to another chain.'));
+                throw new InvalidArgumentException(__('This customer already belongs to another chain.'));
             }
             DB::query('UPDATE hotels SET chain_id = :c WHERE id = :h', ['c' => $chainId, 'h' => $hotelId]);
         } elseif ((int) $h['chain_id'] === $chainId) {
@@ -878,7 +878,7 @@ final class Chains
         try {
             return Tenant::run($hid, static function () use ($fn): array {
                 if (!Tenant::isActive()) {
-                    return ['status' => 'skipped', 'local_id' => null, 'message' => __('Hotel is suspended or expired.')];
+                    return ['status' => 'skipped', 'local_id' => null, 'message' => __('Customer is suspended or expired.')];
                 }
                 return $fn();
             });

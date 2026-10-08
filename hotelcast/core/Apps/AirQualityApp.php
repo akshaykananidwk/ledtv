@@ -92,7 +92,7 @@ final class AirQualityApp extends WidgetApp
     {
         $loc = self::location($config);
         if ($loc === null) {
-            return self::empty(__('Set the hotel location (Settings → Weather) or the coordinates of this screen.'));
+            return self::empty(__('Set your location (Settings → Weather) or the coordinates of this screen.'));
         }
         $params = ['lat' => $loc[0], 'lon' => $loc[1]];
         $aq = DataFeeds::get('open_meteo_aq', $params, true);

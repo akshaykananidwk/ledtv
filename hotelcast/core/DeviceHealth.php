@@ -231,7 +231,7 @@ final class DeviceHealth
                 DB::query('UPDATE devices SET health_alerts = :s WHERE id = :id AND hotel_id = :h', ['s' => $next ? json_out($next) : null, 'id' => (int) $d['id'], 'h' => Tenant::id()]);
             }
             if ($new) {
-                $lines[] = __('Room :r', ['r' => $d['room_number'] ?? ('#' . $d['id'])]) . ': '
+                $lines[] = __('Screen :r', ['r' => $d['room_number'] ?? ('#' . $d['id'])]) . ': '
                     . implode(', ', array_map(static fn ($k) => self::warningLabel($k) . ' (' . $warn[$k] . ')', $new));
             }
         }

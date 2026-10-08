@@ -22,7 +22,7 @@ if (is_post()) {
     $id = req_int('id', $_POST);
     $hotel = $id ? Hotels::find($id) : null;
     if ($id && !$hotel) {
-        flash('warning', __('Hotel not found.'));
+        flash('warning', __('Customer not found.'));
         redirect(admin_url('platform_hotels.php'));
     }
     try {
@@ -36,14 +36,14 @@ if (is_post()) {
                 $status = req_str('status', $_POST, 20);
                 Hotels::setStatus($id, $status, 'manual');
                 ActivityLog::add('hotel_status', 'hotel', $id, $hotel['name'] . ' → ' . $status);
-                flash('success', __('Hotel ":n" is now :s.', ['n' => $hotel['name'], 's' => __(ucfirst($status))]));
+                flash('success', __('Customer ":n" is now :s.', ['n' => $hotel['name'], 's' => __(ucfirst($status))]));
                 redirect(admin_url('platform_hotels.php', ['action' => 'view', 'id' => $id]));
 
             case 'enter':
                 if (Auth::enterHotel($id)) {
                     redirect(admin_url('index.php'));
                 }
-                flash('danger', __('You cannot open this hotel.'));
+                flash('danger', __('You cannot open this customer.'));
                 break;
 
             case 'regen_key':
@@ -93,11 +93,11 @@ if ($action === 'new' || $action === 'edit') {
     if ($action === 'edit') {
         $h = Hotels::find(req_int('id', $_GET));
         if (!$h) {
-            flash('warning', __('Hotel not found.'));
+            flash('warning', __('Customer not found.'));
             redirect(admin_url('platform_hotels.php'));
         }
     }
-    $pageTitle = $h['id'] ? __('Edit hotel') : __('New hotel');
+    $pageTitle = $h['id'] ? __('Edit customer') : __('New customer');
     require __DIR__ . '/partials/header.php';
     ?>
     <div class="page-head">
@@ -107,7 +107,7 @@ if ($action === 'new' || $action === 'edit') {
     <form method="post" enctype="multipart/form-data">
       <?= Csrf::field() ?><input type="hidden" name="op" value="save"><input type="hidden" name="id" value="<?= (int) $h['id'] ?>">
       <?= hotel_form_fields($h, false, !$h['id']) ?>
-      <div class="sticky-actions mt-3"><button class="btn btn-primary btn-lg"><i class="bi bi-check-lg"></i> <?= e(__('Save hotel')) ?></button></div>
+      <div class="sticky-actions mt-3"><button class="btn btn-primary btn-lg"><i class="bi bi-check-lg"></i> <?= e(__('Save customer')) ?></button></div>
     </form>
     <?php
     require __DIR__ . '/partials/footer.php';
@@ -118,7 +118,7 @@ if ($action === 'new' || $action === 'edit') {
 if ($action === 'view') {
     $h = Hotels::find(req_int('id', $_GET));
     if (!$h) {
-        flash('warning', __('Hotel not found.'));
+        flash('warning', __('Customer not found.'));
         redirect(admin_url('platform_hotels.php'));
     }
     $hid = (int) $h['id'];
@@ -140,11 +140,11 @@ if ($action === 'view') {
       </div>
       <div class="d-flex flex-wrap gap-2">
         <form method="post"><?= Csrf::field() ?><input type="hidden" name="op" value="enter"><input type="hidden" name="id" value="<?= $hid ?>">
-          <button class="btn btn-primary"><i class="bi bi-box-arrow-in-right"></i> <?= e(__('Enter hotel')) ?></button></form>
+          <button class="btn btn-primary"><i class="bi bi-box-arrow-in-right"></i> <?= e(__('Enter customer')) ?></button></form>
         <a class="btn btn-outline-primary" href="<?= e(admin_url('platform_hotels.php', ['action' => 'edit', 'id' => $hid])) ?>"><i class="bi bi-pencil"></i> <?= e(__('Edit')) ?></a>
         <a class="btn btn-outline-primary" href="<?= e(admin_url('platform_customer.php', ['id' => $hid])) ?>"><i class="bi bi-card-list"></i> <?= e(__('Customer details')) ?></a><?php /* 2.5 platform screens */ ?>
         <?php if ($h['status'] === 'active'): ?>
-          <form method="post" data-confirm="<?= e(__('Suspend this hotel? Its TVs show the "service paused" screen and its admin panel becomes read-only.')) ?>">
+          <form method="post" data-confirm="<?= e(__('Suspend this customer? Its TVs show the "service paused" screen and its admin panel becomes read-only.')) ?>">
             <?= Csrf::field() ?><input type="hidden" name="op" value="status"><input type="hidden" name="status" value="suspended"><input type="hidden" name="id" value="<?= $hid ?>">
             <button class="btn btn-outline-danger"><i class="bi bi-pause-circle"></i> <?= e(__('Suspend')) ?></button></form>
         <?php else: ?>
@@ -158,7 +158,7 @@ if ($action === 'view') {
       <?php foreach ([
           ['bi-tv', 'bg-soft-primary', __('TVs'), tv_usage_label($tvs, $max)],
           ['bi-wifi', 'bg-soft-success', __('TVs online'), (string) $online],
-          ['bi-door-closed', 'bg-soft-secondary', __('Rooms'), (string) $rooms],
+          ['bi-door-closed', 'bg-soft-secondary', __('Screens'), (string) $rooms],
           ['bi-calendar-check', 'bg-soft-info', __('Valid until'), $h['expires_at'] ? date('d M Y', (int) strtotime((string) $h['expires_at'])) : __('No expiry')],
       ] as [$icon, $cls, $label, $value]): ?>
         <div class="col-6 col-lg-3"><div class="card h-100"><div class="stat-card"><div class="stat-icon <?= e($cls) ?>"><i class="bi <?= e($icon) ?>"></i></div><div class="min-w-0"><div class="stat-value"><?= e($value) ?></div><div class="stat-label"><?= e($label) ?></div></div></div></div></div>
@@ -184,7 +184,7 @@ if ($action === 'view') {
             <?php endforeach; ?>
           </table>
           <div class="card-body pt-2">
-            <form method="post" class="d-inline" data-confirm="<?= e(__('Create a new registration key for this hotel? New TVs then need the new key.')) ?>">
+            <form method="post" class="d-inline" data-confirm="<?= e(__('Create a new registration key for this customer? New TVs then need the new key.')) ?>">
               <?= Csrf::field() ?><input type="hidden" name="op" value="regen_key"><input type="hidden" name="id" value="<?= $hid ?>">
               <button class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-repeat"></i> <?= e(__('New registration key')) ?></button></form>
           </div>
@@ -216,9 +216,9 @@ if ($action === 'view') {
           </ul>
         </div>
         <?php $hcChains = Chains::enabled() ? Chains::all() : []; if (Chains::enabled() && ($hcChains || $h['chain_id'])): ?>
-        <div class="card mb-3"><div class="card-header"><i class="bi bi-diagram-3"></i> <?= e(__('Hotel chain')) ?></div><div class="card-body">
+        <div class="card mb-3"><div class="card-header"><i class="bi bi-diagram-3"></i> <?= e(__('Chain')) ?></div><div class="card-body">
           <form method="post" class="d-flex gap-2"><?= Csrf::field() ?><input type="hidden" name="op" value="set_chain"><input type="hidden" name="id" value="<?= $hid ?>">
-            <select class="form-select" name="chain_id" aria-label="<?= e(__('Hotel chain')) ?>"><option value="0"><?= e(__('— Not in a chain —')) ?></option>
+            <select class="form-select" name="chain_id" aria-label="<?= e(__('Chain')) ?>"><option value="0"><?= e(__('— Not in a chain —')) ?></option>
               <?php foreach ($hcChains as $hcC): ?><option value="<?= (int) $hcC['id'] ?>"<?= (int) $h['chain_id'] === (int) $hcC['id'] ? ' selected' : '' ?>><?= e($hcC['name']) ?></option><?php endforeach; ?></select>
             <button class="btn btn-outline-primary"><?= e(__('Save')) ?></button></form>
         </div></div>
@@ -247,22 +247,22 @@ $hotels = Hotels::all(null, $q, $fStatus);
 $psUsers = PlatformScreens::usersPerCustomer(null); // 2.5 platform screens: "Users" column
 $totals = ['hotels' => count($hotels), 'tvs' => array_sum(array_column($hotels, 'tv_count')), 'online' => array_sum(array_column($hotels, 'tv_online')),
     'suspended' => count(array_filter($hotels, fn ($h) => $h['status'] !== 'active'))];
-$pageTitle = __('Hotels');
+$pageTitle = __('Customers');
 require __DIR__ . '/partials/header.php';
 ?>
 <div class="page-head">
-  <div><h1><?= e(__('Hotels')) ?></h1><p class="lead-sm"><?= e(__('Every hotel on this platform, with its plan, TVs and status.')) ?></p></div>
-  <a class="btn btn-primary" href="<?= e(admin_url('platform_hotels.php', ['action' => 'new'])) ?>"><i class="bi bi-plus-lg"></i> <?= e(__('New hotel')) ?></a>
+  <div><h1><?= e(__('Customers')) ?></h1><p class="lead-sm"><?= e(__('Every customer on this platform, with its plan, TVs and status.')) ?></p></div>
+  <a class="btn btn-primary" href="<?= e(admin_url('platform_hotels.php', ['action' => 'new'])) ?>"><i class="bi bi-plus-lg"></i> <?= e(__('New customer')) ?></a>
 </div>
 <div class="row g-3 mb-3">
-  <?php foreach ([['bi-buildings', 'bg-soft-primary', __('Hotels'), $totals['hotels']], ['bi-tv', 'bg-soft-info', __('TVs'), $totals['tvs']],
+  <?php foreach ([['bi-buildings', 'bg-soft-primary', __('Customers'), $totals['hotels']], ['bi-tv', 'bg-soft-info', __('TVs'), $totals['tvs']],
       ['bi-wifi', 'bg-soft-success', __('TVs online'), $totals['online']], ['bi-pause-circle', 'bg-soft-danger', __('Suspended / expired'), $totals['suspended']]] as [$icon, $cls, $label, $val]): ?>
     <div class="col-6 col-lg-3"><div class="card h-100"><div class="stat-card"><div class="stat-icon <?= e($cls) ?>"><i class="bi <?= e($icon) ?>"></i></div><div><div class="stat-value"><?= (int) $val ?></div><div class="stat-label"><?= e($label) ?></div></div></div></div></div>
   <?php endforeach; ?>
 </div>
 <?php require __DIR__ . '/partials/platform_screens_dashboard.php'; // 2.5: screens counters, top / offline customers ?>
 <form class="d-flex flex-wrap gap-2 mb-3" method="get">
-  <input class="form-control" style="max-width:18rem" name="q" value="<?= e($q) ?>" placeholder="<?= e(__('Search hotel, city, email…')) ?>">
+  <input class="form-control" style="max-width:18rem" name="q" value="<?= e($q) ?>" placeholder="<?= e(__('Search customer, city, email…')) ?>">
   <select class="form-select" style="max-width:12rem" name="status">
     <option value=""><?= e(__('All statuses')) ?></option>
     <?php foreach (['active' => __('Active'), 'suspended' => __('Suspended'), 'expired' => __('Expired')] as $s => $l): ?><option value="<?= e($s) ?>"<?= $fStatus === $s ? ' selected' : '' ?>><?= e($l) ?></option><?php endforeach; ?>
@@ -271,11 +271,11 @@ require __DIR__ . '/partials/header.php';
 </form>
 <div class="card">
 <?php if (!$hotels): ?>
-  <div class="hc-empty"><i class="bi bi-buildings"></i><p class="mb-1"><strong><?= e(__('No hotels found')) ?></strong></p></div>
+  <div class="hc-empty"><i class="bi bi-buildings"></i><p class="mb-1"><strong><?= e(__('No customers found')) ?></strong></p></div>
 <?php else: ?>
   <div class="table-responsive">
     <table class="table table-hc table-hover">
-      <thead><tr><th><?= e(__('Hotel')) ?></th><th class="d-none d-md-table-cell"><?= e(__('Plan')) ?></th><th><?= e(__('TVs')) ?></th><th class="d-none d-md-table-cell"><?= e(__('Screens (online/total)')) ?></th><th class="d-none d-md-table-cell"><?= e(__('Users')) ?></th><th class="d-none d-lg-table-cell"><?= e(__('Reseller')) ?></th><th><?= e(__('Status')) ?></th><th class="text-end"><?= e(__('Actions')) ?></th></tr></thead>
+      <thead><tr><th><?= e(__('Customer')) ?></th><th class="d-none d-md-table-cell"><?= e(__('Plan')) ?></th><th><?= e(__('TVs')) ?></th><th class="d-none d-md-table-cell"><?= e(__('Screens (online/total)')) ?></th><th class="d-none d-md-table-cell"><?= e(__('Users')) ?></th><th class="d-none d-lg-table-cell"><?= e(__('Reseller')) ?></th><th><?= e(__('Status')) ?></th><th class="text-end"><?= e(__('Actions')) ?></th></tr></thead>
       <tbody>
       <?php foreach ($hotels as $h): $max = $h['max_tvs'] !== null ? (int) $h['max_tvs'] : ($h['plan_max_tvs'] !== null ? (int) $h['plan_max_tvs'] : null); ?>
         <tr>
@@ -289,7 +289,7 @@ require __DIR__ . '/partials/header.php';
           <td><?= Hotels::statusBadge($h['status'] === 'active' && $h['expires_at'] && strtotime((string) $h['expires_at']) < time() ? 'expired' : $h['status']) ?></td>
           <td class="text-end text-nowrap">
             <form method="post" class="d-inline"><?= Csrf::field() ?><input type="hidden" name="op" value="enter"><input type="hidden" name="id" value="<?= (int) $h['id'] ?>">
-              <button class="btn btn-sm btn-primary" title="<?= e(__('Enter hotel')) ?>"><i class="bi bi-box-arrow-in-right"></i> <span class="d-none d-sm-inline"><?= e(__('Enter')) ?></span></button></form>
+              <button class="btn btn-sm btn-primary" title="<?= e(__('Enter customer')) ?>"><i class="bi bi-box-arrow-in-right"></i> <span class="d-none d-sm-inline"><?= e(__('Enter')) ?></span></button></form>
             <a class="btn btn-sm btn-light border" href="<?= e(admin_url('platform_customer.php', ['id' => $h['id']])) ?>" title="<?= e(__('Customer details')) ?>"><i class="bi bi-card-list"></i></a>
             <a class="btn btn-sm btn-light border" href="<?= e(admin_url('platform_hotels.php', ['action' => 'edit', 'id' => $h['id']])) ?>" title="<?= e(__('Edit')) ?>"><i class="bi bi-pencil"></i></a>
           </td>

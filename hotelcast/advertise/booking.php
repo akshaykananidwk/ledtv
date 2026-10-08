@@ -89,7 +89,7 @@ MarketplacePortal::header($b['number'] ?: __('Draft'), 'index');
           <?php if ($b['daily_start']): ?> · <?= e(substr((string) $b['daily_start'], 0, 5)) ?>–<?= e(substr((string) $b['daily_end'], 0, 5)) ?><?php endif; ?>
           · <?= e(Marketplace::modelLabel((string) $b['pricing_model'])) ?></div>
         <div class="table-responsive"><table class="table table-sm mb-0">
-          <thead><tr><th><?= e(__('Hotel')) ?></th><th class="text-end"><?= e(__('Details')) ?></th><th class="text-end"><?= e(__('Amount')) ?></th></tr></thead>
+          <thead><tr><th><?= e(__('Customer')) ?></th><th class="text-end"><?= e(__('Details')) ?></th><th class="text-end"><?= e(__('Amount')) ?></th></tr></thead>
           <tbody>
           <?php foreach ($lines as $l): ?>
             <tr><td><?= e($l['hotel_name']) ?><br><small class="text-muted"><?= e((string) $l['hotel_city']) ?></small> <?= in_array($b['status'], ['draft', 'submitted', 'awaiting_payment'], true) ? '' : Marketplace::statusBadge((string) $l['status']) ?>

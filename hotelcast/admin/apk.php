@@ -184,7 +184,7 @@ require __DIR__ . '/partials/header.php';
       <div class="card-header"><?= e(__('App version on each TV')) ?></div>
       <div class="table-responsive">
         <table class="table table-hc table-sm">
-          <thead><tr><th><?= e(__('Room')) ?></th><th><?= e(__('App version')) ?></th><th><?= e(__('Status')) ?></th><th><?= e(__('Last update command')) ?></th></tr></thead>
+          <thead><tr><th><?= e(__('Screen')) ?></th><th><?= e(__('App version')) ?></th><th><?= e(__('Status')) ?></th><th><?= e(__('Last update command')) ?></th></tr></thead>
           <tbody>
           <?php if (!$devices): ?><tr><td colspan="4" class="text-center text-muted py-4"><?= e(__('No TVs registered yet.')) ?></td></tr><?php endif; ?>
           <?php foreach ($devices as $d): $web = DeviceManager::isWeb($d); $old = !$web && $latestCode && (int) $d['app_version_code'] < $latestCode; ?>

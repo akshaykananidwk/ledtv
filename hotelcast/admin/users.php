@@ -58,7 +58,7 @@ function access_from_post(string $role): array
             $targets[] = ['room', $rid];
         }
     }
-    return [$targets, $targets ? [] : [__('Choose at least one group or room, or select "All TVs".')]];
+    return [$targets, $targets ? [] : [__('Choose at least one group or screen, or select "All TVs".')]];
 }
 
 /** "All TVs" / "3 rooms, 1 group" for a user (current hotel). */
@@ -75,7 +75,7 @@ function access_summary(array $u): string
     $r = count($rows) - $g;
     $parts = [];
     if ($r) {
-        $parts[] = $r === 1 ? __('1 room') : __(':n rooms', ['n' => $r]);
+        $parts[] = $r === 1 ? __('1 screen') : __(':n screens', ['n' => $r]);
     }
     if ($g) {
         $parts[] = $g === 1 ? __('1 group') : __(':n groups', ['n' => $g]);
@@ -356,39 +356,39 @@ if ($action === 'new' || $action === 'edit') {
           </select>
         </div>
         <div class="col-12 small text-muted">
-          <strong><?= e(role_label('super_admin')) ?></strong>: <?= e(__('everything in this hotel, including users, settings and billing.')) ?>
-          <strong><?= e(role_label('manager')) ?></strong>: <?= e(__('rooms, content, playlists, schedules, TV commands, APK, logs.')) ?>
-          <strong><?= e(role_label('staff')) ?></strong>: <?= e(__('view rooms and content, send content and emergency messages.')) ?>
-          <strong><?= e(role_label('reception')) ?></strong>: <?= e(__('front desk: guests check-in/out, service orders and requests, view rooms.')) ?>
+          <strong><?= e(role_label('super_admin')) ?></strong>: <?= e(__('everything of this customer, including users, settings and billing.')) ?>
+          <strong><?= e(role_label('manager')) ?></strong>: <?= e(__('screens, content, playlists, schedules, TV commands, APK, logs.')) ?>
+          <strong><?= e(role_label('staff')) ?></strong>: <?= e(__('view screens and content, send content and emergency messages.')) ?>
+          <strong><?= e(role_label('reception')) ?></strong>: <?= e(__('front desk: guests check-in/out, service orders and requests, view screens.')) ?>
           <?php if (Auth::can('roles.manage')): ?><a href="<?= e(admin_url('roles.php')) ?>"><?= e(__('Custom roles and their permissions')) ?> →</a><?php endif; ?>
         </div>
         <div class="col-12<?= Features::enabled('user_access') ? '' : ' d-none' ?>" id="tvAccess"<?= in_array($u['role'], LIMITABLE_ROLES, true) ? '' : ' hidden' ?>>
           <div class="border rounded p-3">
             <label class="form-label fw-semibold mb-1"><i class="bi bi-tv"></i> <?= e(__('Which TVs can this user control?')) ?></label>
-            <div class="form-text mt-0 mb-2"><?= e(__('Limit a Manager, Staff or Reception user to some rooms or groups. They then see and control only those TVs (rooms, dashboard, broadcasts, power, schedules, emergency, guests). Admins always have all TVs.')) ?></div>
+            <div class="form-text mt-0 mb-2"><?= e(__('Limit a Manager, Staff or Reception user to some screens or groups. They then see and control only those TVs (screens, dashboard, broadcasts, power, schedules, emergency, guests). Admins always have all TVs.')) ?></div>
             <div class="d-flex flex-wrap gap-3 mb-2">
               <div class="form-check"><input class="form-check-input" type="radio" name="tv_access" value="all" id="ta_all"<?= $assigned ? '' : ' checked' ?>><label class="form-check-label" for="ta_all"><?= e(__('All TVs')) ?></label></div>
               <div class="form-check"><input class="form-check-input" type="radio" name="tv_access" value="some" id="ta_some"<?= $assigned ? ' checked' : '' ?>><label class="form-check-label" for="ta_some"><?= e(__('Only these TVs')) ?></label></div>
             </div>
             <div id="tvAccessPick"<?= $assigned ? '' : ' hidden' ?>>
-              <input type="search" class="form-control form-control-sm mb-2" id="taSearch" placeholder="<?= e(__('Search rooms or groups…')) ?>" aria-label="<?= e(__('Search rooms or groups…')) ?>" autocomplete="off">
+              <input type="search" class="form-control form-control-sm mb-2" id="taSearch" placeholder="<?= e(__('Search screens or groups…')) ?>" aria-label="<?= e(__('Search screens or groups…')) ?>" autocomplete="off">
               <div class="row g-2">
                 <div class="col-md-5">
-                  <div class="small fw-semibold text-muted mb-1"><?= e(__('Groups')) ?> <span class="fw-normal">(<?= e(__('all rooms in the group, also rooms added later')) ?>)</span></div>
+                  <div class="small fw-semibold text-muted mb-1"><?= e(__('Groups')) ?> <span class="fw-normal">(<?= e(__('all screens in the group, also screens added later')) ?>)</span></div>
                   <div class="border rounded p-2" style="max-height:260px;overflow:auto">
                     <?php if (!$accGroups): ?><div class="text-muted small"><?= e(__('No groups yet. Create groups on the Groups page.')) ?></div><?php endif; ?>
                     <?php foreach ($accGroups as $g): ?>
                       <div class="form-check ta-item" data-search="<?= e(mb_strtolower($g['name'])) ?>">
                         <input class="form-check-input" type="checkbox" name="access_groups[]" value="<?= (int) $g['id'] ?>" id="tag<?= (int) $g['id'] ?>"<?= in_array((int) $g['id'], $selGroups, true) ? ' checked' : '' ?>>
-                        <label class="form-check-label" for="tag<?= (int) $g['id'] ?>"><?= e($g['name']) ?> <span class="text-muted small">(<?= e((int) $g['members'] === 1 ? __('1 room') : __(':n rooms', ['n' => (int) $g['members']])) ?>)</span></label>
+                        <label class="form-check-label" for="tag<?= (int) $g['id'] ?>"><?= e($g['name']) ?> <span class="text-muted small">(<?= e((int) $g['members'] === 1 ? __('1 screen') : __(':n screens', ['n' => (int) $g['members']])) ?>)</span></label>
                       </div>
                     <?php endforeach; ?>
                   </div>
                 </div>
                 <div class="col-md-7">
-                  <div class="small fw-semibold text-muted mb-1"><?= e(__('Rooms')) ?></div>
+                  <div class="small fw-semibold text-muted mb-1"><?= e(__('Screens')) ?></div>
                   <div class="border rounded p-2" style="max-height:260px;overflow:auto">
-                    <?php if (!$accRooms): ?><div class="text-muted small"><?= e(__('No rooms yet.')) ?></div><?php endif; ?>
+                    <?php if (!$accRooms): ?><div class="text-muted small"><?= e(__('No screens yet.')) ?></div><?php endif; ?>
                     <?php foreach ($accRooms as $r): ?>
                       <div class="form-check form-check-inline ta-item" data-search="<?= e(mb_strtolower($r['room_number'] . ' ' . ($r['name'] ?? '') . ' ' . ($r['floor'] ?? ''))) ?>">
                         <input class="form-check-input" type="checkbox" name="access_rooms[]" value="<?= (int) $r['id'] ?>" id="tar<?= (int) $r['id'] ?>"<?= in_array((int) $r['id'], $selRooms, true) ? ' checked' : '' ?>>
@@ -398,7 +398,7 @@ if ($action === 'new' || $action === 'edit') {
                   </div>
                 </div>
               </div>
-              <div class="form-text"><?= e(__('A limited user cannot add or delete rooms and groups, cannot send to "All rooms" and can stop only emergencies shown on their TVs. Content library and playlists stay shared.')) ?></div>
+              <div class="form-text"><?= e(__('A limited user cannot add or delete screens and groups, cannot send to "All screens" and can stop only emergencies shown on their TVs. Content library and playlists stay shared.')) ?></div>
             </div>
           </div>
         </div>
@@ -589,19 +589,19 @@ require __DIR__ . '/partials/header.php';
       <div class="card-header"><i class="bi bi-diagram-3"></i> <?= e(__('Who can do what')) ?></div>
       <div class="card-body small">
         <ol class="ps-3 mb-2">
-          <li class="mb-1"><strong><?= e(role_label('platform_admin')) ?></strong> — <?= e(__('the platform owner: creates customers (hotels), plans, invoices and licenses. Not shown in this list.')) ?></li>
-          <li class="mb-1"><strong><?= e(role_label('super_admin')) ?></strong> — <?= e(__('one customer (this hotel): everything here, including users, settings and billing. Admins always control all TVs.')) ?></li>
-          <li class="mb-1"><strong><?= e(role_label('manager')) ?></strong> — <?= e(__('rooms, content, playlists, schedules, TV commands, APK, logs.')) ?></li>
-          <li class="mb-1"><strong><?= e(role_label('staff')) ?></strong> — <?= e(__('view rooms and content, send content and emergency messages.')) ?></li>
-          <li class="mb-1"><strong><?= e(role_label('reception')) ?></strong> — <?= e(__('front desk: guests check-in/out, service orders and requests, view rooms.')) ?></li>
+          <li class="mb-1"><strong><?= e(role_label('platform_admin')) ?></strong> — <?= e(__('the platform owner: creates customers, plans, invoices and licenses. Not shown in this list.')) ?></li>
+          <li class="mb-1"><strong><?= e(role_label('super_admin')) ?></strong> — <?= e(__('one customer (this account): everything here, including users, settings and billing. Admins always control all TVs.')) ?></li>
+          <li class="mb-1"><strong><?= e(role_label('manager')) ?></strong> — <?= e(__('screens, content, playlists, schedules, TV commands, APK, logs.')) ?></li>
+          <li class="mb-1"><strong><?= e(role_label('staff')) ?></strong> — <?= e(__('view screens and content, send content and emergency messages.')) ?></li>
+          <li class="mb-1"><strong><?= e(role_label('reception')) ?></strong> — <?= e(__('front desk: guests check-in/out, service orders and requests, view screens.')) ?></li>
         </ol>
-        <p class="mb-0 text-muted"><i class="bi bi-tv"></i> <?= e(__('Managers, Staff and Reception can be limited to some TVs (groups or rooms) when you add or edit them. Then they see and control only those TVs.')) ?></p>
+        <p class="mb-0 text-muted"><i class="bi bi-tv"></i> <?= e(__('Managers, Staff and Reception can be limited to some TVs (groups or screens) when you add or edit them. Then they see and control only those TVs.')) ?></p>
       </div>
     </div>
     <div class="card">
       <div class="card-header"><i class="bi bi-key"></i> <?= e(__('TV settings PIN')) ?></div>
       <div class="card-body">
-        <p class="small text-muted"><?= e(__('Guests need this 4-digit PIN to open the settings screen on a TV. You can also set a different PIN for a single room on the Rooms page.')) ?></p>
+        <p class="small text-muted"><?= e(__('This 4-digit PIN is needed to open the settings screen on a TV. You can also set a different PIN for a single screen on the Screens page.')) ?></p>
         <form method="post" class="d-flex gap-2">
           <?= Csrf::field() ?><input type="hidden" name="op" value="set_pin">
           <input class="form-control" name="tv_settings_pin" value="<?= e((string) Settings::get('tv_settings_pin', '1234')) ?>" inputmode="numeric" pattern="\d{4}" maxlength="4" required aria-label="<?= e(__('TV settings PIN')) ?>">

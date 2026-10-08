@@ -53,7 +53,7 @@ $hotelName = $hid ? (string) Settings::getFor($hid, 'hotel_name', '') : '';
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title><?= e(__('Live demo')) ?> · <?= e($brand['product']) ?></title>
-<meta name="description" content="<?= e(__('Try :product: hotel TV management with a live demo hotel.', ['product' => $brand['product']])) ?>">
+<meta name="description" content="<?= e(__('Try :product: TV and digital signage management with a live demo.', ['product' => $brand['product']])) ?>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Gujarati:wght@400;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="<?= e(asset('vendor/bootstrap/css/bootstrap.min.css')) ?>">
@@ -68,11 +68,11 @@ body{background:#f1f5f9}
 </head>
 <body class="hc-admin lang-<?= e($lang) ?>">
 <div class="alert alert-warning rounded-0 mb-0 text-center small" role="status" id="hcDemoBanner"><i class="bi bi-easel"></i>
-  <?= e(__('Demo mode — changes are disabled. This demo hotel is reset every night.')) ?></div>
+  <?= e(__('Demo mode — changes are disabled. This demo is reset every night.')) ?></div>
 <header class="demo-hero text-center">
   <?php if ($brand['logo_url']): ?><img src="<?= e($brand['logo_url']) ?>" alt="" style="max-height:56px;max-width:200px" class="mb-2"><?php endif; ?>
   <h1 class="h2 fw-bold mb-2"><?= e(__(':product live demo', ['product' => $brand['product']])) ?></h1>
-  <p class="mb-0 opacity-75"><?= e(__('See how hotels manage the TVs in every room — welcome screens, timetables, offers and guest services.')) ?></p>
+  <p class="mb-0 opacity-75"><?= e(__('See how a business manages all its TV screens — welcome screens, menus, offers, timetables and notices.')) ?></p>
   <div class="mt-3 small">
     <?php foreach (I18n::LANGUAGES as $code => $name): ?><a class="link-light mx-2<?= $code === $lang ? ' fw-bold' : '' ?>" href="?lang=<?= e($code) ?>"><?= e($name) ?></a><?php endforeach; ?>
   </div>
@@ -86,13 +86,13 @@ body{background:#f1f5f9}
   <div class="row g-3">
     <div class="col-md-6"><div class="card h-100 shadow-sm"><div class="card-body p-4">
       <h2 class="h5"><i class="bi bi-speedometer2 text-primary"></i> <?= e(__('Try the admin panel')) ?></h2>
-      <p class="text-muted small"><?= e(__('Look around the panel of :hotel: rooms, playlists, schedules, guests and reports. You can open everything; saving is disabled in the demo.', ['hotel' => $hotelName])) ?></p>
+      <p class="text-muted small"><?= e(__('Look around the panel of :hotel: screens, playlists, schedules and reports. You can open everything; saving is disabled in the demo.', ['hotel' => $hotelName])) ?></p>
       <form method="post" action="<?= e(base_url('demo.php')) ?>"><?= Csrf::field() ?><input type="hidden" name="op" value="login">
         <button class="btn btn-primary btn-lg w-100"><i class="bi bi-box-arrow-in-right"></i> <?= e(__('Open the demo admin panel')) ?></button></form>
     </div></div></div>
     <div class="col-md-6"><div class="card h-100 shadow-sm"><div class="card-body p-4">
       <h2 class="h5"><i class="bi bi-tv text-primary"></i> <?= e(__('See the TV')) ?></h2>
-      <p class="text-muted small"><?= e(__('Watch what the guest sees on the TV in a room (simulated in your browser).')) ?></p>
+      <p class="text-muted small"><?= e(__('Watch what your visitors see on a TV screen (simulated in your browser).')) ?></p>
       <div class="row g-2">
         <?php foreach (array_slice($rooms, 0, 12) as $r): ?>
           <div class="col-4 col-sm-3"><a class="btn btn-light border w-100 room-btn" href="<?= e(base_url('demo_tv.php?room=' . (int) $r['id'])) ?>" title="<?= e((string) $r['name']) ?>">
@@ -103,7 +103,7 @@ body{background:#f1f5f9}
   </div>
   <?php if (Signup::enabled()): ?>
     <div class="card mt-3 shadow-sm"><div class="card-body d-flex flex-wrap gap-3 align-items-center justify-content-between p-4">
-      <div><h2 class="h5 mb-1"><?= e(__('Ready for your own hotel?')) ?></h2><div class="text-muted small"><?= e(__('Start a :n-day free trial — no payment details needed.', ['n' => Signup::trialDays()])) ?></div></div>
+      <div><h2 class="h5 mb-1"><?= e(__('Ready for your own screens?')) ?></h2><div class="text-muted small"><?= e(__('Start a :n-day free trial — no payment details needed.', ['n' => Signup::trialDays()])) ?></div></div>
       <a class="btn btn-success btn-lg" href="<?= e(base_url('signup.php')) ?>"><i class="bi bi-rocket-takeoff"></i> <?= e(__('Start free trial')) ?></a>
     </div></div>
   <?php endif; ?>

@@ -117,7 +117,7 @@ require __DIR__ . '/partials/header.php';
   <div class="table-responsive">
     <table class="table table-hc table-hover align-middle mb-0">
       <thead><tr>
-        <th><?= e(__('Room')) ?></th><th><?= e(__('Status')) ?></th><th><?= e(__('Storage free')) ?></th><th><?= e(__('Memory free')) ?></th>
+        <th><?= e(__('Screen')) ?></th><th><?= e(__('Status')) ?></th><th><?= e(__('Storage free')) ?></th><th><?= e(__('Memory free')) ?></th>
         <th><?= e(__('Temperature')) ?></th><th><?= e(__('Network')) ?></th><th><?= e(__('Uptime')) ?></th>
         <th class="d-none d-lg-table-cell"><?= e(__('Last 24 hours')) ?></th><th class="d-none d-xl-table-cell"><?= e(__('Device')) ?></th><th></th>
       </tr></thead>

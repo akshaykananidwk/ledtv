@@ -3,7 +3,7 @@ declare(strict_types=1);
 /**
  * Hotel chain dashboard (#20): every hotel of the chain in one view (TVs online / offline, rooms,
  * occupancy, today's plays, open orders / requests, feedback, plan / expiry / invoices), totals,
- * sortable table + cards, "Enter hotel", and a date-range comparison report with charts + CSV.
+ * sortable table + cards, "Enter customer", and a date-range comparison report with charts + CSV.
  *   chain.php?chain=ID[&tab=report&from=Y-m-d&to=Y-m-d&compare=1&hotels[]=…&csv=1]
  * Access: chain admins, hotel super admins with chain access, platform admins, resellers (own chains).
  */
@@ -58,7 +58,7 @@ if ($tab === 'report') {
         'feedback_count' => __('Feedback count'), 'ad_impressions' => __('Ad impressions'), 'occupancy' => __('Occupancy %'),
     ];
     if (!empty($_GET['csv'])) {
-        $head = array_merge([__('Hotel')], array_values($cols));
+        $head = array_merge([__('Customer')], array_values($cols));
         $lines = [];
         foreach (array_merge($rep['hotels'], [$rep['totals']]) as $r) {
             $line = [$r['name']];
@@ -100,11 +100,11 @@ $delta = static function ($cur, $old): string {
 <div class="page-head">
   <div class="min-w-0">
     <h1 class="text-truncate"><i class="bi bi-diagram-3"></i> <?= e($chain['name']) ?></h1>
-    <p class="lead-sm mb-0"><?= e(dot_trim(__('Hotel chain') . ' · ' . ($chain['owner_name'] ?? '') . ($chain['owner_phone'] ? ' · ' . $chain['owner_phone'] : ''))) ?></p>
+    <p class="lead-sm mb-0"><?= e(dot_trim(__('Chain') . ' · ' . ($chain['owner_name'] ?? '') . ($chain['owner_phone'] ? ' · ' . $chain['owner_phone'] : ''))) ?></p>
   </div>
   <div class="d-flex flex-wrap gap-2">
     <?php if ($myChains): ?>
-      <form method="get" class="m-0"><select class="form-select form-select-sm" name="chain" aria-label="<?= e(__('Hotel chain')) ?>" onchange="this.form.submit()">
+      <form method="get" class="m-0"><select class="form-select form-select-sm" name="chain" aria-label="<?= e(__('Chain')) ?>" onchange="this.form.submit()">
         <?php foreach ($myChains as $c): ?><option value="<?= (int) $c['id'] ?>"<?= (int) $c['id'] === $cid ? ' selected' : '' ?>><?= e($c['name']) ?></option><?php endforeach; ?>
       </select></form>
     <?php endif; ?>
@@ -121,9 +121,9 @@ $delta = static function ($cur, $old): string {
 <?php if ($tab === 'overview'): $t = $ov['totals']; ?>
 <div class="row g-3 mb-3" id="chainTotals">
   <?php foreach ([
-      ['bi-buildings', 'bg-soft-primary', __('Hotels'), (string) $t['hotels'] . ($t['not_active'] ? ' (' . $t['not_active'] . ' ' . __('paused') . ')' : '')],
+      ['bi-buildings', 'bg-soft-primary', __('Customers'), (string) $t['hotels'] . ($t['not_active'] ? ' (' . $t['not_active'] . ' ' . __('paused') . ')' : '')],
       ['bi-wifi', 'bg-soft-success', __('TVs online'), $t['online'] . ' / ' . $t['tvs']],
-      ['bi-door-closed', 'bg-soft-secondary', __('Rooms'), (string) $t['rooms']],
+      ['bi-door-closed', 'bg-soft-secondary', __('Screens'), (string) $t['rooms']],
       ['bi-person-check', 'bg-soft-info', __('Occupancy'), $t['occupancy'] === null ? '—' : $t['occupancy'] . '%'],
       ['bi-play-circle', 'bg-soft-primary', __('Plays today'), number_format($t['plays_today'])],
       ['bi-bell', 'bg-soft-warning', __('Open orders / requests'), $t['open_orders'] . ' / ' . $t['open_requests']],
@@ -135,10 +135,10 @@ $delta = static function ($cur, $old): string {
 </div>
 
 <?php if (!$ov['hotels']): ?>
-  <div class="card"><div class="hc-empty"><i class="bi bi-buildings"></i><p class="mb-1"><strong><?= e(__('No hotels in this chain yet.')) ?></strong></p><p class="small text-muted"><?= e(__('The platform or your reseller adds hotels to the chain.')) ?></p></div></div>
+  <div class="card"><div class="hc-empty"><i class="bi bi-buildings"></i><p class="mb-1"><strong><?= e(__('No customers in this chain yet.')) ?></strong></p><p class="small text-muted"><?= e(__('The platform or your reseller adds customers to the chain.')) ?></p></div></div>
 <?php else: ?>
 <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
-  <input type="search" class="form-control form-control-sm" style="max-width:16rem" placeholder="<?= e(__('Search hotel…')) ?>" data-chain-filter aria-label="<?= e(__('Search hotel…')) ?>">
+  <input type="search" class="form-control form-control-sm" style="max-width:16rem" placeholder="<?= e(__('Search customer…')) ?>" data-chain-filter aria-label="<?= e(__('Search customer…')) ?>">
   <div class="btn-group btn-group-sm ms-auto" role="group" aria-label="<?= e(__('View')) ?>">
     <button type="button" class="btn btn-outline-secondary" data-chain-view="table"><i class="bi bi-table"></i> <?= e(__('Table')) ?></button>
     <button type="button" class="btn btn-outline-secondary" data-chain-view="cards"><i class="bi bi-grid-3x2-gap"></i> <?= e(__('Cards')) ?></button>
@@ -147,17 +147,17 @@ $delta = static function ($cur, $old): string {
 
 <?php $enterBtn = static function (array $h, string $cls = 'btn-sm btn-primary', bool $label = false) use ($cid): string {
     return '<form method="post" class="d-inline m-0">' . Csrf::field() . '<input type="hidden" name="op" value="enter"><input type="hidden" name="chain" value="' . $cid . '">'
-        . '<input type="hidden" name="hotel_id" value="' . (int) $h['id'] . '"><button class="btn ' . e($cls) . '" title="' . e(__('Enter hotel')) . '"><i class="bi bi-box-arrow-in-right"></i> <span class="' . ($label ? '' : 'd-none d-sm-inline') . '">' . e(__('Enter hotel')) . '</span></button></form>';
+        . '<input type="hidden" name="hotel_id" value="' . (int) $h['id'] . '"><button class="btn ' . e($cls) . '" title="' . e(__('Enter customer')) . '"><i class="bi bi-box-arrow-in-right"></i> <span class="' . ($label ? '' : 'd-none d-sm-inline') . '">' . e(__('Enter customer')) . '</span></button></form>';
 }; ?>
 
 <div class="card" data-chain-panel="table">
   <div class="table-responsive">
     <table class="table table-hc table-hover align-middle mb-0" data-sortable>
       <thead><tr>
-        <th data-sort="text"><?= e(__('Hotel')) ?></th>
+        <th data-sort="text"><?= e(__('Customer')) ?></th>
         <th data-sort="num" class="text-end"><?= e(__('TVs online')) ?></th>
         <th data-sort="num" class="text-end"><?= e(__('Offline')) ?></th>
-        <th data-sort="num" class="text-end"><?= e(__('Rooms')) ?></th>
+        <th data-sort="num" class="text-end"><?= e(__('Screens')) ?></th>
         <th data-sort="num" class="text-end"><?= e(__('Occupancy')) ?></th>
         <th data-sort="num" class="text-end"><?= e(__('Plays today')) ?></th>
         <th data-sort="num" class="text-end"><?= e(__('Open orders')) ?></th>
@@ -207,7 +207,7 @@ $delta = static function ($cur, $old): string {
         <div class="row g-2 small text-center mb-2">
           <div class="col-4"><div class="fw-bold fs-5 text-success" data-h="<?= (int) $h['id'] ?>" data-k="online"><?= (int) $h['online'] ?></div><?= e(__('online')) ?></div>
           <div class="col-4"><div class="fw-bold fs-5 <?= $h['offline'] ? 'text-danger' : '' ?>" data-h="<?= (int) $h['id'] ?>" data-k="offline"><?= (int) $h['offline'] ?></div><?= e(__('offline')) ?></div>
-          <div class="col-4"><div class="fw-bold fs-5"><?= (int) $h['rooms'] ?></div><?= e(__('Rooms')) ?></div>
+          <div class="col-4"><div class="fw-bold fs-5"><?= (int) $h['rooms'] ?></div><?= e(__('Screens')) ?></div>
           <div class="col-4"><div class="fw-bold"><?= $h['occupancy'] === null ? '—' : e((string) $h['occupancy']) . '%' ?></div><?= e(__('Occupancy')) ?></div>
           <div class="col-4"><div class="fw-bold"><?= e(number_format($h['plays_today'])) ?></div><?= e(__('Plays today')) ?></div>
           <div class="col-4"><div class="fw-bold"><?= $h['feedback_avg'] === null ? '—' : e((string) $h['feedback_avg']) . ' ★' ?></div><?= e(__('Feedback')) ?></div>
@@ -239,7 +239,7 @@ $delta = static function ($cur, $old): string {
       <a class="btn btn-sm btn-light border" href="<?= e(admin_url('chain.php', $_GET + ['csv' => 1])) ?>"><i class="bi bi-download"></i> CSV</a>
     </div>
     <div class="col-12">
-      <details<?= isset($_GET['hotels']) ? ' open' : '' ?>><summary class="small"><?= e(__('Hotels')) ?> (<?= count($sel) ?>/<?= count($allHotels) ?>)</summary>
+      <details<?= isset($_GET['hotels']) ? ' open' : '' ?>><summary class="small"><?= e(__('Customers')) ?> (<?= count($sel) ?>/<?= count($allHotels) ?>)</summary>
         <div class="d-flex flex-wrap gap-2 mt-2">
           <?php foreach ($allHotels as $h): ?>
             <label class="form-check-label small border rounded px-2 py-1"><input class="form-check-input me-1" type="checkbox" name="hotels[]" value="<?= (int) $h['id'] ?>"<?= in_array((int) $h['id'], $sel, true) ? ' checked' : '' ?>><?= e($h['name']) ?></label>
@@ -263,7 +263,7 @@ $charts = [
 ];
 ?>
 <div class="row g-3 mb-3">
-  <?php foreach (['chPlays' => __('Plays per hotel'), 'chUptime' => __('TV uptime per hotel'), 'chDays' => __('Plays per day'), 'chEnergy' => __('Hours ON & electricity')] as $id => $label): ?>
+  <?php foreach (['chPlays' => __('Plays per customer'), 'chUptime' => __('TV uptime per customer'), 'chDays' => __('Plays per day'), 'chEnergy' => __('Hours ON & electricity')] as $id => $label): ?>
     <div class="col-lg-6"><div class="card h-100"><div class="card-header"><?= e($label) ?></div><div class="card-body"><div style="height:260px"><canvas data-chart="<?= e($id) ?>" aria-label="<?= e($label) ?>"></canvas></div></div></div>
       <script type="application/json" id="<?= e($id) ?>"><?= json_embed($charts[$id]) ?></script></div>
   <?php endforeach; ?>
@@ -274,7 +274,7 @@ $charts = [
     <?php if ($prev): ?><span class="small text-muted ms-auto"><?= e(__('Change vs. :a – :b', ['a' => $prev['from'], 'b' => $prev['to']])) ?></span><?php endif; ?></div>
   <div class="table-responsive">
     <table class="table table-sm table-hc table-hover mb-0" data-sortable>
-      <thead><tr><th data-sort="text"><?= e(__('Hotel')) ?></th>
+      <thead><tr><th data-sort="text"><?= e(__('Customer')) ?></th>
         <?php foreach ($cols as $k => $label): if ($k === 'seconds' || $k === 'feedback_count') continue; ?><th data-sort="num" class="text-end"><?= e($label) ?></th><?php endforeach; ?></tr></thead>
       <tbody>
       <?php foreach ($rep['hotels'] as $r): $o = $prev['hotels'][$r['id']] ?? null; ?>
@@ -291,7 +291,7 @@ $charts = [
         <?php endforeach; ?></tr></tfoot>
     </table>
   </div>
-  <div class="card-body small text-muted"><?= e(__('Uptime and hours ON come from the TV status and heartbeat of each hotel; electricity uses each hotel\'s TV wattage. Orders, requests and feedback need the guest services module.')) ?></div>
+  <div class="card-body small text-muted"><?= e(__('Uptime and hours ON come from the TV status and heartbeat of each customer; electricity uses each customer\'s TV wattage. Orders, requests and feedback need the guest services module.')) ?></div>
 </div>
 <?php endif; ?>
 <?php require __DIR__ . '/partials/footer.php'; ?>

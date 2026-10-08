@@ -150,11 +150,11 @@ final class Auth
         }
         if (in_array($user['role'], self::HOTEL_ROLES, true) && (!$user['hotel_id'] || !DB::value('SELECT id FROM hotels WHERE id = :id', ['id' => $user['hotel_id']]))) {
             self::recordAttempt($username, $ip, false);
-            return [false, __('This account is not linked to a hotel.')];
+            return [false, __('This account is not linked to a customer.')];
         }
         if ($user['role'] === 'chain_admin' && (empty($user['chain_id']) || !DB::value('SELECT id FROM hotel_chains WHERE id = :id', ['id' => $user['chain_id']]))) {
             self::recordAttempt($username, $ip, false);
-            return [false, __('This account is not linked to a hotel chain.')];
+            return [false, __('This account is not linked to a chain.')];
         }
 
         if (password_needs_rehash($user['password_hash'], PASSWORD_BCRYPT, ['cost' => 12])) {
@@ -654,11 +654,11 @@ final class Auth
                 http_response_code(403);
                 if (self::isAjax()) {
                     header('Content-Type: application/json; charset=utf-8');
-                    echo json_out(['ok' => false, 'error' => ['code' => 'HOTEL_SUSPENDED', 'message' => __('This hotel account is suspended. Changes are disabled until it is reactivated.')]]);
+                    echo json_out(['ok' => false, 'error' => ['code' => 'HOTEL_SUSPENDED', 'message' => __('This account is suspended. Changes are disabled until it is reactivated.')]]);
                     exit;
                 }
                 if (function_exists('flash')) {
-                    flash('danger', __('This hotel account is suspended. Changes are disabled until it is reactivated.'));
+                    flash('danger', __('This account is suspended. Changes are disabled until it is reactivated.'));
                 }
                 redirect(admin_url(in_array($script, ['', 'index.php'], true) ? 'billing.php' : $script));
             }

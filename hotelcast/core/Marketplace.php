@@ -124,13 +124,13 @@ final class Marketplace
             'draft' => __('Draft'),
             'submitted' => __('Submitted (in review)'),
             'awaiting_payment' => __('Awaiting payment'),
-            'paid' => __('Paid — waiting for hotels'),
+            'paid' => __('Paid — waiting for venues'),
             'scheduled' => __('Scheduled'),
             'running' => __('Running'),
             'completed' => __('Completed'),
             'rejected' => __('Rejected'),
             'cancelled' => __('Cancelled'),
-            'pending' => __('Waiting for hotel approval'),
+            'pending' => __('Waiting for venue approval'),
             'approved' => __('Approved'),
             'delivered' => __('Delivered'),
             'unpaid' => __('Unpaid'),
@@ -557,7 +557,7 @@ final class Marketplace
         foreach (array_values(array_unique(array_map('intval', $hotelIds))) as $hid) {
             $pub = self::publicHotel($hid);
             if (!$pub) {
-                $errors[] = __('Hotel #:id does not sell ad space.', ['id' => $hid]);
+                $errors[] = __('Venue #:id does not sell ad space.', ['id' => $hid]);
                 continue;
             }
             $s = self::hotelSettings($hid);
@@ -784,7 +784,7 @@ final class Marketplace
             $ds = $de = null;
         }
         if ($model === 'cpm' && ($impressions < 1000 || $impressions > 10000000)) {
-            $errors[] = __('Impressions per hotel: between 1,000 and 10,000,000.');
+            $errors[] = __('Impressions per venue: between 1,000 and 10,000,000.');
         }
         $creative = $creativeId ? self::creative($advertiserId, $creativeId) : null;
         if (!$creative || $creative['status'] !== 'active') {
@@ -792,9 +792,9 @@ final class Marketplace
             $creativeId = 0;
         }
         if (!$hotelIds) {
-            $errors[] = __('Choose at least one hotel.');
+            $errors[] = __('Choose at least one venue.');
         } elseif (count($hotelIds) > self::MAX_HOTELS_PER_BOOKING) {
-            $errors[] = __('At most :n hotels per booking.', ['n' => self::MAX_HOTELS_PER_BOOKING]);
+            $errors[] = __('At most :n venues per booking.', ['n' => self::MAX_HOTELS_PER_BOOKING]);
         }
         return [[
             'title' => $title, 'category' => $category, 'pricing_model' => $model, 'start_date' => $start, 'end_date' => $end,
@@ -904,7 +904,7 @@ final class Marketplace
         $impr = $b['impressions'] !== null ? (int) $b['impressions'] : null;
         $q = self::quote($hotelIds, (string) $b['pricing_model'], (string) $b['start_date'], (string) $b['end_date'], $impr, (string) $b['category'], $bookingId);
         if ($q['errors'] || !$q['lines']) {
-            throw new RuntimeException(implode("\n", $q['errors'] ?: [__('Choose at least one hotel.')]));
+            throw new RuntimeException(implode("\n", $q['errors'] ?: [__('Choose at least one venue.')]));
         }
         $review = self::setting('platform_mkt_review') === '1';
         $status = $review ? 'submitted' : 'awaiting_payment';
@@ -995,7 +995,7 @@ final class Marketplace
                 'paid_at' => $paidAt, 'paid_by' => $userId, 'expires_at' => null], 'id = :id', ['id' => $bookingId]);
             self::event($bookingId, 'paid', $ref, $actor);
         });
-        self::notifyAdvertiser($bookingId, __('Payment received for :n', ['n' => $b['number']]), __('Thank you. The hotels now confirm your ad.'));
+        self::notifyAdvertiser($bookingId, __('Payment received for :n', ['n' => $b['number']]), __('Thank you. The venues now confirm your ad.'));
         foreach (self::lines($bookingId) as $l) {
             $s = self::hotelSettings((int) $l['hotel_id']);
             if ($s['approval'] === 'auto') {
@@ -1154,7 +1154,7 @@ final class Marketplace
         $hotelName = (string) DB::value('SELECT name FROM hotels WHERE id = :h', ['h' => $hotelId]);
         self::event((int) $l['booking_id'], 'rejected', $hotelName . ': ' . $reason . ($rejectCreative ? ' (' . __('ad rejected') . ')' : ''), $actor, $hotelId);
         if ($b) {
-            self::notifyAdvertiser((int) $b['id'], __(':h declined your ad :n', ['h' => $hotelName, 'n' => $b['number']]), $reason . ($b['paid_at'] ? "\n" . __('The amount for this hotel will be refunded.') : ''));
+            self::notifyAdvertiser((int) $b['id'], __(':h declined your ad :n', ['h' => $hotelName, 'n' => $b['number']]), $reason . ($b['paid_at'] ? "\n" . __('The amount for this venue will be refunded.') : ''));
         }
         self::refreshStatus((int) $l['booking_id']);
     }
@@ -1254,11 +1254,11 @@ final class Marketplace
         if ($new !== $b['status']) {
             $upd = ['status' => $new];
             if ($new === 'rejected') {
-                $upd['status_reason'] = __('No hotel accepted the ad.');
+                $upd['status_reason'] = __('No venue accepted the ad.');
                 $upd['refund_amount'] = $b['total'];
             }
             DB::update('mkt_bookings', $upd, 'id = :id', ['id' => $bookingId]);
-            self::event($bookingId, $new, $new === 'rejected' ? __('No hotel accepted the ad.') : '', 'system');
+            self::event($bookingId, $new, $new === 'rejected' ? __('No venue accepted the ad.') : '', 'system');
             if (in_array($new, ['scheduled', 'running', 'completed', 'rejected'], true)) {
                 self::notifyAdvertiser($bookingId, __('Order :n: :s', ['n' => $b['number'], 's' => self::statusLabel($new)]), $b['title']);
             }

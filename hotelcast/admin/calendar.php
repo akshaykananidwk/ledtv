@@ -41,7 +41,7 @@ require __DIR__ . '/partials/header.php';
       <?php endforeach; ?>
     </div>
     <div id="hcCalendar"></div>
-    <div class="form-text mt-2"><i class="bi bi-info-circle"></i> <?= e(__('Times are hotel time (:tz). Repeating schedules move as a whole series: moving one day moves every repeat. To change only one day, add a separate schedule for it.', ['tz' => date_default_timezone_get()])) ?></div>
+    <div class="form-text mt-2"><i class="bi bi-info-circle"></i> <?= e(__('Times are local time (:tz). Repeating schedules move as a whole series: moving one day moves every repeat. To change only one day, add a separate schedule for it.', ['tz' => date_default_timezone_get()])) ?></div>
   </div>
 </div>
 

@@ -87,7 +87,7 @@ final class DeviceControlsExtension implements ContentExtension
             return strtr($custom, ['{ssid}' => $ssid, '{password}' => $pw]);
         }
         if ($ssid === '') {
-            return I18n::translate('Connect your phone to the hotel Wi-Fi, open YouTube or another app with the Cast icon, tap Cast and choose this TV.', $lang);
+            return I18n::translate('Connect your phone to the same Wi-Fi as this TV, open YouTube or another app with the Cast icon, tap Cast and choose this TV.', $lang);
         }
         $t = I18n::translate("Connect your phone to the Wi-Fi ':ssid', open YouTube or another app with the Cast icon, tap Cast and choose this TV.", $lang, ['ssid' => $ssid]);
         return $pw !== '' ? $t . ' ' . I18n::translate('Wi-Fi password: :pw', $lang, ['pw' => $pw]) : $t;

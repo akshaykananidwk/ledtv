@@ -110,7 +110,7 @@ require __DIR__ . '/partials/header.php';
 
 <div class="row g-3 mb-3">
   <div class="col-sm-6 col-lg-3"><div class="card h-100"><div class="card-body">
-    <div class="text-muted small"><?= e(__('Rooms switched off by admin')) ?></div>
+    <div class="text-muted small"><?= e(__('Screens switched off by admin')) ?></div>
     <div class="fs-3 fw-bold"><?= $roomsOff ?></div>
   </div></div></div>
   <div class="col-sm-6 col-lg-3"><div class="card h-100"><div class="card-body">
@@ -135,7 +135,7 @@ require __DIR__ . '/partials/header.php';
             <button class="btn btn-success" name="state" value="on"><i class="bi bi-power"></i> <?= e(__('Turn ON')) ?></button>
             <button class="btn btn-dark" name="state" value="off" data-confirm="<?= e(__('Turn the selected TVs off? They stay off until you turn them on again.')) ?>"><i class="bi bi-power"></i> <?= e(__('Turn OFF')) ?></button>
           </div>
-          <div class="form-text"><?= e(__('Turning off here keeps the room off (even after a TV restart) until you turn it on again.')) ?></div>
+          <div class="form-text"><?= e(__('Turning off here keeps the screen off (even after a TV restart) until you turn it on again.')) ?></div>
         </form>
       </div>
     </div>
@@ -252,7 +252,7 @@ require __DIR__ . '/partials/header.php';
   <div class="card-header"><i class="bi bi-clipboard-check"></i> <?= e(__('Last ON/OFF results from TVs')) ?></div>
   <div class="table-responsive">
     <table class="table table-sm align-middle mb-0">
-      <thead class="table-light"><tr><th><?= e(__('Time')) ?></th><th><?= e(__('Room')) ?></th><th><?= e(__('Command')) ?></th><th><?= e(__('Status')) ?></th><th><?= e(__('TV reply')) ?></th></tr></thead>
+      <thead class="table-light"><tr><th><?= e(__('Time')) ?></th><th><?= e(__('Screen')) ?></th><th><?= e(__('Command')) ?></th><th><?= e(__('Status')) ?></th><th><?= e(__('TV reply')) ?></th></tr></thead>
       <tbody>
       <?php if (!$powerLog): ?><tr><td colspan="5" class="text-center text-muted py-3"><?= e(__('No commands yet.')) ?></td></tr><?php endif; ?>
       <?php foreach ($powerLog as $l): ?>

@@ -296,7 +296,7 @@ final class Tenant
             echo json_out(['ok' => false, 'error' => ['code' => 'NOT_FOUND', 'message' => 'Not found']]);
         } else {
             echo '<!DOCTYPE html><meta charset="utf-8"><title>404</title><body style="font-family:sans-serif;padding:40px">'
-                . '<h1>' . e(__('Not found')) . '</h1><p>' . e(__('This record does not exist or belongs to another hotel.')) . '</p>'
+                . '<h1>' . e(__('Not found')) . '</h1><p>' . e(__('This record does not exist or belongs to another customer.')) . '</p>'
                 . '<p><a href="' . e(admin_url('index.php')) . '">' . e(__('Back to dashboard')) . '</a></p></body>';
         }
         exit;

@@ -221,7 +221,7 @@ final class PlayReport
             $out[__('Playlist')] = (string) DB::value('SELECT name FROM content_playlists WHERE id = :id AND hotel_id = :h', ['id' => $f['playlist_id']] + $hid);
         }
         if ($f['room_id']) {
-            $out[__('Room')] = (string) DB::value('SELECT room_number FROM rooms WHERE id = :id AND hotel_id = :h', ['id' => $f['room_id']] + $hid);
+            $out[__('Screen')] = (string) DB::value('SELECT room_number FROM rooms WHERE id = :id AND hotel_id = :h', ['id' => $f['room_id']] + $hid);
         }
         if ($f['group_id']) {
             $out[__('Group')] = (string) DB::value('SELECT name FROM room_groups WHERE id = :id AND hotel_id = :h', ['id' => $f['group_id']] + $hid);

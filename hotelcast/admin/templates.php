@@ -47,7 +47,7 @@ if (is_post()) {
         }
         $newId = Templates::save($existing ? $id : null, $tpl, $fields, $title, req_int('duration', $_POST), !empty($_POST['is_active']), $lang, Auth::id());
         ActivityLog::add($existing ? 'content_update' : 'content_create', 'content', $newId, 'template ' . $tpl['id'] . ': ' . ($title ?: Templates::name($tpl, $lang)));
-        flash('success', __('":t" saved.', ['t' => $title ?: Templates::name($tpl, $lang)]) . ' ' . __('Find it in the Content Library to assign it to rooms or playlists.'));
+        flash('success', __('":t" saved.', ['t' => $title ?: Templates::name($tpl, $lang)]) . ' ' . __('Find it in the Content Library to assign it to screens or playlists.'));
         redirect(admin_url('templates.php', ['action' => 'edit', 'id' => $newId]));
     }
     if ($op === 'guide') {
@@ -169,7 +169,7 @@ if ($action === 'new' || $action === 'edit') {
               <input class="form-check-input" type="checkbox" role="switch" id="t_active" name="is_active" value="1"<?= $active ? ' checked' : '' ?>>
               <label class="form-check-label" for="t_active"><?= e(__('Active (can be shown on TVs)')) ?></label></div></div>
             <?php if ($usage !== null && array_sum($usage) > 0): ?>
-              <div class="col-12 small text-muted"><i class="bi bi-info-circle"></i> <?= e(__('In use: :r rooms, :g groups, :p playlists. Saving updates those TVs.', ['r' => $usage['rooms'], 'g' => $usage['groups'], 'p' => $usage['playlists']])) ?></div>
+              <div class="col-12 small text-muted"><i class="bi bi-info-circle"></i> <?= e(__('In use: :r screens, :g groups, :p playlists. Saving updates those TVs.', ['r' => $usage['rooms'], 'g' => $usage['groups'], 'p' => $usage['playlists']])) ?></div>
             <?php endif; ?>
           </div></div>
           <div class="d-flex gap-2 flex-wrap mb-3">
@@ -238,7 +238,7 @@ require __DIR__ . '/partials/header.php';
 <div class="page-head">
   <div>
     <h1><?= e(__('Templates')) ?></h1>
-    <p class="lead-sm"><?= e(__('Ready-made designs for festivals, hotel notices, temple timings and a local guide. Pick one, change the text, save — done.')) ?></p>
+    <p class="lead-sm"><?= e(__('Ready-made designs for festivals, notices, offers, temple timings and a local guide. Pick one, change the text, save — done.')) ?></p>
   </div>
   <div class="btn-group" role="group" aria-label="<?= e(__('Language of the default text')) ?>">
     <?php foreach ($langs as $code => $name): ?>

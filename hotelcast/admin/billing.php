@@ -29,7 +29,7 @@ $pageTitle = __('Billing');
 $activeNav = 'billing';
 require __DIR__ . '/partials/header.php';
 ?>
-<div class="page-head"><div><h1><?= e(__('Billing')) ?></h1><p class="lead-sm"><?= e(__('Invoices from :p for this hotel.', ['p' => $brand['product']])) ?></p></div></div>
+<div class="page-head"><div><h1><?= e(__('Billing')) ?></h1><p class="lead-sm"><?= e(__('Invoices from :p for this customer.', ['p' => $brand['product']])) ?></p></div></div>
 <div class="row g-3 mb-3">
   <div class="col-md-4"><div class="card h-100"><div class="stat-card"><div class="stat-icon bg-soft-primary"><i class="bi bi-box-seam"></i></div><div><div class="stat-value"><?= e($hotel['plan_name'] ?? '—') ?></div><div class="stat-label"><?= e(__('Plan')) ?><?= $hotel['price_per_tv_month'] !== null ? ' · ' . e(money($hotel['price_per_tv_month'])) . '/' . e(__('TV/month')) : '' ?></div></div></div></div></div>
   <div class="col-md-4"><div class="card h-100"><div class="stat-card"><div class="stat-icon <?= $overdue ? 'bg-soft-danger' : 'bg-soft-warning' ?>"><i class="bi bi-hourglass-split"></i></div><div><div class="stat-value"><?= e(money($due)) ?></div><div class="stat-label"><?= e(__('Amount due')) ?><?= $overdue ? ' · ' . e(__(':n overdue', ['n' => count($overdue)])) : '' ?></div></div></div></div></div>

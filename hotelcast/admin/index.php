@@ -19,10 +19,10 @@ $activeNav = 'index';
 require __DIR__ . '/partials/header.php';
 
 $cards = [
-    ['rooms', 'bi-door-closed', 'bg-soft-primary', __('Total rooms'), (string) $stats['rooms'], admin_url('rooms.php')],
+    ['rooms', 'bi-door-closed', 'bg-soft-primary', __('Total screens'), (string) $stats['rooms'], admin_url('rooms.php')],
     ['online', 'bi-wifi', 'bg-soft-success', __('TVs online'), (string) $stats['online'], admin_url('rooms.php', ['status' => 'online'])],
     ['offline', 'bi-wifi-off', 'bg-soft-danger', __('TVs offline'), (string) $stats['offline'], admin_url('rooms.php', ['status' => 'offline'])],
-    ['never_registered', 'bi-plug', 'bg-soft-secondary', __('Rooms without TV'), (string) $stats['never_registered'], admin_url('rooms.php', ['status' => 'none'])],
+    ['never_registered', 'bi-plug', 'bg-soft-secondary', __('Screens without TV'), (string) $stats['never_registered'], admin_url('rooms.php', ['status' => 'none'])],
     ['emergencies', 'bi-exclamation-triangle', $stats['emergencies'] ? 'bg-soft-danger' : 'bg-soft-warning', __('Active emergency'), $stats['emergencies'] ? __('YES') : __('None'), admin_url('broadcast.php') . '#emergency'],
     ['last_update_ago', 'bi-clock-history', 'bg-soft-info', __('Last content update'), $stats['last_update_ago'], admin_url('content.php')],
 ];
@@ -77,7 +77,7 @@ $cards = [
   <div class="col-xl-8">
     <div class="card h-100">
       <div class="card-header d-flex flex-wrap align-items-center gap-2">
-        <span><i class="bi bi-grid-3x3-gap"></i> <?= e(__('Live room status')) ?></span>
+        <span><i class="bi bi-grid-3x3-gap"></i> <?= e(__('Live screen status')) ?></span>
         <span class="small text-muted ms-auto">
           <span class="legend-dot" style="background:#16a34a"></span><?= e(__('Online')) ?>
           <span class="legend-dot ms-2" style="background:#dc2626"></span><?= e(__('Offline')) ?>
@@ -89,9 +89,9 @@ $cards = [
         <?php if (!$roomStatus): ?>
           <div class="hc-empty">
             <i class="bi bi-tv"></i>
-            <p class="mb-2"><strong><?= e(__('No rooms yet')) ?></strong></p>
-            <p class="text-muted"><?= e(__('Add rooms, or simply set up the TV app — TVs register their room automatically.')) ?></p>
-            <?php if (Auth::can('rooms.manage')): ?><a class="btn btn-primary" href="<?= e(admin_url('rooms.php', ['action' => 'new'])) ?>"><i class="bi bi-plus-lg"></i> <?= e(__('Add rooms')) ?></a><?php endif; ?>
+            <p class="mb-2"><strong><?= e(__('No screens yet')) ?></strong></p>
+            <p class="text-muted"><?= e(__('Add screens, or simply set up the TV app — TVs register their screen automatically.')) ?></p>
+            <?php if (Auth::can('rooms.manage')): ?><a class="btn btn-primary" href="<?= e(admin_url('rooms.php', ['action' => 'new'])) ?>"><i class="bi bi-plus-lg"></i> <?= e(__('Add screens')) ?></a><?php endif; ?>
           </div>
         <?php else: ?>
           <div class="room-grid" id="roomGrid"></div>

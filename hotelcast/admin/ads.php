@@ -193,7 +193,7 @@ if ($action === 'campaign') {
             </div>
             <div class="col-md-6"><label class="form-label" for="c_min"><?= e(__('Every M minutes')) ?></label>
               <input class="form-control" id="c_min" type="number" name="freq_minutes" min="1" max="720" value="<?= (int) $c['freq_minutes'] ?>">
-              <div class="form-text"><?= e(__('Rooms showing one item (not a playlist): the item is shown for M minutes, then the ad, then again.')) ?></div></div>
+              <div class="form-text"><?= e(__('Screens showing one item (not a playlist): the item is shown for M minutes, then the ad, then again.')) ?></div></div>
             <div class="col-md-6"><label class="form-label" for="c_cap"><?= e(__('Max impressions per TV per day')) ?></label>
               <input class="form-control" id="c_cap" type="number" name="max_per_day" min="0" max="100000" value="<?= e((string) ($c['max_per_day'] ?? '')) ?>" placeholder="<?= e(__('No limit')) ?>">
               <div class="form-text"><?= e(__('When a TV reached the limit, the ad stops there until tomorrow.')) ?></div></div>

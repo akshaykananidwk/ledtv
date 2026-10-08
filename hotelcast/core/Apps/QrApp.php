@@ -132,7 +132,7 @@ final class QrApp extends DisplayApp
                 break;
             case 'upi':
                 if (!preg_match('/^[A-Za-z0-9._-]{2,256}@[A-Za-z][A-Za-z0-9.-]{1,63}$/', $c['upi_pa'])) {
-                    $errors[] = __('Enter a valid UPI ID, e.g. hotelname@okaxis.');
+                    $errors[] = __('Enter a valid UPI ID, e.g. shopname@okaxis.');
                 }
                 if ($c['upi_am'] !== '' && (!preg_match('/^\d{1,7}(\.\d{1,2})?$/', $c['upi_am']) || (float) $c['upi_am'] <= 0)) {
                     $errors[] = __('The amount must be a number like 500 or 499.50.');

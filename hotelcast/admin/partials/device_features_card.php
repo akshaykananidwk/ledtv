@@ -55,7 +55,7 @@ $__rows = $__h ? array_filter([
       <input type="hidden" name="room_id" value="<?= (int) $__room['id'] ?>"><input type="hidden" name="device_id" value="<?= (int) $dev['id'] ?>">
       <div class="form-check form-switch mb-2">
         <input class="form-check-input" type="checkbox" role="switch" id="usb_mode" name="usb_mode" value="1"<?= $__flags['usb_mode'] ? ' checked' : '' ?>>
-        <label class="form-check-label" for="usb_mode"><?= e(__('USB mode: play the "KrishnaCloud" folder of a USB drive / SD card on this room\'s TVs')) ?></label>
+        <label class="form-check-label" for="usb_mode"><?= e(__('USB mode: play the "KrishnaCloud" folder of a USB drive / SD card on this screen\'s TVs')) ?></label>
       </div>
       <div class="row g-2 align-items-end">
         <div class="col-sm-7">

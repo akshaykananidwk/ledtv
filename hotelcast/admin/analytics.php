@@ -56,22 +56,22 @@ if ($csv !== '') {
     $base = 'analytics-' . $from . '_' . $to;
     switch ($csv) {
         case 'content':
-            csv_download($base . '-content.csv', [__('Content'), __('Type'), __('Plays'), __('Screen time (seconds)'), __('Rooms'), __('Of which ads')],
+            csv_download($base . '-content.csv', [__('Content'), __('Type'), __('Plays'), __('Screen time (seconds)'), __('Screens'), __('Of which ads')],
                 array_map(fn ($r) => [$r['title'], $r['type'], $r['plays'], $r['seconds'], $r['rooms'], $r['ad_plays']], $content));
         case 'rooms':
-            csv_download($base . '-rooms.csv', [__('Room'), __('Floor'), __('Plays'), __('Screen time (seconds)'), __('Different items')],
+            csv_download($base . '-rooms.csv', [__('Screen'), __('Floor'), __('Plays'), __('Screen time (seconds)'), __('Different items')],
                 array_map(fn ($r) => [$r['room'], $r['floor'], $r['plays'], $r['seconds'], $r['items']], $rooms));
         case 'tvs':
-            csv_download($base . '-tvs.csv', [__('Room'), __('Model'), __('Status'), __('Hours in period'), __('Hours online'), __('Uptime %'), __('Hours ON'), 'kWh', __('Method')],
+            csv_download($base . '-tvs.csv', [__('Screen'), __('Model'), __('Status'), __('Hours in period'), __('Hours online'), __('Uptime %'), __('Hours ON'), 'kWh', __('Method')],
                 array_map(fn ($r) => [$r['room'], $r['model'], $r['status'], $r['period_hours'], $r['online_hours'], $r['uptime'], $r['hours_on'], $r['kwh'], $r['method']], $tvRows));
         case 'occupancy':
-            csv_download($base . '-occupancy.csv', [__('Date'), __('Occupied rooms'), __('Rooms'), __('Occupancy %')],
+            csv_download($base . '-occupancy.csv', [__('Date'), __('Occupied rooms'), __('Screens'), __('Occupancy %')],
                 array_map(fn ($r) => [$r['day'], $r['occupied'], $r['rooms'], $r['percent']], $occ['days'] ?? []));
         case 'requests':
             csv_download($base . '-requests.csv', [__('Request'), __('Count'), __('Done'), __('Avg. minutes to done')],
                 array_map(fn ($r) => [$r['type'], $r['count'], $r['done'], $r['avg_done_min']], $gs['requests'] ?? []));
         default:
-            csv_download($base . '-days.csv', [__('Date'), __('Plays'), __('Screen time (seconds)'), __('Ad impressions'), __('Rooms')],
+            csv_download($base . '-days.csv', [__('Date'), __('Plays'), __('Screen time (seconds)'), __('Ad impressions'), __('Screens')],
                 array_map(fn ($r) => [$r['day'], $r['plays'], $r['seconds'], $r['ad_impressions'], $r['rooms']], $days));
     }
 }
@@ -164,7 +164,7 @@ $ranges = [
     <div class="card h-100">
       <div class="card-header d-flex align-items-center gap-2"><span><i class="bi bi-images"></i> <?= e(__('Plays per content')) ?></span><?= $csvLink('content') ?></div>
       <div class="table-responsive" style="max-height:420px"><table class="table table-hc table-sm table-hover mb-0">
-        <thead><tr><th><?= e(__('Content')) ?></th><th class="text-end"><?= e(__('Plays')) ?></th><th class="text-end"><?= e(__('Screen time')) ?></th><th class="text-end d-none d-sm-table-cell"><?= e(__('Rooms')) ?></th></tr></thead>
+        <thead><tr><th><?= e(__('Content')) ?></th><th class="text-end"><?= e(__('Plays')) ?></th><th class="text-end"><?= e(__('Screen time')) ?></th><th class="text-end d-none d-sm-table-cell"><?= e(__('Screens')) ?></th></tr></thead>
         <tbody>
         <?php foreach ($content as $r): ?>
           <tr><td><?= e($r['title']) ?><?php if ($r['ad_plays']): ?> <span class="badge text-bg-warning" title="<?= e(__('Of which ads')) ?>"><?= e(__('Ad')) ?> <?= (int) $r['ad_plays'] ?></span><?php endif; ?></td>
@@ -206,7 +206,7 @@ $ranges = [
     </div>
   </div>
   <div class="table-responsive" style="max-height:460px"><table class="table table-hc table-sm table-hover mb-0">
-    <thead><tr><th><?= e(__('Room')) ?></th><th class="d-none d-md-table-cell"><?= e(__('Model')) ?></th><th><?= e(__('Status')) ?></th><th class="text-end"><?= e(__('Uptime %')) ?></th>
+    <thead><tr><th><?= e(__('Screen')) ?></th><th class="d-none d-md-table-cell"><?= e(__('Model')) ?></th><th><?= e(__('Status')) ?></th><th class="text-end"><?= e(__('Uptime %')) ?></th>
       <th class="text-end d-none d-sm-table-cell"><?= e(__('Hours online')) ?></th><th class="text-end"><?= e(__('Hours ON')) ?></th><th class="text-end">kWh</th></tr></thead>
     <tbody>
     <?php foreach ($tvRows as $r): ?>
@@ -223,14 +223,14 @@ $ranges = [
 </div>
 
 <div class="card mb-3">
-  <div class="card-header d-flex align-items-center gap-2"><span><i class="bi bi-door-open"></i> <?= e(__('Plays per room')) ?></span><?= $csvLink('rooms') ?></div>
+  <div class="card-header d-flex align-items-center gap-2"><span><i class="bi bi-door-open"></i> <?= e(__('Plays per screen')) ?></span><?= $csvLink('rooms') ?></div>
   <div class="table-responsive" style="max-height:420px"><table class="table table-hc table-sm table-hover mb-0">
-    <thead><tr><th><?= e(__('Room')) ?></th><th class="d-none d-sm-table-cell"><?= e(__('Floor')) ?></th><th class="text-end"><?= e(__('Plays')) ?></th><th class="text-end"><?= e(__('Screen time')) ?></th><th class="text-end d-none d-sm-table-cell"><?= e(__('Different items')) ?></th></tr></thead>
+    <thead><tr><th><?= e(__('Screen')) ?></th><th class="d-none d-sm-table-cell"><?= e(__('Floor')) ?></th><th class="text-end"><?= e(__('Plays')) ?></th><th class="text-end"><?= e(__('Screen time')) ?></th><th class="text-end d-none d-sm-table-cell"><?= e(__('Different items')) ?></th></tr></thead>
     <tbody>
     <?php foreach ($rooms as $r): ?>
       <tr><td><?= e($r['room']) ?></td><td class="d-none d-sm-table-cell"><?= e($r['floor']) ?></td><td class="text-end"><?= number_format($r['plays']) ?></td><td class="text-end text-nowrap"><?= e(Analytics::hm($r['seconds'])) ?></td><td class="text-end d-none d-sm-table-cell"><?= (int) $r['items'] ?></td></tr>
     <?php endforeach; ?>
-    <?php if (!$rooms): ?><tr><td colspan="5" class="text-muted"><?= e(__('No rooms yet.')) ?></td></tr><?php endif; ?>
+    <?php if (!$rooms): ?><tr><td colspan="5" class="text-muted"><?= e(__('No screens yet.')) ?></td></tr><?php endif; ?>
     </tbody></table></div>
 </div>
 

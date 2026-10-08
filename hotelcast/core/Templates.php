@@ -16,7 +16,7 @@ declare(strict_types=1);
  */
 final class Templates
 {
-    public const CATEGORIES = ['festival' => 'Festivals', 'notice' => 'Hotel notices', 'temple' => 'Temple', 'guide' => 'Local guide'];
+    public const CATEGORIES = ['festival' => 'Festivals', 'notice' => 'Notices', 'temple' => 'Temple', 'guide' => 'Local guide'];
     public const FIELD_TYPES = ['text', 'textarea', 'color', 'list', 'time', 'url'];
     public const LANGS = ['en', 'gu', 'hi'];
     private const MAX = ['text' => 200, 'textarea' => 2000, 'time' => 40, 'url' => 1000];

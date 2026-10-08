@@ -164,7 +164,7 @@ if ($action === 'new' || $action === 'edit') {
               <input class="form-check-input" type="checkbox" role="switch" id="vwactive" name="is_active" value="1"<?= $v['is_active'] ? ' checked' : '' ?>>
               <label class="form-check-label" for="vwactive"><?= e(__('Wall is on')) ?></label>
             </div>
-            <div class="form-text"><?= e(__('When off, the TVs show their own room / group content.')) ?></div>
+            <div class="form-text"><?= e(__('When off, the TVs show their own screen / group content.')) ?></div>
           </div>
           <div class="col-12"><hr class="my-1"><div class="fw-semibold"><?= e(__('Bezel compensation (optional)')) ?></div>
             <div class="form-text"><?= e(__('Gap between the pictures of two neighbouring TVs (both frames together), and the picture size of one TV. The image then continues behind the frames instead of being cut at them.')) ?></div>
@@ -209,7 +209,7 @@ if ($action === 'new' || $action === 'edit') {
                 </div>
               <?php endfor; endfor; ?>
             </div>
-            <div class="form-text mt-2"><i class="bi bi-info-circle"></i> <?= e(__('Each room can be part of one wall only. Use "Identify" after saving to check that every TV is in the right place.')) ?></div>
+            <div class="form-text mt-2"><i class="bi bi-info-circle"></i> <?= e(__('Each screen can be part of one wall only. Use "Identify" after saving to check that every TV is in the right place.')) ?></div>
           </div>
         </div>
       </div>
@@ -272,7 +272,7 @@ require __DIR__ . '/partials/header.php';
 <?php if (!$walls): ?>
   <div class="hc-empty"><i class="bi bi-grid-3x3"></i>
     <p class="mb-1"><strong><?= e(__('No video walls yet')) ?></strong></p>
-    <p class="text-muted"><?= e(__('Mount the TVs in a grid, register each one as a room, then create a wall and place each TV on its tile.')) ?></p>
+    <p class="text-muted"><?= e(__('Mount the TVs in a grid, register each one as a screen, then create a wall and place each TV on its tile.')) ?></p>
   </div>
 <?php else: ?>
   <div class="table-responsive">

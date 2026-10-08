@@ -44,7 +44,7 @@ if (is_post()) {
                 [, $count] = TvControls::send($command, $type, $ids, $_POST, Auth::id());
                 flash($count ? 'success' : 'warning', $count
                     ? __('Sent to :n TV(s). See the result on the TV details page.', ['n' => $count])
-                    : __('No TV is registered in the selected rooms.'));
+                    : __('No TV is registered on the selected screens.'));
                 break;
         }
     } catch (InvalidArgumentException $e) {

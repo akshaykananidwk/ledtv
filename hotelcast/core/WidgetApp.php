@@ -45,7 +45,7 @@ abstract class WidgetApp extends DataFeedApp
     protected static function latLonFields(array $config): string
     {
         $city = (string) Settings::get('weather_city', '');
-        $help = __('Leave empty to use the hotel location from Settings → Weather:') . ' ' . ($city !== '' ? $city : '—');
+        $help = __('Leave empty to use the location from Settings → Weather:') . ' ' . ($city !== '' ? $city : '—');
         return self::input('lat', __('Latitude'), (string) $config['lat'], 'text', ['inputmode' => 'decimal', 'maxlength' => 20, 'placeholder' => (string) Settings::get('weather_lat', '')], $help)
             . self::input('lon', __('Longitude'), (string) $config['lon'], 'text', ['inputmode' => 'decimal', 'maxlength' => 20, 'placeholder' => (string) Settings::get('weather_lon', '')]);
     }

@@ -168,10 +168,10 @@ final class MarketplacePortal
         $lang = I18n::lang();
         $nav = $a && $a['status'] === 'active' ? [
             'index' => ['index.php', 'bi-speedometer2', __('Dashboard')],
-            'hotels' => ['hotels.php', 'bi-buildings', __('Hotels')],
+            'hotels' => ['hotels.php', 'bi-buildings', __('Customers')],
             'book' => ['book.php', 'bi-plus-circle', __('Book an ad')],
             'creatives' => ['creatives.php', 'bi-images', __('My ads')],
-        ] : ['hotels' => ['hotels.php', 'bi-buildings', __('Hotels')]];
+        ] : ['hotels' => ['hotels.php', 'bi-buildings', __('Customers')]];
         ?><!DOCTYPE html>
 <html lang="<?= e($lang) ?>">
 <head>

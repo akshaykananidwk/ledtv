@@ -179,14 +179,14 @@ if ($action === 'delete') {
           <div class="alert alert-warning">
             <strong><?= e(__('This content is in use:')) ?></strong>
             <ul class="mb-0">
-              <?php if ($usage['rooms']): ?><li><?= e(__('Assigned to :n rooms', ['n' => $usage['rooms']])) ?></li><?php endif; ?>
+              <?php if ($usage['rooms']): ?><li><?= e(__('Assigned to :n screens', ['n' => $usage['rooms']])) ?></li><?php endif; ?>
               <?php if ($usage['groups']): ?><li><?= e(__('Assigned to :n groups', ['n' => $usage['groups']])) ?></li><?php endif; ?>
               <?php if ($usage['playlists']): ?><li><?= e(__('Part of :n playlists', ['n' => $usage['playlists']])) ?></li><?php endif; ?>
               <?php if ($usage['broadcasts']): ?><li><?= e(__('Used by :n scheduled broadcasts', ['n' => $usage['broadcasts']])) ?></li><?php endif; ?>
-              <?php if ((string) Settings::get('default_content_id') === (string) $item['id']): ?><li><?= e(__('It is the hotel default content')) ?></li><?php endif; ?>
+              <?php if ((string) Settings::get('default_content_id') === (string) $item['id']): ?><li><?= e(__('It is the default content')) ?></li><?php endif; ?>
               <?php if ($layoutUse): ?><li><?= e(__('Used in layout :t', ['t' => '"' . implode('", "', $layoutUse) . '"'])) ?> — <?= e(__('Deleting it leaves that zone empty.')) ?></li><?php endif; ?>
             </ul>
-            <div class="mt-2 small"><?= e(__('Those TVs will fall back to their group or hotel default content.')) ?></div>
+            <div class="mt-2 small"><?= e(__('Those TVs will fall back to their group or default content.')) ?></div>
           </div>
         <?php else: ?>
           <p class="text-muted"><?= e(__('This content is not used anywhere.')) ?></p>
@@ -326,7 +326,7 @@ if ($action === 'new' || $action === 'edit') {
             <?php elseif ($type === 'announcement'): ?>
               <div class="col-12">
                 <label class="form-label" for="body"><?= e(__('Announcement text')) ?> *</label>
-                <textarea class="form-control" id="body" name="body" rows="3" required maxlength="5000" placeholder="<?= e(__('e.g. Welcome to our hotel!')) ?>"><?= e($item['body']) ?></textarea>
+                <textarea class="form-control" id="body" name="body" rows="3" required maxlength="5000" placeholder="<?= e(__('e.g. Welcome to our store!')) ?>"><?= e($item['body']) ?></textarea>
               </div>
               <div class="col-12">
                 <label class="form-label" for="subtitle"><?= e(__('Subtitle (optional)')) ?></label>
@@ -418,7 +418,7 @@ if ($action === 'new' || $action === 'edit') {
           <div class="card"><div class="card-body">
             <label class="form-label" for="duration"><?= e(__('Show for (seconds)')) ?></label>
             <input class="form-control" type="number" id="duration" name="duration" min="0" max="86400" value="<?= (int) $item['duration'] ?>">
-            <div class="form-text mb-3"><?= e(__('Used inside playlists. 0 = until the video ends / forever. A single item assigned to a room stays on screen.')) ?></div>
+            <div class="form-text mb-3"><?= e(__('Used inside playlists. 0 = until the video ends / forever. A single item assigned to a screen stays on screen.')) ?></div>
             <div class="form-check form-switch">
               <input class="form-check-input" type="checkbox" role="switch" id="is_active" name="is_active" value="1"<?= (int) $item['is_active'] ? ' checked' : '' ?>>
               <label class="form-check-label" for="is_active"><?= e(__('Active (can be shown on TVs)')) ?></label>
@@ -431,7 +431,7 @@ if ($action === 'new' || $action === 'edit') {
             <input class="form-control mb-2" type="datetime-local" id="valid_from" name="valid_from" value="<?= e($dtLocal($item['valid_from'] ?? null)) ?>">
             <label class="form-label small" for="valid_to"><?= e(__('Show until (optional)')) ?></label>
             <input class="form-control" type="datetime-local" id="valid_to" name="valid_to" value="<?= e($dtLocal($item['valid_to'] ?? null)) ?>">
-            <div class="form-text"><?= e(__('Hotel time (:tz). Outside these dates the item is skipped everywhere: rooms, groups, playlists and layouts.', ['tz' => date_default_timezone_get()])) ?></div>
+            <div class="form-text"><?= e(__('Local time (:tz). Outside these dates the item is skipped everywhere: screens, groups, playlists and layouts.', ['tz' => date_default_timezone_get()])) ?></div>
           </div></div>
           <?php if (!$isNew && (Approvals::enabled() || ($item['approval_status'] ?? 'approved') !== 'approved' || $revision)): // 2.4 approvals ?>
           <div class="card mt-3"><div class="card-body small">

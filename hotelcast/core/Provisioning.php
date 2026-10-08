@@ -251,8 +251,8 @@ final class Provisioning
             $state = Tenant::state($hotelId);
             if ($state !== 'active') {
                 $problems[] = $state === 'expired'
-                    ? __('This hotel account has expired. TVs cannot be registered until it is renewed.')
-                    : __('This hotel account is suspended. TVs cannot be registered until it is reactivated.');
+                    ? __('This account has expired. TVs cannot be registered until it is renewed.')
+                    : __('This account is suspended. TVs cannot be registered until it is reactivated.');
             }
             $max = Tenant::maxTvs($hotelId);
             if ($max !== null) {
@@ -261,7 +261,7 @@ final class Provisioning
                     ['h' => $hotelId, 'u' => $deviceUid]
                 );
                 if (!$already && Tenant::tvCount($hotelId) >= $max) {
-                    $problems[] = __('TV limit reached (:n TVs). Remove an old TV in Rooms & TVs or upgrade your plan before adding this one.', ['n' => $max]);
+                    $problems[] = __('TV limit reached (:n TVs). Remove an old TV in Screens & TVs or upgrade your plan before adding this one.', ['n' => $max]);
                 }
             }
             if (!$problems && trim((string) DB::value('SELECT registration_key FROM hotels WHERE id = :id', ['id' => $hotelId])) === '') {

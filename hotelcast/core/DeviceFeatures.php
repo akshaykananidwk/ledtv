@@ -30,7 +30,7 @@ final class DeviceFeatures
     {
         $room = Tenant::find('rooms', $roomId);
         if (!$room) {
-            throw new InvalidArgumentException(__('Room not found.'));
+            throw new InvalidArgumentException(__('Screen not found.'));
         }
         Access::requireRoom($roomId);
         $cec = (string) ($in['cec_mode'] ?? 'auto');

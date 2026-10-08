@@ -88,7 +88,7 @@ body.embed .bar{display:none}body.embed .wrap{top:0}
   'use strict';
   const T = <?= json_embed([
       'modes' => ['emergency' => __('Emergency'), 'scheduled' => __('Scheduled'), 'assigned' => __('Assigned'), 'group' => __('Group'), 'default' => __('Default'), 'off' => __('Screen off'), 'empty' => __('Welcome screen'), 'preview' => __('Preview')],
-      'welcome' => __('Welcome'), 'room' => __('Room'), 'rtsp' => __('RTSP camera streams play on the TV but cannot be shown in a web browser.'),
+      'welcome' => __('Welcome'), 'room' => __('Screen'), 'rtsp' => __('RTSP camera streams play on the TV but cannot be shown in a web browser.'),
       'off' => __('Screen off'), 'nothing' => __('Nothing to show'), 'of' => __('of'),
       'alarm' => __('Alarm sound'), 'alarmLoop' => __('until stopped'), 'alarmTimes' => __(':n times'), 'alarmMuted' => __('Alarm silenced'),
       'alarmHint' => __('Sound on/off'),

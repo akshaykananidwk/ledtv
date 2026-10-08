@@ -90,7 +90,7 @@ final class Tickers
             $id = is_int($raw) || (is_string($raw) && ctype_digit($raw) && strlen($raw) < 10) ? (int) $raw : 0;
             $row = $id > 0 ? Tenant::find($type === 'group' ? 'room_groups' : 'rooms', $id) : null;
             if (!$row) {
-                $errors[] = $type === 'group' ? __('Choose a group.') : __('Choose a room.');
+                $errors[] = $type === 'group' ? __('Choose a group.') : __('Choose a screen.');
             } else {
                 Access::requireTarget($type, $id);
                 $targetId = $id;
@@ -425,7 +425,7 @@ final class Tickers
         }
         if ($t['target_type'] === 'room') {
             $num = $rooms !== null ? ($rooms[$id] ?? null) : DB::value('SELECT room_number FROM rooms WHERE id = :id AND hotel_id = :h', ['id' => $id, 'h' => Tenant::id()]);
-            return __('Room') . ' ' . ($num !== null && $num !== false ? (string) $num : __('(deleted)'));
+            return __('Screen') . ' ' . ($num !== null && $num !== false ? (string) $num : __('(deleted)'));
         }
         return __('All TVs');
     }

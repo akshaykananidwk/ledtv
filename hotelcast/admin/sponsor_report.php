@@ -41,11 +41,11 @@ $csv = (string) ($_GET['csv'] ?? '');
 if ($csv !== '') {
     $base = 'sponsor-' . slugify((string) $subject, 'report') . '-' . $from . '_' . $to;
     match ($csv) {
-        'room' => csv_download($base . '-rooms.csv', [__('Room'), __('Impressions'), __('Screen time (seconds)')],
+        'room' => csv_download($base . '-rooms.csv', [__('Screen'), __('Impressions'), __('Screen time (seconds)')],
             array_map(fn ($r) => [$r['room'], $r['impressions'], $r['seconds']], $report['per_room'])),
-        'campaign' => csv_download($base . '-campaigns.csv', [__('Campaign'), __('Impressions'), __('Screen time (seconds)'), __('Rooms')],
+        'campaign' => csv_download($base . '-campaigns.csv', [__('Campaign'), __('Impressions'), __('Screen time (seconds)'), __('Screens')],
             array_map(fn ($r) => [$r['name'], $r['impressions'], $r['seconds'], $r['rooms']], $report['per_campaign'])),
-        default => csv_download($base . '-days.csv', [__('Date'), __('Impressions'), __('Screen time (seconds)'), __('Rooms')],
+        default => csv_download($base . '-days.csv', [__('Date'), __('Impressions'), __('Screen time (seconds)'), __('Screens')],
             array_map(fn ($r) => [$r['day'], $r['impressions'], $r['seconds'], $r['rooms']], $report['per_day'])),
     };
 }
@@ -84,18 +84,18 @@ td.r,th.r{text-align:right}.bar{height:9px;background:#4f46e5;border-radius:2px;
   <div class="kpis">
     <div class="kpi"><b><?= number_format($t['impressions']) ?></b><span><?= e(__('Impressions')) ?></span></div>
     <div class="kpi"><b><?= e(Ads::duration($t['seconds'])) ?></b><span><?= e(__('Total screen time')) ?></span></div>
-    <div class="kpi"><b><?= (int) $t['rooms'] ?></b><span><?= e(__('Rooms reached')) ?></span></div>
+    <div class="kpi"><b><?= (int) $t['rooms'] ?></b><span><?= e(__('Screens reached')) ?></span></div>
     <div class="kpi"><b><?= (int) $t['days_active'] ?></b><span><?= e(__('Days on air')) ?></span></div>
   </div>
   <?php if (count($report['per_campaign']) > 1 || !$campaign): ?>
   <h2><?= e(__('Campaigns')) ?></h2>
-  <table><thead><tr><th><?= e(__('Campaign')) ?></th><th class="r"><?= e(__('Impressions')) ?></th><th class="r"><?= e(__('Screen time')) ?></th><th class="r"><?= e(__('Rooms')) ?></th></tr></thead><tbody>
+  <table><thead><tr><th><?= e(__('Campaign')) ?></th><th class="r"><?= e(__('Impressions')) ?></th><th class="r"><?= e(__('Screen time')) ?></th><th class="r"><?= e(__('Screens')) ?></th></tr></thead><tbody>
   <?php foreach ($report['per_campaign'] as $r): ?><tr><td><?= e($r['name']) ?></td><td class="r"><?= number_format($r['impressions']) ?></td><td class="r"><?= e(Ads::duration($r['seconds'])) ?></td><td class="r"><?= (int) $r['rooms'] ?></td></tr><?php endforeach; ?>
   <?php if (!$report['per_campaign']): ?><tr><td colspan="4"><?= e(__('No impressions in this period.')) ?></td></tr><?php endif; ?>
   </tbody></table>
   <?php endif; ?>
   <h2><?= e(__('Per day')) ?></h2>
-  <table><thead><tr><th><?= e(__('Date')) ?></th><th class="r"><?= e(__('Impressions')) ?></th><th style="width:34%"></th><th class="r"><?= e(__('Screen time')) ?></th><th class="r"><?= e(__('Rooms')) ?></th></tr></thead><tbody>
+  <table><thead><tr><th><?= e(__('Date')) ?></th><th class="r"><?= e(__('Impressions')) ?></th><th style="width:34%"></th><th class="r"><?= e(__('Screen time')) ?></th><th class="r"><?= e(__('Screens')) ?></th></tr></thead><tbody>
   <?php foreach ($report['per_day'] as $d): ?>
     <tr><td><?= e(date('D d M Y', (int) strtotime($d['day']))) ?></td><td class="r"><?= number_format($d['impressions']) ?></td>
       <td><div class="bar" style="width:<?= round(100 * $d['impressions'] / $maxDay, 1) ?>%"></div></td>
@@ -146,7 +146,7 @@ $chart = [
   <?php foreach ([
       ['bi-eye', 'bg-soft-primary', number_format($t['impressions']), __('Impressions')],
       ['bi-clock-history', 'bg-soft-info', Ads::duration($t['seconds']), __('Total screen time')],
-      ['bi-door-open', 'bg-soft-success', (string) $t['rooms'], __('Rooms reached')],
+      ['bi-door-open', 'bg-soft-success', (string) $t['rooms'], __('Screens reached')],
       ['bi-calendar-check', 'bg-soft-warning', (string) $t['days_active'], __('Days on air')],
   ] as [$icon, $cls, $value, $label]): ?>
   <div class="col-6 col-xl-3"><div class="card"><div class="stat-card">
@@ -163,7 +163,7 @@ $chart = [
     <script type="application/json" id="chartDays"><?= json_embed($chart) ?></script></div>
   <div class="table-responsive" style="max-height:420px">
     <table class="table table-hc table-sm mb-0">
-      <thead><tr><th><?= e(__('Date')) ?></th><th class="text-end"><?= e(__('Impressions')) ?></th><th class="text-end"><?= e(__('Screen time')) ?></th><th class="text-end"><?= e(__('Rooms')) ?></th></tr></thead>
+      <thead><tr><th><?= e(__('Date')) ?></th><th class="text-end"><?= e(__('Impressions')) ?></th><th class="text-end"><?= e(__('Screen time')) ?></th><th class="text-end"><?= e(__('Screens')) ?></th></tr></thead>
       <tbody>
       <?php foreach (array_reverse($report['per_day']) as $d): ?>
         <tr><td><?= e(date('D d M Y', (int) strtotime($d['day']))) ?></td><td class="text-end"><?= number_format($d['impressions']) ?></td><td class="text-end"><?= e(Ads::duration($d['seconds'])) ?></td><td class="text-end"><?= (int) $d['rooms'] ?></td></tr>
@@ -179,7 +179,7 @@ $chart = [
       <div class="card-header d-flex align-items-center gap-2"><span><i class="bi bi-badge-ad"></i> <?= e(__('Campaigns')) ?></span>
         <a class="btn btn-sm btn-light border ms-auto" href="<?= e(admin_url('sponsor_report.php', $query + ['csv' => 'campaign'])) ?>"><i class="bi bi-download"></i> CSV</a></div>
       <div class="table-responsive"><table class="table table-hc table-sm mb-0">
-        <thead><tr><th><?= e(__('Campaign')) ?></th><th class="text-end"><?= e(__('Impressions')) ?></th><th class="text-end"><?= e(__('Screen time')) ?></th><th class="text-end"><?= e(__('Rooms')) ?></th></tr></thead>
+        <thead><tr><th><?= e(__('Campaign')) ?></th><th class="text-end"><?= e(__('Impressions')) ?></th><th class="text-end"><?= e(__('Screen time')) ?></th><th class="text-end"><?= e(__('Screens')) ?></th></tr></thead>
         <tbody>
         <?php foreach ($report['per_campaign'] as $r): ?><tr><td><?= e($r['name']) ?></td><td class="text-end"><?= number_format($r['impressions']) ?></td><td class="text-end"><?= e(Ads::duration($r['seconds'])) ?></td><td class="text-end"><?= (int) $r['rooms'] ?></td></tr><?php endforeach; ?>
         <?php if (!$report['per_campaign']): ?><tr><td colspan="4" class="text-muted"><?= e(__('No impressions in this period.')) ?></td></tr><?php endif; ?>
@@ -188,10 +188,10 @@ $chart = [
   </div>
   <div class="col-lg-6">
     <div class="card h-100">
-      <div class="card-header d-flex align-items-center gap-2"><span><i class="bi bi-door-open"></i> <?= e(__('Rooms')) ?></span>
+      <div class="card-header d-flex align-items-center gap-2"><span><i class="bi bi-door-open"></i> <?= e(__('Screens')) ?></span>
         <a class="btn btn-sm btn-light border ms-auto" href="<?= e(admin_url('sponsor_report.php', $query + ['csv' => 'room'])) ?>"><i class="bi bi-download"></i> CSV</a></div>
       <div class="table-responsive" style="max-height:360px"><table class="table table-hc table-sm mb-0">
-        <thead><tr><th><?= e(__('Room')) ?></th><th class="text-end"><?= e(__('Impressions')) ?></th><th class="text-end"><?= e(__('Screen time')) ?></th></tr></thead>
+        <thead><tr><th><?= e(__('Screen')) ?></th><th class="text-end"><?= e(__('Impressions')) ?></th><th class="text-end"><?= e(__('Screen time')) ?></th></tr></thead>
         <tbody>
         <?php foreach ($report['per_room'] as $r): ?><tr><td><?= e($r['room']) ?></td><td class="text-end"><?= number_format($r['impressions']) ?></td><td class="text-end"><?= e(Ads::duration($r['seconds'])) ?></td></tr><?php endforeach; ?>
         <?php if (!$report['per_room']): ?><tr><td colspan="3" class="text-muted"><?= e(__('No impressions in this period.')) ?></td></tr><?php endif; ?>

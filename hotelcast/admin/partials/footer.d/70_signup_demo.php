@@ -18,7 +18,7 @@ $__kind = Demo::kind((int) $__h['id']);
 if ($__kind !== null) {
     $__ro = Demo::readOnlyHotel((int) $__h['id']);
     $__text = $__kind === 'public'
-        ? __('Demo mode — changes are disabled. This demo hotel is reset every night.')
+        ? __('Demo mode — changes are disabled. This demo is reset every night.')
         : __('Client demo — valid until :d, then deleted automatically.', ['d' => !empty($__h['expires_at']) ? date('d M Y', (int) strtotime((string) $__h['expires_at'])) : '—'])
             . ($__ro ? ' ' . __('Demo mode — changes are disabled.') : '');
     $__link = $__kind === 'public' && Signup::enabled() ? [base_url('signup.php'), __('Start free trial'), 'bi-rocket-takeoff'] : null;

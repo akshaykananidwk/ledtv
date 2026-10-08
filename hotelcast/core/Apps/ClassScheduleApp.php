@@ -79,7 +79,7 @@ final class ClassScheduleApp extends DisplayApp
             . self::input('subheading', __('Sub-heading'), $config['subheading'], 'text', ['maxlength' => 190])
             . self::select('view', __('Show as'), ['today' => __('Today (NOW / NEXT)'), 'week' => __('Whole week')], $config['view'], '', 'col-md-4')
             . self::input('trainer_label', __('Name for "Trainer"'), $config['trainer_label'], 'text', ['maxlength' => 40, 'placeholder' => __('Trainer')], __('e.g. Doctor, Teacher, Instructor'), 'col-md-4')
-            . self::input('room_label', __('Name for "Studio"'), $config['room_label'], 'text', ['maxlength' => 40, 'placeholder' => __('Studio')], __('e.g. Room, Hall, Cabin'), 'col-md-4')
+            . self::input('room_label', __('Name for "Studio"'), $config['room_label'], 'text', ['maxlength' => 40, 'placeholder' => __('Studio')], __('e.g. Hall, Cabin, Lab'), 'col-md-4')
             . self::input('rows_per_page', __('Rows per page (today view)'), $config['rows_per_page'], 'number', ['min' => 3, 'max' => 10], '', 'col-md-4')
             . self::input('page_sec', __('Change page every (seconds)'), $config['page_sec'], 'number', ['min' => 3, 'max' => 120], '', 'col-md-4')
             . self::checkbox('show_photos', __('Show trainer photos'), (bool) $config['show_photos'], 'col-md-4')

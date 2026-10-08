@@ -120,7 +120,7 @@ final class Features
         'dashboard' => ['label' => 'Dashboard', 'group' => 'core', 'core' => true, 'description' => 'Live overview of screens, activity and the getting-started checklist.',
             'permissions' => ['dashboard.view'], 'pages' => ['index.php', 'getting_started.php'], 'ajax' => ['dashboard_stats', 'signup_checklist'],
             'widgets' => ['50_plan_usage.php', '70_signups.php']],
-        'screens' => ['label' => 'Screens & TVs', 'group' => 'core', 'core' => true, 'description' => 'Screens (rooms), TV registration, QR setup and remote commands.',
+        'screens' => ['label' => 'Screens & TVs', 'group' => 'core', 'core' => true, 'description' => 'Screens, TV registration, QR setup and remote commands.',
             'permissions' => ['rooms.view', 'rooms.manage', 'broadcast.device_commands', 'devices.setup'],
             'pages' => ['rooms.php', 'claim.php', 'setup_file.php'], 'ajax' => ['room_status', 'send_command', 'claim_*'],
             'api' => ['', 'health', 'device', 'content', 'provision', 'license']],
@@ -138,7 +138,7 @@ final class Features
             'permissions' => ['logs.view'], 'pages' => ['logs.php']],
         'update' => ['label' => 'Auto-update', 'group' => 'core', 'core' => true, 'description' => 'Server updates (platform only).',
             'permissions' => ['update.manage'], 'pages' => ['update.php', 'ajax_update.php'], 'ajax' => ['update_*', 'rollback']],
-        'platform' => ['label' => 'Platform', 'group' => 'core', 'core' => true, 'description' => 'Platform, reseller and hotel-chain administration.',
+        'platform' => ['label' => 'Platform', 'group' => 'core', 'core' => true, 'description' => 'Platform, reseller and chain administration.',
             'permissions' => ['platform.manage', 'platform.hotels', 'reseller.panel', 'support.platform', 'signup.manage', 'demo.client', 'chains.manage', 'chain.view', 'platform.screens', 'platform.pool'],
             'ajax' => ['platform_*', 'chain_*', 'signup_stats']],
 
@@ -238,7 +238,7 @@ final class Features
             'api_self' => ['guest'], 'extensions' => ['GuestExtension']], // guest app link: 404 from Guests::resolveToken, not 403
         'feedback' => ['label' => 'Guest feedback', 'group' => 'hospitality', 'description' => 'Ratings and comments from guests.',
             'permissions' => ['guests.feedback'], 'pages' => ['feedback.php'], 'depends' => ['room_service']],
-        'pms' => ['label' => 'PMS integration', 'group' => 'hospitality', 'description' => 'Check-in / out from the hotel PMS over the API.',
+        'pms' => ['label' => 'PMS integration', 'group' => 'hospitality', 'description' => 'Check-in / out from the property PMS over the API.',
             'api' => ['pms'], 'depends' => ['guests', 'api_access']],
         'guide' => ['label' => 'Local guide', 'group' => 'hospitality', 'description' => 'Local guide page in the TV guest menu.',
             'extensions' => ['GuideExtension'], 'depends' => ['content']],

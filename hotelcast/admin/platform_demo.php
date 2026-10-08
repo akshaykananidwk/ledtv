@@ -48,7 +48,7 @@ if (is_post()) {
                 require_can('platform.manage');
                 $hid = Demo::resetPublic();
                 ActivityLog::add('demo_reset', 'hotel', $hid, 'Public demo reset');
-                flash('success', __('The demo hotel was reset with fresh sample data.'));
+                flash('success', __('The demo was reset with fresh sample data.'));
                 break;
             case 'client_create':
                 $r = Demo::createClientDemo(req_str('prospect', $_POST, 100), $resellerId !== null && $resellerId > 0 ? $resellerId : null, Auth::id(),
@@ -71,7 +71,7 @@ if (is_post()) {
                 if ($h && !$h['demo_purged_at'] && Auth::enterHotel((int) $h['id'])) {
                     redirect(admin_url('index.php'));
                 }
-                throw new InvalidArgumentException(__('You cannot open this hotel.'));
+                throw new InvalidArgumentException(__('You cannot open this customer.'));
         }
     } catch (InvalidArgumentException | RuntimeException $e) {
         flash('danger', $e->getMessage());
@@ -102,13 +102,13 @@ require __DIR__ . '/partials/header.php';
       <div class="col-12"><div class="form-check form-switch"><input class="form-check-input" type="checkbox" role="switch" id="d_en" name="demo_public_enabled" value="1"<?= Demo::publicEnabled() ? ' checked' : '' ?>>
         <label class="form-check-label fw-semibold" for="d_en"><?= e(__('Public demo on')) ?></label></div>
         <div class="form-text"><?= e(__('Anyone can open :url, look around a read-only admin panel and watch the TV simulator. Data is reset every night.', ['url' => base_url('demo.php')])) ?></div></div>
-      <div class="col-12"><label class="form-label" for="d_name"><?= e(__('Demo hotel name')) ?></label><input class="form-control" id="d_name" name="demo_hotel_name" maxlength="100" value="<?= e((string) Settings::platform('demo_hotel_name', '')) ?>" placeholder="Hotel Dwarka Palace (Demo)"></div>
+      <div class="col-12"><label class="form-label" for="d_name"><?= e(__('Demo business name')) ?></label><input class="form-control" id="d_name" name="demo_hotel_name" maxlength="100" value="<?= e((string) Settings::platform('demo_hotel_name', '')) ?>" placeholder="Hotel Dwarka Palace (Demo)"></div>
       <div class="col-12"><button class="btn btn-primary"><i class="bi bi-check-lg"></i> <?= e(__('Save settings')) ?></button></div>
     </form>
     <?php if ($public): ?>
       <table class="table table-sm small mb-3">
-        <tr><th class="text-muted fw-normal"><?= e(__('Hotel')) ?></th><td><a href="<?= e(admin_url('platform_hotels.php', ['action' => 'view', 'id' => $public['id']])) ?>"><?= e($public['name']) ?></a> · #<?= (int) $public['id'] ?></td></tr>
-        <tr><th class="text-muted fw-normal"><?= e(__('Rooms')) ?></th><td><?= $publicRooms ?> · <?= e(__(':n TVs', ['n' => Tenant::tvCount((int) $public['id'])])) ?></td></tr>
+        <tr><th class="text-muted fw-normal"><?= e(__('Customer')) ?></th><td><a href="<?= e(admin_url('platform_hotels.php', ['action' => 'view', 'id' => $public['id']])) ?>"><?= e($public['name']) ?></a> · #<?= (int) $public['id'] ?></td></tr>
+        <tr><th class="text-muted fw-normal"><?= e(__('Screens')) ?></th><td><?= $publicRooms ?> · <?= e(__(':n TVs', ['n' => Tenant::tvCount((int) $public['id'])])) ?></td></tr>
         <tr><th class="text-muted fw-normal"><?= e(__('Last reset')) ?></th><td><?= e($lastReset ? date('d M Y H:i', $lastReset) : __('never')) ?></td></tr>
       </table>
       <div class="d-flex flex-wrap gap-2">
@@ -116,22 +116,22 @@ require __DIR__ . '/partials/header.php';
         <?php if (Demo::publicEnabled()): ?><a class="btn btn-light border btn-sm" href="<?= e(base_url('demo.php')) ?>" target="_blank" rel="noopener"><i class="bi bi-box-arrow-up-right"></i> <?= e(__('Open demo page')) ?></a><?php endif; ?>
       </div>
     <?php else: ?>
-      <form method="post"><?= Csrf::field() ?><input type="hidden" name="op" value="public_reset"><button class="btn btn-outline-primary btn-sm"><i class="bi bi-magic"></i> <?= e(__('Create demo hotel')) ?></button></form>
+      <form method="post"><?= Csrf::field() ?><input type="hidden" name="op" value="public_reset"><button class="btn btn-outline-primary btn-sm"><i class="bi bi-magic"></i> <?= e(__('Create demo customer')) ?></button></form>
     <?php endif; ?>
   </div></div></div>
 <?php endif; ?>
 
   <div class="<?= $isPlatform ? 'col-xl-7' : 'col-12' ?>"><div class="card h-100"><div class="card-header"><i class="bi bi-person-video3"></i> <?= e(__('Demo for client')) ?></div><div class="card-body">
-    <p class="small text-muted"><?= e(__('Creates a private demo hotel named after your prospect with rich sample data and its own login. It is deleted automatically when it expires.')) ?></p>
+    <p class="small text-muted"><?= e(__('Creates a private demo customer named after your prospect with rich sample data and its own login. It is deleted automatically when it expires.')) ?></p>
     <form method="post" class="row g-2 align-items-end"><?= Csrf::field() ?><input type="hidden" name="op" value="client_create">
-      <div class="col-sm-6"><label class="form-label" for="c_p"><?= e(__('Prospect hotel name')) ?> *</label><input class="form-control" id="c_p" name="prospect" required maxlength="100" placeholder="Hotel Sagar"></div>
+      <div class="col-sm-6"><label class="form-label" for="c_p"><?= e(__('Prospect business name')) ?> *</label><input class="form-control" id="c_p" name="prospect" required maxlength="100" placeholder="Hotel Sagar"></div>
       <div class="col-sm-6"><label class="form-label" for="c_e"><?= e(__('Prospect email (optional, used as login)')) ?></label><input class="form-control" type="email" id="c_e" name="email" maxlength="190"></div>
       <div class="col-6 col-sm-3"><label class="form-label" for="c_d"><?= e(__('Valid for')) ?></label><div class="input-group"><input class="form-control" type="number" id="c_d" name="days" min="1" max="30" value="<?= Demo::CLIENT_DAYS ?>"><span class="input-group-text"><?= e(__('days')) ?></span></div></div>
       <div class="col-6 col-sm-5"><div class="form-check mt-4"><input class="form-check-input" type="checkbox" id="c_ro" name="readonly" value="1"><label class="form-check-label" for="c_ro"><?= e(__('Read-only (changes disabled)')) ?></label></div></div>
       <div class="col-12 col-sm-4"><button class="btn btn-primary w-100"><i class="bi bi-plus-lg"></i> <?= e(__('Create client demo')) ?></button></div>
     </form>
     <div class="table-responsive mt-3"><table class="table table-sm table-hc mb-0">
-      <thead><tr><th><?= e(__('Hotel')) ?></th><th class="d-none d-sm-table-cell"><?= e(__('Login')) ?></th><th><?= e(__('Valid until')) ?></th><th></th></tr></thead>
+      <thead><tr><th><?= e(__('Customer')) ?></th><th class="d-none d-sm-table-cell"><?= e(__('Login')) ?></th><th><?= e(__('Valid until')) ?></th><th></th></tr></thead>
       <tbody>
       <?php if (!$clients): ?><tr><td colspan="4" class="text-muted text-center py-3"><?= e(__('No client demos yet.')) ?></td></tr><?php endif; ?>
       <?php foreach ($clients as $c): $gone = (bool) $c['demo_purged_at']; ?>

@@ -27,7 +27,7 @@ if (!empty($_GET['csv'])) {
     header('Content-Type: text/csv; charset=utf-8');
     header('Content-Disposition: attachment; filename="proof-of-play-' . preg_replace('/[^A-Za-z0-9-]/', '', (string) $b['number']) . '.csv"');
     $fh = fopen('php://output', 'w');
-    fputcsv($fh, [__('Date'), __('Hotel'), __('City'), __('Impressions'), __('Screen time (seconds)'), __('Rooms')]);
+    fputcsv($fh, [__('Date'), __('Customer'), __('City'), __('Impressions'), __('Screen time (seconds)'), __('Screens')]);
     foreach ($r['hotels'] as $h) {
         foreach ($h['days'] as $day => $d) {
             // Spreadsheet formula injection: hotel names never start with = + - @ in the output.
@@ -69,15 +69,15 @@ if ($print) {
 <div class="row g-2 my-2 text-center">
   <div class="col-4"><div class="mkt-stat"><b data-total-impressions><?= number_format((int) $r['totals']['impressions']) ?></b><span><?= e(__('Impressions')) ?></span></div></div>
   <div class="col-4"><div class="mkt-stat"><b><?= e(Ads::duration((int) $r['totals']['seconds'])) ?></b><span><?= e(__('Screen time')) ?></span></div></div>
-  <div class="col-4"><div class="mkt-stat"><b><?= count(array_filter($r['hotels'], fn ($h) => $h['totals']['impressions'] > 0)) ?></b><span><?= e(__('Hotels')) ?></span></div></div>
+  <div class="col-4"><div class="mkt-stat"><b><?= count(array_filter($r['hotels'], fn ($h) => $h['totals']['impressions'] > 0)) ?></b><span><?= e(__('Customers')) ?></span></div></div>
 </div>
-<?php if (!$r['hotels']): ?><p class="text-muted"><?= e(__('No hotel has started your ad yet.')) ?></p><?php endif; ?>
+<?php if (!$r['hotels']): ?><p class="text-muted"><?= e(__('No venue has started your ad yet.')) ?></p><?php endif; ?>
 <?php foreach ($r['hotels'] as $h): ?>
 <section class="card mb-3 mkt-report-hotel"><div class="card-body">
   <div class="d-flex justify-content-between flex-wrap gap-2"><h2 class="h6 mb-0"><?= e($h['name']) ?> <small class="text-muted"><?= e($h['city']) ?></small></h2>
     <span class="small"><?= number_format((int) $h['totals']['impressions']) ?> <?= e(__('impressions')) ?><?= $h['impressions_ordered'] ? ' / ' . number_format((int) $h['impressions_ordered']) : '' ?> · <?= e(Ads::duration((int) $h['totals']['seconds'])) ?></span></div>
   <div class="table-responsive"><table class="table table-sm mb-0 mt-2">
-    <thead><tr><th><?= e(__('Date')) ?></th><th class="text-end"><?= e(__('Impressions')) ?></th><th class="text-end"><?= e(__('Screen time')) ?></th><th class="text-end"><?= e(__('Rooms')) ?></th></tr></thead>
+    <thead><tr><th><?= e(__('Date')) ?></th><th class="text-end"><?= e(__('Impressions')) ?></th><th class="text-end"><?= e(__('Screen time')) ?></th><th class="text-end"><?= e(__('Screens')) ?></th></tr></thead>
     <tbody>
     <?php foreach ($h['days'] as $day => $d): ?>
       <tr><td class="text-nowrap"><?= e(date('d M y', (int) strtotime($day))) ?></td><td class="text-end"><?= number_format($d['impressions']) ?></td><td class="text-end"><?= e(Ads::duration($d['seconds'])) ?></td><td class="text-end"><?= (int) $d['rooms'] ?></td></tr>
@@ -86,7 +86,7 @@ if ($print) {
   </table></div>
 </div></section>
 <?php endforeach; ?>
-<p class="small text-muted"><?= e(__('Impressions are reported by the hotel TVs each time your ad finished playing. Generated :d.', ['d' => date('d M Y H:i')])) ?></p>
+<p class="small text-muted"><?= e(__('Impressions are reported by the venue TVs each time your ad finished playing. Generated :d.', ['d' => date('d M Y H:i')])) ?></p>
 <?php
 if ($print) {
     echo '</body></html>';

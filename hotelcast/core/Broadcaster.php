@@ -81,14 +81,14 @@ final class Broadcaster
         $ids = (array) $ids;
         switch ($type) {
             case 'all':
-                return __('All rooms');
+                return __('All screens');
             case 'rooms':
                 if (!$ids) {
-                    return __('No rooms');
+                    return __('No screens');
                 }
                 [$in, $p] = DB::in(array_map('intval', $ids), 'r');
                 $nums = DB::column("SELECT room_number FROM rooms WHERE hotel_id = :hid AND id IN $in ORDER BY room_number", $p + ['hid' => Tenant::id()]);
-                return __('Rooms') . ': ' . (count($nums) > 8 ? implode(', ', array_slice($nums, 0, 8)) . ' +' . (count($nums) - 8) : implode(', ', $nums));
+                return __('Screens') . ': ' . (count($nums) > 8 ? implode(', ', array_slice($nums, 0, 8)) . ' +' . (count($nums) - 8) : implode(', ', $nums));
             case 'groups':
                 if (!$ids) {
                     return __('No groups');
@@ -154,7 +154,7 @@ final class Broadcaster
         Access::requireTargetList($targetType, $ids);
         $rooms = self::targetRooms($targetType, $ids);
         if (!$rooms) {
-            throw new InvalidArgumentException(__('No rooms match the selected target.'));
+            throw new InvalidArgumentException(__('No screens match the selected target.'));
         }
         return DB::transaction(function () use ($rooms, $targetType, $ids, $contentId, $playlistId, $title, $userId) {
             $bid = DB::insert('broadcast_commands', [

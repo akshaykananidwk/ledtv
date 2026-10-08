@@ -102,12 +102,12 @@ if ($action === 'new' || $action === 'edit') {
         <div class="col-sm-6"><label class="form-label" for="r_ph"><?= e(__('Phone / WhatsApp')) ?></label><input class="form-control" id="r_ph" name="phone" value="<?= $v('phone') ?>"></div>
         <div class="col-sm-6"><label class="form-label" for="r_em"><?= e(__('Email')) ?></label><input class="form-control" type="email" id="r_em" name="email" value="<?= $v('email') ?>"></div>
         <div class="col-sm-3"><label class="form-label" for="r_c"><?= e(__('Commission %')) ?></label><input class="form-control" type="number" step="0.01" min="0" max="100" id="r_c" name="commission_percent" value="<?= $v('commission_percent') ?>"></div>
-        <div class="col-sm-3"><label class="form-label" for="r_mh"><?= e(__('Hotel allowance')) ?></label><input class="form-control" type="number" min="0" id="r_mh" name="max_hotels" value="<?= $v('max_hotels') ?>" placeholder="<?= e(__('unlimited')) ?>"></div>
+        <div class="col-sm-3"><label class="form-label" for="r_mh"><?= e(__('Customer allowance')) ?></label><input class="form-control" type="number" min="0" id="r_mh" name="max_hotels" value="<?= $v('max_hotels') ?>" placeholder="<?= e(__('unlimited')) ?>"></div>
         <div class="col-sm-6"><label class="form-label" for="r_st"><?= e(__('Status')) ?></label><select class="form-select" id="r_st" name="status">
           <option value="active"<?= $r['status'] === 'active' ? ' selected' : '' ?>><?= e(__('Active')) ?></option><option value="suspended"<?= $r['status'] === 'suspended' ? ' selected' : '' ?>><?= e(__('Suspended')) ?></option></select></div>
         <div class="col-12"><label class="form-label" for="r_no"><?= e(__('Notes')) ?></label><textarea class="form-control" id="r_no" name="notes" rows="2"><?= $v('notes') ?></textarea></div>
       </div></div></div>
-      <div class="col-lg-5"><div class="card"><div class="card-header"><?= e(__('Branding for their hotels')) ?></div><div class="card-body row g-3">
+      <div class="col-lg-5"><div class="card"><div class="card-header"><?= e(__('Branding for their customers')) ?></div><div class="card-body row g-3">
         <div class="col-sm-7"><label class="form-label" for="r_bn"><?= e(__('Product name')) ?></label><input class="form-control" id="r_bn" name="brand_name" value="<?= $v('brand_name') ?>" placeholder="Krishna Cloud LED TV"></div>
         <div class="col-sm-5"><label class="form-label" for="r_bc"><?= e(__('Colour')) ?></label><input class="form-control" id="r_bc" name="brand_color" value="<?= $v('brand_color') ?>" pattern="#[0-9A-Fa-f]{6}" placeholder="#7B1FA2"></div>
         <div class="col-sm-6"><label class="form-label" for="r_sp"><?= e(__('Support phone')) ?></label><input class="form-control" id="r_sp" name="support_phone" value="<?= $v('support_phone') ?>"></div>
@@ -135,15 +135,15 @@ if ($action === 'view') {
     ?>
     <div class="page-head">
       <div><h1><i class="bi bi-person-badge"></i> <?= e($r['name']) ?> <?= $r['status'] === 'active' ? '' : Hotels::statusBadge('suspended') ?></h1>
-        <p class="lead-sm"><?= e(__('Commission')) ?> <?= e((string) (float) $r['commission_percent']) ?>% · <?= e(__('Hotels')) ?> <?= count($hotels) ?><?= $r['max_hotels'] !== null ? ' / ' . (int) $r['max_hotels'] : '' ?></p></div>
+        <p class="lead-sm"><?= e(__('Commission')) ?> <?= e((string) (float) $r['commission_percent']) ?>% · <?= e(__('Customers')) ?> <?= count($hotels) ?><?= $r['max_hotels'] !== null ? ' / ' . (int) $r['max_hotels'] : '' ?></p></div>
       <div class="d-flex gap-2"><a class="btn btn-primary" href="<?= e(admin_url('platform_resellers.php', ['action' => 'edit', 'id' => $r['id']])) ?>"><i class="bi bi-pencil"></i> <?= e(__('Edit')) ?></a>
         <a class="btn btn-light border" href="<?= e(admin_url('platform_resellers.php')) ?>"><i class="bi bi-arrow-left"></i> <?= e(__('Back')) ?></a></div>
     </div>
     <div class="row g-3">
       <div class="col-lg-7">
-        <div class="card mb-3"><div class="card-header"><?= e(__('Hotels')) ?></div><div class="table-responsive"><table class="table table-sm table-hc mb-0">
-          <thead><tr><th><?= e(__('Hotel')) ?></th><th><?= e(__('TVs')) ?></th><th><?= e(__('Status')) ?></th></tr></thead><tbody>
-          <?php if (!$hotels): ?><tr><td colspan="3" class="text-muted text-center py-3"><?= e(__('No hotels yet.')) ?></td></tr><?php endif; ?>
+        <div class="card mb-3"><div class="card-header"><?= e(__('Customers')) ?></div><div class="table-responsive"><table class="table table-sm table-hc mb-0">
+          <thead><tr><th><?= e(__('Customer')) ?></th><th><?= e(__('TVs')) ?></th><th><?= e(__('Status')) ?></th></tr></thead><tbody>
+          <?php if (!$hotels): ?><tr><td colspan="3" class="text-muted text-center py-3"><?= e(__('No customers yet.')) ?></td></tr><?php endif; ?>
           <?php foreach ($hotels as $h): ?><tr><td><a href="<?= e(admin_url('platform_hotels.php', ['action' => 'view', 'id' => $h['id']])) ?>"><?= e($h['name']) ?></a></td><td><?= (int) $h['tv_count'] ?></td><td><?= Hotels::statusBadge($h['status']) ?></td></tr><?php endforeach; ?>
           </tbody></table></div></div>
         <div class="card"><div class="card-header"><?= e(__('Commission (all time)')) ?></div><div class="card-body">
@@ -179,11 +179,11 @@ $pageTitle = __('Resellers');
 require __DIR__ . '/partials/header.php';
 ?>
 <div class="page-head">
-  <div><h1><?= e(__('Resellers')) ?></h1><p class="lead-sm"><?= e(__('Partners who sell to hotels. Commission = paid invoices of their hotels (without tax) × commission %.')) ?></p></div>
+  <div><h1><?= e(__('Resellers')) ?></h1><p class="lead-sm"><?= e(__('Partners who sell to customers. Commission = paid invoices of their customers (without tax) × commission %.')) ?></p></div>
   <a class="btn btn-primary" href="<?= e(admin_url('platform_resellers.php', ['action' => 'new'])) ?>"><i class="bi bi-plus-lg"></i> <?= e(__('New reseller')) ?></a>
 </div>
 <div class="card"><div class="table-responsive"><table class="table table-hc table-hover">
-  <thead><tr><th><?= e(__('Reseller')) ?></th><th><?= e(__('Hotels')) ?></th><th><?= e(__('Commission %')) ?></th><th class="d-none d-md-table-cell"><?= e(__('Commission earned')) ?></th><th><?= e(__('Status')) ?></th><th></th></tr></thead>
+  <thead><tr><th><?= e(__('Reseller')) ?></th><th><?= e(__('Customers')) ?></th><th><?= e(__('Commission %')) ?></th><th class="d-none d-md-table-cell"><?= e(__('Commission earned')) ?></th><th><?= e(__('Status')) ?></th><th></th></tr></thead>
   <tbody>
   <?php if (!$resellers): ?><tr><td colspan="6" class="text-center text-muted py-4"><?= e(__('No resellers yet.')) ?></td></tr><?php endif; ?>
   <?php foreach ($resellers as $r): $c = Billing::commission((int) $r['id']); ?>

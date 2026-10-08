@@ -81,7 +81,7 @@ $config = [
         'template_name' => __('Template name'),
         'template_saved' => __('Template saved.'),
         'delete_template' => __('Delete this template?'),
-        'no_logo' => __('No hotel logo yet. Upload it in Settings.'),
+        'no_logo' => __('No business logo yet. Upload it in Settings.'),
         'no_images' => __('No images in your content library yet. Use "Upload image".'),
         'uploading' => __('Uploading…'),
         'leave' => __('You have unsaved changes.'),
@@ -130,7 +130,7 @@ $btn = static fn (string $act, string $icon, string $label, string $extra = '') 
       <div class="dz-group-label"><?= e(__('Pictures')) ?></div>
       <button type="button" class="btn btn-light border w-100 text-start" data-act="upload-image"><i class="bi bi-upload"></i> <?= e(__('Upload image')) ?></button>
       <button type="button" class="btn btn-light border w-100 text-start" data-act="library-image"><i class="bi bi-images"></i> <?= e(__('From library')) ?></button>
-      <button type="button" class="btn btn-light border w-100 text-start" data-act="add-logo"><i class="bi bi-award"></i> <?= e(__('Hotel logo')) ?></button>
+      <button type="button" class="btn btn-light border w-100 text-start" data-act="add-logo"><i class="bi bi-award"></i> <?= e(__('Business logo')) ?></button>
 
       <div class="dz-group-label"><?= e(__('Shapes')) ?></div>
       <div class="dz-shapes">

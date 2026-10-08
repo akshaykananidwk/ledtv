@@ -113,14 +113,14 @@ MarketplacePortal::header($draft ? __('Edit draft') : __('Book an ad'), 'book');
         <label class="form-check-label" for="pm_<?= e($m) ?>"><?= e(Marketplace::modelLabel($m)) ?></label></div>
       <?php endforeach; ?>
     </div>
-    <div data-cpm-only><label class="form-label" for="b_imp"><?= e(__('Impressions per hotel')) ?></label>
+    <div data-cpm-only><label class="form-label" for="b_imp"><?= e(__('Impressions per venue')) ?></label>
       <input class="form-control" id="b_imp" type="number" name="impressions" min="1000" step="1000" max="10000000" value="<?= (int) ($f['impressions'] ?? 5000) ?>">
-      <div class="form-text"><?= e(__('The ad stops in a hotel when it was shown this many times (or at the end date).')) ?></div></div>
+      <div class="form-text"><?= e(__('The ad stops at a venue when it was shown this many times (or at the end date).')) ?></div></div>
   </section>
 
   <section class="card card-body mb-3 gap-2">
-    <h2 class="h6 mb-0">4. <?= e(__('Hotels')) ?></h2>
-    <?php if (!$hotels): ?><p class="text-muted mb-0"><?= e(__('No hotels found.')) ?></p><?php endif; ?>
+    <h2 class="h6 mb-0">4. <?= e(__('Customers')) ?></h2>
+    <?php if (!$hotels): ?><p class="text-muted mb-0"><?= e(__('No venues found.')) ?></p><?php endif; ?>
     <div class="mkt-hotel-pick">
     <?php foreach ($hotels as $h): ?>
       <label class="mkt-card mkt-pick" data-models="<?= e($h['pricing_model']) ?>">
@@ -136,7 +136,7 @@ MarketplacePortal::header($draft ? __('Edit draft') : __('Book an ad'), 'book');
 
   <section class="card card-body mb-3 mkt-quote" aria-live="polite">
     <h2 class="h6"><?= e(__('Price')) ?></h2>
-    <div data-quote><span class="text-muted"><?= e(__('Choose hotels and dates to see the price.')) ?></span></div>
+    <div data-quote><span class="text-muted"><?= e(__('Choose venues and dates to see the price.')) ?></span></div>
   </section>
   <div class="d-grid gap-2 d-sm-flex mb-4">
     <button class="btn btn-primary btn-lg" name="op" value="submit"><i class="bi bi-send"></i> <?= e(__('Submit order')) ?></button>

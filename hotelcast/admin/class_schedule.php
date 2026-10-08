@@ -152,7 +152,7 @@ if ($action === 'new' || $action === 'edit' || $formRow !== null) {
         </div></div></div>
         <div class="col-lg-4"><div class="card"><div class="card-body row g-3">
           <div class="col-12">
-            <label class="form-label" for="c_room"><?= e(__('Studio / room')) ?></label>
+            <label class="form-label" for="c_room"><?= e(__('Studio / hall')) ?></label>
             <input class="form-control" id="c_room" name="room" value="<?= e($s['room']) ?>" maxlength="80">
           </div>
           <div class="col-12">

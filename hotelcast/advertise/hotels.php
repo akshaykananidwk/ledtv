@@ -11,9 +11,9 @@ $filter = [
     'model' => in_array($_GET['model'] ?? '', Marketplace::MODELS, true) ? (string) $_GET['model'] : '',
 ];
 $hotels = Marketplace::enabled() ? Marketplace::listHotels($filter) : [];
-MarketplacePortal::header(__('Hotels'), 'hotels');
+MarketplacePortal::header(__('Customers'), 'hotels');
 ?>
-<h1 class="h4"><?= e(__('Hotels selling TV ad space')) ?></h1>
+<h1 class="h4"><?= e(__('Venues selling TV ad space')) ?></h1>
 <form class="mkt-filter row g-2 mb-3" method="get">
   <div class="col-12 col-sm-4"><input class="form-control" name="city" value="<?= e($filter['city']) ?>" placeholder="<?= e(__('City')) ?>" aria-label="<?= e(__('City')) ?>"></div>
   <div class="col-6 col-sm-3"><select class="form-select" name="category" aria-label="<?= e(__('Category')) ?>">
@@ -27,7 +27,7 @@ MarketplacePortal::header(__('Hotels'), 'hotels');
   <div class="col-12 col-sm-2 d-grid"><button class="btn btn-outline-primary"><i class="bi bi-search"></i> <?= e(__('Filter')) ?></button></div>
 </form>
 <?php if (!$hotels): ?>
-  <p class="text-muted"><?= e(__('No hotels found.')) ?></p>
+  <p class="text-muted"><?= e(__('No venues found.')) ?></p>
 <?php endif; ?>
 <div class="mkt-list">
 <?php foreach ($hotels as $h): ?>
@@ -38,7 +38,7 @@ MarketplacePortal::header(__('Hotels'), 'hotels');
     </div>
     <div class="mkt-facts">
       <span><i class="bi bi-tv"></i> <?= (int) $h['tv_count'] ?> <?= e(__('TVs')) ?></span>
-      <span><i class="bi bi-door-closed"></i> <?= (int) $h['rooms'] ?> <?= e(__('rooms')) ?></span>
+      <span><i class="bi bi-door-closed"></i> <?= (int) $h['rooms'] ?> <?= e(__('screens')) ?></span>
       <span><i class="bi bi-eye"></i> <?= $h['est_daily_impressions'] !== null ? e(__('~:n plays / day', ['n' => number_format((int) $h['est_daily_impressions'])])) : e(__('new')) ?></span>
     </div>
     <div class="mkt-price">

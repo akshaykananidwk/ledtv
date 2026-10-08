@@ -270,14 +270,14 @@ final class VideoWalls
                 continue;
             }
             if (!in_array($rid, $own, true)) {
-                $errors[] = __('Room not found.');
+                $errors[] = __('Screen not found.');
                 continue;
             }
             if (!Access::canRoom($rid)) {
                 Access::deny('video wall room ' . $rid);
             }
             if (isset($seen[$rid])) {
-                $errors[] = __('Room :r is placed on more than one tile.', ['r' => self::roomNumber($rid)]);
+                $errors[] = __('Screen :r is placed on more than one tile.', ['r' => self::roomNumber($rid)]);
                 continue;
             }
             $seen[$rid] = true;
@@ -286,7 +286,7 @@ final class VideoWalls
                 ['r' => $rid, 'h' => Tenant::id()] + ($wallId ? ['w' => $wallId] : [])
             );
             if ($other) {
-                $errors[] = __('Room :r is already part of the wall ":w".', ['r' => self::roomNumber($rid), 'w' => $other['name']]);
+                $errors[] = __('Screen :r is already part of the wall ":w".', ['r' => self::roomNumber($rid), 'w' => $other['name']]);
                 continue;
             }
             $tiles[] = [(int) $m[1], (int) $m[2], $rid];
@@ -370,7 +370,7 @@ final class VideoWalls
             $c = (int) $t['col_index'];
             $n += Broadcaster::queueForRooms([['id' => (int) $t['room_id']]], 'SHOW_MESSAGE', [
                 'title' => (string) ($r * $cols + $c + 1),
-                'message' => __('Row :r, column :c', ['r' => $r + 1, 'c' => $c + 1]) . ' · ' . $wall['name'] . ' · ' . __('Room :n', ['n' => $t['room_number']]),
+                'message' => __('Row :r, column :c', ['r' => $r + 1, 'c' => $c + 1]) . ' · ' . $wall['name'] . ' · ' . __('Screen :n', ['n' => $t['room_number']]),
                 'duration_sec' => $seconds,
             ]);
         }

@@ -24,7 +24,7 @@ final class SheetTableApp extends DisplayApp
 
     public function description(): string
     {
-        return __('Show a published Google Sheet as a big table: price lists, room rates, timetables. Edit the sheet and the TVs follow.');
+        return __('Show a published Google Sheet as a big table: price lists, rates, timetables. Edit the sheet and the TVs follow.');
     }
 
     public function icon(): string

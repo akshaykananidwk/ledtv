@@ -52,7 +52,7 @@ if ($json) {
     exit;
 }
 
-$label = __('Room') . ' ' . $obj['room']['number'] . ' · ' . (string) Settings::get('hotel_name', '');
+$label = __('Screen') . ' ' . $obj['room']['number'] . ' · ' . (string) Settings::get('hotel_name', '');
 $embed = !empty($_GET['embed']);
 $simRefreshUrl = base_url('demo_tv.php?' . http_build_query(['room' => $roomId, 'json' => 1]));
 $simCloseUrl = base_url('demo.php');

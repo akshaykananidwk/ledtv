@@ -192,7 +192,7 @@ final class SocialWallApp extends DisplayApp
     {
         return '<div class="col-12"><div class="alert alert-info small mb-0">'
             . e(__('Works without a token: posts must be public and the TV needs internet. Videos may not autoplay. New posts are not added automatically — paste the links of the posts you want to show.')) . '</div></div>'
-            . self::input('heading', __('Heading (optional)'), $config['heading'], 'text', ['maxlength' => 120, 'placeholder' => __('Follow us @yourhotel')])
+            . self::input('heading', __('Heading (optional)'), $config['heading'], 'text', ['maxlength' => 120, 'placeholder' => __('Follow us @yourbusiness')])
             . self::input('page_url', __('Facebook page (timeline)'), $config['page_url'], 'url', ['maxlength' => 1000, 'placeholder' => 'https://www.facebook.com/yourpage'], __('Optional. Shows the page\'s latest public posts with the official Facebook Page Plugin.'))
             . self::textarea('posts', __('Instagram / Facebook post links (one per line)'), (string) $config['posts'], 6,
                 __('Public posts or reels, e.g. https://www.instagram.com/p/ABC123/ or https://www.facebook.com/yourpage/posts/123… (at most :n).', ['n' => self::MAX_POSTS]), 'col-12', 20000)

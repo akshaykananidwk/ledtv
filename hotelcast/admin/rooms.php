@@ -75,7 +75,7 @@ if (is_post()) {
                 $id = req_int('id', $_POST);
                 $existing = $id ? Tenant::find('rooms', $id) : null;
                 if ($id && !$existing) {
-                    throw new InvalidArgumentException(__('Room not found.'));
+                    throw new InvalidArgumentException(__('Screen not found.'));
                 }
                 // Users limited to some TVs edit only their rooms, never add rooms and only (un)assign their groups.
                 $existing ? Access::requireRoom($id) : Access::requireUnrestricted('room create');
@@ -88,12 +88,12 @@ if (is_post()) {
                 $pin = req_str('settings_pin', $_POST, 10);
                 $errors = [];
                 if ($number === '' || mb_strlen($number) > 20 || !preg_match('/^[\p{L}\p{N} _.-]+$/u', $number)) {
-                    $errors[] = __('Room number is required (max 20 letters/numbers).');
+                    $errors[] = __('Screen name / ID is required (max 20 letters/numbers).');
                 } elseif (DB::value('SELECT id FROM rooms WHERE hotel_id = :hid AND room_number = :n AND id <> :id', ['n' => $number, 'id' => $id] + hid())) {
-                    $errors[] = __('Room :n already exists.', ['n' => $number]);
+                    $errors[] = __('Screen :n already exists.', ['n' => $number]);
                 }
                 if ($pin !== '' && !preg_match('/^\d{4}$/', $pin)) {
-                    $errors[] = __('The settings PIN must be exactly 4 digits (or empty to use the hotel PIN).');
+                    $errors[] = __('The settings PIN must be exactly 4 digits (or empty to use the PIN for all screens).');
                 }
                 [$cid, $pid] = parse_source($_POST['source'] ?? '');
                 if ($errors) {
@@ -122,7 +122,7 @@ if (is_post()) {
                 $room = Tenant::find('rooms', (int) $id);
                 Broadcaster::queueForRooms([$room], 'SHOW_CONTENT');
                 ActivityLog::add($existing ? 'room_update' : 'room_create', 'room', $id, 'Room ' . $number);
-                flash('success', $existing ? __('Room :n saved.', ['n' => $number]) : __('Room :n added.', ['n' => $number]));
+                flash('success', $existing ? __('Screen :n saved.', ['n' => $number]) : __('Screen :n added.', ['n' => $number]));
                 redirect(admin_url('rooms.php'));
 
             case 'delete':
@@ -134,7 +134,7 @@ if (is_post()) {
                     DB::delete('rooms', 'id = :id', ['id' => $id]);
                     Settings::bumpContentVersion();
                     ActivityLog::add('room_delete', 'room', $id, 'Room ' . $room['room_number']);
-                    flash('success', __('Room :n deleted.', ['n' => $room['room_number']]));
+                    flash('success', __('Screen :n deleted.', ['n' => $room['room_number']]));
                 }
                 redirect(admin_url('rooms.php'));
 
@@ -143,7 +143,7 @@ if (is_post()) {
                 Access::requireUnrestricted('room bulk add');
                 $numbers = parse_room_numbers(req_str('numbers', $_POST, 2000));
                 if (!$numbers) {
-                    flash('danger', __('Enter room numbers, e.g. 101-120 or 101, 102, 105.'));
+                    flash('danger', __('Enter screen names / IDs, e.g. 101-120 or 101, 102, 105.'));
                     redirect(admin_url('rooms.php', ['action' => 'bulk_add']));
                 }
                 $floor = req_str('floor', $_POST, 20);
@@ -171,7 +171,7 @@ if (is_post()) {
                 });
                 Settings::bumpContentVersion();
                 ActivityLog::add('room_bulk_add', 'room', null, "Added $added rooms: " . implode(', ', array_slice($numbers, 0, 30)));
-                flash('success', __(':n rooms added.', ['n' => $added]) . ($skipped ? ' ' . __('Already existed: :list', ['list' => implode(', ', array_slice($skipped, 0, 20))]) : ''));
+                flash('success', __(':n screens added.', ['n' => $added]) . ($skipped ? ' ' . __('Already existed: :list', ['list' => implode(', ', array_slice($skipped, 0, 20))]) : ''));
                 redirect(admin_url('rooms.php'));
 
             case 'bulk':
@@ -179,7 +179,7 @@ if (is_post()) {
                 Access::requireTargetList('rooms', $ids);
                 $do = req_str('bulk_action', $_POST, 30);
                 if (!$ids) {
-                    flash('warning', __('Select at least one room first.'));
+                    flash('warning', __('Select at least one screen first.'));
                     redirect(admin_url('rooms.php'));
                 }
                 $count = count($ids);
@@ -193,7 +193,7 @@ if (is_post()) {
                         }
                         $bid = Broadcaster::pushNow('rooms', $ids, $cid, $pid, '', Auth::id());
                         ActivityLog::add('room_bulk_assign', 'broadcast', $bid, source_label($cid, $pid) . " → $count rooms");
-                        flash('success', __('Content assigned to :n rooms. TVs will switch within a few seconds.', ['n' => $count]));
+                        flash('success', __('Content assigned to :n screens. TVs will switch within a few seconds.', ['n' => $count]));
                         break;
                     case 'refresh':
                         require_can('broadcast.send');
@@ -228,7 +228,7 @@ if (is_post()) {
                         DB::query("DELETE FROM rooms WHERE hotel_id = :hid AND id IN $in", $p + hid());
                         Settings::bumpContentVersion();
                         ActivityLog::add('room_bulk_delete', 'room', null, 'Deleted rooms: ' . implode(', ', $nums));
-                        flash('success', __(':n rooms deleted.', ['n' => count($nums)]));
+                        flash('success', __(':n screens deleted.', ['n' => count($nums)]));
                         break;
                     default:
                         flash('warning', __('Choose an action.'));
@@ -280,7 +280,7 @@ if (in_array($action, ['new', 'edit', 'bulk_add'], true)) {
     }
 }
 
-$pageTitle = __('Rooms & TVs');
+$pageTitle = __('Screens & TVs');
 $activeNav = 'rooms';
 
 // ---- Device detail
@@ -300,7 +300,7 @@ if ($action === 'device') {
     $pageTitle = __('TV details');
     require __DIR__ . '/partials/header.php';
     $info = [
-        __('Room') => $dev['room_number'] ? $dev['room_number'] . ($dev['room_name'] ? ' — ' . $dev['room_name'] : '') : '-',
+        __('Screen') => $dev['room_number'] ? $dev['room_number'] . ($dev['room_name'] ? ' — ' . $dev['room_name'] : '') : '-',
         __('Status') => null,
         __('Last seen') => time_ago($dev['last_ping']) . ($dev['last_ping'] ? ' (' . $dev['last_ping'] . ')' : ''),
         __('Last heartbeat') => time_ago($dev['last_heartbeat']),
@@ -391,14 +391,14 @@ if ($action === 'new' || $action === 'edit') {
     if ($action === 'edit') {
         $room = Tenant::find('rooms', req_int('id', $_GET));
         if (!$room) {
-            flash('warning', __('Room not found.'));
+            flash('warning', __('Screen not found.'));
             redirect(admin_url('rooms.php'));
         }
         Access::requireRoom((int) $room['id']);
         $memberOf = array_map('intval', DB::column('SELECT group_id FROM room_group_members WHERE room_id = :r', ['r' => $room['id']]));
         $devices = DB::all('SELECT * FROM devices WHERE hotel_id = :hid AND room_id = :r ORDER BY is_revoked, last_ping DESC', ['r' => $room['id']] + hid());
     }
-    $pageTitle = $room['id'] ? __('Edit room :n', ['n' => $room['room_number']]) : __('Add room');
+    $pageTitle = $room['id'] ? __('Edit screen :n', ['n' => $room['room_number']]) : __('Add screen');
     require __DIR__ . '/partials/header.php';
     ?>
     <div class="page-head">
@@ -411,7 +411,7 @@ if ($action === 'new' || $action === 'edit') {
       <div class="col-lg-7">
         <div class="card"><div class="card-body row g-3">
           <div class="col-sm-4">
-            <label class="form-label" for="room_number"><?= e(__('Room number')) ?> *</label>
+            <label class="form-label" for="room_number"><?= e(__('Screen name / ID')) ?> *</label>
             <input class="form-control" id="room_number" name="room_number" value="<?= e($room['room_number']) ?>" required maxlength="20" placeholder="101">
           </div>
           <div class="col-sm-4">
@@ -421,17 +421,17 @@ if ($action === 'new' || $action === 'edit') {
           </div>
           <div class="col-sm-4">
             <label class="form-label" for="settings_pin"><?= e(__('TV settings PIN')) ?></label>
-            <input class="form-control" id="settings_pin" name="settings_pin" value="<?= e($room['settings_pin']) ?>" inputmode="numeric" pattern="\d{4}" maxlength="4" placeholder="<?= e(__('hotel PIN')) ?>">
-            <div class="form-text"><?= e(__('4 digits. Empty = use the hotel-wide PIN.')) ?></div>
+            <input class="form-control" id="settings_pin" name="settings_pin" value="<?= e($room['settings_pin']) ?>" inputmode="numeric" pattern="\d{4}" maxlength="4" placeholder="<?= e(__('PIN for all screens')) ?>">
+            <div class="form-text"><?= e(__('4 digits. Empty = use the PIN for all screens.')) ?></div>
           </div>
           <div class="col-12">
-            <label class="form-label" for="name"><?= e(__('Room name')) ?></label>
+            <label class="form-label" for="name"><?= e(__('Screen name')) ?></label>
             <input class="form-control" id="name" name="name" value="<?= e($room['name']) ?>" maxlength="120" placeholder="<?= e(__('e.g. Deluxe 101')) ?>">
           </div>
           <div class="col-12">
             <label class="form-label" for="source"><?= e(__('What should this TV show?')) ?></label>
-            <?= source_select('source', source_value($room['content_id'], $room['playlist_id']), __('— Follow group / hotel default —'), ['id' => 'source']) ?>
-            <div class="form-text"><?= e(__('Leave on "Follow group / hotel default" so the TV shows its group content or the hotel default.')) ?></div>
+            <?= source_select('source', source_value($room['content_id'], $room['playlist_id']), __('— Follow group / default content —'), ['id' => 'source']) ?>
+            <div class="form-text"><?= e(__('Leave on "Follow group / default content" so the TV shows its group content or the default content.')) ?></div>
           </div>
           <div class="col-12">
             <label class="form-label" for="notes"><?= e(__('Notes')) ?></label>
@@ -460,7 +460,7 @@ if ($action === 'new' || $action === 'edit') {
         </div>
         <?php if ($room['id']): ?>
         <div class="card">
-          <div class="card-header"><?= e(__('TVs in this room')) ?></div>
+          <div class="card-header"><?= e(__('TVs on this screen')) ?></div>
           <ul class="list-group list-group-flush">
             <?php if (!$devices): ?><li class="list-group-item text-muted small"><?= e(__('No TV registered yet.')) ?></li><?php endif; ?>
             <?php foreach ($devices as $d): ?>
@@ -474,14 +474,14 @@ if ($action === 'new' || $action === 'edit') {
         <?php endif; ?>
       </div>
       <div class="col-12 d-flex gap-2">
-        <button class="btn btn-primary btn-lg"><i class="bi bi-check-lg"></i> <?= e(__('Save room')) ?></button>
+        <button class="btn btn-primary btn-lg"><i class="bi bi-check-lg"></i> <?= e(__('Save screen')) ?></button>
         <a href="<?= e(admin_url('rooms.php')) ?>" class="btn btn-light border btn-lg"><?= e(__('Cancel')) ?></a>
       </div>
     </form>
     <?php if ($room['id'] && !$limited): ?>
-      <form method="post" class="mt-4" data-confirm="<?= e(__('Delete room :n? Its TV will stop receiving content until the room is added again.', ['n' => $room['room_number']])) ?>">
+      <form method="post" class="mt-4" data-confirm="<?= e(__('Delete screen :n? Its TV will stop receiving content until the screen is added again.', ['n' => $room['room_number']])) ?>">
         <?= Csrf::field() ?><input type="hidden" name="op" value="delete"><input type="hidden" name="id" value="<?= (int) $room['id'] ?>">
-        <button class="btn btn-outline-danger btn-sm"><i class="bi bi-trash"></i> <?= e(__('Delete this room')) ?></button>
+        <button class="btn btn-outline-danger btn-sm"><i class="bi bi-trash"></i> <?= e(__('Delete this screen')) ?></button>
       </form>
     <?php endif; ?>
     <?php
@@ -491,20 +491,20 @@ if ($action === 'new' || $action === 'edit') {
 
 // ---- Bulk add
 if ($action === 'bulk_add') {
-    $pageTitle = __('Add many rooms');
+    $pageTitle = __('Bulk add screens');
     require __DIR__ . '/partials/header.php';
     ?>
     <div class="page-head">
-      <h1><?= e(__('Add many rooms')) ?></h1>
+      <h1><?= e(__('Bulk add screens')) ?></h1>
       <a href="<?= e(admin_url('rooms.php')) ?>" class="btn btn-light border"><i class="bi bi-arrow-left"></i> <?= e(__('Back')) ?></a>
     </div>
     <div class="card" style="max-width:720px"><div class="card-body">
       <form method="post" class="row g-3">
         <?= Csrf::field() ?><input type="hidden" name="op" value="bulk_add">
         <div class="col-12">
-          <label class="form-label" for="numbers"><?= e(__('Room numbers')) ?> *</label>
+          <label class="form-label" for="numbers"><?= e(__('Screen names / IDs')) ?> *</label>
           <input class="form-control form-control-lg" id="numbers" name="numbers" required placeholder="101-120" maxlength="2000">
-          <div class="form-text"><?= e(__('Use a range like 101-120, or a list like 101, 102, 105. Combine them: 101-110, 201-210. Existing rooms are skipped.')) ?></div>
+          <div class="form-text"><?= e(__('Use a range like 101-120, or a list like 101, 102, 105. Combine them: 101-110, 201-210. Existing screens are skipped.')) ?></div>
         </div>
         <div class="col-sm-6">
           <label class="form-label" for="bfloor"><?= e(__('Floor')) ?></label>
@@ -526,7 +526,7 @@ if ($action === 'bulk_add') {
           <?php endforeach; ?>
         </div>
         <?php endif; ?>
-        <div class="col-12"><button class="btn btn-primary btn-lg"><i class="bi bi-plus-lg"></i> <?= e(__('Add rooms')) ?></button></div>
+        <div class="col-12"><button class="btn btn-primary btn-lg"><i class="bi bi-plus-lg"></i> <?= e(__('Add screens')) ?></button></div>
       </form>
     </div></div>
     <?php
@@ -547,7 +547,7 @@ if ($action === 'devices') {
     </div>
     <div class="card"><div class="table-responsive">
       <table class="table table-hc">
-        <thead><tr><th><?= e(__('Device ID')) ?></th><th><?= e(__('Room')) ?></th><th><?= e(__('Model')) ?></th><th><?= e(__('Last seen')) ?></th><th></th></tr></thead>
+        <thead><tr><th><?= e(__('Device ID')) ?></th><th><?= e(__('Screen')) ?></th><th><?= e(__('Model')) ?></th><th><?= e(__('Last seen')) ?></th><th></th></tr></thead>
         <tbody>
         <?php if (!$revoked): ?><tr><td colspan="5" class="text-center text-muted py-4"><?= e(__('Nothing here.')) ?></td></tr><?php endif; ?>
         <?php foreach ($revoked as $d): ?>
@@ -618,16 +618,16 @@ require __DIR__ . '/partials/header.php';
 ?>
 <div class="page-head">
   <div>
-    <h1><?= e(__('Rooms & TVs')) ?></h1>
-    <p class="lead-sm"><?= e(__(':n rooms', ['n' => $totalRooms])) ?></p>
+    <h1><?= e(__('Screens & TVs')) ?></h1>
+    <p class="lead-sm"><?= e(__(':n screens', ['n' => $totalRooms])) ?></p>
   </div>
   <?php if ($canManage): ?>
   <div class="d-flex flex-wrap gap-2">
     <?php if (is_file(__DIR__ . '/claim.php')): ?><a href="<?= e(admin_url('claim.php')) ?>" class="btn btn-success"><i class="bi bi-qr-code-scan"></i> <?= e(__('Add TV with QR')) ?></a><?php endif; ?>
     <?php require __DIR__ . '/partials/web_player_link.php'; // 2.4 web player (#45) ?>
     <?php if (!$limited): ?>
-    <a href="<?= e(admin_url('rooms.php', ['action' => 'new'])) ?>" class="btn btn-primary"><i class="bi bi-plus-lg"></i> <?= e(__('Add room')) ?></a>
-    <a href="<?= e(admin_url('rooms.php', ['action' => 'bulk_add'])) ?>" class="btn btn-outline-primary"><i class="bi bi-plus-square-dotted"></i> <?= e(__('Add many rooms')) ?></a>
+    <a href="<?= e(admin_url('rooms.php', ['action' => 'new'])) ?>" class="btn btn-primary"><i class="bi bi-plus-lg"></i> <?= e(__('Add screen')) ?></a>
+    <a href="<?= e(admin_url('rooms.php', ['action' => 'bulk_add'])) ?>" class="btn btn-outline-primary"><i class="bi bi-plus-square-dotted"></i> <?= e(__('Bulk add screens')) ?></a>
     <?php endif; ?>
     <?php if ($revokedCount): ?><a href="<?= e(admin_url('rooms.php', ['action' => 'devices'])) ?>" class="btn btn-light border"><i class="bi bi-slash-circle"></i> <?= e(__('Revoked TVs')) ?> (<?= $revokedCount ?>)</a><?php endif; ?>
     <?php if (Auth::can('devices.setup')): ?><a href="<?= e(admin_url('setup_file.php')) ?>" class="btn btn-light border"><i class="bi bi-filetype-csv"></i> <?= e(__('Download setup file')) ?></a><?php endif; ?>
@@ -649,7 +649,7 @@ require __DIR__ . '/partials/header.php';
         <?php else: ?>
           <li><?= e(__('Ask your manager for the registration key.')) ?></li>
         <?php endif; ?>
-        <li><?= e(__('Type the room number. The TV appears here within a few seconds.')) ?></li>
+        <li><?= e(__('Type the screen name / ID. The TV appears here within a few seconds.')) ?></li>
       </ol>
     </div>
   </div>
@@ -659,7 +659,7 @@ require __DIR__ . '/partials/header.php';
   <div class="row g-2 align-items-end">
     <div class="col-12 col-md-4">
       <label class="form-label small" for="fq"><?= e(__('Search')) ?></label>
-      <input class="form-control" id="fq" name="q" value="<?= e($q) ?>" placeholder="<?= e(__('Room number or name')) ?>">
+      <input class="form-control" id="fq" name="q" value="<?= e($q) ?>" placeholder="<?= e(__('Screen name / ID')) ?>">
     </div>
     <div class="col-6 col-md-2">
       <label class="form-label small" for="ff"><?= e(__('Floor')) ?></label>
@@ -695,13 +695,13 @@ require __DIR__ . '/partials/header.php';
   <div class="card"><div class="hc-empty">
     <i class="bi bi-door-open"></i>
     <?php if ($totalRooms === 0): ?>
-      <p class="mb-1"><strong><?= e(__('No rooms yet')) ?></strong></p>
-      <p class="text-muted"><?= e(__('Add rooms, or let TVs auto-register: open the app on a TV and type its room number.')) ?></p>
+      <p class="mb-1"><strong><?= e(__('No screens yet')) ?></strong></p>
+      <p class="text-muted"><?= e(__('Add screens, or let TVs auto-register: open the app on a TV and type its screen name / ID.')) ?></p>
       <?php if ($canManage && !$limited): ?>
-        <a class="btn btn-primary" href="<?= e(admin_url('rooms.php', ['action' => 'bulk_add'])) ?>"><i class="bi bi-plus-lg"></i> <?= e(__('Add rooms')) ?></a>
+        <a class="btn btn-primary" href="<?= e(admin_url('rooms.php', ['action' => 'bulk_add'])) ?>"><i class="bi bi-plus-lg"></i> <?= e(__('Add screens')) ?></a>
       <?php endif; ?>
     <?php else: ?>
-      <p class="text-muted"><?= e(__('No rooms match your filter.')) ?></p>
+      <p class="text-muted"><?= e(__('No screens match your filter.')) ?></p>
     <?php endif; ?>
   </div></div>
 <?php else: ?>
@@ -713,7 +713,7 @@ require __DIR__ . '/partials/header.php';
         <thead>
           <tr>
             <th style="width:2rem"><input type="checkbox" class="form-check-input" data-check-all=".room-cb" aria-label="<?= e(__('Select all')) ?>"></th>
-            <th><?= e(__('Room')) ?></th>
+            <th><?= e(__('Screen')) ?></th>
             <th class="d-none d-md-table-cell"><?= e(__('Floor')) ?></th>
             <th class="d-none d-lg-table-cell"><?= e(__('Groups')) ?></th>
             <th><?= e(__('Status')) ?></th>
@@ -790,14 +790,14 @@ require __DIR__ . '/partials/header.php';
             <option value="RELOAD"><?= e(__('Restart app')) ?></option>
             <option value="PING"><?= e(__('Ping (test)')) ?></option>
           <?php endif; ?>
-          <?php if ($canManage && !$limited): ?><option value="delete"><?= e(__('Delete rooms')) ?></option><?php endif; ?>
+          <?php if ($canManage && !$limited): ?><option value="delete"><?= e(__('Delete screens')) ?></option><?php endif; ?>
         </select>
       </div>
       <div class="col-12 col-md-4" id="bulkSource" hidden>
         <?= source_select('source', '', __('— Choose content —'), ['aria-label' => __('Content')]) ?>
       </div>
       <div class="col-12 col-md-auto">
-        <button class="btn btn-primary w-100" data-confirm="<?= e(__('Apply this action to the selected rooms?')) ?>" data-confirm-safe="1"><i class="bi bi-lightning-charge"></i> <?= e(__('Apply')) ?></button>
+        <button class="btn btn-primary w-100" data-confirm="<?= e(__('Apply this action to the selected screens?')) ?>" data-confirm-safe="1"><i class="bi bi-lightning-charge"></i> <?= e(__('Apply')) ?></button>
       </div>
     </div>
   </div>
@@ -813,7 +813,7 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('bulkForm').addEventListener('submit', (ev) => {
     if (!document.querySelectorAll('.room-cb:checked').length || !sel.value) {
       ev.preventDefault(); ev.stopImmediatePropagation();
-      HC.toast(<?= json_embed(__('Select rooms and an action first.')) ?>, 'warning');
+      HC.toast(<?= json_embed(__('Select screens and an action first.')) ?>, 'warning');
     }
   }, true);
 });

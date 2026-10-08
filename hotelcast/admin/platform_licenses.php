@@ -71,9 +71,9 @@ if ($action === 'new' || $action === 'edit') {
       <div class="col-sm-8"><label class="form-label" for="l_c"><?= e(__('Customer name')) ?> *</label><input class="form-control" id="l_c" name="customer_name" value="<?= e($l['customer_name']) ?>" required maxlength="150"></div>
       <div class="col-sm-4"><label class="form-label" for="l_m"><?= e(__('Max TVs')) ?></label><input class="form-control" type="number" min="0" id="l_m" name="max_tvs" value="<?= e((string) ($l['max_tvs'] ?? '')) ?>" placeholder="<?= e(__('unlimited')) ?>"></div>
       <div class="col-sm-6"><label class="form-label" for="l_e"><?= e(__('Valid until')) ?></label><input class="form-control" type="date" id="l_e" name="expires_at" value="<?= $l['expires_at'] ? e(date('Y-m-d', (int) strtotime((string) $l['expires_at']))) : '' ?>"></div>
-      <div class="col-sm-6"><label class="form-label" for="l_h"><?= e(__('Billing hotel (optional)')) ?></label><select class="form-select" id="l_h" name="hotel_id"><option value=""><?= e(__('— none —')) ?></option>
+      <div class="col-sm-6"><label class="form-label" for="l_h"><?= e(__('Billing customer (optional)')) ?></label><select class="form-select" id="l_h" name="hotel_id"><option value=""><?= e(__('— none —')) ?></option>
         <?php foreach ($hotels as $h): ?><option value="<?= (int) $h['id'] ?>"<?= (int) ($l['hotel_id'] ?? 0) === (int) $h['id'] ? ' selected' : '' ?>><?= e($h['name']) ?></option><?php endforeach; ?></select>
-        <div class="form-text"><?= e(__('Link to a hotel record to bill the self-hosted customer; suspending that hotel also invalidates the license.')) ?></div></div>
+        <div class="form-text"><?= e(__('Link to a customer record to bill the self-hosted customer; suspending that customer also invalidates the license.')) ?></div></div>
       <div class="col-12"><label class="form-label" for="l_n"><?= e(__('Notes')) ?></label><textarea class="form-control" id="l_n" name="notes" rows="2"><?= e((string) $l['notes']) ?></textarea></div>
       <input type="hidden" name="status" value="<?= e($l['status']) ?>">
       <div class="col-12"><button class="btn btn-primary"><i class="bi bi-check-lg"></i> <?= e($l['id'] ? __('Save license') : __('Create license key')) ?></button></div>

@@ -88,7 +88,7 @@ final class Hotels
         $s = fn (string $k, int $max) => mb_substr(trim((string) ($in[$k] ?? '')), 0, $max);
         $name = $s('name', 120);
         if ($name === '') {
-            $errors[] = __('Hotel name is required.');
+            $errors[] = __('Business name is required.');
         }
         $email = $s('contact_email', 190);
         if ($email !== '' && !filter_var($email, FILTER_VALIDATE_EMAIL)) {

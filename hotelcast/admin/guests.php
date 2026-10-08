@@ -226,7 +226,7 @@ require __DIR__ . '/partials/header.php';
 </div>
 
 <?php if (!$rooms): ?>
-  <div class="card"><div class="card-body text-center text-muted py-5"><?= e(__('No rooms yet. Add rooms on the Rooms & TVs page.')) ?></div></div>
+  <div class="card"><div class="card-body text-center text-muted py-5"><?= e(__('No screens yet. Add them on the Screens & TVs page.')) ?></div></div>
 <?php endif; ?>
 <div class="row g-2" id="gdBoard">
 <?php foreach ($rooms as $r):

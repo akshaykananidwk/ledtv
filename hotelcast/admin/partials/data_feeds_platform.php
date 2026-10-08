@@ -11,7 +11,7 @@ $curP = DataFeeds::currencyProvider();
 ?>
 <form method="post" class="card" style="max-width:980px" autocomplete="off"><div class="card-body row g-3">
   <?= Csrf::field() ?><input type="hidden" name="op" value="data_feeds"><input type="hidden" name="tab" value="data_feeds">
-  <div class="col-12"><p class="text-muted mb-0"><?= e(__('External data for the gold, market, cricket, currency and flight widgets and for ticker placeholders. Keys are stored encrypted and used only by the server; TVs never see them. Hotels may also enter their own key (Data feeds page). Every widget also works with values typed by the hotel.')) ?></p></div>
+  <div class="col-12"><p class="text-muted mb-0"><?= e(__('External data for the gold, market, cricket, currency and flight widgets and for ticker placeholders. Keys are stored encrypted and used only by the server; TVs never see them. Customers may also enter their own key (Data feeds page). Every widget also works with values typed by the customer.')) ?></p></div>
   <div class="col-md-6">
     <label class="form-label" for="df_cur"><?= e(__('Currency rates provider (free, no key)')) ?></label>
     <select class="form-select" id="df_cur" name="feed_currency_provider">

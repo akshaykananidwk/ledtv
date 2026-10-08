@@ -11,7 +11,7 @@ $fields = [
     ['key' => 'title', 'type' => 'text', 'label' => 'Greeting', 'required' => true],
     ['key' => 'subtitle', 'type' => 'text', 'label' => 'Sub-heading'],
     ['key' => 'message', 'type' => 'textarea', 'label' => 'Message'],
-    ['key' => 'signature', 'type' => 'text', 'label' => 'Signature (empty = hotel name)'],
+    ['key' => 'signature', 'type' => 'text', 'label' => 'Signature (empty = business name)'],
     ['key' => 'bg_color', 'type' => 'color', 'label' => 'Background colour'],
     ['key' => 'accent_color', 'type' => 'color', 'label' => 'Highlight colour'],
 ];

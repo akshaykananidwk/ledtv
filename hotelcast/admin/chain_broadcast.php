@@ -32,7 +32,7 @@ if (is_post()) {
             $kind = req_str('kind', $_POST, 20);
             [$p, $errors] = Chains::validateBroadcast($cid, $kind, $_POST);
             if (!$hotels) {
-                $errors[] = __('Select at least one hotel.');
+                $errors[] = __('Select at least one customer.');
             }
             if ($errors) {
                 flash_errors($errors);
@@ -64,7 +64,7 @@ if (is_post()) {
 
         case 'apply_template':
             if (!$hotels) {
-                flash('warning', __('Select at least one hotel.'));
+                flash('warning', __('Select at least one customer.'));
                 break;
             }
             $res = Chains::applyTemplate($cid, req_int('template_id', $_POST), $hotels, Auth::id());
@@ -98,11 +98,11 @@ $extraScripts = ['js/chain.js'];
 require __DIR__ . '/partials/header.php';
 
 $hotelPicker = static function (string $uid) use ($hotels, $states, $emerg): string {
-    $h = '<div class="d-flex align-items-center gap-2 mb-1"><span class="form-label mb-0">' . e(__('Hotels')) . '</span>'
+    $h = '<div class="d-flex align-items-center gap-2 mb-1"><span class="form-label mb-0">' . e(__('Customers')) . '</span>'
         . '<button type="button" class="btn btn-sm btn-light border ms-auto" data-check-all="hotels[]">' . e(__('Select all')) . '</button></div>'
         . '<div class="border rounded p-2 d-flex flex-wrap gap-2">';
     if (!$hotels) {
-        $h .= '<span class="text-muted small">' . e(__('No hotels in this chain yet.')) . '</span>';
+        $h .= '<span class="text-muted small">' . e(__('No customers in this chain yet.')) . '</span>';
     }
     foreach ($hotels as $x) {
         $id = (int) $x['id'];
@@ -134,7 +134,7 @@ $sourceSelect = static function () use ($items, $playlists): string {
 ?>
 <div class="page-head">
   <div class="min-w-0"><h1 class="text-truncate"><i class="bi bi-broadcast"></i> <?= e(__('Chain broadcast & settings')) ?></h1>
-    <p class="lead-sm mb-0"><?= e($chain['name']) ?> · <?= e(__('Reaches all rooms of the selected hotels.')) ?></p></div>
+    <p class="lead-sm mb-0"><?= e($chain['name']) ?> · <?= e(__('Reaches all screens of the selected customers.')) ?></p></div>
   <a class="btn btn-light border" href="<?= e(admin_url('chain.php', $cq)) ?>"><i class="bi bi-arrow-left"></i> <?= e(__('Chain dashboard')) ?></a>
 </div>
 
@@ -151,7 +151,7 @@ $sourceSelect = static function () use ($items, $playlists): string {
   <div class="col-xl-7">
     <form method="post" class="card mb-3" id="chainBroadcast">
       <?= Csrf::field() ?><input type="hidden" name="op" value="broadcast"><input type="hidden" name="chain" value="<?= $cid ?>">
-      <div class="card-header"><i class="bi bi-broadcast-pin"></i> <?= e(__('Broadcast to hotels')) ?></div>
+      <div class="card-header"><i class="bi bi-broadcast-pin"></i> <?= e(__('Broadcast to customers')) ?></div>
       <div class="card-body row g-3">
         <div class="col-12"><div class="btn-group flex-wrap" role="group" data-kind-switch>
           <?php foreach (['push' => [__('Push now'), 'bi-lightning'], 'schedule' => [__('Schedule'), 'bi-calendar-event'], 'emergency' => [__('Emergency'), 'bi-exclamation-triangle'], 'emergency_stop' => [__('Stop emergency'), 'bi-stop-circle']] as $k => [$l, $ic]): ?>
@@ -164,14 +164,14 @@ $sourceSelect = static function () use ($items, $playlists): string {
         <div class="col-md-5" data-kinds="push schedule emergency"><label class="form-label" for="b_title"><?= e(__('Title')) ?></label><input class="form-control" id="b_title" name="title" maxlength="190"></div>
         <div class="col-12" data-kinds="schedule" hidden>
           <div class="row g-2">
-            <div class="col-12"><div class="form-check form-check-inline"><input class="form-check-input" type="radio" name="mode" value="once" id="m_once" checked><label class="form-check-label" for="m_once"><?= e(__('Once (becomes the room content)')) ?></label></div>
+            <div class="col-12"><div class="form-check form-check-inline"><input class="form-check-input" type="radio" name="mode" value="once" id="m_once" checked><label class="form-check-label" for="m_once"><?= e(__('Once (becomes the screen content)')) ?></label></div>
               <div class="form-check form-check-inline"><input class="form-check-input" type="radio" name="mode" value="window" id="m_win"><label class="form-check-label" for="m_win"><?= e(__('Time window (then back to normal)')) ?></label></div></div>
             <div class="col-6 col-md-3"><label class="form-label small" for="s_start"><?= e(__('Start')) ?></label><input class="form-control form-control-sm" type="datetime-local" id="s_start" name="start_at"></div>
             <div class="col-6 col-md-3"><label class="form-label small" for="s_end"><?= e(__('End')) ?></label><input class="form-control form-control-sm" type="datetime-local" id="s_end" name="end_at"></div>
             <div class="col-6 col-md-3"><label class="form-label small" for="s_ds"><?= e(__('Daily from')) ?></label><input class="form-control form-control-sm" type="time" id="s_ds" name="daily_start"></div>
             <div class="col-6 col-md-3"><label class="form-label small" for="s_de"><?= e(__('Daily until')) ?></label><input class="form-control form-control-sm" type="time" id="s_de" name="daily_end"></div>
             <div class="col-12"><?php foreach (day_names() as $n => $d): ?><div class="form-check form-check-inline"><input class="form-check-input" type="checkbox" name="repeat_days[]" value="<?= $n ?>" id="rd<?= $n ?>"><label class="form-check-label small" for="rd<?= $n ?>"><?= e($d) ?></label></div><?php endforeach; ?></div>
-            <div class="col-12 form-text"><?= e(__('Times are the local time of each hotel.')) ?></div>
+            <div class="col-12 form-text"><?= e(__('Times are the local time of each customer.')) ?></div>
           </div>
         </div>
         <div class="col-12" data-kinds="emergency" hidden>
@@ -180,7 +180,7 @@ $sourceSelect = static function () use ($items, $playlists): string {
             <div class="col-6 col-md-3"><label class="form-label small" for="e_fg"><?= e(__('Text colour')) ?></label><input type="color" class="form-control form-control-color w-100" id="e_fg" name="text_color" value="#FFFFFF"></div></div>
         </div>
         <div class="col-12"><?= $hotelPicker('bh') ?></div>
-        <div class="col-12"><button class="btn btn-primary" data-confirm="<?= e(__('Send to all rooms of the selected hotels?')) ?>"><i class="bi bi-send"></i> <?= e(__('Send')) ?></button></div>
+        <div class="col-12"><button class="btn btn-primary" data-confirm="<?= e(__('Send to all screens of the selected customers?')) ?>"><i class="bi bi-send"></i> <?= e(__('Send')) ?></button></div>
       </div>
     </form>
 
@@ -209,7 +209,7 @@ $sourceSelect = static function () use ($items, $playlists): string {
             <div class="col-4"><label class="form-label small" for="t_tsp"><?= e(__('Speed')) ?></label><input type="range" class="form-range" id="t_tsp" name="ticker_speed" min="1" max="10" value="<?= (int) ($v['ticker_speed'] ?? 5) ?>"></div></div>
         </fieldset>
         <fieldset class="border rounded p-2 mb-2"><legend class="float-none w-auto px-1 fs-6 mb-0"><label><input class="form-check-input" type="checkbox" name="groups[]" value="overlay"<?= in_array('overlay', $g, true) ? ' checked' : '' ?>> <?= e(__('Screen overlay')) ?></label></legend>
-          <?php foreach (['overlay_clock' => __('Show clock'), 'overlay_logo' => __('Show hotel logo'), 'overlay_weather' => __('Show weather')] as $k => $l): ?>
+          <?php foreach (['overlay_clock' => __('Show clock'), 'overlay_logo' => __('Show business logo'), 'overlay_weather' => __('Show weather')] as $k => $l): ?>
             <div class="form-check form-switch"><input class="form-check-input" type="checkbox" role="switch" name="<?= e($k) ?>" value="1" id="t_<?= e($k) ?>"<?= ($v[$k] ?? ($k === 'overlay_weather' ? '0' : '1')) === '1' ? ' checked' : '' ?>><label class="form-check-label small" for="t_<?= e($k) ?>"><?= e($l) ?></label></div>
           <?php endforeach; ?>
           <select class="form-select form-select-sm mt-1" name="overlay_clock_format" aria-label="<?= e(__('Clock format')) ?>"><?php foreach (Chains::CLOCK_FORMATS as $f): ?><option value="<?= e($f) ?>"<?= ($v['overlay_clock_format'] ?? 'hh:mm a') === $f ? ' selected' : '' ?>><?= e($f) ?></option><?php endforeach; ?></select>
@@ -219,7 +219,7 @@ $sourceSelect = static function () use ($items, $playlists): string {
             <div class="col-5"><label class="form-label small" for="t_bc"><?= e(__('Colour')) ?></label><input class="form-control form-control-sm" id="t_bc" name="brand_color" value="<?= e((string) ($v['brand_color'] ?? $chain['brand_color'] ?? '')) ?>" pattern="#[0-9A-Fa-f]{6}" maxlength="7" placeholder="#7B1FA2"></div>
             <div class="col-12"><div class="form-check"><input class="form-check-input" type="checkbox" name="use_chain_logo" value="1" id="t_logo"<?= !empty($v['brand_logo']) || ($tplEdit['id'] === 0 && !empty($chain['brand_logo'])) ? ' checked' : '' ?><?= empty($chain['brand_logo']) ? ' disabled' : '' ?>>
               <label class="form-check-label small" for="t_logo"><?= e(__('Use the chain logo')) ?></label></div></div></div>
-          <div class="form-text"><?= e(__('Replaces the product name, logo and colour of the hotel (admin panel, TVs). Empty fields remove the hotel override.')) ?></div>
+          <div class="form-text"><?= e(__('Replaces the product name, logo and colour of the customer (admin panel, TVs). Empty fields remove the customer override.')) ?></div>
         </fieldset>
         <button class="btn btn-primary btn-sm"><i class="bi bi-check-lg"></i> <?= e(__('Save template')) ?></button>
         <a class="btn btn-sm btn-light border" href="<?= e(admin_url('chain_broadcast.php', $cq)) ?>"><?= e(__('Cancel')) ?></a>
@@ -238,10 +238,10 @@ $sourceSelect = static function () use ($items, $playlists): string {
       </ul>
       <form method="post" class="card-body border-top">
         <?= Csrf::field() ?><input type="hidden" name="op" value="apply_template"><input type="hidden" name="chain" value="<?= $cid ?>">
-        <label class="form-label" for="t_apply"><?= e(__('Push a template to hotels')) ?></label>
+        <label class="form-label" for="t_apply"><?= e(__('Push a template to customers')) ?></label>
         <select class="form-select mb-2" id="t_apply" name="template_id"><?php foreach ($templates as $t): ?><option value="<?= (int) $t['id'] ?>"><?= e($t['name']) ?></option><?php endforeach; ?></select>
         <?= $hotelPicker('th') ?>
-        <button class="btn btn-primary mt-2" data-confirm="<?= e(__('Overwrite these settings in the selected hotels?')) ?>"><i class="bi bi-send"></i> <?= e(__('Push settings')) ?></button>
+        <button class="btn btn-primary mt-2" data-confirm="<?= e(__('Overwrite these settings at the selected customers?')) ?>"><i class="bi bi-send"></i> <?= e(__('Push settings')) ?></button>
       </form>
       <?php endif; ?>
     </div>

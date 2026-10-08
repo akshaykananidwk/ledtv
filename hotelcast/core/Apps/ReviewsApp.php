@@ -55,7 +55,7 @@ final class ReviewsApp extends WidgetApp
         $mode = self::choice($in, 'mode', ['manual', 'auto'], 'manual');
         $place = self::str($in, 'place_id', 300);
         if ($mode === 'auto' && !GoogleReviews::validPlaceId($place)) {
-            $errors[] = __('Enter the Google Place ID of your hotel (starts with "ChIJ…"), or use manual mode.');
+            $errors[] = __('Enter the Google Place ID of your business (starts with "ChIJ…"), or use manual mode.');
         } elseif ($place !== '' && !GoogleReviews::validPlaceId($place)) {
             $errors[] = __('The Place ID looks wrong.');
             $place = '';
@@ -100,7 +100,7 @@ final class ReviewsApp extends WidgetApp
                 $key ? __('A Google API key is available.') : __('Automatic mode needs a Google Places API key (Data feeds page or Platform settings).'))
             . self::input('place_id', __('Google Place ID'), $config['place_id'], 'text', ['maxlength' => 300, 'placeholder' => 'ChIJ…'], __('Find it with Google\'s "Place ID finder". Reviews refresh every 6–24 hours.'))
             . self::textarea('reviews', __('Reviews typed by you'), (string) $config['reviews'], 6,
-                __('One per line: Author | rating 1-5 | date | text, e.g. "Ramesh P. | 5 | 2026-09-12 | Very clean rooms and kind staff". The date may be empty.'), 'col-12', 20000)
+                __('One per line: Author | rating 1-5 | date | text, e.g. "Ramesh P. | 5 | 2026-09-12 | Very clean and kind staff". The date may be empty.'), 'col-12', 20000)
             . self::input('manual_rating', __('Overall rating (optional)'), $config['manual_rating'], 'text', ['inputmode' => 'decimal', 'maxlength' => 4, 'placeholder' => '4.6'], __('Manual mode; empty = average of the reviews above.'), 'col-6 col-md-3')
             . self::input('manual_total', __('Total reviews (optional)'), $config['manual_total'], 'text', ['inputmode' => 'numeric', 'maxlength' => 9], '', 'col-6 col-md-3')
             . self::select('min_rating', __('Show reviews with'), ['1' => __('All ratings'), '4' => __('4 and 5 stars'), '5' => __('5 stars only')], (string) $config['min_rating'], '', 'col-6 col-md-3')

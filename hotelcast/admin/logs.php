@@ -69,7 +69,7 @@ switch ($tab) {
                          LEFT JOIN rooms r ON r.id = l.room_id LEFT JOIN devices d ON d.id = l.device_id
                          $where ORDER BY l.id DESC" . $limitSql, $p);
         if ($export) {
-            csv_download('tv_status_' . date('Ymd') . '.csv', ['Time', 'Room', 'Status', 'Device', 'Model'],
+            csv_download('tv_status_' . date('Ymd') . '.csv', ['Time', 'Screen', 'Status', 'Device', 'Model'],
                 array_map(fn ($r) => [$r['created_at'], $r['room_number'], $r['status'], $r['device_uid'], $r['model']], $rows));
         }
         break;
@@ -81,7 +81,7 @@ switch ($tab) {
                          LEFT JOIN rooms r ON r.id = l.room_id LEFT JOIN content_items c ON c.id = l.content_id
                          $where ORDER BY l.id DESC" . $limitSql, $p);
         if ($export) {
-            csv_download('content_played_' . date('Ymd') . '.csv', ['Time', 'Room', 'Content', 'Type', 'Seconds'],
+            csv_download('content_played_' . date('Ymd') . '.csv', ['Time', 'Screen', 'Content', 'Type', 'Seconds'],
                 array_map(fn ($r) => [$r['created_at'], $r['room_number'], $r['title'] ?? ('#' . $r['content_id']), $r['type'], $r['duration_sec']], $rows));
         }
         break;
@@ -96,7 +96,7 @@ switch ($tab) {
             $total = (int) DB::value('SELECT COUNT(*) FROM broadcast_logs WHERE hotel_id = :hid AND broadcast_id = :b', ['b' => $detail] + hid());
             $rows = DB::all('SELECT l.*, r.room_number FROM broadcast_logs l LEFT JOIN rooms r ON r.id = l.room_id WHERE l.hotel_id = :hid AND l.broadcast_id = :b ORDER BY l.id DESC' . $limitSql, ['b' => $detail] + hid());
             if ($export) {
-                csv_download('broadcast_' . $detail . '.csv', ['Time', 'Room', 'Event', 'Message'], array_map(fn ($r) => [$r['created_at'], $r['room_number'], $r['event'], $r['message']], $rows));
+                csv_download('broadcast_' . $detail . '.csv', ['Time', 'Screen', 'Event', 'Message'], array_map(fn ($r) => [$r['created_at'], $r['room_number'], $r['event'], $r['message']], $rows));
             }
             break;
         }
@@ -152,9 +152,9 @@ $filterForm = function (bool $room, bool $userSel) use ($tab, $fRoom, $fUser, $f
       <?php if (!empty($_GET['id'])): ?><input type="hidden" name="id" value="<?= (int) $_GET['id'] ?>"><?php endif; ?>
       <?php if ($room): ?>
       <div class="col-6 col-md-3">
-        <label class="form-label small" for="lroom"><?= e(__('Room')) ?></label>
+        <label class="form-label small" for="lroom"><?= e(__('Screen')) ?></label>
         <select class="form-select form-select-sm" id="lroom" name="room">
-          <option value=""><?= e(__('All rooms')) ?></option>
+          <option value=""><?= e(__('All screens')) ?></option>
           <?php foreach (hc_rooms() as $r): ?><option value="<?= (int) $r['id'] ?>"<?= (int) $r['id'] === $fRoom ? ' selected' : '' ?>><?= e($r['room_number']) ?></option><?php endforeach; ?>
         </select>
       </div>
@@ -215,14 +215,14 @@ $filterForm = function (bool $room, bool $userSel) use ($tab, $fRoom, $fUser, $f
   <div class="table-responsive">
     <table class="table table-hc table-sm table-hover">
       <?php if ($tab === 'status'): ?>
-        <thead><tr><th><?= e(__('Time')) ?></th><th><?= e(__('Room')) ?></th><th><?= e(__('Status')) ?></th><th class="d-none d-md-table-cell"><?= e(__('TV')) ?></th></tr></thead>
+        <thead><tr><th><?= e(__('Time')) ?></th><th><?= e(__('Screen')) ?></th><th><?= e(__('Status')) ?></th><th class="d-none d-md-table-cell"><?= e(__('TV')) ?></th></tr></thead>
         <tbody>
         <?php foreach ($rows as $r): ?>
           <tr><td class="small text-nowrap"><?= e($r['created_at']) ?></td><td><?= e($r['room_number'] ?? '-') ?></td><td><?= status_badge($r['status']) ?></td>
             <td class="d-none d-md-table-cell small"><a href="<?= e(admin_url('rooms.php', ['action' => 'device', 'id' => $r['device_id']])) ?>"><?= e($r['model'] ?: $r['device_uid'] ?: '#' . $r['device_id']) ?></a></td></tr>
         <?php endforeach; ?>
       <?php elseif ($tab === 'played'): ?>
-        <thead><tr><th><?= e(__('Time')) ?></th><th><?= e(__('Room')) ?></th><th><?= e(__('Content')) ?></th><th><?= e(__('Seconds')) ?></th></tr></thead>
+        <thead><tr><th><?= e(__('Time')) ?></th><th><?= e(__('Screen')) ?></th><th><?= e(__('Content')) ?></th><th><?= e(__('Seconds')) ?></th></tr></thead>
         <tbody>
         <?php foreach ($rows as $r): ?>
           <tr><td class="small text-nowrap"><?= e($r['created_at']) ?></td><td><?= e($r['room_number'] ?? '-') ?></td>
@@ -230,7 +230,7 @@ $filterForm = function (bool $room, bool $userSel) use ($tab, $fRoom, $fUser, $f
             <td><?= e($r['duration_sec'] ?? '-') ?></td></tr>
         <?php endforeach; ?>
       <?php elseif ($tab === 'broadcasts' && !empty($bc)): ?>
-        <thead><tr><th><?= e(__('Time')) ?></th><th><?= e(__('Room')) ?></th><th><?= e(__('Event')) ?></th><th><?= e(__('Message')) ?></th></tr></thead>
+        <thead><tr><th><?= e(__('Time')) ?></th><th><?= e(__('Screen')) ?></th><th><?= e(__('Event')) ?></th><th><?= e(__('Message')) ?></th></tr></thead>
         <tbody>
         <?php foreach ($rows as $r): ?>
           <tr><td class="small text-nowrap"><?= e($r['created_at']) ?></td><td><?= e($r['room_number'] ?? '-') ?></td><td><?= cmd_status_badge(in_array($r['event'], ['acked', 'delivered', 'failed'], true) ? $r['event'] : null) ?: '' ?> <span class="small"><?= e($r['event']) ?></span></td><td class="small"><?= e($r['message']) ?></td></tr>

@@ -183,7 +183,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $lang = ($_POST['language'] ?? 'en') === 'gu' ? 'gu' : 'en';
                     $baseUrl = trim((string) ($_POST['base_url'] ?? ''));
                     if ($hotel === '' || mb_strlen($hotel) > 120) {
-                        $errors[] = 'Hotel name is required.';
+                        $errors[] = 'Business name is required.';
                     }
                     if (!in_array($tz, timezone_identifiers_list(), true)) {
                         $errors[] = 'Choose a valid time zone.';

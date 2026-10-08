@@ -45,7 +45,7 @@ if (is_post()) {
             case 'save_general':
                 $name = req_str('hotel_name', $_POST, 200);
                 if ($name === '' || mb_strlen($name) > 120) {
-                    $errors[] = __('Hotel name is required (max 120 characters).');
+                    $errors[] = __('Business name is required (max 120 characters).');
                 }
                 $tz = (string) ($_POST['timezone'] ?? '');
                 if (!in_array($tz, timezone_identifiers_list(), true)) {
@@ -241,11 +241,11 @@ $saveBtn = '<div class="sticky-actions"><button class="btn btn-primary btn-lg"><
   <?= $formStart('save_general', true) ?>
   <div class="card" style="max-width:760px"><div class="card-body row g-3">
     <div class="col-12">
-      <label class="form-label" for="hn"><?= e(__('Hotel name')) ?> *</label>
+      <label class="form-label" for="hn"><?= e(__('Business name')) ?> *</label>
       <input class="form-control form-control-lg" id="hn" name="hotel_name" value="<?= e($S['hotel_name']) ?>" required maxlength="120">
     </div>
     <div class="col-12">
-      <label class="form-label" for="logo"><?= e(__('Hotel logo')) ?></label>
+      <label class="form-label" for="logo"><?= e(__('Business logo')) ?></label>
       <div class="d-flex gap-3 align-items-center flex-wrap">
         <img id="logoPrev" src="<?= e($logo ?? '') ?>" alt="" style="max-height:72px;max-width:200px;background:#eee;border-radius:.5rem;padding:4px"<?= $logo ? '' : ' hidden' ?>>
         <div class="flex-grow-1">
@@ -277,7 +277,7 @@ $saveBtn = '<div class="sticky-actions"><button class="btn btn-primary btn-lg"><
     <div class="col-lg-6">
       <div class="card mb-3"><div class="card-header"><?= e(__('Default content')) ?></div><div class="card-body">
         <label class="form-label" for="dsrc"><?= e(__('What TVs show when nothing else is assigned')) ?></label>
-        <?= source_select('default_source', source_value($S['default_content_id'], $S['default_playlist_id']), __('— Welcome screen (hotel logo) —'), ['id' => 'dsrc']) ?>
+        <?= source_select('default_source', source_value($S['default_content_id'], $S['default_playlist_id']), __('— Welcome screen (business logo) —'), ['id' => 'dsrc']) ?>
       </div></div>
       <div class="card mb-3"><div class="card-header"><?= e(__('Connection')) ?></div><div class="card-body row g-3">
         <div class="col-sm-4"><label class="form-label" for="pi"><?= e(__('Check for changes every')) ?></label>
@@ -299,7 +299,7 @@ $saveBtn = '<div class="sticky-actions"><button class="btn btn-primary btn-lg"><
             <?php foreach (CLOCK_FORMATS as $f): ?><option value="<?= e($f) ?>"<?= $f === $S['overlay_clock_format'] ? ' selected' : '' ?>><?= e($f) ?></option><?php endforeach; ?>
           </select>
         </div>
-        <div class="col-12"><?= $switch('overlay_logo', __('Show hotel logo')) ?></div>
+        <div class="col-12"><?= $switch('overlay_logo', __('Show business logo')) ?></div>
         <div class="col-12"><?= $switch('overlay_weather', __('Show weather'), __('Free weather data from Open-Meteo, updated every 30 minutes.')) ?></div>
         <div class="col-sm-4"><label class="form-label" for="wc"><?= e(__('City name')) ?></label><input class="form-control" id="wc" name="weather_city" value="<?= e($S['weather_city']) ?>" maxlength="80"></div>
         <div class="col-6 col-sm-4"><label class="form-label" for="wlat"><?= e(__('Latitude')) ?></label><input class="form-control" id="wlat" name="weather_lat" value="<?= e($S['weather_lat']) ?>" inputmode="decimal"></div>
@@ -337,10 +337,10 @@ $saveBtn = '<div class="sticky-actions"><button class="btn btn-primary btn-lg"><
     <div class="col-md-6">
       <?= $formStart('save_devices') ?>
       <div class="card h-100"><div class="card-header"><?= e(__('TV options')) ?></div><div class="card-body">
-        <?= $switch('auto_create_rooms', __('Create rooms automatically'), __('When a TV registers with a room number that does not exist yet, the room is created for you.')) ?>
-        <label class="form-label mt-2" for="pin"><?= e(__('TV settings PIN (hotel-wide)')) ?></label>
+        <?= $switch('auto_create_rooms', __('Create screens automatically'), __('When a TV registers with a screen name / ID that does not exist yet, the screen is created for you.')) ?>
+        <label class="form-label mt-2" for="pin"><?= e(__('TV settings PIN (all screens)')) ?></label>
         <input class="form-control" id="pin" name="tv_settings_pin" value="<?= e($S['tv_settings_pin']) ?>" inputmode="numeric" pattern="\d{4}" maxlength="4" required style="max-width:10rem">
-        <div class="form-text"><?= e(__('4 digits needed to open the settings screen on a TV. Rooms can override it.')) ?></div>
+        <div class="form-text"><?= e(__('4 digits needed to open the settings screen on a TV. Single screens can override it.')) ?></div>
         <button class="btn btn-primary mt-3"><i class="bi bi-check-lg"></i> <?= e(__('Save settings')) ?></button>
       </div></div>
       </form>

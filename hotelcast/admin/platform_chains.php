@@ -64,7 +64,7 @@ if (is_post()) {
                 $c = $ownChain($id);
                 Chains::delete($id);
                 ActivityLog::add('chain_delete', 'chain', $id, $c['name']);
-                flash('success', __('Chain deleted. Its hotels keep working on their own; chain admin logins were disabled.'));
+                flash('success', __('Chain deleted. Its customers keep working on their own; chain admin logins were disabled.'));
                 redirect(admin_url('platform_chains.php'));
 
             case 'add_hotel':
@@ -73,7 +73,7 @@ if (is_post()) {
                 $hid = req_int('hotel_id', $_POST);
                 Chains::assignHotel($id, $hid, $op === 'add_hotel');
                 ActivityLog::add($op === 'add_hotel' ? 'chain_hotel_add' : 'chain_hotel_remove', 'chain', $id, $c['name'] . ' ↔ hotel #' . $hid);
-                flash('success', $op === 'add_hotel' ? __('Hotel added to the chain.') : __('Hotel removed from the chain.'));
+                flash('success', $op === 'add_hotel' ? __('Customer added to the chain.') : __('Customer removed from the chain.'));
                 break;
 
             case 'add_admin':
@@ -131,7 +131,7 @@ if ($action === 'new' || $action === 'edit') {
     <form method="post" enctype="multipart/form-data">
       <?= Csrf::field() ?><input type="hidden" name="op" value="save"><input type="hidden" name="id" value="<?= (int) $c['id'] ?>">
       <div class="row g-3">
-        <div class="col-lg-7"><div class="card"><div class="card-header"><?= e(__('Hotel chain')) ?></div><div class="card-body row g-3">
+        <div class="col-lg-7"><div class="card"><div class="card-header"><?= e(__('Chain')) ?></div><div class="card-body row g-3">
           <div class="col-12"><label class="form-label" for="c_name"><?= e(__('Chain name')) ?> *</label><input class="form-control" id="c_name" name="name" value="<?= $v('name') ?>" required maxlength="150"></div>
           <div class="col-sm-6"><label class="form-label" for="c_on"><?= e(__('Owner')) ?></label><input class="form-control" id="c_on" name="owner_name" value="<?= $v('owner_name') ?>" maxlength="120"></div>
           <div class="col-sm-6"><label class="form-label" for="c_op"><?= e(__('Phone / WhatsApp')) ?></label><input class="form-control" id="c_op" name="owner_phone" value="<?= $v('owner_phone') ?>" maxlength="40"></div>
@@ -140,12 +140,12 @@ if ($action === 'new' || $action === 'edit') {
           <div class="col-sm-6"><label class="form-label" for="c_res"><?= e(__('Reseller')) ?></label><select class="form-select" id="c_res" name="reseller_id">
             <option value=""><?= e(__('— Direct customer —')) ?></option>
             <?php foreach (Hotels::resellers() as $r): ?><option value="<?= (int) $r['id'] ?>"<?= (int) ($c['reseller_id'] ?? 0) === (int) $r['id'] ? ' selected' : '' ?>><?= e($r['name']) ?></option><?php endforeach; ?></select>
-            <div class="form-text"><?= e(__('The reseller can then manage this chain for its own hotels.')) ?></div></div>
+            <div class="form-text"><?= e(__('The reseller can then manage this chain for its own customers.')) ?></div></div>
           <?php endif; ?>
           <div class="col-12"><label class="form-label" for="c_notes"><?= e(__('Notes')) ?></label><textarea class="form-control" id="c_notes" name="notes" rows="2" maxlength="1000"><?= $v('notes') ?></textarea></div>
         </div></div></div>
         <div class="col-lg-5"><div class="card"><div class="card-header"><?= e(__('Chain branding (optional)')) ?></div><div class="card-body row g-3">
-          <div class="col-12 small text-muted"><?= e(__('Used by chain settings templates to brand the chain\'s hotels.')) ?></div>
+          <div class="col-12 small text-muted"><?= e(__('Used by chain settings templates to brand the chain\'s customers.')) ?></div>
           <div class="col-sm-7"><label class="form-label" for="c_bn"><?= e(__('Product name')) ?></label><input class="form-control" id="c_bn" name="brand_name" value="<?= $v('brand_name') ?>" maxlength="120"></div>
           <div class="col-sm-5"><label class="form-label" for="c_bc"><?= e(__('Colour')) ?></label><input class="form-control" id="c_bc" name="brand_color" value="<?= $v('brand_color') ?>" pattern="#[0-9A-Fa-f]{6}" maxlength="7" placeholder="#7B1FA2"></div>
           <div class="col-12"><label class="form-label" for="c_bl"><?= e(__('Logo')) ?></label><input class="form-control" type="file" id="c_bl" name="brand_logo" accept="image/png,image/jpeg,image/webp">
@@ -177,7 +177,7 @@ if ($action === 'view') {
       <div class="d-flex flex-wrap gap-2">
         <a class="btn btn-primary" href="<?= e(admin_url('chain.php', ['chain' => $cid])) ?>"><i class="bi bi-speedometer2"></i> <?= e(__('Chain dashboard')) ?></a>
         <a class="btn btn-outline-primary" href="<?= e(admin_url('platform_chains.php', ['action' => 'edit', 'id' => $cid])) ?>"><i class="bi bi-pencil"></i> <?= e(__('Edit')) ?></a>
-        <form method="post" class="m-0" data-confirm="<?= e(__('Delete this chain? Hotels keep working on their own, chain admin logins are disabled, the chain library is removed.')) ?>">
+        <form method="post" class="m-0" data-confirm="<?= e(__('Delete this chain? Customers keep working on their own, chain admin logins are disabled, the chain library is removed.')) ?>">
           <?= Csrf::field() ?><input type="hidden" name="op" value="delete"><input type="hidden" name="id" value="<?= $cid ?>">
           <button class="btn btn-outline-danger"><i class="bi bi-trash"></i> <?= e(__('Delete')) ?></button></form>
         <a class="btn btn-light border" href="<?= e(admin_url('platform_chains.php')) ?>"><i class="bi bi-arrow-left"></i> <?= e(__('Back')) ?></a>
@@ -185,22 +185,22 @@ if ($action === 'view') {
     </div>
     <div class="row g-3">
       <div class="col-lg-6">
-        <div class="card mb-3"><div class="card-header"><?= e(__('Hotels in this chain')) ?> (<?= count($inChain) ?>)</div>
+        <div class="card mb-3"><div class="card-header"><?= e(__('Customers in this chain')) ?> (<?= count($inChain) ?>)</div>
           <ul class="list-group list-group-flush">
-            <?php if (!$inChain): ?><li class="list-group-item text-muted"><?= e(__('No hotels in this chain yet.')) ?></li><?php endif; ?>
+            <?php if (!$inChain): ?><li class="list-group-item text-muted"><?= e(__('No customers in this chain yet.')) ?></li><?php endif; ?>
             <?php foreach ($inChain as $h): ?>
               <li class="list-group-item d-flex align-items-center gap-2"><div class="flex-grow-1 min-w-0"><strong><?= e($h['name']) ?></strong> <span class="small text-muted"><?= e((string) $h['city']) ?> #<?= (int) $h['id'] ?></span></div>
                 <?= Hotels::statusBadge(Tenant::state((int) $h['id'])) ?>
-                <form method="post" class="m-0" data-confirm="<?= e(__('Remove this hotel from the chain?')) ?>"><?= Csrf::field() ?><input type="hidden" name="op" value="remove_hotel"><input type="hidden" name="id" value="<?= $cid ?>"><input type="hidden" name="hotel_id" value="<?= (int) $h['id'] ?>">
+                <form method="post" class="m-0" data-confirm="<?= e(__('Remove this customer from the chain?')) ?>"><?= Csrf::field() ?><input type="hidden" name="op" value="remove_hotel"><input type="hidden" name="id" value="<?= $cid ?>"><input type="hidden" name="hotel_id" value="<?= (int) $h['id'] ?>">
                   <button class="btn btn-sm btn-outline-danger" title="<?= e(__('Remove')) ?>"><i class="bi bi-x-lg"></i></button></form></li>
             <?php endforeach; ?>
           </ul>
           <div class="card-body border-top">
             <?php if ($assignable): ?>
             <form method="post" class="d-flex gap-2"><?= Csrf::field() ?><input type="hidden" name="op" value="add_hotel"><input type="hidden" name="id" value="<?= $cid ?>">
-              <select class="form-select" name="hotel_id" aria-label="<?= e(__('Add a hotel')) ?>"><?php foreach ($assignable as $h): ?><option value="<?= (int) $h['id'] ?>"><?= e($h['name'] . ($h['city'] ? ' · ' . $h['city'] : '')) ?></option><?php endforeach; ?></select>
+              <select class="form-select" name="hotel_id" aria-label="<?= e(__('Add a customer')) ?>"><?php foreach ($assignable as $h): ?><option value="<?= (int) $h['id'] ?>"><?= e($h['name'] . ($h['city'] ? ' · ' . $h['city'] : '')) ?></option><?php endforeach; ?></select>
               <button class="btn btn-outline-primary text-nowrap"><i class="bi bi-plus-lg"></i> <?= e(__('Add')) ?></button></form>
-            <?php else: ?><div class="small text-muted"><?= e(__('Every hotel you manage is already in a chain.')) ?></div><?php endif; ?>
+            <?php else: ?><div class="small text-muted"><?= e(__('Every customer you manage is already in a chain.')) ?></div><?php endif; ?>
           </div>
         </div>
       </div>
@@ -224,10 +224,10 @@ if ($action === 'view') {
             </form>
           </div>
         </div>
-        <div class="card"><div class="card-header"><?= e(__('Chain access for hotel super admins')) ?></div>
-          <div class="card-body small text-muted pb-0"><?= e(__('A super admin of a chain hotel with chain access also sees the chain dashboard and can enter the other hotels of the chain.')) ?></div>
+        <div class="card"><div class="card-header"><?= e(__('Chain access for customer super admins')) ?></div>
+          <div class="card-body small text-muted pb-0"><?= e(__('A super admin of a chain member with chain access also sees the chain dashboard and can enter the other customers of the chain.')) ?></div>
           <ul class="list-group list-group-flush">
-            <?php if (!$supers): ?><li class="list-group-item text-muted small"><?= e(__('No super admins in the chain hotels.')) ?></li><?php endif; ?>
+            <?php if (!$supers): ?><li class="list-group-item text-muted small"><?= e(__('No super admins at the chain customers.')) ?></li><?php endif; ?>
             <?php foreach ($supers as $s): $has = (int) $s['chain_id'] === $cid; ?>
               <li class="list-group-item d-flex align-items-center gap-2 small"><div class="flex-grow-1 min-w-0 text-truncate"><strong><?= e($s['full_name'] ?: $s['username']) ?></strong> · <?= e($s['hotel_name']) ?></div>
                 <form method="post" class="m-0"><?= Csrf::field() ?><input type="hidden" name="op" value="<?= $has ? 'revoke' : 'grant' ?>"><input type="hidden" name="id" value="<?= $cid ?>"><input type="hidden" name="user_id" value="<?= (int) $s['id'] ?>">
@@ -244,11 +244,11 @@ if ($action === 'view') {
 
 // ---------------------------------------------------------------- list
 $chains = Chains::all($isReseller ? Chains::userChainIds() : null);
-$pageTitle = __('Hotel chains');
+$pageTitle = __('Chains');
 require __DIR__ . '/partials/header.php';
 ?>
 <div class="page-head">
-  <div><h1><?= e(__('Hotel chains')) ?></h1><p class="lead-sm"><?= e(__('One owner, many hotels: a chain admin sees all hotels of the chain in one dashboard.')) ?></p></div>
+  <div><h1><?= e(__('Chains')) ?></h1><p class="lead-sm"><?= e(__('One owner, many locations: a chain admin sees all customers of the chain in one dashboard.')) ?></p></div>
   <a class="btn btn-primary" href="<?= e(admin_url('platform_chains.php', ['action' => 'new'])) ?>"><i class="bi bi-plus-lg"></i> <?= e(__('New chain')) ?></a>
 </div>
 <div class="card">
@@ -256,7 +256,7 @@ require __DIR__ . '/partials/header.php';
   <div class="hc-empty"><i class="bi bi-diagram-3"></i><p class="mb-1"><strong><?= e(__('No chains yet')) ?></strong></p></div>
 <?php else: ?>
   <div class="table-responsive"><table class="table table-hc table-hover align-middle mb-0">
-    <thead><tr><th><?= e(__('Chain')) ?></th><th><?= e(__('Hotels')) ?></th><th class="d-none d-md-table-cell"><?= e(__('Chain admins')) ?></th><th class="d-none d-lg-table-cell"><?= e(__('Reseller')) ?></th><th class="text-end"><?= e(__('Actions')) ?></th></tr></thead>
+    <thead><tr><th><?= e(__('Chain')) ?></th><th><?= e(__('Customers')) ?></th><th class="d-none d-md-table-cell"><?= e(__('Chain admins')) ?></th><th class="d-none d-lg-table-cell"><?= e(__('Reseller')) ?></th><th class="text-end"><?= e(__('Actions')) ?></th></tr></thead>
     <tbody>
     <?php foreach ($chains as $c): ?>
       <tr><td><a class="fw-semibold text-decoration-none" href="<?= e(admin_url('platform_chains.php', ['action' => 'view', 'id' => $c['id']])) ?>"><?= e($c['name']) ?></a><div class="small text-muted"><?= e((string) $c['owner_name']) ?></div></td>

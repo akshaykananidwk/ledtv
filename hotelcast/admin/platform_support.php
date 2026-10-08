@@ -35,7 +35,7 @@ $tile = static function (string $label, int|string $value, string $icon, string 
 ?>
 <div class="page-head">
   <div><h1><i class="bi bi-life-preserver"></i> <?= e(__('Support')) ?></h1>
-    <p class="lead-sm"><?= e(__('TV health across all hotels.')) ?>
+    <p class="lead-sm"><?= e(__('TV health across all customers.')) ?>
       <?php if ($st['newest']): ?><?= e(__('Newest app: :v (:c)', ['v' => $st['newest']['name'], 'c' => $st['newest']['code']])) ?><?php endif; ?></p></div>
 </div>
 
@@ -45,19 +45,19 @@ $tile = static function (string $label, int|string $value, string $icon, string 
   <?= $tile(__('Crashes (24 h)'), $t['crashes_24h'], 'bi-bug', $t['crashes_24h'] ? 'text-danger' : '') ?>
   <?= $tile(__('Crashes (7 days)'), $t['crashes_7d'], 'bi-bug') ?>
   <?= $tile(__('Outdated app'), $t['outdated'], 'bi-android2', $t['outdated'] ? 'text-warning' : '') ?>
-  <?= $tile(__('Hotels with errors'), $t['hotels_with_errors'], 'bi-buildings', $t['hotels_with_errors'] ? 'text-danger' : '') ?>
+  <?= $tile(__('Customers with errors'), $t['hotels_with_errors'], 'bi-buildings', $t['hotels_with_errors'] ? 'text-danger' : '') ?>
 </div>
 
 <div class="row g-3">
   <div class="col-xl-8">
     <div class="card mb-3">
       <div class="card-header d-flex justify-content-between align-items-center">
-        <span><?= e($showAll ? __('All hotels') : __('Hotels with errors')) ?></span>
-        <a class="btn btn-sm btn-light border" href="<?= e(admin_url('platform_support.php', $showAll ? [] : ['all' => 1])) ?>"><?= e($showAll ? __('Only hotels with errors') : __('Show all hotels')) ?></a>
+        <span><?= e($showAll ? __('All customers') : __('Customers with errors')) ?></span>
+        <a class="btn btn-sm btn-light border" href="<?= e(admin_url('platform_support.php', $showAll ? [] : ['all' => 1])) ?>"><?= e($showAll ? __('Only customers with errors') : __('Show all customers')) ?></a>
       </div>
       <div class="table-responsive">
         <table class="table table-hc table-sm align-middle mb-0">
-          <thead><tr><th><?= e(__('Hotel')) ?></th><th class="text-end"><?= e(__('TVs')) ?></th><th class="text-end"><?= e(__('Offline')) ?></th><th class="text-end"><?= e(__('Crashes 24 h')) ?></th><th class="text-end"><?= e(__('Crashes 7 d')) ?></th><th class="text-end d-none d-md-table-cell"><?= e(__('Outdated app')) ?></th><th class="text-end d-none d-md-table-cell"><?= e(__('Failed commands 24 h')) ?></th></tr></thead>
+          <thead><tr><th><?= e(__('Customer')) ?></th><th class="text-end"><?= e(__('TVs')) ?></th><th class="text-end"><?= e(__('Offline')) ?></th><th class="text-end"><?= e(__('Crashes 24 h')) ?></th><th class="text-end"><?= e(__('Crashes 7 d')) ?></th><th class="text-end d-none d-md-table-cell"><?= e(__('Outdated app')) ?></th><th class="text-end d-none d-md-table-cell"><?= e(__('Failed commands 24 h')) ?></th></tr></thead>
           <tbody>
           <?php if (!$list): ?><tr><td colspan="7" class="text-center text-muted py-4"><?= e(__('No problems found. All TVs are online and no crashes were reported.')) ?></td></tr><?php endif; ?>
           <?php foreach ($list as $h): ?>
@@ -82,7 +82,7 @@ $tile = static function (string $label, int|string $value, string $icon, string 
         <?php if (!$st['recent_crashes']): ?><li class="list-group-item text-muted"><?= e(__('No crash reports.')) ?></li><?php endif; ?>
         <?php foreach ($st['recent_crashes'] as $c): ?>
           <li class="list-group-item">
-            <div class="d-flex flex-wrap gap-2"><strong><?= e($c['hotel']) ?></strong><span class="text-muted"><?= e(__('Room')) ?> <?= e($c['room_number'] ?? '-') ?></span><span class="text-muted">v<?= e($c['app_version'] ?? '?') ?></span><span class="ms-auto text-muted"><?= e($c['happened_at'] ?? $c['created_at']) ?></span></div>
+            <div class="d-flex flex-wrap gap-2"><strong><?= e($c['hotel']) ?></strong><span class="text-muted"><?= e(__('Screen')) ?> <?= e($c['room_number'] ?? '-') ?></span><span class="text-muted">v<?= e($c['app_version'] ?? '?') ?></span><span class="ms-auto text-muted"><?= e($c['happened_at'] ?? $c['created_at']) ?></span></div>
             <div class="mono text-truncate"><?= e($c['summary']) ?></div>
           </li>
         <?php endforeach; ?>
@@ -108,9 +108,9 @@ $tile = static function (string $label, int|string $value, string $icon, string 
       <?= Csrf::field() ?><input type="hidden" name="op" value="settings">
       <div class="card-header"><i class="bi bi-bell"></i> <?= e(__('Crash spike alerts')) ?></div>
       <div class="card-body">
-        <label class="form-label" for="thr"><?= e(__('Alert when a hotel sends this many crash reports within one hour')) ?></label>
+        <label class="form-label" for="thr"><?= e(__('Alert when a customer sends this many crash reports within one hour')) ?></label>
         <input type="number" class="form-control mb-2" id="thr" name="threshold" min="1" max="1000" value="<?= (int) SupportAlertTask::threshold() ?>">
-        <p class="small text-muted"><?= e(__('Sent by push to platform admins and to the platform notification email / support WhatsApp (Platform settings), at most once every 6 hours per hotel.')) ?></p>
+        <p class="small text-muted"><?= e(__('Sent by push to platform admins and to the platform notification email / support WhatsApp (Platform settings), at most once every 6 hours per customer.')) ?></p>
         <button class="btn btn-primary"><i class="bi bi-check-lg"></i> <?= e(__('Save')) ?></button>
       </div>
     </form>

@@ -73,7 +73,7 @@ final class GoogleReviews
             $date = $p[2] ?? '';
             $ts = $date !== '' ? strtotime($date) : null;
             if ($p[0] === '' || $rating === null || count($p) < 4 || trim($p[3]) === '' || ($date !== '' && $ts === false)) {
-                $errors[] = __('Review line :n: write "Author | rating 1-5 | date | text", e.g. "Ramesh P. | 5 | 2026-09-12 | Very clean rooms".', ['n' => $i + 1]);
+                $errors[] = __('Review line :n: write "Author | rating 1-5 | date | text", e.g. "Ramesh P. | 5 | 2026-09-12 | Very clean and friendly".', ['n' => $i + 1]);
                 continue;
             }
             $out[] = ['author' => mb_substr($p[0], 0, 80), 'rating' => $rating, 'text' => mb_substr($p[3], 0, 1200), 'time' => $ts ?: null, 'relative' => ''];

@@ -54,7 +54,7 @@ final class StaffAlertsTask implements Task
             $out['sent'] += StaffAlerts::send(
                 'rooms.view',
                 __('TV offline') . ' · ' . (string) Settings::get('hotel_name', ''),
-                __('Room(s): :r', ['r' => implode(', ', array_slice($rooms, 0, 20)) . (count($rooms) > 20 ? ' +' . (count($rooms) - 20) : '')]),
+                __('Screen(s): :r', ['r' => implode(', ', array_slice($rooms, 0, 20)) . (count($rooms) > 20 ? ' +' . (count($rooms) - 20) : '')]),
                 'rooms.php?status=offline',
                 'tv_offline'
             );

@@ -32,7 +32,7 @@ MarketplacePortal::header(__('Log in'));
     <button class="btn btn-primary btn-lg"><?= e(__('Log in')) ?></button>
   </form>
   <p class="mt-3 text-center"><?= e(__('New here?')) ?> <a href="<?= e(MarketplacePortal::url('signup.php')) ?>"><?= e(__('Create a free account')) ?></a></p>
-  <p class="small text-muted text-center"><?= e(__('Hotel staff? Use the hotel admin panel instead.')) ?></p>
+  <p class="small text-muted text-center"><?= e(__('Screen owner? Use the admin panel instead.')) ?></p>
 </div>
 <?php
 MarketplacePortal::footer();

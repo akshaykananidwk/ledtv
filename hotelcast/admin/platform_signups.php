@@ -22,7 +22,7 @@ if (is_post()) {
             case 'approve':
                 [$hid] = Signup::approve($id, Auth::id());
                 ActivityLog::add('signup_approve', 'signup', $id, 'Hotel #' . $hid);
-                flash('success', __('Sign-up approved: the trial hotel was created and the owner was informed.'));
+                flash('success', __('Sign-up approved: the trial customer was created and the owner was informed.'));
                 break;
             case 'reject':
                 Signup::reject($id, Auth::id(), req_str('reason', $_POST, 255));
@@ -119,7 +119,7 @@ $activeNav = 'platform_signups';
 require __DIR__ . '/partials/header.php';
 ?>
 <div class="page-head"><div><h1><?= e(__('Sign-ups & trials')) ?></h1>
-  <p class="lead-sm"><?= e(__('Hotels that signed up online for a free trial.')) ?>
+  <p class="lead-sm"><?= e(__('Businesses that signed up online for a free trial.')) ?>
     <?php if (Signup::enabled()): ?><a href="<?= e(base_url('signup.php')) ?>" target="_blank" rel="noopener"><?= e(base_url('signup.php')) ?></a>
     <?php else: ?><span class="badge text-bg-secondary"><?= e(__('Sign-up page is switched off')) ?></span><?php endif; ?></p></div></div>
 <ul class="nav nav-tabs mb-3">
@@ -145,11 +145,11 @@ require __DIR__ . '/partials/header.php';
       <option value="<?= e($k) ?>"<?= $fStatus === $k ? ' selected' : '' ?>><?= e($l[0]) ?></option>
     <?php endforeach; ?>
   </select>
-  <input class="form-control form-control-sm" style="max-width:260px" type="search" name="q" value="<?= e($q) ?>" placeholder="<?= e(__('Search hotel, email, mobile…')) ?>">
+  <input class="form-control form-control-sm" style="max-width:260px" type="search" name="q" value="<?= e($q) ?>" placeholder="<?= e(__('Search business, email, mobile…')) ?>">
   <button class="btn btn-sm btn-light border"><i class="bi bi-search"></i></button>
 </form>
 <div class="card"><div class="table-responsive"><table class="table table-hc table-hover mb-0">
-  <thead><tr><th><?= e(__('Date')) ?></th><th><?= e(__('Hotel')) ?></th><th class="d-none d-md-table-cell"><?= e(__('Owner')) ?></th><th class="text-end"><?= e(__('TVs')) ?></th><th><?= e(__('Status')) ?></th><th class="d-none d-lg-table-cell"><?= e(__('Trial ends')) ?></th><th></th></tr></thead>
+  <thead><tr><th><?= e(__('Date')) ?></th><th><?= e(__('Customer')) ?></th><th class="d-none d-md-table-cell"><?= e(__('Owner')) ?></th><th class="text-end"><?= e(__('TVs')) ?></th><th><?= e(__('Status')) ?></th><th class="d-none d-lg-table-cell"><?= e(__('Trial ends')) ?></th><th></th></tr></thead>
   <tbody>
   <?php if (!$rows): ?><tr><td colspan="7" class="text-center text-muted py-4"><?= e(__('No sign-ups yet.')) ?></td></tr><?php endif; ?>
   <?php foreach ($rows as $r): [$sl, $sc] = $statusLabels[$r['status']] ?? [$r['status'], 'text-bg-light']; ?>
@@ -179,7 +179,7 @@ require __DIR__ . '/partials/header.php';
           <form method="post" class="d-inline"><?= Csrf::field() ?><input type="hidden" name="op" value="extend"><input type="hidden" name="hotel_id" value="<?= (int) $r['hotel_id'] ?>"><input type="hidden" name="days" value="7"><input type="hidden" name="back_status" value="<?= e($fStatus) ?>">
             <button class="btn btn-sm btn-light border" title="<?= e(__('Extend the trial by 7 days')) ?>"><i class="bi bi-calendar-plus"></i> +7</button></form>
         <?php endif; ?>
-        <?php if ($r['hotel_id']): ?><a class="btn btn-sm btn-light border" href="<?= e(admin_url('platform_hotels.php', ['action' => 'view', 'id' => $r['hotel_id']])) ?>" title="<?= e(__('Hotel')) ?>"><i class="bi bi-building"></i></a><?php endif; ?>
+        <?php if ($r['hotel_id']): ?><a class="btn btn-sm btn-light border" href="<?= e(admin_url('platform_hotels.php', ['action' => 'view', 'id' => $r['hotel_id']])) ?>" title="<?= e(__('Customer')) ?>"><i class="bi bi-building"></i></a><?php endif; ?>
       </td>
     </tr>
   <?php endforeach; ?>
@@ -190,7 +190,7 @@ require __DIR__ . '/partials/header.php';
 <form method="post" class="card" style="max-width:900px"><div class="card-body row g-3">
   <?= Csrf::field() ?><input type="hidden" name="op" value="settings"><input type="hidden" name="tab" value="settings">
   <div class="col-12"><div class="form-check form-switch"><input class="form-check-input" type="checkbox" role="switch" id="s_en" name="signup_enabled" value="1"<?= $sv('signup_enabled') === '1' ? ' checked' : '' ?>>
-    <label class="form-check-label fw-semibold" for="s_en"><?= e(__('Allow hotels to sign up online for a free trial')) ?></label></div>
+    <label class="form-check-label fw-semibold" for="s_en"><?= e(__('Allow businesses to sign up online for a free trial')) ?></label></div>
     <div class="form-text"><?= e(__('Shows "Start free trial" on the login page and enables :url.', ['url' => base_url('signup.php')])) ?></div></div>
   <div class="col-md-6"><label class="form-label" for="s_mode"><?= e(__('New sign-ups')) ?></label>
     <select class="form-select" id="s_mode" name="signup_mode">

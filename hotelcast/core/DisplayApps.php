@@ -47,7 +47,7 @@ final class DisplayApps
         'latin' => '"Noto Sans","Noto Sans Gujarati","Noto Sans Devanagari",Arial,sans-serif',
         'serif' => 'Georgia,"Times New Roman","Noto Sans Gujarati","Noto Sans Devanagari",serif',
     ];
-    public const LANGS = ['auto' => 'Hotel default', 'en' => 'English', 'gu' => 'ગુજરાતી', 'hi' => 'हिन्दी'];
+    public const LANGS = ['auto' => 'Default content', 'en' => 'English', 'gu' => 'ગુજરાતી', 'hi' => 'हिन्दी'];
 
     /** @var array<string, DisplayApp>|null */
     private static ?array $apps = null;

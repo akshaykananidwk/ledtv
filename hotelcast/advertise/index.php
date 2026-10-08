@@ -15,12 +15,12 @@ if (!Marketplace::enabled() && !$adv) {
 }
 
 if (!$adv) {
-    MarketplacePortal::header(__('Advertise on hotel TVs'));
+    MarketplacePortal::header(__('Advertise on TV screens near you'));
     $hotels = Marketplace::enabled() ? Marketplace::listHotels() : [];
     ?>
     <section class="mkt-hero">
-      <h1><?= e(__('Advertise on hotel TVs')) ?></h1>
-      <p><?= e(__('Show your shop, restaurant or service on the TVs in hotel rooms near you. Pick hotels and dates, upload your ad, pay — the hotel does the rest.')) ?></p>
+      <h1><?= e(__('Advertise on TV screens near you')) ?></h1>
+      <p><?= e(__('Show your shop, restaurant or service on TV screens near you. Pick venues and dates, upload your ad, pay — the venue does the rest.')) ?></p>
       <?php if (Marketplace::enabled()): ?>
       <div class="d-grid gap-2 d-sm-flex">
         <a class="btn btn-warning btn-lg" href="<?= e(MarketplacePortal::url('signup.php')) ?>"><?= e(__('Create a free account')) ?></a>
@@ -31,17 +31,17 @@ if (!$adv) {
       <?php endif; ?>
     </section>
     <div class="row g-3 mb-3 text-center">
-      <div class="col-4"><div class="mkt-stat"><b><?= count($hotels) ?></b><span><?= e(__('Hotels')) ?></span></div></div>
+      <div class="col-4"><div class="mkt-stat"><b><?= count($hotels) ?></b><span><?= e(__('Customers')) ?></span></div></div>
       <div class="col-4"><div class="mkt-stat"><b><?= array_sum(array_column($hotels, 'tv_count')) ?></b><span><?= e(__('TVs')) ?></span></div></div>
       <div class="col-4"><div class="mkt-stat"><b><?= count(array_unique(array_filter(array_column($hotels, 'city')))) ?></b><span><?= e(__('Cities')) ?></span></div></div>
     </div>
     <ol class="mkt-steps">
       <li><?= e(__('Create an account and verify your email.')) ?></li>
       <li><?= e(__('Upload your ad: a picture, a short video or a text announcement.')) ?></li>
-      <li><?= e(__('Choose hotels and dates and see the price at once.')) ?></li>
+      <li><?= e(__('Choose venues and dates and see the price at once.')) ?></li>
       <li><?= e(__('Pay by bank transfer or UPI. Track every play in your report.')) ?></li>
     </ol>
-    <p class="text-center"><a href="<?= e(MarketplacePortal::url('hotels.php')) ?>"><?= e(__('See hotels and prices')) ?> →</a></p>
+    <p class="text-center"><a href="<?= e(MarketplacePortal::url('hotels.php')) ?>"><?= e(__('See venues and prices')) ?> →</a></p>
     <?php
     MarketplacePortal::footer();
     exit;
@@ -78,7 +78,7 @@ foreach ($bookings as $b) {
 <?php foreach ($bookings as $b): ?>
   <a class="mkt-card" href="<?= e(MarketplacePortal::url('booking.php', ['id' => $b['id']])) ?>">
     <div class="d-flex justify-content-between gap-2"><strong><?= e($b['title']) ?></strong><?= Marketplace::statusBadge((string) $b['status']) ?></div>
-    <div class="small text-muted"><?= e($b['number'] ?: __('Draft')) ?> · <?= e(date('d M', (int) strtotime((string) $b['start_date']))) ?> – <?= e(date('d M Y', (int) strtotime((string) $b['end_date']))) ?> · <?= e(__(':n hotels', ['n' => (int) $b['hotels']])) ?></div>
+    <div class="small text-muted"><?= e($b['number'] ?: __('Draft')) ?> · <?= e(date('d M', (int) strtotime((string) $b['start_date']))) ?> – <?= e(date('d M Y', (int) strtotime((string) $b['end_date']))) ?> · <?= e(__(':n venues', ['n' => (int) $b['hotels']])) ?></div>
     <div class="fw-semibold"><?= e(Marketplace::money($b['total'])) ?></div>
   </a>
 <?php endforeach; ?>

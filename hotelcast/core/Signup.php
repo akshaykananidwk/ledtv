@@ -161,7 +161,7 @@ final class Signup
         $s = static fn (string $k, int $max) => mb_substr(trim(preg_replace('/\s+/u', ' ', is_scalar($in[$k] ?? null) ? (string) $in[$k] : '') ?? ''), 0, $max);
         $hotel = $s('hotel_name', 120);
         if (mb_strlen($hotel) < 2) {
-            $errors['hotel_name'] = __('Hotel name is required.');
+            $errors['hotel_name'] = __('Business name is required.');
         }
         $city = $s('city', 80);
         if (mb_strlen($city) < 2) {
@@ -183,7 +183,7 @@ final class Signup
         }
         $tvs = (int) ($in['tv_estimate'] ?? 0);
         if ($tvs < 1 || $tvs > 2000) {
-            $errors['tv_estimate'] = __('Enter the number of rooms / TVs (1–2000).');
+            $errors['tv_estimate'] = __('Enter the number of screens / TVs (1–2000).');
         }
         $lang = is_string($in['language'] ?? null) && isset(I18n::LANGUAGES[$in['language']]) ? $in['language'] : 'en';
         $password = is_string($in['password'] ?? null) ? (string) $in['password'] : '';
@@ -525,7 +525,7 @@ final class Signup
     {
         $hotel = Hotels::find($hotelId);
         if (!$hotel || !(int) $hotel['is_trial']) {
-            throw new InvalidArgumentException(__('This hotel is not on a free trial.'));
+            throw new InvalidArgumentException(__('This customer is not on a free trial.'));
         }
         $plan = DB::one('SELECT * FROM plans WHERE id = :id AND is_active = 1', ['id' => $planId]);
         if (!$plan) {
@@ -594,7 +594,7 @@ final class Signup
     {
         $h = DB::one('SELECT * FROM hotels WHERE id = :id AND is_trial = 1', ['id' => $hotelId]);
         if (!$h) {
-            throw new InvalidArgumentException(__('This hotel is not on a free trial.'));
+            throw new InvalidArgumentException(__('This customer is not on a free trial.'));
         }
         $base = max(time(), (int) strtotime((string) ($h['expires_at'] ?? 'now')));
         $ends = date('Y-m-d H:i:s', $base + max(1, min(90, $days)) * 86400);
@@ -622,8 +622,8 @@ final class Signup
         $staff = (int) DB::value('SELECT COUNT(*) FROM users WHERE hotel_id = :h AND is_active = 1', $h);
         $claim = is_file(HC_ROOT . '/admin/claim.php') ? 'claim.php' : 'rooms.php';
         return [
-            'rooms' => [$rooms > 0, __('Add your rooms'), 'rooms.php', 'bi-door-open', __(':n rooms', ['n' => $rooms])],
-            'logo' => [$logo, __('Set your hotel logo'), 'settings.php', 'bi-image', ''],
+            'rooms' => [$rooms > 0, __('Add your screens'), 'rooms.php', 'bi-door-open', __(':n screens', ['n' => $rooms])],
+            'logo' => [$logo, __('Set your business logo'), 'settings.php', 'bi-image', ''],
             'tv' => [$tvs > 0, __('Add your first TV with the QR code'), $claim, 'bi-qr-code-scan', __(':n TVs', ['n' => $tvs])],
             'content' => [$pushed > 0, __('Add and push your own content'), 'content.php', 'bi-broadcast', ''],
             'staff' => [$staff > 1, __('Invite your staff'), 'users.php', 'bi-people', __(':n users', ['n' => $staff])],

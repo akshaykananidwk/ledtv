@@ -148,7 +148,7 @@ require __DIR__ . '/partials/header.php';
         <td class="text-end text-nowrap">
           <?php if ($l['campaign_id'] && Auth::can('ads.manage')): ?><a class="btn btn-sm btn-light border" href="<?= e(admin_url('sponsor_report.php', ['campaign_id' => $l['campaign_id']])) ?>"><i class="bi bi-bar-chart"></i> <?= e(__('Report')) ?></a><?php endif; ?>
           <?php if ($l['status'] === 'approved' && $l['booking_status'] !== 'completed'): ?>
-            <form method="post" class="d-inline-flex gap-1" data-confirm="<?= e(__('Stop this ad? The advertiser gets a refund for your hotel.')) ?>"><?= Csrf::field() ?><input type="hidden" name="op" value="reject"><input type="hidden" name="tab" value="bookings"><input type="hidden" name="id" value="<?= (int) $l['id'] ?>">
+            <form method="post" class="d-inline-flex gap-1" data-confirm="<?= e(__('Stop this ad? The advertiser gets a refund for your screens.')) ?>"><?= Csrf::field() ?><input type="hidden" name="op" value="reject"><input type="hidden" name="tab" value="bookings"><input type="hidden" name="id" value="<?= (int) $l['id'] ?>">
               <input class="form-control form-control-sm" name="reason" required maxlength="500" placeholder="<?= e(__('Reason')) ?>" aria-label="<?= e(__('Reason')) ?>" style="width:9rem">
               <button class="btn btn-sm btn-outline-danger"><?= e(__('Stop')) ?></button></form>
           <?php endif; ?>
@@ -202,7 +202,7 @@ require __DIR__ . '/partials/header.php';
     <?= Csrf::field() ?><input type="hidden" name="op" value="settings_save">
     <div class="col-12"><div class="form-check form-switch fs-5"><input class="form-check-input" type="checkbox" role="switch" id="m_en" name="enabled" value="1"<?= $mkt['enabled'] ? ' checked' : '' ?>>
       <label class="form-check-label" for="m_en"><?= e(__('Sell ad space')) ?></label></div>
-      <div class="form-text"><?= e(__('Your hotel appears in the advertiser marketplace with its name, city, number of TVs and rooms and your prices. Contacts and room numbers are never shown.')) ?></div></div>
+      <div class="form-text"><?= e(__('Your business appears in the advertiser marketplace with its name, city, number of TVs and screens and your prices. Contacts and screen names are never shown.')) ?></div></div>
     <div class="col-md-4"><label class="form-label" for="m_model"><?= e(__('Price model')) ?></label>
       <select class="form-select" id="m_model" name="pricing_model">
         <?php foreach (['per_day', 'cpm', 'both'] as $m): ?><option value="<?= e($m) ?>"<?= $mkt['pricing_model'] === $m ? ' selected' : '' ?>><?= e(Marketplace::modelLabel($m)) ?></option><?php endforeach; ?>
@@ -228,8 +228,8 @@ require __DIR__ . '/partials/header.php';
       <?php foreach (Marketplace::categories() as $c): ?><div class="form-check form-check-inline"><input class="form-check-input" type="checkbox" name="blocked_categories[]" id="mb_<?= e($c) ?>" value="<?= e($c) ?>"<?= in_array($c, $blocked, true) ? ' checked' : '' ?>><label class="form-check-label" for="mb_<?= e($c) ?>"><?= e(Marketplace::categoryLabel($c)) ?></label></div><?php endforeach; ?>
     </fieldset></div>
     <div class="col-12"><label class="form-label" for="m_desc"><?= e(__('Short description for advertisers')) ?></label>
-      <textarea class="form-control" id="m_desc" name="description" rows="2" maxlength="500" placeholder="<?= e(__('e.g. 40 rooms near the temple, pilgrims and families')) ?>"><?= e((string) $mkt['description']) ?></textarea></div>
-    <div class="col-12"><div class="hint-box small"><i class="bi bi-info-circle"></i> <?= e(__('Approved ads become normal campaigns in Ads & Sponsors (all rooms, after every 3 items). Ad rules for advertisers:')) ?>
+      <textarea class="form-control" id="m_desc" name="description" rows="2" maxlength="500" placeholder="<?= e(__('e.g. 40 screens near the temple, pilgrims and families')) ?>"><?= e((string) $mkt['description']) ?></textarea></div>
+    <div class="col-12"><div class="hint-box small"><i class="bi bi-info-circle"></i> <?= e(__('Approved ads become normal campaigns in Ads & Sponsors (all screens, after every 3 items). Ad rules for advertisers:')) ?>
       <div class="mt-1"><?= nl2br(e(Marketplace::setting('platform_mkt_rules'))) ?></div></div></div>
     <div class="col-12"><button class="btn btn-primary btn-lg"><i class="bi bi-check-lg"></i> <?= e(__('Save')) ?></button></div>
   </div></form>

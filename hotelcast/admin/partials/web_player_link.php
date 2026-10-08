@@ -48,7 +48,7 @@ try {
               <li><?= e(__('Raspberry Pi: run tools/raspberry-pi/setup.sh with this address (full screen, starts by itself).')) ?></li>
               <li><?= e(__('Windows mini PC: start Chrome with --kiosk and this address.')) ?></li>
             </ul>
-            <p class="small text-muted mb-0"><?= e(__('The screen shows a QR code: scan it with your phone and choose the room — or type the room number and the registration key on the screen.')) ?></p>
+            <p class="small text-muted mb-0"><?= e(__('The screen shows a QR code: scan it with your phone and choose the screen — or type the screen name / ID and the registration key on the screen.')) ?></p>
           </div>
         </div>
       </div>

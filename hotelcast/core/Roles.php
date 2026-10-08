@@ -36,7 +36,7 @@ final class Roles
     {
         return [
             'overview' => [__('Overview'), __('Dashboard and getting started.')],
-            'screens' => [__('Screens'), __('Screens (rooms & TVs), groups, video walls and TV tools.')],
+            'screens' => [__('Screens'), __('Screens & TVs, groups, video walls and TV tools.')],
             'content' => [__('Content'), __('Content library, playlists, designs and templates.')],
             'apps' => [__('Apps & widgets'), __('Notice board, menu board, tickers and other display apps.')],
             'broadcast' => [__('Broadcast'), __('Send content, messages, emergencies and commands to screens.')],
@@ -274,10 +274,10 @@ final class Roles
     public static function builtIn(): array
     {
         $desc = [
-            'super_admin' => __('everything in this hotel, including users, settings and billing.'),
-            'manager' => __('rooms, content, playlists, schedules, TV commands, APK, logs.'),
-            'staff' => __('view rooms and content, send content and emergency messages.'),
-            'reception' => __('front desk: guests check-in/out, service orders and requests, view rooms.'),
+            'super_admin' => __('everything of this customer, including users, settings and billing.'),
+            'manager' => __('screens, content, playlists, schedules, TV commands, APK, logs.'),
+            'staff' => __('view screens and content, send content and emergency messages.'),
+            'reception' => __('front desk: guests check-in/out, service orders and requests, view screens.'),
         ];
         $out = [];
         foreach (self::BUILT_IN as $r) {

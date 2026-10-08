@@ -21,7 +21,7 @@ $lang = I18n::lang();
 
 // Sidebar from the navigation registry (admin/partials/nav.d/*.php).
 $navSections = $user ? hc_nav_sections() : [];
-$sectionTitles = ['hotel' => $hotelName, 'reseller' => __('Reseller'), 'platform' => __('Platform'), 'chain' => __('Hotel chain')];
+$sectionTitles = ['hotel' => $hotelName, 'reseller' => __('Reseller'), 'platform' => __('Platform'), 'chain' => __('Chain')];
 
 // Users limited to some TVs (core/Access.php): their emergencies / TVs only.
 $hdrEmergencies = $user && $inHotel ? hc_visible_emergencies() : [];
@@ -132,7 +132,7 @@ foreach (glob(__DIR__ . '/head.d/*.php') ?: [] as $__hd) { include $__hd; } unse
             <li><h6 class="dropdown-header"><?= e($user['username']) ?> · <?= e(Auth::roleName($user)) ?></h6></li>
             <li><a class="dropdown-item" href="<?= e(admin_url('profile.php')) ?>"><i class="bi bi-person-gear me-2"></i><?= e(__('My profile')) ?></a></li>
             <?php if (Auth::can('platform.manage') && License::mode() === 'saas'): ?><li><a class="dropdown-item" href="<?= e(admin_url('platform_hotels.php')) ?>"><i class="bi bi-buildings me-2"></i><?= e(__('Platform')) ?></a></li><?php endif; ?>
-            <?php if (Auth::can('reseller.panel')): ?><li><a class="dropdown-item" href="<?= e(admin_url('reseller.php')) ?>"><i class="bi bi-briefcase me-2"></i><?= e(__('My hotels')) ?></a></li><?php endif; ?>
+            <?php if (Auth::can('reseller.panel')): ?><li><a class="dropdown-item" href="<?= e(admin_url('reseller.php')) ?>"><i class="bi bi-briefcase me-2"></i><?= e(__('My customers')) ?></a></li><?php endif; ?>
             <li><hr class="dropdown-divider"></li>
             <li>
               <form method="post" action="<?= e(admin_url('logout.php')) ?>" class="m-0">
@@ -148,11 +148,11 @@ foreach (glob(__DIR__ . '/head.d/*.php') ?: [] as $__hd) { include $__hd; } unse
     <?php if (Auth::inEnteredHotel() && $inHotel): ?>
     <div class="hc-context-banner" role="status">
       <i class="bi bi-building-gear"></i>
-      <div class="flex-grow-1 min-w-0 text-truncate"><?= e(__('You are managing hotel')) ?> <strong><?= e($hotelName) ?></strong></div>
+      <div class="flex-grow-1 min-w-0 text-truncate"><?= e(__('You are managing customer')) ?> <strong><?= e($hotelName) ?></strong></div>
       <?php $hdrBack = Auth::backPage(); ?>
       <form method="post" action="<?= e(admin_url($hdrBack)) ?>" class="m-0">
         <?= Csrf::field() ?><input type="hidden" name="op" value="leave">
-        <button class="btn btn-sm btn-light"><i class="bi bi-arrow-left"></i> <?= e($hdrBack === 'chain.php' ? __('Back to chain') : (Auth::role() === 'reseller' ? __('Back to my hotels') : __('Back to platform'))) ?></button>
+        <button class="btn btn-sm btn-light"><i class="bi bi-arrow-left"></i> <?= e($hdrBack === 'chain.php' ? __('Back to chain') : (Auth::role() === 'reseller' ? __('Back to my customers') : __('Back to platform'))) ?></button>
       </form>
     </div>
     <?php endif; ?>
@@ -164,7 +164,7 @@ foreach (glob(__DIR__ . '/head.d/*.php') ?: [] as $__hd) { include $__hd; } unse
     <?php if ($inHotel && $hdrHotelState !== 'active'): ?>
     <div class="alert alert-danger rounded-0 mb-0 d-flex flex-wrap gap-2 align-items-center" role="alert">
       <i class="bi bi-pause-circle-fill fs-5"></i>
-      <div class="flex-grow-1"><strong><?= e($hdrHotelState === 'expired' ? __('This hotel account has expired.') : __('This hotel account is suspended.')) ?></strong>
+      <div class="flex-grow-1"><strong><?= e($hdrHotelState === 'expired' ? __('This account has expired.') : __('This account is suspended.')) ?></strong>
         <?= e(Auth::isPlatformUser() ? __('TVs show the "service paused" screen.') : __('TVs show the "service paused" screen and changes are disabled. Please contact your provider.')) ?></div>
       <?php if (Auth::can('billing.view') && is_file(HC_ROOT . '/admin/billing.php') && License::mode() === 'saas'): ?><a class="btn btn-sm btn-light" href="<?= e(admin_url('billing.php')) ?>"><i class="bi bi-receipt"></i> <?= e(__('Billing')) ?></a><?php endif; ?>
     </div>

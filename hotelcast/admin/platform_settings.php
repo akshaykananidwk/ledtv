@@ -171,7 +171,7 @@ $pageTitle = __('Platform settings');
 $activeNav = 'platform_settings';
 require __DIR__ . '/partials/header.php';
 ?>
-<div class="page-head"><div><h1><?= e(__('Platform settings')) ?></h1><p class="lead-sm"><?= e($saas ? __('Settings for the whole platform (all hotels).') : __('Self-hosted installation.')) ?></p></div></div>
+<div class="page-head"><div><h1><?= e(__('Platform settings')) ?></h1><p class="lead-sm"><?= e($saas ? __('Settings for the whole platform (all customers).') : __('Self-hosted installation.')) ?></p></div></div>
 <ul class="nav nav-tabs mb-3 flex-nowrap overflow-auto">
   <?php foreach ($tabs as $k => [$label, $icon]): ?>
     <li class="nav-item"><a class="nav-link text-nowrap<?= $tab === $k ? ' active' : '' ?>" href="<?= e(admin_url('platform_settings.php', ['tab' => $k])) ?>"><i class="bi <?= e($icon) ?>"></i> <?= e($label) ?></a></li>
@@ -181,7 +181,7 @@ require __DIR__ . '/partials/header.php';
 <?php if ($tab === 'branding'): ?>
 <form method="post" enctype="multipart/form-data" class="card" style="max-width:820px"><div class="card-body row g-3">
   <?= Csrf::field() ?><input type="hidden" name="op" value="branding"><input type="hidden" name="tab" value="branding">
-  <div class="col-12 small text-muted"><?= e(__('Shown on the login page, the admin panel, the installer and on every TV (Content "branding"). Resellers and hotels can override it.')) ?></div>
+  <div class="col-12 small text-muted"><?= e(__('Shown on the login page, the admin panel, the installer and on every TV (Content "branding"). Resellers and customers can override it.')) ?></div>
   <div class="col-sm-8"><label class="form-label" for="b_n"><?= e(__('Product name')) ?></label><input class="form-control" id="b_n" name="platform_name" value="<?= $val('platform_name') ?>" maxlength="120"></div>
   <div class="col-sm-4"><label class="form-label" for="b_c"><?= e(__('Primary colour')) ?></label><input class="form-control form-control-color w-100" type="color" id="b_c" name="platform_color" value="<?= $val('platform_color') ?>"></div>
   <div class="col-12"><label class="form-label" for="b_l"><?= e(__('Logo')) ?></label><input class="form-control" type="file" id="b_l" name="platform_logo" accept="image/png,image/jpeg,image/webp">
@@ -209,7 +209,7 @@ require __DIR__ . '/partials/header.php';
     <div class="form-check form-switch"><input class="form-check-input" type="checkbox" role="switch" id="c_rw" name="reminder_whatsapp" value="1"<?= $chk('reminder_whatsapp') ?>><label class="form-check-label" for="c_rw"><?= e(__('Overdue reminders by WhatsApp')) ?></label></div>
   </div>
   <div class="col-12"><label class="form-label" for="c_wa"><?= e(__('WhatsApp gateway URL')) ?></label><input class="form-control" id="c_wa" name="billing_whatsapp_url" value="<?= $val('billing_whatsapp_url') ?>" placeholder="https://api.example.com/send?to={phone}&amp;text={message}">
-    <div class="form-text"><?= e(__('{phone} is replaced with the hotel\'s phone number (digits only) and {message} with the text. Without {message} the text is POSTed as JSON.')) ?></div></div>
+    <div class="form-text"><?= e(__('{phone} is replaced with the customer\'s phone number (digits only) and {message} with the text. Without {message} the text is POSTed as JSON.')) ?></div></div>
   <div class="col-12"><label class="form-label" for="c_sd"><?= e(__('Your company details on invoices')) ?></label><textarea class="form-control" id="c_sd" name="invoice_seller_details" rows="4" placeholder="<?= e(__("Company name\nAddress\nGSTIN …\nBank / UPI details")) ?>"><?= $val('invoice_seller_details') ?></textarea></div>
   <div class="col-12"><button class="btn btn-primary"><i class="bi bi-check-lg"></i> <?= e(__('Save settings')) ?></button></div>
 </div></form>
@@ -218,7 +218,7 @@ require __DIR__ . '/partials/header.php';
 <form method="post" class="card" style="max-width:760px"><div class="card-body row g-3">
   <?= Csrf::field() ?><input type="hidden" name="op" value="notify"><input type="hidden" name="tab" value="notify">
   <div class="col-12"><label class="form-label" for="n_to"><?= e(__('Platform admin email(s)')) ?></label><input class="form-control" id="n_to" name="platform_notify_email" value="<?= $val('platform_notify_email') ?>" placeholder="owner@example.com, accounts@example.com">
-    <div class="form-text"><?= e(__('Receives platform alerts, e.g. hotels auto-suspended for non-payment.')) ?></div></div>
+    <div class="form-text"><?= e(__('Receives platform alerts, e.g. customers auto-suspended for non-payment.')) ?></div></div>
   <div class="col-12"><label class="form-label" for="n_from"><?= e(__('Sender address for invoices and reminders')) ?></label><input class="form-control" type="email" id="n_from" name="platform_from_email" value="<?= $val('platform_from_email') ?>" placeholder="billing@example.com"></div>
   <div class="col-12"><button class="btn btn-primary"><i class="bi bi-check-lg"></i> <?= e(__('Save settings')) ?></button></div>
 </div></form>
@@ -229,9 +229,9 @@ require __DIR__ . '/partials/header.php';
   <div class="col-12">
     <div class="form-check form-switch">
       <input class="form-check-input" type="checkbox" role="switch" id="f_chains" name="feature_chains" value="1"<?= $chk('feature_chains') ?>>
-      <label class="form-check-label fw-semibold" for="f_chains"><?= e(__('Hotel chains')) ?></label>
+      <label class="form-check-label fw-semibold" for="f_chains"><?= e(__('Chains')) ?></label>
     </div>
-    <div class="form-text"><?= e(__('Groups of hotels with one owner (chain dashboard, chain content, chain broadcast, chain admins). Off: the chain menus and pages are hidden and chain admins cannot enter hotels. Existing chain data is kept and comes back when you switch it on again.')) ?></div>
+    <div class="form-text"><?= e(__('Groups of customers with one owner (chain dashboard, chain content, chain broadcast, chain admins). Off: the chain menus and pages are hidden and chain admins cannot enter customers. Existing chain data is kept and comes back when you switch it on again.')) ?></div>
   </div>
   <div class="col-12"><button class="btn btn-primary"><i class="bi bi-check-lg"></i> <?= e(__('Save settings')) ?></button></div>
 </div></form>
@@ -245,7 +245,7 @@ require __DIR__ . '/partials/header.php';
     <?php foreach ($admins as $a): ?>
       <li class="list-group-item d-flex justify-content-between align-items-center gap-2 small">
         <span><strong><?= e($a['full_name'] ?: $a['username']) ?></strong> · <?= e($a['username']) ?> · <?= e($a['email']) ?>
-          <?= $a['hotel_name'] ? '<span class="badge text-bg-light border">' . e(__('Hotel')) . ': ' . e($a['hotel_name']) . '</span>' : '' ?>
+          <?= $a['hotel_name'] ? '<span class="badge text-bg-light border">' . e(__('Customer')) . ': ' . e($a['hotel_name']) . '</span>' : '' ?>
           <?= (int) $a['is_active'] ? '' : '<span class="text-danger">' . e(__('Disabled')) . '</span>' ?></span>
         <?php if ((int) $a['id'] !== Auth::id()): ?>
         <form method="post" class="m-0"><?= Csrf::field() ?><input type="hidden" name="op" value="toggle_admin"><input type="hidden" name="tab" value="admins"><input type="hidden" name="user_id" value="<?= (int) $a['id'] ?>">
@@ -255,7 +255,7 @@ require __DIR__ . '/partials/header.php';
     <?php endforeach; ?>
   </ul></div></div>
   <div class="col-lg-5"><div class="card"><div class="card-header"><?= e(__('Add platform admin')) ?></div><div class="card-body">
-    <p class="small text-muted"><?= e(__('Platform admins manage all hotels, plans, invoices, licenses and updates.')) ?></p>
+    <p class="small text-muted"><?= e(__('Platform admins manage all customers, plans, invoices, licenses and updates.')) ?></p>
     <form method="post" class="row g-2" autocomplete="off"><?= Csrf::field() ?><input type="hidden" name="op" value="add_admin"><input type="hidden" name="tab" value="admins">
       <div class="col-sm-6"><input class="form-control" name="admin_username" placeholder="<?= e(__('Username')) ?>" required></div>
       <div class="col-sm-6"><input class="form-control" name="admin_name" placeholder="<?= e(__('Full name')) ?>"></div>

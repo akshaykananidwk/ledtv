@@ -22,7 +22,7 @@ if (!$obj) {
 }
 $embed = !empty($_GET['embed']);
 if ($roomId) {
-    $label = __('Room') . ' ' . $obj['room']['number'];
+    $label = __('Screen') . ' ' . $obj['room']['number'];
 } elseif ($playlistId) {
     $label = __('Playlist') . ': ' . ($obj['playlist']['name'] ?? '');
 } else {

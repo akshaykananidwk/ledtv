@@ -58,7 +58,7 @@ if (is_post()) {
     } elseif ($op === 'delete' && $plan) {
         $used = (int) DB::value('SELECT COUNT(*) FROM hotels WHERE plan_id = :p', ['p' => $id]);
         if ($used) {
-            flash('danger', __('This plan is used by :n hotels. Deactivate it instead.', ['n' => $used]));
+            flash('danger', __('This plan is used by :n customers. Deactivate it instead.', ['n' => $used]));
         } else {
             DB::delete('plans', 'id = :id', ['id' => $id]);
             ActivityLog::add('plan_delete', 'plan', $id, $plan['name']);
@@ -108,7 +108,7 @@ if ($action === 'new' || $action === 'edit') {
         <?= features_checkbox_groups('features', $features, 'pf') ?>
         <div class="form-text"><?= e(__('Always included: dashboard, screens, groups, push content now, users, settings, logs. All features ticked = everything, also features added in future updates.')) ?></div>
       </div>
-      <div class="col-12"><div class="form-check form-switch"><input class="form-check-input" type="checkbox" role="switch" id="p_a" name="is_active" value="1"<?= (int) $p['is_active'] ? ' checked' : '' ?>><label class="form-check-label" for="p_a"><?= e(__('Available for new hotels')) ?></label></div></div>
+      <div class="col-12"><div class="form-check form-switch"><input class="form-check-input" type="checkbox" role="switch" id="p_a" name="is_active" value="1"<?= (int) $p['is_active'] ? ' checked' : '' ?>><label class="form-check-label" for="p_a"><?= e(__('Available for new customers')) ?></label></div></div>
       <div class="col-12"><button class="btn btn-primary"><i class="bi bi-check-lg"></i> <?= e(__('Save plan')) ?></button></div>
     </div></form>
     <script>
@@ -135,7 +135,7 @@ require __DIR__ . '/partials/header.php';
 </div>
 <div class="card"><div class="table-responsive">
   <table class="table table-hc table-hover">
-    <thead><tr><th><?= e(__('Plan')) ?></th><th><?= e(__('Price per TV / month')) ?></th><th><?= e(__('Limits')) ?></th><th class="d-none d-md-table-cell"><?= e(__('Features')) ?></th><th><?= e(__('Hotels')) ?></th><th class="text-end"><?= e(__('Actions')) ?></th></tr></thead>
+    <thead><tr><th><?= e(__('Plan')) ?></th><th><?= e(__('Price per TV / month')) ?></th><th><?= e(__('Limits')) ?></th><th class="d-none d-md-table-cell"><?= e(__('Features')) ?></th><th><?= e(__('Customers')) ?></th><th class="text-end"><?= e(__('Actions')) ?></th></tr></thead>
     <tbody>
     <?php if (!$plans): ?><tr><td colspan="6" class="text-center text-muted py-4"><?= e(__('No plans yet.')) ?></td></tr><?php endif; ?>
     <?php foreach ($plans as $p): $keys = Features::planKeys($p['features']); $unl = __('unlimited'); ?>

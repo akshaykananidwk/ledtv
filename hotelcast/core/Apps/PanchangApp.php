@@ -135,7 +135,7 @@ final class PanchangApp extends WidgetApp
     {
         $loc = self::location($config);
         if ($loc === null) {
-            return self::empty(__('Set the hotel location (Settings → Weather) or the coordinates of this screen.'));
+            return self::empty(__('Set your location (Settings → Weather) or the coordinates of this screen.'));
         }
         $tz = date_default_timezone_get();
         $now = (int) $ctx['now'];
@@ -158,7 +158,7 @@ final class PanchangApp extends WidgetApp
                 . self::tithiLines($p, $over, (string) $ctx['lang']) . '<dl class="pc-list">';
             foreach ($rows as [$k, $v, $until, $mine]) {
                 $html .= '<div class="pc-row"><dt>' . e($k) . '</dt><dd>' . e($v) . ($until !== '' ? '<span class="pc-until">' . e($until) . '</span>' : '')
-                    . ($mine ? ' <span class="pc-mine">' . e(__('(set by the hotel)')) . '</span>' : '') . '</dd></div>';
+                    . ($mine ? ' <span class="pc-mine">' . e(__('(set by the customer)')) . '</span>' : '') . '</dd></div>';
             }
             $html .= '</dl><div class="pc-approx">' . e(__('Approximate — computed for :place; times may differ by a few minutes from your panchang.', ['place' => (string) Settings::get('weather_city', '') ?: sprintf('%.2f, %.2f', $loc[0], $loc[1])])) . '</div></div>';
         }

@@ -76,7 +76,7 @@ if (is_post()) {
                 $tax = (float) str_replace(',', '.', req_str('platform_mkt_tax_percent', $_POST, 10));
                 $upi = trim(req_str('platform_mkt_upi_id', $_POST, 100));
                 if ($share < 0 || $share > 100) {
-                    $errors[] = __('Hotel share must be between 0 and 100 %.');
+                    $errors[] = __('Venue share must be between 0 and 100 %.');
                 }
                 if ($tax < 0 || $tax > 50) {
                     $errors[] = __('Tax must be between 0 and 50 %.');
@@ -136,9 +136,9 @@ require __DIR__ . '/partials/header.php';
   <div class="row g-3 mb-3">
     <?php foreach ([
         [__('Paid ad sales'), Marketplace::money($o['gross']), 'gross'], [__('Platform share'), Marketplace::money($o['platform_share']), 'platform'],
-        [__('Hotel share'), Marketplace::money($o['hotel_share']), 'hotels'], [__('Unpaid hotel payouts'), Marketplace::money($o['unpaid_payouts']), 'payouts'],
-        [__('Awaiting payment'), (string) ($o['by_status']['awaiting_payment'] + $o['by_status']['submitted']), 'awaiting'], [__('Waiting for hotel approval'), (string) $o['pending_hotel'], 'pending_hotel'],
-        [__('Running'), (string) $o['by_status']['running'], 'running'], [__('Hotels selling'), (string) $o['hotels_selling'], 'hotels_selling'],
+        [__('Venue share'), Marketplace::money($o['hotel_share']), 'hotels'], [__('Unpaid venue payouts'), Marketplace::money($o['unpaid_payouts']), 'payouts'],
+        [__('Awaiting payment'), (string) ($o['by_status']['awaiting_payment'] + $o['by_status']['submitted']), 'awaiting'], [__('Waiting for venue approval'), (string) $o['pending_hotel'], 'pending_hotel'],
+        [__('Running'), (string) $o['by_status']['running'], 'running'], [__('Venues selling'), (string) $o['hotels_selling'], 'hotels_selling'],
         [__('Advertisers'), $o['advertisers'] . ($o['advertisers_pending'] ? ' (+' . $o['advertisers_pending'] . ' ' . __('pending') . ')' : ''), 'advertisers'],
     ] as [$label, $val, $key]): ?>
       <div class="col-6 col-md-4 col-xl-3"><div class="card card-body h-100"><div class="small text-muted"><?= e($label) ?></div><div class="fs-4" data-kpi="<?= e($key) ?>"><?= e($val) ?></div></div></div>
@@ -168,7 +168,7 @@ require __DIR__ . '/partials/header.php';
         <div class="small text-muted mb-2"><?= e($b['business_name']) ?> · <?= e($b['contact_name']) ?> · <?= e($b['mobile']) ?> · <?= e($b['advertiser_email']) ?></div>
         <div class="small mb-2"><?= e($b['start_date']) ?> – <?= e($b['end_date']) ?><?= $b['daily_start'] ? ' · ' . e(substr((string) $b['daily_start'], 0, 5) . '–' . substr((string) $b['daily_end'], 0, 5)) : '' ?> · <?= e(Marketplace::categoryLabel((string) $b['category'])) ?> · <?= e(Marketplace::modelLabel((string) $b['pricing_model'])) ?></div>
         <?php if ($b['status_reason']): ?><div class="alert alert-secondary py-2 small"><?= e($b['status_reason']) ?><?= $b['refund_note'] ? ' — ' . e($b['refund_note']) : '' ?></div><?php endif; ?>
-        <table class="table table-sm"><thead><tr><th><?= e(__('Hotel')) ?></th><th><?= e(__('Status')) ?></th><th class="text-end"><?= e(__('Amount')) ?></th><th class="text-end"><?= e(__('Hotel share')) ?></th></tr></thead>
+        <table class="table table-sm"><thead><tr><th><?= e(__('Customer')) ?></th><th><?= e(__('Status')) ?></th><th class="text-end"><?= e(__('Amount')) ?></th><th class="text-end"><?= e(__('Venue share')) ?></th></tr></thead>
           <tbody><?php foreach ($lines as $l): ?><tr><td><?= e($l['hotel_name']) ?> <small class="text-muted"><?= e((string) $l['hotel_city']) ?></small><?= $l['campaign_id'] ? ' <small class="text-muted">#' . (int) $l['campaign_id'] . '</small>' : '' ?></td>
             <td><?= Marketplace::statusBadge((string) $l['status']) ?><?= $l['reason'] ? '<br><small class="text-muted">' . e($l['reason']) . '</small>' : '' ?></td>
             <td class="text-end"><?= e(Marketplace::money($l['amount'])) ?></td><td class="text-end"><?= e(Marketplace::money($l['hotel_share'])) ?></td></tr><?php endforeach; ?></tbody>
@@ -218,7 +218,7 @@ require __DIR__ . '/partials/header.php';
     <div class="col-md-2 d-grid"><button class="btn btn-outline-primary"><?= e(__('Filter')) ?></button></div>
   </form>
   <div class="table-responsive"><table class="table align-middle">
-    <thead><tr><th><?= e(__('Order')) ?></th><th><?= e(__('Advertiser')) ?></th><th><?= e(__('Dates')) ?></th><th class="text-end"><?= e(__('Hotels')) ?></th><th class="text-end"><?= e(__('Total')) ?></th><th><?= e(__('Status')) ?></th></tr></thead>
+    <thead><tr><th><?= e(__('Order')) ?></th><th><?= e(__('Advertiser')) ?></th><th><?= e(__('Dates')) ?></th><th class="text-end"><?= e(__('Customers')) ?></th><th class="text-end"><?= e(__('Total')) ?></th><th><?= e(__('Status')) ?></th></tr></thead>
     <tbody><?php foreach ($rows as $b): ?><tr><td><a href="<?= e(admin_url('platform_marketplace.php', ['id' => $b['id']])) ?>"><?= e((string) $b['number']) ?></a><br><small><?= e($b['title']) ?></small></td><td><?= e($b['business_name']) ?></td>
       <td class="small"><?= e($b['start_date']) ?> – <?= e($b['end_date']) ?></td><td class="text-end"><?= (int) $b['hotels'] ?></td><td class="text-end"><?= e(Marketplace::money($b['total'])) ?></td><td><?= Marketplace::statusBadge((string) $b['status']) ?></td></tr><?php endforeach; ?>
     <?php if (!$rows): ?><tr><td colspan="6" class="text-muted"><?= e(__('No orders.')) ?></td></tr><?php endif; ?></tbody>
@@ -246,10 +246,10 @@ require __DIR__ . '/partials/header.php';
   <form method="post" class="row g-2 align-items-end mb-3"><?= Csrf::field() ?><input type="hidden" name="op" value="payouts"><input type="hidden" name="tab" value="payouts">
     <div class="col-7 col-md-3"><label class="form-label" for="p_period"><?= e(__('Month')) ?></label><input class="form-control" type="month" id="p_period" name="period" value="<?= e(date('Y-m', strtotime('first day of last month'))) ?>" required></div>
     <div class="col-5 col-md-3 d-grid"><button class="btn btn-primary"><?= e(__('Create statements')) ?></button></div>
-    <div class="col-12 form-text"><?= e(__('Includes every approved hotel line of orders paid until the end of the month that is not on a statement yet.')) ?></div>
+    <div class="col-12 form-text"><?= e(__('Includes every approved venue line of orders paid until the end of the month that is not on a statement yet.')) ?></div>
   </form>
   <div class="table-responsive"><table class="table align-middle">
-    <thead><tr><th><?= e(__('Month')) ?></th><th><?= e(__('Hotel')) ?></th><th class="text-end"><?= e(__('Bookings')) ?></th><th class="text-end"><?= e(__('Ad sales')) ?></th><th class="text-end"><?= e(__('Payout')) ?></th><th><?= e(__('Status')) ?></th><th></th></tr></thead>
+    <thead><tr><th><?= e(__('Month')) ?></th><th><?= e(__('Customer')) ?></th><th class="text-end"><?= e(__('Bookings')) ?></th><th class="text-end"><?= e(__('Ad sales')) ?></th><th class="text-end"><?= e(__('Payout')) ?></th><th><?= e(__('Status')) ?></th><th></th></tr></thead>
     <tbody><?php foreach (Marketplace::payouts($period) as $p): ?><tr><td><?= e($p['period']) ?></td><td><?= e($p['hotel_name']) ?> <small class="text-muted"><?= e((string) $p['city']) ?></small></td><td class="text-end"><?= (int) $p['lines_count'] ?></td>
       <td class="text-end"><?= e(Marketplace::money($p['gross'])) ?></td><td class="text-end fw-semibold"><?= e(Marketplace::money($p['amount'])) ?></td><td><?= Marketplace::statusBadge((string) $p['status']) ?><?= $p['payment_ref'] ? ' <small class="text-muted">' . e($p['payment_ref']) . '</small>' : '' ?></td>
       <td class="text-nowrap"><a class="btn btn-sm btn-light border" href="<?= e(admin_url('platform_marketplace.php', ['tab' => 'payouts', 'payout' => $p['id']])) ?>"><?= e(__('Statement')) ?></a>
@@ -266,7 +266,7 @@ require __DIR__ . '/partials/header.php';
 <?php else: $v = static fn (string $k) => e(Marketplace::setting($k)); ?>
   <form method="post" class="card" style="max-width:900px"><div class="card-body row g-3"><?= Csrf::field() ?><input type="hidden" name="op" value="settings"><input type="hidden" name="tab" value="settings">
     <div class="col-12"><div class="form-check form-switch"><input class="form-check-input" type="checkbox" id="s_en" name="platform_mkt_enabled" value="1"<?= Marketplace::enabled() ? ' checked' : '' ?>><label class="form-check-label" for="s_en"><?= e(__('Marketplace open for advertisers')) ?></label></div></div>
-    <div class="col-6 col-md-3"><label class="form-label" for="s_share"><?= e(__('Hotel share %')) ?></label><input class="form-control" id="s_share" name="platform_mkt_hotel_share" type="number" step="0.01" min="0" max="100" value="<?= $v('platform_mkt_hotel_share') ?>">
+    <div class="col-6 col-md-3"><label class="form-label" for="s_share"><?= e(__('Venue share %')) ?></label><input class="form-control" id="s_share" name="platform_mkt_hotel_share" type="number" step="0.01" min="0" max="100" value="<?= $v('platform_mkt_hotel_share') ?>">
       <div class="form-text"><?= e(__('Platform keeps the rest. Fixed per order when it is paid.')) ?></div></div>
     <div class="col-6 col-md-3"><label class="form-label" for="s_tax"><?= e(__('Tax %')) ?> (<?= e((string) Settings::platform('billing_tax_label', 'GST')) ?>)</label><input class="form-control" id="s_tax" name="platform_mkt_tax_percent" type="number" step="0.01" min="0" max="50" value="<?= $v('platform_mkt_tax_percent') ?>"></div>
     <div class="col-6 col-md-3"><label class="form-label" for="s_exp"><?= e(__('Cancel unpaid orders after (days)')) ?></label><input class="form-control" id="s_exp" name="platform_mkt_expire_days" type="number" min="1" max="60" value="<?= $v('platform_mkt_expire_days') ?>"></div>
@@ -281,7 +281,7 @@ require __DIR__ . '/partials/header.php';
     <div class="col-6 col-md-3"><label class="form-label" for="s_img"><?= e(__('Max image MB')) ?></label><input class="form-control" id="s_img" name="platform_mkt_max_image_mb" type="number" min="1" max="25" value="<?= $v('platform_mkt_max_image_mb') ?>"></div>
     <div class="col-6 col-md-3"><label class="form-label" for="s_vid"><?= e(__('Max video MB')) ?></label><input class="form-control" id="s_vid" name="platform_mkt_max_video_mb" type="number" min="1" max="500" value="<?= $v('platform_mkt_max_video_mb') ?>"></div>
     <div class="col-md-6"><label class="form-label" for="s_cat"><?= e(__('Categories (comma separated keys)')) ?></label><input class="form-control" id="s_cat" name="platform_mkt_categories" maxlength="600" value="<?= $v('platform_mkt_categories') ?>" placeholder="<?= e(implode(',', Marketplace::DEFAULT_CATEGORIES)) ?>"></div>
-    <div class="col-12"><label class="form-label" for="s_rules"><?= e(__('Content rules (shown to advertisers and hotels)')) ?></label><textarea class="form-control" id="s_rules" name="platform_mkt_rules" rows="5" maxlength="3000"><?= $v('platform_mkt_rules') ?></textarea></div>
+    <div class="col-12"><label class="form-label" for="s_rules"><?= e(__('Content rules (shown to advertisers and venues)')) ?></label><textarea class="form-control" id="s_rules" name="platform_mkt_rules" rows="5" maxlength="3000"><?= $v('platform_mkt_rules') ?></textarea></div>
     <div class="col-12"><button class="btn btn-primary btn-lg"><i class="bi bi-check-lg"></i> <?= e(__('Save')) ?></button></div>
   </div></form>
 <?php endif; ?>
