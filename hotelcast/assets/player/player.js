@@ -996,7 +996,7 @@
   }
   function applyAudio() {
     each(mediaEls(), function (v) {
-      try { v.volume = S.volume / 100; } catch (e) { /* ignore */ }
+      try { v.volume = (S.volume / 100) * (ducks > 0 ? 0.25 : 1); } catch (e) { /* ignore */ }
       if (v.getAttribute('data-sound') === '1') {
         v.muted = S.muted || S.soundOk === false;
         if (v.paused) tryPlay(v);
@@ -1405,34 +1405,63 @@
     if (!isFinite(v)) return d;
     return clamp(v > 1 ? v / 100 : v, 0, 1);
   }
+  /** Lower the video sound while an announcement / sound plays (like the TV app's audio ducking). */
+  var ducks = 0;
+  function duck(onOff) {
+    ducks = Math.max(0, ducks + (onOff ? 1 : -1));
+    each(mediaEls(), function (v) {
+      try { v.volume = (S.volume / 100) * (ducks > 0 ? 0.25 : 1); } catch (e) { /* read-only on some TVs */ }
+    });
+  }
+  /** SPEAK {text, lang: gu|hi|en|auto, rate, pitch?, repeat, volume?, chime_before} (payload: docs/modules/device_schedules.md). */
   function speak(p, done) {
     var syn = window.speechSynthesis;
     if (!syn || typeof window.SpeechSynthesisUtterance === 'undefined') { done('failed', unsupported('this browser has no speech synthesis')); return; }
     var text = trim(p.text || p.message);
     if (!text) { done('failed', 'Missing text'); return; }
     var lang = speechLang(p.lang || p.language, text);
-    var voice = pickVoice(lang);
     var times = clamp(Math.round(num(p.repeat, 1)), 1, 5);
-    var label = lang + (voice ? ', voice ' + voice.name : ', no ' + lang + ' voice installed: browser default');
-    try { syn.cancel(); } catch (e) { /* ignore */ }
-    for (var r = 0; r < times; r++) {
-      var u = new window.SpeechSynthesisUtterance(text);
-      u.lang = lang;
-      if (voice) u.voice = voice;
-      u.rate = clamp(num(p.rate, 1), 0.5, 2);
-      u.pitch = clamp(num(p.pitch, 1), 0, 2);
-      u.volume = vol01(p.volume, S.volume / 100);
-      if (r === 0) {
-        u.onstart = function () { done('acked', 'Speaking (' + label + ')'); };
-        u.onerror = function (ev) {
-          var er = ev && ev.error ? ev.error : 'error';
-          done(er === 'interrupted' || er === 'canceled' ? 'acked' : 'failed', 'Speech ' + er + (er === 'not-allowed' ? ': blocked until OK is pressed once on the screen (browser autoplay policy)' : '') + ' (' + label + ')');
-        };
+    var go = function () {
+      var voice = pickVoice(lang);
+      var label = lang + (voice ? ', voice ' + voice.name : ', no ' + lang + ' voice installed: browser default');
+      var left = times, ducked = false;
+      var finish = function () {
+        left--;
+        if (left <= 0 && ducked) { ducked = false; duck(false); }
+      };
+      try { syn.cancel(); } catch (e) { /* ignore */ }
+      for (var r = 0; r < times; r++) {
+        var u = new window.SpeechSynthesisUtterance(text);
+        u.lang = lang;
+        if (voice) u.voice = voice;
+        u.rate = clamp(num(p.rate, 1), 0.5, 2);
+        u.pitch = clamp(num(p.pitch, 1), 0, 2);
+        u.volume = vol01(p.volume, S.volume / 100);
+        u.onend = finish;
+        if (r === 0) {
+          u.onstart = function () {
+            if (!ducked) { ducked = true; duck(true); }
+            done('acked', 'Speaking (' + label + (times > 1 ? ', ×' + times : '') + ')');
+          };
+          u.onerror = function (ev) {
+            var er = ev && ev.error ? ev.error : 'error';
+            if (ducked) { ducked = false; duck(false); }
+            done(er === 'interrupted' || er === 'canceled' ? 'acked' : 'failed', 'Speech ' + er + (er === 'not-allowed' ? ': blocked until OK is pressed once on the screen (browser autoplay policy)' : '') + ' (' + label + ')');
+          };
+        } else {
+          u.onerror = finish;
+        }
+        syn.speak(u);
       }
-      syn.speak(u);
+      // Some TV browsers never fire onstart: ack anyway after a few seconds.
+      setTimeout(function () { done('acked', 'Speech requested (' + label + ')'); }, 4000);
+    };
+    if (p.chime_before) {
+      playTones('chime', vol01(p.volume, S.volume / 100), 1, function () { /* the chime is a courtesy: speak anyway */ });
+      setTimeout(go, 1300);
+    } else {
+      go();
     }
-    // Some TV browsers never fire onstart: ack anyway after a few seconds.
-    setTimeout(function () { done('acked', 'Speech requested (' + label + ')'); }, 4000);
   }
 
   // ------------------------------------------------------------------- PLAY_SOUND (HTML audio / Web Audio tones)
@@ -1444,37 +1473,51 @@
     doorbell: [[784, 0, 0.45], [523, 0.5, 0.8]]
   };
   var audioCtx = null, audios = [];
+  /** PLAY_SOUND {url, volume?, repeat} — or, without url, a built-in tone {sound: chime|bell|beep|alarm|doorbell}. */
   function playSound(p, done) {
     var url = trim(p.url || p.src);
     var name = trim(p.sound || p.name || p.tone).toLowerCase();
     var volume = vol01(p.volume, S.volume / 100);
     var times = clamp(Math.round(num(p.repeat, 1)), 1, 10);
-    if (url) {
-      if (!/^(https?:)?\/\//i.test(url) && url.charAt(0) !== '/') { done('failed', 'Invalid sound url'); return; }
-      each(audios.splice(0, audios.length), function (a0) { try { a0.pause(); } catch (e) { /* ignore */ } });
-      var a = new window.Audio();
-      var count = 0;
-      audios.push(a);
-      a.volume = volume;
-      a.onended = function () { count++; if (count < times) { a.currentTime = 0; tryPlay(a); } };
-      a.onerror = function () { done('failed', 'Cannot play the sound (address or format)'); };
-      a.src = url;
-      var pr = tryPlay(a);
-      if (pr) {
-        pr.then(function () { done('acked', 'Playing sound' + (times > 1 ? ' ×' + times : '')); }, function (err) {
-          done('failed', err && err.name === 'NotAllowedError' ? 'Blocked by the browser autoplay policy: press OK once on the screen' : 'Cannot play: ' + (err && err.message));
-        });
-      } else {
-        setTimeout(function () { done(a.paused ? 'failed' : 'acked', a.paused ? 'Sound did not start' : 'Playing sound'); }, 2000);
-      }
+    if (!url) {
+      if (!TONES[name]) name = 'chime';
+      playTones(name, volume, times, function (ok, msg) { done(ok ? 'acked' : 'failed', msg); });
       return;
     }
+    if (!/^(https?:)?\/\//i.test(url) && url.charAt(0) !== '/') { done('failed', 'Invalid sound url'); return; }
+    each(audios.splice(0, audios.length), function (a0) { try { a0.pause(); if (a0._unduck) a0._unduck(); } catch (e) { /* ignore */ } });
+    var a = new window.Audio();
+    var count = 0, ducked = false;
+    var unduck = function () { if (ducked) { ducked = false; duck(false); } };
+    a._unduck = unduck;
+    audios.push(a);
+    a.volume = volume;
+    a.onplaying = function () { if (!ducked) { ducked = true; duck(true); } };
+    a.onended = function () {
+      count++;
+      if (count < times) { a.currentTime = 0; tryPlay(a); } else unduck();
+    };
+    a.onerror = function () { unduck(); done('failed', 'Cannot play the sound (address or format)'); };
+    // Never longer than 2 minutes (like the TV app).
+    setTimeout(function () { try { a.pause(); } catch (e) { /* ignore */ } unduck(); }, 120000);
+    a.src = url;
+    var pr = tryPlay(a);
+    if (pr) {
+      pr.then(function () { done('acked', 'Playing sound' + (times > 1 ? ' ×' + times : '')); }, function (err) {
+        unduck();
+        done('failed', err && err.name === 'NotAllowedError' ? 'Blocked by the browser autoplay policy: press OK once on the screen' : 'Cannot play: ' + (err && err.message));
+      });
+    } else {
+      setTimeout(function () { done(a.paused ? 'failed' : 'acked', a.paused ? 'Sound did not start' : 'Playing sound'); }, 2000);
+    }
+  }
+  /** Built-in tone with Web Audio; cb(ok, message). */
+  function playTones(name, volume, times, cb) {
     var AC = window.AudioContext || window.webkitAudioContext;
-    if (!AC) { done('failed', unsupported('no Web Audio in this browser')); return; }
-    if (!TONES[name]) name = 'chime';
-    try { audioCtx = audioCtx || new AC(); } catch (e) { done('failed', unsupported('Web Audio failed: ' + e.message)); return; }
+    if (!AC) { cb(false, unsupported('no Web Audio in this browser')); return; }
+    try { audioCtx = audioCtx || new AC(); } catch (e) { cb(false, unsupported('Web Audio failed: ' + e.message)); return; }
     var go = function () {
-      var pat = TONES[name], len = 0, t0 = audioCtx.currentTime + 0.05;
+      var pat = TONES[name] || TONES.chime, len = 0, t0 = audioCtx.currentTime + 0.05;
       each(pat, function (n) { len = Math.max(len, n[1] + n[2]); });
       for (var r = 0; r < times; r++) {
         each(pat, function (n) {
@@ -1491,12 +1534,14 @@
           osc.stop(st + n[2] + 0.05);
         });
       }
+      duck(true);
+      setTimeout(function () { duck(false); }, Math.round(times * (len + 0.3) * 1000) + 200);
     };
     if (audioCtx.state === 'suspended' && audioCtx.resume) { try { audioCtx.resume(); } catch (e) { /* ignore */ } }
     setTimeout(function () {
-      if (audioCtx.state === 'suspended') { done('failed', 'Blocked by the browser autoplay policy: press OK once on the screen'); return; }
+      if (audioCtx.state === 'suspended') { cb(false, 'Blocked by the browser autoplay policy: press OK once on the screen'); return; }
       go();
-      done('acked', 'Playing ' + name + (times > 1 ? ' ×' + times : ''));
+      cb(true, 'Playing ' + name + (times > 1 ? ' ×' + times : ''));
     }, audioCtx.state === 'suspended' ? 800 : 0);
   }
 

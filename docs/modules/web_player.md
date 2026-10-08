@@ -129,8 +129,8 @@ of the TV (the player has its own volume).
 | `SHOW_MESSAGE {title, message, duration_sec}` | message card (OK / Back closes it) | `acked`; `failed` during an emergency |
 | `SCREENSHOT` | best effort: the player redraws its screen on a canvas (colours, texts, images / video frames when the media server allows it); web pages are grey boxes → uploaded to `/device/screenshot` | `acked` "(approximate …)"; `failed` "unsupported: …" when the browser cannot draw |
 | `UPLOAD_LOGS` | the player's in-memory log + state → `/device/logs` | `acked` |
-| `SPEAK {text, lang?, rate?, pitch?, volume?, repeat?}` | `speechSynthesis`; language `gu-IN` / `hi-IN` / `en-IN` from `lang` or the script of the text; picks an installed voice of that language | `acked` "Speaking (gu-IN, voice …)"; `failed` with the reason (no voice engine, blocked by autoplay policy) |
-| `PLAY_SOUND {url? \| sound?, volume?, repeat?}` | `url`: HTML audio; else a built-in Web Audio tone `chime` / `bell` / `beep` / `alarm` / `doorbell` | `acked` / `failed` (blocked, bad file) |
+| `SPEAK {text, lang: gu\|hi\|en\|auto, rate, repeat, volume?, chime_before}` (payload as in docs/modules/device_schedules.md) | `speechSynthesis`; language `gu-IN` / `hi-IN` / `en-IN` from `lang` (`auto`: the script of the text); picks an installed voice of that language; optional chime first; video sound lowered while speaking | `acked` "Speaking (gu-IN, voice …)"; `failed` with the reason (no voice engine, blocked by autoplay policy) |
+| `PLAY_SOUND {url, volume?, repeat}` | HTML audio (max 2 min, video sound lowered meanwhile; a new sound stops the previous one); without `url` a built-in Web Audio tone `sound`: `chime` / `bell` / `beep` / `alarm` / `doorbell` | `acked` / `failed` (blocked, bad file) |
 | `UPDATE_APP`, `OPEN_INPUT`, `SHOW_WELCOME`, unknown | — | `failed` "unsupported: …" |
 
 Commands are de-duplicated by id (also across reloads) and re-acked when the server delivers them again.

@@ -150,7 +150,7 @@ async function shot(page, name) {
 
     // 5. Commands (incl. the new SPEAK / PLAY_SOUND): every one is acked.
     const cmds = {
-      SPEAK: ctl('command', uid, 'SPEAK', JSON.stringify({ text: 'ચેક-આઉટ સમય સવારે 11 વાગ્યે છે', lang: 'gu' })),
+      SPEAK: ctl('command', uid, 'SPEAK', JSON.stringify({ text: 'ચેક-આઉટ સમય સવારે 11 વાગ્યે છે', lang: 'gu', rate: 1, repeat: 2, volume: 80, chime_before: true })),
       PLAY_SOUND: ctl('command', uid, 'PLAY_SOUND', JSON.stringify({ sound: 'chime', volume: 60 })),
       PLAY_SOUND_URL: ctl('command', uid, 'PLAY_SOUND', JSON.stringify({ url: info.url + 'missing-sound.mp3' })),
       SHOW_MESSAGE: ctl('command', uid, 'SHOW_MESSAGE', JSON.stringify({ title: 'Room service', message: 'Your order is on the way', duration_sec: 20 })),
