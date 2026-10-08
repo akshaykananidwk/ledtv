@@ -43,7 +43,7 @@ return [
     'No departures right now.' => 'હમણાં કોઈ પ્રસ્થાન નથી.',
     'Add entries on the Departures board page.' => 'પ્રસ્થાન બોર્ડ પેજ પર એન્ટ્રી ઉમેરો.',
     'Delayed :n min' => ':n મિનિટ મોડું',
-    'Expected :t' => 'અપેક્ષિત :t',
+    'Exp. :t' => 'અપેક્ષિત :t',
     'ARR' => 'આગ.',
     'DEP' => 'પ્રસ્થા.',
     'Tomorrow' => 'આવતીકાલે',

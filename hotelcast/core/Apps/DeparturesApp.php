@@ -161,7 +161,7 @@ final class DeparturesApp extends DisplayApp
                 }
                 $sub = '';
                 if ($r['delay_now'] > 0 && !in_array($st, ['cancelled', 'on_time'], true)) {
-                    $sub = __('Expected :t', ['t' => BusinessApps::timeLabel(date('H:i:s', (int) $r['eff_ts']), $h24)]);
+                    $sub = __('Exp. :t', ['t' => BusinessApps::timeLabel(date('H:i:s', (int) $r['eff_ts']), $h24)]);
                 }
                 $kindTag = $mode === 'both' ? '<span class="df-kind">' . e($r['kind'] === 'arrival' ? __('ARR') : __('DEP')) . '</span>' : '';
                 $h .= '<div class="df-row df-st-' . e($st) . '" data-k="' . e($r['id'] . '|' . $r['date']) . '" data-st="' . e($st . '|' . $r['delay_now']) . '"' . $rowStyle . '>'

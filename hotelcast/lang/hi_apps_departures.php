@@ -45,7 +45,7 @@ return [
     'No departures right now.' => 'अभी कोई प्रस्थान नहीं।',
     'Add entries on the Departures board page.' => 'प्रस्थान बोर्ड पेज पर एंट्री जोड़ें।',
     'Delayed :n min' => ':n मिनट देरी',
-    'Expected :t' => 'अपेक्षित :t',
+    'Exp. :t' => 'अपेक्षित :t',
     'ARR' => 'आग.',
     'DEP' => 'प्रस्था.',
     'Tomorrow' => 'कल',

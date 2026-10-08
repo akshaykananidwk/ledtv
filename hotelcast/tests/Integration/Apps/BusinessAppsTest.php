@@ -507,7 +507,7 @@ final class BusinessAppsTest extends TestCase
         [, $json] = DisplayAppsTestKit::data(self::$url, $item);
         $this->assertStringContainsString('df-st-delayed', $json['data']['html']);
         $this->assertStringContainsString('Delayed 30 min', $json['data']['html']);
-        $this->assertStringContainsString('Expected ', $json['data']['html']);
+        $this->assertStringContainsString('Exp. ', $json['data']['html']);
         $s->post('departures.php', $q('boarding'));
         [, $json] = DisplayAppsTestKit::data(self::$url, $item);
         $this->assertStringContainsString('df-st-boarding', $json['data']['html']);
