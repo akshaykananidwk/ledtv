@@ -56,7 +56,8 @@ require __DIR__ . '/partials/header.php';
 ?>
 <style>
 .qi-svc{min-height:6rem;font-size:1.4rem;font-weight:700}
-.qi-big{font-size:clamp(4rem,20vw,8rem);font-weight:800;line-height:1;font-variant-numeric:tabular-nums}
+.qi-big{font-size:clamp(4rem,20vw,8rem);font-weight:800;line-height:1;font-variant-numeric:tabular-nums;white-space:nowrap}
+@media (min-width:992px){.qi-big{font-size:clamp(3rem,6vw,8rem)}}
 #qTicket{display:none;font-family:Arial,Helvetica,sans-serif;color:#000;background:#fff;text-align:center}
 #qTicket .t-hotel{font-size:13pt;font-weight:700}
 #qTicket .t-svc{font-size:11pt;margin-top:2mm}
