@@ -1,3 +1,10 @@
+# 2.5.0 — Krishna Cloud TV Management: plans & features, custom roles, all screens, rename (2026-10-08)
+
+Product renamed to **Krishna Cloud TV Management**; UI wording Hotel → Customer / Business, Room → Screen outside the Hospitality module (database / API / JSON names unchanged, see `docs/modules/terminology.md`); Hindi admin language; migration 031.
+PHPUnit ✅ **560 tests, 23,344 assertions, 0 failures** (new: `TerminologyTest` crawls every admin page as platform admin — platform pages and inside a customer — and as a customer admin without Hospitality, in EN / GU / HI: no PHP warnings, no "hotel" / "room" in the visible English text; `MigratorTest::testProductNameMigration031`) · Android ✅ 226 tests, lint 0 errors, APK `KrishnaCloud-TV-2.5.0.apk` (code 13, launcher label "Krishna Cloud TV"), same signing key (SHA-256 `b0f2c899…1a156c`).
+
+---
+
 # 2.4.1 — emergency alarm sound + notice chime (2026-10-08)
 
 Emergency: beep / siren / fire alarm / library sound, repeating until stopped (or N times), alarm volume (TV raised, restored after), "Silence alarm" button. Messages and notice board: optional chime. Built-in sounds synthesised in-house (`tools/sounds/make_alarm_sounds.php`).
