@@ -90,6 +90,9 @@ final class Kpi
         } elseif ($type === 'days_since') {
             $num = (float) self::daysSince($t['since_date'] ?? null, $now);
             $value = self::fmt($num);
+            if ($unit === '') {
+                $unit = __('days');
+            }
         } else {
             $num = (float) $t['value_num'];
             $value = self::fmt($num);
@@ -113,7 +116,7 @@ final class Kpi
             'num' => $num,
             'unit' => $unit,
             'target' => $target,
-            'target_text' => $target !== null ? self::fmt($target) . ($unit !== '' ? ' ' . $unit : '') : '',
+            'target_text' => $target !== null ? self::fmt($target) . ($unit === '%' ? '%' : ($unit !== '' ? ' ' . $unit : '')) : '',
             'progress' => $progress,
             'level' => self::level($num, $good, $bad),
         ];

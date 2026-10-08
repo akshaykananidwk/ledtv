@@ -130,9 +130,6 @@ final class KpiDashboardApp extends DisplayApp
         $h = '<div class="kp-tile hc-card kp-t-' . e($v['type']) . ($v['level'] !== '' ? ' kp-' . e($v['level']) : '') . '">'
             . '<div class="kp-label">' . e($v['label']) . '</div>'
             . '<div class="kp-value"><b>' . e($v['value'] !== '' ? $v['value'] : '—') . '</b>' . ($v['unit'] !== '' && $v['type'] !== 'text' ? '<span class="kp-unit">' . e($v['unit']) . '</span>' : '') . '</div>';
-        if ($v['type'] === 'days_since') {
-            $h .= '<div class="kp-sub">' . e(__('days')) . '</div>';
-        }
         if ($v['progress'] !== null) {
             $h .= '<div class="kp-bar"><i style="width:' . e(BusinessApps::plain((float) $v['progress'])) . '%"></i></div>';
         }
