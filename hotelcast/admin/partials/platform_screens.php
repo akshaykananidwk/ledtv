@@ -2,8 +2,9 @@
 declare(strict_types=1);
 
 /**
- * Shared UI + POST handler of Platform → All screens (admin/platform_screens.php) and the Screens tab
- * of the customer detail page (admin/platform_customer.php). docs/modules/platform_screens.md.
+ * Shared UI + POST handler of Platform → All screens (admin/platform_screens.php), the Screens tab
+ * of the customer detail page (admin/platform_customer.php) and (2.5.1) the "All customers" view and the
+ * "Transfer to another customer" dialog of Screens & TVs (admin/rooms.php). docs/modules/platform_screens.md.
  * Permission checks: the pages require platform.screens; pool actions here require platform.pool.
  * Every device id is re-checked against the user's customers by core/PlatformScreens.php.
  */
@@ -81,7 +82,7 @@ function ps_handle_post(string $back): never
     redirect($back);
 }
 
-/** Move options from POST (target screen mode, room, new screen name). */
+/** Move options from POST (target screen mode, room, new screen name, 2.5.1 "Transfer everything" boxes). */
 function ps_move_options(): array
 {
     $mode = req_str('screen_mode', $_POST, 10);
@@ -89,6 +90,7 @@ function ps_move_options(): array
         'mode' => in_array($mode, ['existing', 'new', 'same'], true) ? $mode : 'existing',
         'room_id' => req_int('target_room', $_POST),
         'name' => req_str('new_name', $_POST, 100),
+        'copy' => ['details' => !empty($_POST['copy_details']), 'content' => !empty($_POST['copy_content'])],
     ];
 }
 
@@ -117,8 +119,11 @@ function ps_apply(string $action, array $ids): void
             return;
         case 'move':
             require_can('platform.move'); // only platform admins move TVs (resellers: commands / revoke only)
-            $n = PlatformScreens::move($ids, req_int('target_customer', $_POST), ps_move_options());
-            flash('success', __(':n TV(s) moved. They show the new customer\'s content on their next poll.', ['n' => $n]));
+            $r = PlatformScreens::transfer($ids, req_int('target_customer', $_POST), ps_move_options());
+            flash('success', __(':n TV(s) moved. They show the new customer\'s content on their next poll.', ['n' => $r['moved']]));
+            if ($r['summary'] !== '') {
+                flash($r['report']['skipped'] ? 'warning' : 'info', $r['summary']);
+            }
             return;
         case 'unassign':
             require_can('platform.pool');
@@ -213,6 +218,7 @@ function ps_table(array $rows, bool $showCustomer = true): string
             <td class="d-none d-xl-table-cell small mono"><?= e($d['ip_address'] ?? '-') ?><?php if (!empty($d['public_ip']) && $d['public_ip'] !== $d['ip_address']): ?><div class="text-muted"><?= e($d['public_ip']) ?></div><?php endif; ?></td>
             <td class="d-none d-xxl-table-cell small text-muted"><?= e(substr((string) $d['registered_at'], 0, 16)) ?></td>
             <td class="text-end text-nowrap">
+              <?php if ($canMove && !$revoked): ?><button type="button" class="btn btn-sm btn-outline-primary js-ps-transfer" data-ids="<?= $id ?>" data-label="<?= e(trim(($d['room_number'] ?? '') . ' · ' . $d['device_uid'], ' ·')) ?>" title="<?= e(__('Transfer to another customer')) ?>" aria-label="<?= e(__('Transfer to another customer')) ?>"><i class="bi bi-arrow-left-right"></i></button><?php endif; ?>
               <button class="btn btn-sm btn-light border" form="psRowForm" name="row" value="open:device:<?= $id ?>" title="<?= e(__('Open this screen inside the customer')) ?>"><i class="bi bi-box-arrow-in-right"></i></button>
               <?php if (!$revoked && $d['room_id']): ?>
                 <button class="btn btn-sm btn-light border" form="psRowForm" name="row" value="open:live:<?= $id ?>" title="<?= e(__('Live view')) ?>"><i class="bi bi-display"></i></button>
@@ -227,7 +233,7 @@ function ps_table(array $rows, bool $showCustomer = true): string
                   <?php endforeach; ?>
                   <?php if (($d['platform'] ?? 'android') !== 'web'): ?><li><button class="dropdown-item" form="psRowForm" name="row" value="update:-:<?= $id ?>" data-confirm="<?= e(__('Install the customer\'s newest app on this TV?')) ?>" data-confirm-safe="1"><?= e(__('Update app')) ?></button></li><?php endif; ?>
                   <li><hr class="dropdown-divider"></li>
-                  <?php if ($canMove): ?><li><button class="dropdown-item js-ps-move" type="button" data-id="<?= $id ?>"><i class="bi bi-arrow-left-right"></i> <?= e(__('Move to another customer…')) ?></button></li><?php endif; ?>
+                  <?php if ($canMove): ?><li><button class="dropdown-item js-ps-transfer" type="button" data-ids="<?= $id ?>" data-label="<?= e($d['device_uid']) ?>"><i class="bi bi-arrow-left-right"></i> <?= e(__('Transfer to another customer…')) ?></button></li><?php endif; ?>
                   <?php if ($canPool): ?><li><button class="dropdown-item" form="psRowForm" name="row" value="unassign:-:<?= $id ?>" data-confirm="<?= e(__('Move this TV to the unassigned pool? The customer loses it; it shows a "waiting for setup" screen.')) ?>"><i class="bi bi-inbox"></i> <?= e(__('Move to unassigned pool')) ?></button></li><?php endif; ?>
                   <li><button class="dropdown-item text-danger" form="psRowForm" name="row" value="revoke:-:<?= $id ?>" data-confirm="<?= e(__('Revoke this TV? It will stop showing content and go back to its setup screen until registered again.')) ?>"><i class="bi bi-slash-circle"></i> <?= e(__('Revoke')) ?></button></li>
                 </ul>
@@ -243,8 +249,11 @@ function ps_table(array $rows, bool $showCustomer = true): string
     return (string) ob_get_clean();
 }
 
-/** Target customer + screen fields (move / pool assign). $prefix keeps element ids unique. */
-function ps_move_fields(array $customers, string $prefix, int $preselect = 0): string
+/**
+ * Target customer + screen fields (move / pool assign). $prefix keeps element ids unique.
+ * $transfer (2.5.1): add the "Transfer everything" boxes (screen details, content), checked by default.
+ */
+function ps_move_fields(array $customers, string $prefix, int $preselect = 0, bool $transfer = false): string
 {
     ob_start();
     ?>
@@ -272,63 +281,43 @@ function ps_move_fields(array $customers, string $prefix, int $preselect = 0): s
         <label class="form-label small" for="<?= e($prefix) ?>New"><?= e(__('New screen name')) ?></label>
         <input class="form-control" id="<?= e($prefix) ?>New" name="new_name" maxlength="100" placeholder="<?= e(__('e.g. Lobby TV')) ?>">
       </div>
+      <?php if ($transfer): ?>
+      <div class="col-12 ps-transfer-opts">
+        <div class="border rounded p-2 bg-body-tertiary">
+          <div class="fw-semibold small mb-1"><i class="bi bi-box-seam"></i> <?= e(__('Transfer everything')) ?></div>
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" name="copy_details" value="1" id="<?= e($prefix) ?>CopyDetails" checked>
+            <label class="form-check-label small" for="<?= e($prefix) ?>CopyDetails"><strong><?= e(__('Screen details')) ?></strong> — <?= e(__('name, area / floor, on / off, settings PIN, notes, USB and HDMI-CEC mode, power-off times and device schedules (volume, input, restart) of this screen')) ?></label>
+          </div>
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" name="copy_content" value="1" id="<?= e($prefix) ?>CopyContent" checked>
+            <label class="form-check-label small" for="<?= e($prefix) ?>CopyContent"><strong><?= e(__('Content')) ?></strong> — <?= e(__('the playlist or item this screen plays with its media files, split screen layouts, tickers and scheduled content of this screen')) ?></label>
+          </div>
+          <div class="form-text"><?= e(__('Copied into the new customer and assigned to the target screen; the old customer keeps its originals. The TV keeps its token: no setup on the TV. Display apps are not copied.')) ?></div>
+        </div>
+      </div>
+      <?php endif; ?>
     </div>
     <?php
     return (string) ob_get_clean();
 }
 
-/** Bulk form (bar) + hidden row form + move dialog script. */
-function ps_bulk_bar(array $customers, int $preselect = 0): string
+/**
+ * Script binding every .ps-move block (customer → screens of that customer, screen mode). Emitted once
+ * per page. $roomsUrl: JSON list of a customer's screens (platform_screens.php?action=rooms).
+ */
+function ps_move_script(): string
 {
-    $canPool = Auth::can('platform.pool');
+    static $done = false;
+    if ($done) {
+        return '';
+    }
+    $done = true;
     ob_start();
     ?>
-    <form method="post" id="psRowForm" class="d-none"><?= Csrf::field() ?><input type="hidden" name="op" value="row"></form>
-    <form method="post" id="psBulkForm" class="bulk-bar card card-body mt-3 shadow">
-      <?= Csrf::field() ?><input type="hidden" name="op" value="bulk">
-      <div class="row g-2 align-items-end">
-        <div class="col-12 col-md-auto small text-muted"><i class="bi bi-check2-square"></i> <span id="psSelCount">0</span> <?= e(__('selected')) ?></div>
-        <div class="col-12 col-md-3">
-          <label class="form-label small" for="psAction"><?= e(__('Action')) ?></label>
-          <select class="form-select" name="bulk_action" id="psAction">
-            <option value=""><?= e(__('— Choose action —')) ?></option>
-            <optgroup label="<?= e(__('Commands')) ?>">
-              <?php foreach (PlatformScreens::COMMANDS as $cmd): ?><option value="cmd:<?= e($cmd) ?>"><?= e(command_label($cmd)) ?></option><?php endforeach; ?>
-              <option value="update"><?= e(__('Update app (newest APK of each customer)')) ?></option>
-            </optgroup>
-            <optgroup label="<?= e(__('Manage')) ?>">
-              <?php if (Auth::can('platform.move')): ?><option value="move"><?= e(__('Move to another customer / screen')) ?></option><?php endif; ?>
-              <?php if ($canPool): ?><option value="unassign"><?= e(__('Move to unassigned pool')) ?></option><?php endif; ?>
-              <option value="revoke"><?= e(__('Revoke')) ?></option>
-            </optgroup>
-          </select>
-        </div>
-        <div class="col-12 col-md-auto">
-          <button class="btn btn-primary w-100" data-confirm="<?= e(__('Apply this action to the selected screens?')) ?>" data-confirm-safe="1"><i class="bi bi-lightning-charge"></i> <?= e(__('Apply')) ?></button>
-        </div>
-      </div>
-      <div id="psMoveBox" class="mt-2" hidden><?= ps_move_fields($customers, 'psMv', $preselect) ?></div>
-    </form>
     <script>
     document.addEventListener('DOMContentLoaded', () => {
       const roomsUrl = <?= json_embed(admin_url('platform_screens.php', ['action' => 'rooms'])) ?>;
-      const sel = document.getElementById('psAction');
-      const box = document.getElementById('psMoveBox');
-      const count = () => { document.getElementById('psSelCount').textContent = document.querySelectorAll('.ps-cb:checked').length; };
-      sel.addEventListener('change', () => { box.hidden = sel.value !== 'move'; });
-      document.querySelectorAll('.ps-cb').forEach((c) => c.addEventListener('change', count));
-      document.addEventListener('hc:selection', count);
-      document.querySelectorAll('.js-ps-move').forEach((b) => b.addEventListener('click', () => {
-        document.querySelectorAll('.ps-cb').forEach((c) => { c.checked = c.value === b.dataset.id; });
-        sel.value = 'move'; box.hidden = false; count();
-        document.getElementById('psBulkForm').scrollIntoView({ behavior: 'smooth' });
-      }));
-      document.getElementById('psBulkForm').addEventListener('submit', (ev) => {
-        if (!document.querySelectorAll('.ps-cb:checked').length || !sel.value) {
-          ev.preventDefault(); ev.stopImmediatePropagation();
-          HC.toast(<?= json_embed(__('Select screens and an action first.')) ?>, 'warning');
-        }
-      }, true);
       document.querySelectorAll('.ps-move').forEach((wrap) => {
         const cust = wrap.querySelector('.js-ps-customer');
         const mode = wrap.querySelector('.js-ps-mode');
@@ -351,6 +340,132 @@ function ps_bulk_bar(array $customers, int $preselect = 0): string
       });
     });
     </script>
+    <?php
+    return (string) ob_get_clean();
+}
+
+/**
+ * 2.5.1 "Transfer to another customer" dialog (platform.move only): target customer, target screen and
+ * the "Transfer everything" boxes; posts op=bulk / bulk_action=move to the current page. Opened by any
+ * .js-ps-transfer element with data-ids="1,2" (TV ids) and data-label, or by ps_transfer_open(ids, label).
+ */
+function ps_transfer_modal(array $customers, int $preselect = 0): string
+{
+    static $done = false;
+    if ($done || !Auth::can('platform.move')) {
+        return '';
+    }
+    $done = true;
+    ob_start();
+    ?>
+    <div class="modal fade" id="psTransferModal" tabindex="-1" aria-labelledby="psTransferTitle" aria-hidden="true">
+      <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <form method="post" class="modal-content" id="psTransferForm">
+          <?= Csrf::field() ?><input type="hidden" name="op" value="bulk"><input type="hidden" name="bulk_action" value="move"><input type="hidden" name="ps_form" value="1">
+          <div id="psTransferIds"></div>
+          <div class="modal-header">
+            <h2 class="modal-title fs-5" id="psTransferTitle"><i class="bi bi-arrow-left-right"></i> <?= e(__('Transfer to another customer')) ?></h2>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="<?= e(__('Close')) ?>"></button>
+          </div>
+          <div class="modal-body">
+            <p class="small mb-2"><?= e(__('TV')) ?>: <strong id="psTransferWhat">-</strong></p>
+            <?= ps_move_fields($customers, 'psTr', $preselect, true) ?>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-light border" data-bs-dismiss="modal"><?= e(__('Cancel')) ?></button>
+            <button class="btn btn-primary" id="psTransferGo"><i class="bi bi-arrow-left-right"></i> <?= e(__('Transfer now')) ?></button>
+          </div>
+        </form>
+      </div>
+    </div>
+    <script>
+    function ps_transfer_open(ids, label) {
+      ids = (ids || []).map(String).filter((v) => /^\d+$/.test(v));
+      if (!ids.length) { HC.toast(<?= json_embed(__('Select screens with a TV first.')) ?>, 'warning'); return; }
+      const box = document.getElementById('psTransferIds');
+      box.innerHTML = '';
+      ids.forEach((id) => { const i = document.createElement('input'); i.type = 'hidden'; i.name = 'ids[]'; i.value = id; box.appendChild(i); });
+      document.getElementById('psTransferWhat').textContent = label || (ids.length + ' TV');
+      bootstrap.Modal.getOrCreateInstance(document.getElementById('psTransferModal')).show();
+    }
+    document.addEventListener('DOMContentLoaded', () => {
+      document.querySelectorAll('.js-ps-transfer').forEach((b) => b.addEventListener('click', (ev) => {
+        ev.preventDefault();
+        ps_transfer_open(String(b.dataset.ids || '').split(','), b.dataset.label || '');
+      }));
+      document.getElementById('psTransferForm').addEventListener('submit', (ev) => {
+        if (!document.getElementById('psTransferForm').querySelector('.js-ps-customer').value) {
+          ev.preventDefault(); ev.stopImmediatePropagation();
+          HC.toast(<?= json_embed(__('Choose the target customer.')) ?>, 'warning');
+        }
+      }, true);
+    });
+    </script>
+    <?= ps_move_script() ?>
+    <?php
+    return (string) ob_get_clean();
+}
+
+/** Bulk form (bar) + hidden row form + move dialog script. */
+function ps_bulk_bar(array $customers, int $preselect = 0): string
+{
+    $canPool = Auth::can('platform.pool');
+    ob_start();
+    ?>
+    <form method="post" id="psRowForm" class="d-none"><?= Csrf::field() ?><input type="hidden" name="op" value="row"><input type="hidden" name="ps_form" value="1"></form>
+    <form method="post" id="psBulkForm" class="bulk-bar card card-body mt-3 shadow">
+      <?= Csrf::field() ?><input type="hidden" name="op" value="bulk"><input type="hidden" name="ps_form" value="1">
+      <div class="row g-2 align-items-end">
+        <div class="col-12 col-md-auto small text-muted"><i class="bi bi-check2-square"></i> <span id="psSelCount">0</span> <?= e(__('selected')) ?></div>
+        <div class="col-12 col-md-3">
+          <label class="form-label small" for="psAction"><?= e(__('Action')) ?></label>
+          <select class="form-select" name="bulk_action" id="psAction">
+            <option value=""><?= e(__('— Choose action —')) ?></option>
+            <optgroup label="<?= e(__('Commands')) ?>">
+              <?php foreach (PlatformScreens::COMMANDS as $cmd): ?><option value="cmd:<?= e($cmd) ?>"><?= e(command_label($cmd)) ?></option><?php endforeach; ?>
+              <option value="update"><?= e(__('Update app (newest APK of each customer)')) ?></option>
+            </optgroup>
+            <optgroup label="<?= e(__('Manage')) ?>">
+              <?php if (Auth::can('platform.move')): ?><option value="move"><?= e(__('Transfer to another customer / screen')) ?></option><?php endif; ?>
+              <?php if ($canPool): ?><option value="unassign"><?= e(__('Move to unassigned pool')) ?></option><?php endif; ?>
+              <option value="revoke"><?= e(__('Revoke')) ?></option>
+            </optgroup>
+          </select>
+        </div>
+        <div class="col-12 col-md-auto">
+          <button class="btn btn-primary w-100" data-confirm="<?= e(__('Apply this action to the selected screens?')) ?>" data-confirm-safe="1"><i class="bi bi-lightning-charge"></i> <?= e(__('Apply')) ?></button>
+        </div>
+        <?php if (Auth::can('platform.move')): ?>
+        <div class="col-12 col-md-auto ms-md-auto">
+          <button type="button" class="btn btn-outline-primary w-100" id="psTransferSel"><i class="bi bi-arrow-left-right"></i> <?= e(__('Transfer selected to another customer')) ?></button>
+        </div>
+        <?php endif; ?>
+      </div>
+      <div id="psMoveBox" class="mt-2" hidden><?= ps_move_fields($customers, 'psMv', $preselect, true) ?></div>
+    </form>
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const sel = document.getElementById('psAction');
+      const box = document.getElementById('psMoveBox');
+      const count = () => { document.getElementById('psSelCount').textContent = document.querySelectorAll('.ps-cb:checked').length; };
+      sel.addEventListener('change', () => { box.hidden = sel.value !== 'move'; });
+      document.querySelectorAll('.ps-cb').forEach((c) => c.addEventListener('change', count));
+      document.addEventListener('hc:selection', count);
+      document.getElementById('psBulkForm').addEventListener('submit', (ev) => {
+        if (!document.querySelectorAll('.ps-cb:checked').length || !sel.value) {
+          ev.preventDefault(); ev.stopImmediatePropagation();
+          HC.toast(<?= json_embed(__('Select screens and an action first.')) ?>, 'warning');
+        }
+      }, true);
+      const tr = document.getElementById('psTransferSel');
+      if (tr) tr.addEventListener('click', () => {
+        const ids = [...document.querySelectorAll('.ps-cb:checked')].map((c) => c.value);
+        ps_transfer_open(ids, ids.length + ' ' + <?= json_embed(__('TV(s) selected')) ?>);
+      });
+    });
+    </script>
+    <?= ps_move_script() ?>
+    <?= ps_transfer_modal($customers) ?>
     <?php
     return (string) ob_get_clean();
 }

@@ -228,6 +228,39 @@ final class PlatformScreens
     }
 
     /**
+     * 2.5.1 (Screens & TVs → All customers, filter "Screens without TV"): screens (rooms) in scope that
+     * have no active TV, with the same search / customer filters and pagination as list().
+     */
+    public static function screensWithoutTv(array $f, ?array $scope = null): array
+    {
+        $scope = func_num_args() >= 2 ? $scope : self::scopeHotelIds();
+        [$sc, $p] = self::scopeSql('r.hotel_id', $scope);
+        $w = 'WHERE NOT EXISTS (SELECT 1 FROM devices d WHERE d.room_id = r.id AND d.hotel_id = r.hotel_id AND d.is_revoked = 0)' . $sc;
+        if ($f['customer']) {
+            $w .= ' AND r.hotel_id = :fc';
+            $p['fc'] = $f['customer'];
+        }
+        if ($f['q'] !== '') {
+            $w .= ' AND (r.room_number LIKE :q1 OR r.name LIKE :q2 OR h.name LIKE :q3 OR r.floor LIKE :q4)';
+            $like = '%' . addcslashes($f['q'], '%_\\') . '%';
+            foreach (range(1, 4) as $i) {
+                $p['q' . $i] = $like;
+            }
+        }
+        $from = ' FROM rooms r JOIN hotels h ON h.id = r.hotel_id ';
+        $total = (int) DB::value('SELECT COUNT(*)' . $from . $w, $p);
+        $rows = DB::all(
+            'SELECT r.id, r.hotel_id, r.room_number, r.name, r.floor, r.is_enabled, h.name AS hotel_name, h.status AS hotel_status,
+                    (SELECT GROUP_CONCAT(g.name ORDER BY g.name SEPARATOR \', \') FROM room_group_members m
+                       JOIN room_groups g ON g.id = m.group_id AND g.hotel_id = r.hotel_id WHERE m.room_id = r.id) AS group_names'
+            . $from . $w . ' ORDER BY h.name, h.id, LENGTH(r.room_number), r.room_number
+            LIMIT ' . (int) $f['per_page'] . ' OFFSET ' . (int) (($f['page'] - 1) * $f['per_page']),
+            $p
+        );
+        return ['rows' => $rows, 'total' => $total, 'pages' => (int) max(1, ceil($total / max(1, $f['per_page'])))];
+    }
+
+    /**
      * Health warnings of every active TV in scope: device id => [key => text]. Same rule as
      * admin/tv_health.php (DeviceHealth::warnings on the last heartbeat). Cached per request.
      */
@@ -280,6 +313,13 @@ final class PlatformScreens
             'pool' => $pool,
             'revoked' => (int) ($r['revoked'] ?? 0),
         ];
+    }
+
+    /** Active TVs in scope (view switch of Screens & TVs, 2.5.1). */
+    public static function tvTotal(?array $scope): int
+    {
+        [$sc, $p] = self::scopeSql('hotel_id', $scope);
+        return (int) DB::value('SELECT COUNT(*) FROM devices WHERE is_revoked = 0' . $sc, $p);
     }
 
     /** Per customer: screens / online / offline (dashboard + customers list). hotel id => counts. */
