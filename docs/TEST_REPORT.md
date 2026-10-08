@@ -1,3 +1,21 @@
+# 2.5.1 — all customers' TVs on Screens & TVs, transfer a TV with everything (2026-10-08)
+
+Server only (`version.json` 2.5.1; the TV app stays 2.5.0). Screens & TVs (`admin/rooms.php`) gets the view switch "This customer" | "All customers" for platform users and a "Transfer to another customer" dialog with "Transfer everything" (screen details + content copied into the target, `core/ScreenTransfer.php`). See `docs/modules/platform_screens.md` § 2b, § 7.
+PHPUnit ✅ **577 tests, 23,699 assertions, 0 failures, 2 skipped** (full suite; 570 before + 7 in the new `tests/Integration/Apps/ScreenTransferTest.php`). One earlier full run had a failure in `ContentAppsTest::testEventWelcomeProgrammeHighlightAndFrames` (programme item at 11:59 PM while the run crossed local midnight — time-of-day dependent, passes alone and in the second full run).
+
+| `ScreenTransferTest` | covers |
+|---|---|
+| platform admin on rooms.php | All customers default (every customer's TVs incl. resellers' customers, customer column links), search / customer / status / "screens without TV" filters, pagination; without an open customer only All; own account: switch, `?view=customer` remembered, Transfer buttons in the customer view, bulk option and on the TV detail page |
+| reseller / customer user | reseller: own customers only, no Transfer (no `platform.move`), old redirect to the panel until `?view=all`; customer admin: old page, no switch, `?view=all` and a posted platform form change nothing; reseller POST → 403; core API refuses |
+| transfer everything | screen details (ID, name, floor, PIN, notes, CEC), playlist + image / video / announcement / layout copied as new rows of the target with files in `uploads/h{target}`, layout zones re-pointed, display app and bell with an uploaded sound listed as not copied, room ticker / power-off window / volume schedule copied, nothing else of the old customer; old customer's rows and files unchanged; token kept, old commands deleted; the TV's next poll (ContentResolver) lists the copies with the target's URLs and serves the file; logs on both customers + platform |
+| no options / inherited content | without boxes nothing is copied; a screen following default content gets it copied and assigned directly; "new screen" keeps the typed name |
+| limits & failures | storage limit (`STORAGE_LIMIT`), screen limit (`LICENSE_LIMIT`) and a clash after files were copied: no rows, no screen, no files left, TVs unchanged, originals intact |
+| CSRF / translations | 419 without / with a wrong token on rooms.php (list + TV page) and platform_screens.php; every new string in gu / hi, no hotel / room wording |
+
+Browser check (headless Chromium, sandbox with 4 customers, 7 TVs): All customers view EN / GU, customer view with Transfer buttons, transfer dialog, transfer of a screen with 2 images, a video, an announcement, a display app and a ticker → "Copied: 1 screen setting, 1 playlist, 4 content items, 3 media files, 1 ticker; Not copied: Display app …", target customer lists the screen with its playlist. No JavaScript errors from the app. Screenshots: `docs/screenshots/2.5.1/`.
+
+---
+
 # 2.5.0 — Krishna Cloud TV Management: plans & features, custom roles, all screens, rename (2026-10-08)
 
 Product renamed to **Krishna Cloud TV Management**; UI wording Hotel → Customer / Business, Room → Screen outside the Hospitality module (database / API / JSON names unchanged, see `docs/modules/terminology.md`); Hindi admin language; migration 031.
