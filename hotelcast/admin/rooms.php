@@ -294,8 +294,10 @@ if ($action === 'device') {
         flash('warning', __('Device not found.'));
         redirect(admin_url('rooms.php'));
     }
+    // device_commands has no hotel_id: a TV moved in from another customer has its old commands removed by the
+    // move (PlatformScreens::move); the status log is scoped to this customer (2.5 security review).
     $cmds = DB::all('SELECT * FROM device_commands WHERE device_id = :d ORDER BY id DESC LIMIT 30', ['d' => $did]);
-    $statusLog = DB::all('SELECT * FROM device_status_logs WHERE device_id = :d ORDER BY id DESC LIMIT 20', ['d' => $did]);
+    $statusLog = DB::all('SELECT * FROM device_status_logs WHERE device_id = :d AND hotel_id = :hid ORDER BY id DESC LIMIT 20', ['d' => $did] + hid());
     $online = DeviceManager::isOnline($dev);
     $pageTitle = __('TV details');
     require __DIR__ . '/partials/header.php';

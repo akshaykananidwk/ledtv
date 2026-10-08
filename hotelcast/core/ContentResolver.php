@@ -116,7 +116,9 @@ final class ContentResolver
             $content['screen_on'] = false;
             return self::finish($content, $room);
         }
-        foreach (self::powerWindows() as $b) {
+        // 2.5 plans: time-based rules of modules outside the customer's plan (power schedules, holidays,
+        // scheduled content) stop applying after a downgrade; they are kept and apply again after an upgrade.
+        foreach (Features::enabled('power_schedules') ? self::powerWindows() : [] as $b) {
             if (self::windowActive($b) && self::targets($b, $room, $groupIds)) {
                 $content['mode'] = 'off';
                 $content['screen_on'] = false;
@@ -125,7 +127,7 @@ final class ContentResolver
             }
         }
         // 2b. Holiday calendar (2.4): "TVs off" works like a power-off window for the whole day.
-        $holiday = Holidays::forRoom($room, $groupIds);
+        $holiday = Features::enabled('holidays') ? Holidays::forRoom($room, $groupIds) : null;
         if ($holiday && $holiday['action'] === 'tv_off') {
             $content['mode'] = 'off';
             $content['screen_on'] = false;
@@ -134,8 +136,8 @@ final class ContentResolver
             return self::finish($content, $room);
         }
 
-        // 3. Time-window broadcasts
-        $windows = DB::all(
+        // 3. Time-window broadcasts (Schedules & calendar)
+        $windows = !Features::enabled('schedule') ? [] : DB::all(
             "SELECT * FROM broadcast_commands
              WHERE hotel_id = :h AND mode = 'window' AND is_emergency = 0 AND command = 'SHOW_CONTENT' AND status IN ('scheduled','active')
                AND (start_at IS NULL OR start_at <= :now) AND (end_at IS NULL OR end_at > :now2)

@@ -25,7 +25,9 @@ final class Approvals
 
     public static function enabled(): bool
     {
-        return Settings::bool(self::SETTING);
+        // 2.5 plans: without "Content approval" in the plan, staff content is not held back (there is no
+        // approvals page to release it).
+        return Settings::bool(self::SETTING) && Features::enabled('approvals');
     }
 
     /** Does a save by the current user need a manager's approval? */

@@ -628,7 +628,9 @@ final class Broadcaster
     {
         $done = ['pushed' => 0, 'activated' => 0, 'ended' => 0];
         $hid = Tenant::id();
-        $due = DB::all("SELECT * FROM broadcast_commands WHERE hotel_id = :hid AND mode = 'once' AND status = 'scheduled' AND start_at <= :n", ['n' => now(), 'hid' => $hid]);
+        // 2.5 plans: one-time scheduled pushes of a customer without "Schedules & calendar" wait (they run
+        // after an upgrade); window schedules are ignored by ContentResolver while the feature is off.
+        $due = !Features::enabled('schedule') ? [] : DB::all("SELECT * FROM broadcast_commands WHERE hotel_id = :hid AND mode = 'once' AND status = 'scheduled' AND start_at <= :n", ['n' => now(), 'hid' => $hid]);
         foreach ($due as $b) {
             // Claim atomically so concurrent ticks don't double-process.
             if (DB::update('broadcast_commands', ['status' => 'completed'], "id = :id AND status = 'scheduled'", ['id' => $b['id']]) !== 1) {

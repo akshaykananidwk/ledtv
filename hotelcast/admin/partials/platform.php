@@ -80,6 +80,13 @@ function platform_save_hotel(?array $existing, ?int $resellerId, string $backUrl
 function hotel_form_fields(array $h, bool $byReseller, bool $isNew): string
 {
     $plans = Hotels::plans(true);
+    // The customer's current plan stays selectable even when it was deactivated (2.5 security review: saving the
+    // form must not silently switch the customer to "No plan" = every feature, unlimited).
+    if (!empty($h['plan_id']) && !in_array((int) $h['plan_id'], array_map('intval', array_column($plans, 'id')), true)
+        && ($cur = DB::one('SELECT * FROM plans WHERE id = :id', ['id' => (int) $h['plan_id']]))) {
+        $cur['name'] .= ' (' . __('inactive') . ')';
+        $plans[] = $cur;
+    }
     $resellers = $byReseller ? [] : Hotels::resellers();
     $v = fn (string $k) => e((string) ($h[$k] ?? ''));
     ob_start();
@@ -94,7 +101,7 @@ function hotel_form_fields(array $h, bool $byReseller, bool $isNew): string
           <div class="col-sm-6">
             <label class="form-label" for="h_plan"><?= e(__('Plan')) ?></label>
             <select class="form-select" id="h_plan" name="plan_id">
-              <option value=""><?= e(__('— No plan (not billed) —')) ?></option>
+              <?php if (!$byReseller || empty($h['plan_id']) && !$isNew): // resellers: always a plan ?><option value=""><?= e(__('— No plan (not billed) —')) ?></option><?php endif; ?>
               <?php foreach ($plans as $p): ?>
                 <option value="<?= (int) $p['id'] ?>"<?= (int) ($h['plan_id'] ?? 0) === (int) $p['id'] ? ' selected' : '' ?>><?= e($p['name']) ?> · <?= e(money($p['price_per_tv_month'])) ?>/<?= e(__('TV/month')) ?><?= $p['max_tvs'] !== null ? ' · ' . e(__('max :n TVs', ['n' => $p['max_tvs']])) : '' ?></option>
               <?php endforeach; ?>

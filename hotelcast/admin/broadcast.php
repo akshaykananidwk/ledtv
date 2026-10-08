@@ -26,6 +26,9 @@ if (is_post()) {
                     flash('success', __('Sent! :n TVs will switch within a few seconds.', ['n' => $n]));
                 } else {
                     require_can('schedule.manage');
+                    // 2.5 plans: schedule.manage is shared with "TV power schedules"; scheduling content
+                    // needs "Schedules & calendar" itself.
+                    Features::require('schedule');
                     $in = $_POST;
                     $in['mode'] = $when;
                     [$data, $errors] = Broadcaster::validateSchedule($in);
@@ -113,7 +116,7 @@ if (is_post()) {
     redirect(admin_url('broadcast.php') . (in_array($op, ['emergency', 'emergency_stop', 'emergency_silence'], true) ? '#emergency' : ($op === 'announce' ? '#announce' : '')));
 }
 
-$canSchedule = Auth::can('schedule.manage');
+$canSchedule = Auth::can('schedule.manage') && Features::allows('schedule');
 $canCmd = Auth::can('broadcast.device_commands');
 $emergencies = hc_visible_emergencies();
 $limited = Access::restricted();

@@ -67,7 +67,9 @@ try {
         case 'send_command':
             $needPost();
             $command = strtoupper((string) ($in['command'] ?? ''));
-            if (!in_array($command, Broadcaster::DEVICE_COMMANDS, true) || $command === 'UPDATE_APP') {
+            // Same commands as the Broadcast page: the others (SPEAK, PLAY_SOUND, SCREENSHOT, UPLOAD_LOGS, SET_VOLUME,
+            // OPEN_INPUT, SHOW_MESSAGE …) have their own pages with their own permission and plan checks.
+            if (!in_array($command, ['SHOW_CONTENT', 'RELOAD', 'CLEAR_CACHE', 'SCREEN_ON', 'SCREEN_OFF', 'REBOOT', 'PING'], true)) {
                 ajax_error(__('Unknown command.'), 422, 'VALIDATION_ERROR');
             }
             require_can($command === 'SHOW_CONTENT' ? 'broadcast.send' : 'broadcast.device_commands');

@@ -424,7 +424,9 @@ final class DeviceSchedules
     {
         $now ??= time();
         $out = ['fired' => 0, 'tvs' => 0, 'restarts' => 0, 'skipped' => 0];
-        if (!Tenant::isActive()) {
+        // 2.5 plans: schedules of a customer whose plan no longer includes device schedules do not fire
+        // (they are kept and fire again after an upgrade).
+        if (!Tenant::isActive() || !Features::enabled('device_schedules')) {
             return $out;
         }
         $hid = Tenant::id();

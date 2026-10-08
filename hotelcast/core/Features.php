@@ -139,7 +139,7 @@ final class Features
         'update' => ['label' => 'Auto-update', 'group' => 'core', 'core' => true, 'description' => 'Server updates (platform only).',
             'permissions' => ['update.manage'], 'pages' => ['update.php', 'ajax_update.php'], 'ajax' => ['update_*', 'rollback']],
         'platform' => ['label' => 'Platform', 'group' => 'core', 'core' => true, 'description' => 'Platform, reseller and chain administration.',
-            'permissions' => ['platform.manage', 'platform.hotels', 'reseller.panel', 'support.platform', 'signup.manage', 'demo.client', 'chains.manage', 'chain.view', 'platform.screens', 'platform.pool'],
+            'permissions' => ['platform.manage', 'platform.hotels', 'reseller.panel', 'support.platform', 'signup.manage', 'demo.client', 'chains.manage', 'chain.view', 'platform.screens', 'platform.pool', 'platform.move'],
             'ajax' => ['platform_*', 'chain_*', 'signup_stats']],
 
         // ------------------------------------------------------------------ content

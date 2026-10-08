@@ -338,7 +338,9 @@ final class PlatformScreensTest extends TestCase
         $this->assertSame(self::$room['B1'], (int) $row['room_id']);
         $this->assertSame(hash('sha256', $tv['token']), $row['token_hash'], 'token kept');
         $this->assertNull($row['health_alerts']);
-        $this->assertSame('expired', DB::value("SELECT status FROM device_commands WHERE device_id = :d AND command = 'REBOOT'", ['d' => $tv['id']]));
+        // 2.5 security review: the old customer's commands are removed (device_commands has no hotel_id, they
+        // would show on the new customer's TV page).
+        $this->assertSame(0, (int) DB::value('SELECT COUNT(*) FROM device_commands WHERE device_id = :d', ['d' => $tv['id']]));
         $this->assertSame(0, (int) DB::value('SELECT COUNT(*) FROM device_live_views WHERE device_id = :d', ['d' => $tv['id']]));
         $this->assertSame(0, (int) DB::value('SELECT COUNT(*) FROM device_health_history WHERE device_id = :d', ['d' => $tv['id']]));
         // Next poll with the SAME token: the new customer's content, no commands of the old one.
@@ -367,8 +369,16 @@ final class PlatformScreensTest extends TestCase
         $this->assertSame(1, (int) DB::value("SELECT COUNT(*) FROM activity_logs WHERE hotel_id = :h AND action = 'device_moved_in' AND entity_id = :d", ['h' => self::$h['beta'], 'd' => $tv['id']]));
         $this->assertSame(1, (int) DB::value("SELECT COUNT(*) FROM activity_logs WHERE hotel_id IS NULL AND action = 'device_move' AND entity_id = :d", ['d' => $tv['id']]));
 
-        // Row "move" with a NEW screen (reseller, own customers) and "same screen ID".
+        // 2.5 security review: only platform admins move TVs — a reseller is refused even between their own customers.
         [$s] = self::as('psres1')->post('platform_screens.php', ['op' => 'bulk', 'bulk_action' => 'move', 'ids' => [$tv['id']],
+            'target_customer' => self::$h['alpha'], 'screen_mode' => 'new', 'new_name' => 'Lobby TV']);
+        $this->assertSame(403, $s);
+        $this->assertSame(self::$h['beta'], (int) self::deviceRow('tvA2')['hotel_id']);
+        [, , $html] = self::as('psres1')->get('platform_screens.php');
+        $this->assertStringNotContainsString('value="move"', $html, 'no move action for resellers');
+        $this->assertStringNotContainsString('js-ps-move', $html);
+        // Row "move" with a NEW screen and "same screen ID".
+        [$s] = self::as('psroot')->post('platform_screens.php', ['op' => 'bulk', 'bulk_action' => 'move', 'ids' => [$tv['id']],
             'target_customer' => self::$h['alpha'], 'screen_mode' => 'new', 'new_name' => 'Lobby TV']);
         $row = self::deviceRow('tvA2');
         $this->assertSame(self::$h['alpha'], (int) $row['hotel_id']);

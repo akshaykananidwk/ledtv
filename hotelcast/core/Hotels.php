@@ -98,6 +98,17 @@ final class Hotels
         if ($planId && !DB::value('SELECT id FROM plans WHERE id = :id', ['id' => $planId])) {
             $planId = 0;
         }
+        // 2.5 security review: "no plan" means every feature, unlimited and not billed, and inactive plans are
+        // drafts / retired. A reseller may choose an active plan or keep the customer's current one.
+        $currentPlan = $existing ? (int) ($existing['plan_id'] ?? 0) : 0;
+        if ($byReseller && (!$existing || $planId !== $currentPlan)) {
+            if (!$planId) {
+                $errors[] = __('Choose a plan.');
+            } elseif (!DB::value('SELECT id FROM plans WHERE id = :id AND is_active = 1', ['id' => $planId])) {
+                $errors[] = __('This plan is not available. Choose another plan.');
+                $planId = $currentPlan;
+            }
+        }
         $color = $s('brand_color', 7);
         if ($color !== '' && !preg_match('/^#[0-9a-fA-F]{6}$/', $color)) {
             $errors[] = __('Colour must look like #7B1FA2.');

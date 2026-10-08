@@ -42,6 +42,12 @@ if (is_post()) {
                 flash('danger', __('You cannot change your own role.'));
                 redirect(admin_url('roles.php'));
             }
+            if ($existing && !Roles::canAssign($existing['key'])) {
+                // 2.5 security review: a non-Admin may not change (e.g. strip) a role with more rights than their own.
+                Logger::write('security', 'warning', 'Role edit refused (more rights than the editor)', ['user' => Auth::id(), 'role' => $id, 'ip' => client_ip()]);
+                flash('danger', __('You cannot change a role that has more rights than yours.'));
+                redirect(admin_url('roles.php'));
+            }
             [$data, $errors] = Roles::validate($_POST, $id ?: null);
             $requested = array_values(array_filter((array) ($_POST['perms'] ?? []), 'is_string'));
             [$perms, $kept] = Roles::sanitize($requested, $existing['permissions'] ?? []);
@@ -71,6 +77,11 @@ if (is_post()) {
             }
             if ($myRoleId === (int) $role['id']) {
                 flash('danger', __('You cannot delete your own role.'));
+                break;
+            }
+            if (!Roles::canAssign($role['key'])) {
+                Logger::write('security', 'warning', 'Role delete refused (more rights than the editor)', ['user' => Auth::id(), 'role' => $id, 'ip' => client_ip()]);
+                flash('danger', __('You cannot change a role that has more rights than yours.'));
                 break;
             }
             $users = Roles::usersOf((int) $role['id']);
@@ -250,6 +261,10 @@ if (in_array($action, ['new', 'edit', 'copy'], true)) {
             flash('danger', __('You cannot change your own role.'));
             redirect(admin_url('roles.php'));
         }
+        if (!Roles::canAssign($role['key'])) {
+            flash('danger', __('You cannot change a role that has more rights than yours.'));
+            redirect(admin_url('roles.php'));
+        }
     } elseif ($action === 'copy') {
         $from = req_str('from', $_GET, 20);
         $builtIn = Roles::builtIn();
@@ -406,9 +421,9 @@ require __DIR__ . '/partials/header.php';
       <thead><tr><th><?= e(__('Role')) ?></th><th class="d-none d-md-table-cell"><?= e(__('This role can …')) ?></th><th><?= e(__('Users')) ?></th><th class="text-end"><?= e(__('Actions')) ?></th></tr></thead>
       <tbody>
       <?php if (!$custom): ?><tr><td colspan="4" class="text-muted text-center py-4"><?= e(__('No custom roles yet. Click "New role" or copy a built-in role.')) ?></td></tr><?php endif; ?>
-      <?php foreach ($custom as $r): $mine = $myRoleId === (int) $r['id']; ?>
+      <?php foreach ($custom as $r): $mine = $myRoleId === (int) $r['id'] || !Roles::canAssign($r['key']); /* own role or more rights than mine: read-only */ $own = $myRoleId === (int) $r['id']; ?>
         <tr>
-          <td><span class="fw-semibold"><?= e($r['name']) ?></span><?php if ($mine): ?> <span class="badge text-bg-info"><?= e(__('your role')) ?></span><?php endif; ?>
+          <td><span class="fw-semibold"><?= e($r['name']) ?></span><?php if ($own): ?> <span class="badge text-bg-info"><?= e(__('your role')) ?></span><?php endif; ?>
             <?php if ($r['description'] !== ''): ?><div class="small text-muted"><?= e($r['description']) ?></div><?php endif; ?></td>
           <td class="d-none d-md-table-cell small">
             <?php foreach (Roles::summary($r['permissions']) as $s): ?><div><strong><?= e($s['group']) ?>:</strong> <?= e(implode(', ', $s['items'])) ?></div><?php endforeach; ?>

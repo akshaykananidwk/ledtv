@@ -116,6 +116,7 @@ function ps_apply(string $action, array $ids): void
             flash('success', __(':n TV(s) revoked. They return to their setup screen.', ['n' => $n]));
             return;
         case 'move':
+            require_can('platform.move'); // only platform admins move TVs (resellers: commands / revoke only)
             $n = PlatformScreens::move($ids, req_int('target_customer', $_POST), ps_move_options());
             flash('success', __(':n TV(s) moved. They show the new customer\'s content on their next poll.', ['n' => $n]));
             return;
@@ -166,6 +167,7 @@ function ps_platform_label(array $d): string
 function ps_table(array $rows, bool $showCustomer = true): string
 {
     $canPool = Auth::can('platform.pool');
+    $canMove = Auth::can('platform.move');
     ob_start();
     ?>
     <div class="table-responsive">
@@ -225,7 +227,7 @@ function ps_table(array $rows, bool $showCustomer = true): string
                   <?php endforeach; ?>
                   <?php if (($d['platform'] ?? 'android') !== 'web'): ?><li><button class="dropdown-item" form="psRowForm" name="row" value="update:-:<?= $id ?>" data-confirm="<?= e(__('Install the customer\'s newest app on this TV?')) ?>" data-confirm-safe="1"><?= e(__('Update app')) ?></button></li><?php endif; ?>
                   <li><hr class="dropdown-divider"></li>
-                  <li><button class="dropdown-item js-ps-move" type="button" data-id="<?= $id ?>"><i class="bi bi-arrow-left-right"></i> <?= e(__('Move to another customer…')) ?></button></li>
+                  <?php if ($canMove): ?><li><button class="dropdown-item js-ps-move" type="button" data-id="<?= $id ?>"><i class="bi bi-arrow-left-right"></i> <?= e(__('Move to another customer…')) ?></button></li><?php endif; ?>
                   <?php if ($canPool): ?><li><button class="dropdown-item" form="psRowForm" name="row" value="unassign:-:<?= $id ?>" data-confirm="<?= e(__('Move this TV to the unassigned pool? The customer loses it; it shows a "waiting for setup" screen.')) ?>"><i class="bi bi-inbox"></i> <?= e(__('Move to unassigned pool')) ?></button></li><?php endif; ?>
                   <li><button class="dropdown-item text-danger" form="psRowForm" name="row" value="revoke:-:<?= $id ?>" data-confirm="<?= e(__('Revoke this TV? It will stop showing content and go back to its setup screen until registered again.')) ?>"><i class="bi bi-slash-circle"></i> <?= e(__('Revoke')) ?></button></li>
                 </ul>
@@ -295,7 +297,7 @@ function ps_bulk_bar(array $customers, int $preselect = 0): string
               <option value="update"><?= e(__('Update app (newest APK of each customer)')) ?></option>
             </optgroup>
             <optgroup label="<?= e(__('Manage')) ?>">
-              <option value="move"><?= e(__('Move to another customer / screen')) ?></option>
+              <?php if (Auth::can('platform.move')): ?><option value="move"><?= e(__('Move to another customer / screen')) ?></option><?php endif; ?>
               <?php if ($canPool): ?><option value="unassign"><?= e(__('Move to unassigned pool')) ?></option><?php endif; ?>
               <option value="revoke"><?= e(__('Revoke')) ?></option>
             </optgroup>

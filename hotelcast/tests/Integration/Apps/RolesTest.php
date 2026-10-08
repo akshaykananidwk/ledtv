@@ -227,10 +227,14 @@ final class RolesTest extends TestCase
         self::waitForOpcache();
     }
 
-    /** The built-in web server (cli-server) uses OPcache with revalidate_freq = 2 s: wait until changed files are re-read. */
+    /**
+     * The built-in web server (cli-server) uses OPcache with revalidate_freq = 2 s: wait until changed files are re-read.
+     * OPcache counts in whole seconds (a script checked at second S is trusted until S + 2 inclusive), so a write
+     * just after a check needs more than 3 s; 2.6 s made the class flaky ("Class FeaturesReal not found" → 500).
+     */
     private static function waitForOpcache(): void
     {
-        usleep(2_600_000);
+        usleep(3_300_000);
     }
 
     private static function restoreFeatures(): void

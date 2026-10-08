@@ -615,6 +615,11 @@ final class PlatformScreens
      */
     public static function move(array $deviceIds, int $targetHotel, array $opt): int
     {
+        if (self::scopeHotelIds() !== null) {
+            // 2.5 security review: moving TVs between customers is for platform admins only (platform.move).
+            Logger::write('security', 'warning', 'All screens: move refused (not a platform admin)', ['user' => self::userId()]);
+            throw new InvalidArgumentException(__('Only the platform admin can move TVs.'));
+        }
         $devs = self::devices($deviceIds);
         if (!self::canSeeHotel($targetHotel)) {
             Logger::write('security', 'warning', 'All screens: move to customer outside scope', ['user' => self::userId(), 'hotel' => $targetHotel]);
@@ -658,6 +663,9 @@ final class PlatformScreens
                         DB::query('DELETE FROM devices WHERE id = :id AND hotel_id = :h', ['id' => (int) $clash['id'], 'h' => $targetHotel]);
                     }
                     self::clearDeviceState($d);
+                    // device_commands has no hotel_id: the old customer's commands (message texts, announcements…)
+                    // would show on the new customer's TV page. The old customer no longer sees this TV, so they go.
+                    DB::query('DELETE FROM device_commands WHERE device_id = :d', ['d' => (int) $d['id']]);
                 }
                 DB::query(
                     'UPDATE devices SET hotel_id = :t, room_id = :r, current_hash = NULL, current_item_id = NULL, health_alerts = NULL, offline_notified = 0

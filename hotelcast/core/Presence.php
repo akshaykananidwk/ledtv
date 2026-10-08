@@ -195,6 +195,9 @@ final class Presence
     {
         $now ??= time();
         $hid = Tenant::id();
+        if (!Features::enabled('presence')) {
+            return 0; // 2.5 plans: sensors outside the customer's plan do not switch screens off
+        }
         $sensors = DB::all("SELECT * FROM presence_sensors WHERE hotel_id = :h AND is_active = 1", ['h' => $hid]);
         if (!$sensors) {
             return 0;

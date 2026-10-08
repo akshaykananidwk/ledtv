@@ -21,6 +21,11 @@ declare(strict_types=1);
 final class DevicePool
 {
     public const POLL_INTERVAL = 15;
+    /**
+     * At most this many TVs wait in the pool (the admin list shows 500). A leaked platform key cannot fill
+     * the table: new TVs are refused (POOL_FULL) until the admin assigns or removes some (2.5 security review).
+     */
+    public const MAX_WAITING = 500;
 
     /** Unique positive ints. */
     private static function ids(array $v): array
@@ -105,6 +110,10 @@ final class DevicePool
             'last_ping' => now(),
         ];
         $id = (int) DB::value('SELECT id FROM device_pool WHERE device_uid = :u', ['u' => $uid]);
+        if (!$id && (int) DB::value('SELECT COUNT(*) FROM device_pool') >= self::MAX_WAITING) {
+            Logger::write('security', 'warning', 'Unassigned pool full: registration refused', ['uid' => $uid, 'ip' => client_ip()]);
+            Api::error('POOL_FULL', 'Too many TVs are waiting for setup. Ask your provider to assign or remove some first.', 409);
+        }
         if ($id) {
             $set = implode(', ', array_map(static fn ($k) => "`$k` = :$k", array_keys($fields)));
             DB::query("UPDATE device_pool SET $set, source = 'platform_key', registered_at = :ra WHERE id = :id", $fields + ['ra' => now(), 'id' => $id]);
