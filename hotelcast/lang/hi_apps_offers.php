@@ -48,7 +48,7 @@ return [
     'New' => 'नया',
     'Mobile accessories' => 'मोबाइल एक्सेसरीज़',
     'Ends in' => 'ख़त्म होगा',
-    ':n d' => ':n दि',
+    ':nd' => ':n दि',
     'OFF' => 'छूट',
     'Add offers on the Offers page.' => 'ऑफ़र पेज पर ऑफ़र जोड़ें।',
 

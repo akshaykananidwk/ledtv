@@ -330,7 +330,7 @@ final class DataFeeds
         foreach ($reqs as [$url, $headers]) {
             $n++;
             self::$requests++;
-            $res = Http::request('GET', $url, $headers, null, self::TIMEOUT);
+            $res = Http::request('GET', $url, $headers, null, self::TIMEOUT, null, false); // keys in the request: never follow redirects
             if ($res['status'] === 429) {
                 return ['ok' => false, 'data' => null, 'error' => 'Rate limit reached (HTTP 429)', 'rate_limited' => true, 'requests' => $n];
             }

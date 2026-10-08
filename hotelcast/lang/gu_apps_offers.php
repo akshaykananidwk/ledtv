@@ -40,7 +40,7 @@ return [
     'On all shirts and kurtas.' => 'બધા શર્ટ અને કુર્તા પર.',
     'Mobile accessories' => 'મોબાઇલ એક્સેસરીઝ',
     'Ends in' => 'પૂરી થશે',
-    ':n d' => ':n દિ',
+    ':nd' => ':n દિ',
     'OFF' => 'છૂટ',
     'Add offers on the Offers page.' => 'ઓફર પેજ પર ઓફર ઉમેરો.',
 

@@ -234,7 +234,7 @@ final class Kpi
     /** New push token for a tile (returned once; only its hash is stored). */
     public static function newToken(int $id): string
     {
-        $token = 'kpi_' . random_token(24);
+        $token = 'kpi' . random_token(24);
         DB::update('kpi_tiles', ['push_token_hash' => hash('sha256', $token), 'push_token_hint' => substr($token, -4)], 'id = :id', ['id' => $id]);
         return $token;
     }
@@ -247,7 +247,7 @@ final class Kpi
     /** Tile of any hotel by its push token (null when unknown / malformed). */
     public static function byToken(string $token): ?array
     {
-        if (!preg_match('/^kpi_[0-9a-f]{48}$/', $token)) {
+        if (!preg_match('/^kpi[0-9a-f]{48}$/', $token)) {
             return null;
         }
         return DB::one('SELECT * FROM kpi_tiles WHERE push_token_hash = :h LIMIT 1', ['h' => hash('sha256', $token)]);

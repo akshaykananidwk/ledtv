@@ -201,7 +201,7 @@ if ($action === 'new' || $action === 'edit' || $formRow !== null) {
           <p class="mb-2"><span class="badge text-bg-success"><?= e(__('On')) ?></span> <?= e(__('Token ending in :h', ['h' => $t['push_token_hint']])) ?>
             <?php if (!empty($t['pushed_at'])): ?><span class="text-muted small"> · <?= e(__('Last push: :t', ['t' => (string) $t['pushed_at']])) ?></span><?php endif; ?></p>
           <pre class="small bg-light border rounded p-2 text-wrap">curl -X POST <?= e(base_url('api/kpi/push')) ?> \
-  -H "Authorization: Bearer <?= e($newToken ?? 'kpi_…') ?>" \
+  -H "Authorization: Bearer <?= e($newToken ?? 'kpi…') ?>" \
   -H "Content-Type: application/json" -d '{"<?= $t['type'] === 'days_since' ? 'reset": true' : ($t['type'] === 'text' ? 'value": "Running"' : 'add": 1') ?>}'</pre>
         <?php endif; ?>
         <div class="d-flex gap-2 flex-wrap">

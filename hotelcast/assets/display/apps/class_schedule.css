@@ -34,7 +34,7 @@
 .cs-day.is-today{border-color:var(--hc-accent);box-shadow:0 0 0 .12rem var(--hc-accent) inset}
 .cs-dayname{font-weight:700;font-size:1.1rem;text-align:center;margin-bottom:.5rem;color:var(--hc-accent)}
 .cs-item{border-left:.3rem solid var(--hc-accent);background:rgba(0,0,0,.18);border-radius:.35rem;padding:.35rem .5rem;margin-bottom:.4rem}
-.cs-item-time{font-size:.8rem;color:var(--hc-muted)}
+.cs-item-time{font-size:.8rem;color:var(--hc-muted);white-space:nowrap;overflow:hidden}
 .cs-item-name{font-size:.95rem;font-weight:700;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .cs-item-meta{font-size:.75rem;color:var(--hc-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .cs-item .cs-pill{font-size:.6rem;padding:.05rem .4rem}

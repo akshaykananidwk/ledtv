@@ -15,6 +15,11 @@
     }
   }
 
+  /** Value for style="background-image:url('…')": quotes, brackets and spaces percent-encoded. */
+  function cssUrl(u) {
+    return HC.esc(String(u).replace(/[\\'"()\s<>]/g, function (c) { return '%' + c.charCodeAt(0).toString(16).toUpperCase(); }));
+  }
+
   function food(f) {
     return f ? '<i class="mb-food mb-' + HC.esc(f) + '"></i>' : '';
   }
@@ -39,7 +44,7 @@
   function card(it, photo, t) {
     var h = '<div class="mb-card hc-card' + (it.sold ? ' is-sold' : '') + '">';
     if (photo && it.photo) {
-      h += '<div class="mb-card-img" style="background-image:url(\'' + HC.esc(it.photo).replace(/'/g, '%27') + '\')"></div>';
+      h += '<div class="mb-card-img" style="background-image:url(\'' + cssUrl(it.photo) + '\')"></div>';
     } else {
       h += '<div class="mb-card-img mb-noimg">' + food(it.food) + '</div>';
     }
@@ -114,7 +119,7 @@
   }
 
   function heroHtml(s, t) {
-    return '<div class="mb-hero-slide hc-slide">' + (s.photo ? '<div class="mb-hero-img" style="background-image:url(\'' + HC.esc(s.photo).replace(/'/g, '%27') + '\')"></div>' : '') +
+    return '<div class="mb-hero-slide hc-slide">' + (s.photo ? '<div class="mb-hero-img" style="background-image:url(\'' + cssUrl(s.photo) + '\')"></div>' : '') +
       '<div class="mb-hero-text"><div class="mb-hero-tag">' + HC.esc(t.special) + '</div><div class="mb-hero-name">' + food(s.food) + HC.esc(s.name) + '</div>' +
       (s.desc ? '<div class="mb-hero-desc">' + HC.esc(s.desc) + '</div>' : '') +
       '<div class="mb-hero-price">' + (s.old ? '<s class="mb-old">' + HC.esc(s.old) + '</s> ' : '') + HC.esc(s.price) + '</div></div></div>';

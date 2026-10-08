@@ -456,7 +456,7 @@ final class TickersTest extends TestCase
         $s = new AdminSession(self::$url, 'tkMgr');
         [, , $html] = $s->get('index.php');
         $this->assertStringContainsString('tickers.php', $html);
-        $this->assertLessThan(strpos($html, 'schedule.php'), strpos($html, 'tickers.php'), 'menu entry right after Broadcast');
+        $this->assertLessThan(strpos($html, '/schedule.php'), strpos($html, 'tickers.php'), 'menu entry right after Broadcast');
         $this->assertGreaterThan(strpos($html, 'broadcast.php'), strpos($html, 'tickers.php'));
 
         // Settings: no ticker fields any more, a link instead; saving the display tab keeps the legacy keys.

@@ -17,7 +17,7 @@ final class Http
     public static $mock = null;
 
     /** @return array{status:int, body:string, headers:array, error:?string} */
-    public static function request(string $method, string $url, array $headers = [], ?string $body = null, int $timeout = 20, ?string $saveTo = null): array
+    public static function request(string $method, string $url, array $headers = [], ?string $body = null, int $timeout = 20, ?string $saveTo = null, bool $followRedirects = true): array
     {
         $mocked = self::mocked($method, $url, $headers, $body);
         if ($mocked !== null) {
@@ -31,8 +31,12 @@ final class Http
         $fh = null;
         $opts = [
             CURLOPT_CUSTOMREQUEST => $method,
-            CURLOPT_FOLLOWLOCATION => true,
+            // Off for requests carrying API keys: a redirect must never take the key to another host.
+            CURLOPT_FOLLOWLOCATION => $followRedirects,
             CURLOPT_MAXREDIRS => 5,
+            // Only web URLs, also after redirects (no file://, gopher:// … via a redirect).
+            CURLOPT_PROTOCOLS => CURLPROTO_HTTP | CURLPROTO_HTTPS,
+            CURLOPT_REDIR_PROTOCOLS => CURLPROTO_HTTP | CURLPROTO_HTTPS,
             CURLOPT_CONNECTTIMEOUT => min(10, $timeout),
             CURLOPT_TIMEOUT => $timeout,
             CURLOPT_HTTPHEADER => $headers,

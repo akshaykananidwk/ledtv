@@ -2,21 +2,21 @@
  * countdowns; when an offer ends it is hidden at once and new data is fetched. ES5 only. */
 (function (w, d) {
   'use strict';
-  var text = {}, tick = null, asked = 0;
+  var text = {}, tick = null, asked = 0, last = null;
 
   function countdown(sec) {
     sec = Math.max(0, sec);
     var days = Math.floor(sec / 86400);
     var hms = HC.pad(Math.floor((sec % 86400) / 3600)) + ':' + HC.pad(Math.floor((sec % 3600) / 60)) + ':' + HC.pad(sec % 60);
-    return (days > 0 ? String(text.day || ':n d').replace(':n', days) + ' ' : '') + hms;
+    return (days > 0 ? String(text.day || ':nd').replace(':n', days) + ' ' : '') + hms;
   }
 
   function card(o) {
     var h = '<div class="of-card hc-card' + (o.image ? ' has-img' : '') + '">';
     if (o.image) { h += '<div class="of-img"><img alt="" src="' + HC.esc(o.image) + '"></div>'; }
-    h += '<div class="of-info">';
+    h += '<div class="of-info"><div class="of-head">';
     if (o.badge) { h += '<div class="of-bw"><span class="hc-badge of-badge">' + HC.esc(o.badge) + '</span></div>'; }
-    h += '<div class="of-title">' + HC.esc(o.title) + '</div>';
+    h += '<div class="of-title">' + HC.esc(o.title) + '</div></div>';
     if (o.description) { h += '<div class="of-desc">' + HC.esc(o.description).replace(/\n/g, '<br>') + '</div>'; }
     if (o.price || o.old_price) {
       h += '<div class="of-prices">' + (o.price ? '<span class="of-price">' + HC.esc(o.price) + '</span>' : '') +
@@ -52,6 +52,10 @@
       var list = d.getElementById('ofList');
       if (!list || !data) { return; }
       text = data.text || {};
+      // Same offers as before: keep the running rotation (the page polls every 15 s).
+      var sig = JSON.stringify([data.offers, data.layout, data.per_page, data.rotate_sec]);
+      if (!initial && sig === last) { return; }
+      last = sig;
       if (!initial) {
         var offers = data.offers || [], per = data.per_page || 1, html = '', i;
         for (i = 0; i < offers.length; i++) {

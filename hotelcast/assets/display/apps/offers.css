@@ -45,19 +45,20 @@
 .of-grid .of-disc{width:5.8rem;height:5.8rem;top:.8rem;right:.8rem}
 .of-grid .of-disc b{font-size:1.8rem}
 .of-grid .of-disc span{font-size:.75rem}
-/* List: 5 rows. */
-.of-list .of-card{width:100%;height:18.4%;margin-bottom:2%;padding:.8rem 1.4rem}
-.of-list .of-img{width:9rem;height:100%}
+/* List: 5 rows (badge + title on line 1, prices + countdown on line 2). */
+.of-list .of-card{width:100%;height:18.4%;margin-bottom:2%;padding:.4rem 1.4rem}
+.of-list .of-img{width:7rem;height:100%;margin-right:1.2rem}
 .of-list .of-info{padding-right:6rem}
-.of-list .of-badge{margin:0 .8rem 0 0}
-.of-list .of-bw{display:inline-block}
-.of-list .of-title{display:inline;font-size:1.6rem}
-.of-list .of-desc{font-size:.95rem;white-space:nowrap;text-overflow:ellipsis;margin-top:.2rem}
-.of-list .of-prices{display:inline-block;margin:.3rem 1.4rem 0 0}
-.of-list .of-price{font-size:1.7rem}
-.of-list .of-old{font-size:1.1rem}
-.of-list .of-ends{display:inline-block;font-size:1rem}
-.of-list .of-disc{width:5rem;height:5rem;top:50%;margin-top:-2.5rem;right:1.2rem;-webkit-transform:none;transform:none}
-.of-list .of-disc b{font-size:1.5rem}
-.of-list .of-disc span{font-size:.7rem}
+.of-list .of-head{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.of-list .of-bw{display:inline-block;margin-right:.8rem}
+.of-list .of-badge{margin:0}
+.of-list .of-title{display:inline;font-size:1.45rem}
+.of-list .of-desc{display:none}
+.of-list .of-prices{display:inline-block;margin:.15rem 1.6rem 0 0}
+.of-list .of-price{font-size:1.5rem}
+.of-list .of-old{font-size:1.05rem}
+.of-list .of-ends{display:inline-block;font-size:1rem;margin-top:0}
+.of-list .of-disc{width:4.2rem;height:4.2rem;top:50%;margin-top:-2.1rem;right:1.2rem;-webkit-transform:none;transform:none}
+.of-list .of-disc b{font-size:1.3rem}
+.of-list .of-disc span{font-size:.65rem}
 .of-footer{-webkit-justify-content:center;justify-content:center;font-size:1.1rem}

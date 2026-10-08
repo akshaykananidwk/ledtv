@@ -127,7 +127,7 @@ final class OffersApp extends DisplayApp
     /** Texts used by the page script. */
     private static function texts(): array
     {
-        return ['ends_in' => __('Ends in'), 'day' => __(':n d'), 'off' => __('OFF'), 'empty' => __('Add offers on the Offers page.')];
+        return ['ends_in' => __('Ends in'), 'day' => __(':nd'), 'off' => __('OFF'), 'empty' => __('Add offers on the Offers page.')];
     }
 
     public function data(array $config, array $ctx): ?array
@@ -152,7 +152,7 @@ final class OffersApp extends DisplayApp
         $sec = max(0, $sec);
         $d = intdiv($sec, 86400);
         $hms = sprintf('%02d:%02d:%02d', intdiv($sec % 86400, 3600), intdiv($sec % 3600, 60), $sec % 60);
-        return ($d > 0 ? __(':n d', ['n' => $d]) . ' ' : '') . $hms;
+        return ($d > 0 ? __(':nd', ['n' => $d]) . ' ' : '') . $hms;
     }
 
     /** One offer card; same markup as offers.js → card(). */
@@ -162,11 +162,11 @@ final class OffersApp extends DisplayApp
         if ($o['image']) {
             $h .= '<div class="of-img"><img alt="" src="' . e($o['image']) . '"></div>';
         }
-        $h .= '<div class="of-info">';
+        $h .= '<div class="of-info"><div class="of-head">';
         if ($o['badge'] !== '') {
             $h .= '<div class="of-bw"><span class="hc-badge of-badge">' . e($o['badge']) . '</span></div>';
         }
-        $h .= '<div class="of-title">' . e($o['title']) . '</div>';
+        $h .= '<div class="of-title">' . e($o['title']) . '</div></div>';
         if ($o['description'] !== '') {
             $h .= '<div class="of-desc">' . nl2br(e($o['description']), false) . '</div>';
         }

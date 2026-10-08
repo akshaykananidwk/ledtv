@@ -83,6 +83,7 @@ final class BusinessAppsTest extends TestCase
 
     public function testPureLogicWithFixedClock(): void
     {
+        DisplayApps::all(); // loads core/Apps/*App.php
         $prevTz = date_default_timezone_get();
         date_default_timezone_set('Asia/Kolkata');
         try {
@@ -134,7 +135,7 @@ final class BusinessAppsTest extends TestCase
                 $d(3, '09:30:00', ['status' => 'delayed', 'delay_min' => 35, 'status_date' => '2026-10-07']), // expected 10:05 → shown
                 $d(4, '09:30:00', ['status' => 'delayed', 'delay_min' => 35, 'status_date' => '2026-10-06']), // yesterday's delay → on time today → hidden
                 $d(5, '11:00:00', ['status' => 'cancelled', 'status_date' => '2026-10-06', 'remark' => 'OLD']), // yesterday's cancel → on time
-                $d(6, '10:30:00', ['service_date' => '2026-10-08']),                                      // tomorrow only
+                $d(6, '08:30:00', ['service_date' => '2026-10-08']),                                      // tomorrow only
                 $d(7, '10:30:00', ['service_date' => '2026-10-06']),                                      // past date
                 $d(8, '12:00:00', ['kind' => 'arrival']),
                 $d(9, '13:00:00', ['is_active' => 0]),
@@ -682,7 +683,7 @@ final class BusinessAppsTest extends TestCase
         $this->assertSame(302, $code);
         $this->assertStringContainsString('action=edit', $head);
         [, , $html] = $s->get('kpi.php?action=edit&id=' . $prod);
-        $this->assertSame(1, preg_match('/value="(kpi_[0-9a-f]{48})"/', $html, $m));
+        $this->assertSame(1, preg_match('/value="(kpi[0-9a-f]{48})"/', $html, $m));
         $token = $m[1];
         $row = Kpi::find($prod);
         $this->assertSame([hash('sha256', $token), substr($token, -4)], [$row['push_token_hash'], $row['push_token_hint']]);
@@ -703,7 +704,7 @@ final class BusinessAppsTest extends TestCase
         };
         [$code, $j] = $push(null, ['value' => 1]);
         $this->assertSame([401, 'INVALID_TOKEN'], [$code, $j['error']['code']]);
-        [$code] = $push('kpi_' . str_repeat('0', 48), ['value' => 1]);
+        [$code] = $push('kpi' . str_repeat('0', 48), ['value' => 1]);
         $this->assertSame(401, $code);
         [$code] = TestEnv::http('GET', self::$url . 'api/kpi/push');
         $this->assertSame(405, $code);
@@ -752,7 +753,7 @@ final class BusinessAppsTest extends TestCase
         DB::query('DELETE FROM rate_limits');
         $codes = [];
         for ($i = 0; $i < 21; $i++) {
-            $codes[] = $push('kpi_' . str_repeat('a', 48), ['value' => 1])[0];
+            $codes[] = $push('kpi' . str_repeat('a', 48), ['value' => 1])[0];
         }
         $this->assertSame(401, $codes[19]);
         $this->assertSame(429, $codes[20]);

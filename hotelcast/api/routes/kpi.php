@@ -3,7 +3,7 @@
  * KPI dashboard (#8) machine push — set a tile's value from a PLC, counter box or script:
  *
  *   POST /api/kpi/push
- *   Authorization: Bearer kpi_<48 hex>        (or "token" in the JSON / form body)
+ *   Authorization: Bearer kpi<48 hex>        (or "token" in the JSON / form body)
  *   {"value": 830}                set a counter / percent (text tiles: any text)
  *   {"add": 1}                    add to a counter (negative to subtract)
  *   {"reset": true}               days-since tile: start again from today (counter: back to 0)
