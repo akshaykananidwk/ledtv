@@ -309,7 +309,6 @@ return [
     'next statement' => 'આગામી સ્ટેટમેન્ટ',
     'none = all' => 'કોઈ નહીં = બધી',
     'pending' => 'બાકી',
-    'rooms' => 'રૂમ',
     'screens' => 'સ્ક્રીન',
     'your share' => 'તમારો હિસ્સો',
     'your verification code' => 'તમારો ચકાસણી કોડ',

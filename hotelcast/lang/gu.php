@@ -476,7 +476,7 @@ return [
     'Revoke TV' => 'TV રદ કરો',
     'Revoke this TV? It will stop showing content and go back to its setup screen until registered again.' => 'આ TV રદ કરવું છે? તે કન્ટેન્ટ બતાવવાનું બંધ કરશે અને ફરી નોંધાય ત્યાં સુધી સેટઅપ સ્ક્રીન પર જશે.',
     'Revoked' => 'રદ કરેલ',
-    'Revoked & unassigned TVs' => 'રદ કરેલા અને રૂમ વગરના TV',
+    'Revoked & unassigned TVs' => 'રદ કરેલા અને સ્ક્રીન વગરના TV',
     'Revoked TVs' => 'રદ કરેલા TV',
     'Right now' => 'હમણાં જ',
     'Role' => 'ભૂમિકા',

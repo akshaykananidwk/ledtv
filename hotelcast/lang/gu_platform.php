@@ -87,7 +87,6 @@ return [
     "Generate last month's invoices automatically on the 1st" => 'દર મહિનાની 1 તારીખે ગયા મહિનાના ઇન્વૉઇસ આપમેળે બનાવો',
     'Generate monthly invoices' => 'માસિક ઇન્વૉઇસ બનાવો',
     'Guests / front desk' => 'મહેમાનો / ફ્રન્ટ ડેસ્ક',
-    'Hotel' => 'હોટેલ',
     'Customer ":n" created.' => 'ગ્રાહક ":n" બનાવ્યો.',
     'Customer ":n" is now :s.' => 'ગ્રાહક ":n" હવે :s છે.',
     'Customer ":n" saved.' => 'ગ્રાહક ":n" સાચવ્યો.',
