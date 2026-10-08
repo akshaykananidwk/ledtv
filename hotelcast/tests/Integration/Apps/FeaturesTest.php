@@ -549,10 +549,17 @@ final class FeaturesTest extends TestCase
         }
         Uploader::handle($file, 'logo', 'platform'); // platform files are not counted
         Features::$storageOverride = null;
+        // Real folder size (other tests may have uploaded files already): leave ~100 KB of headroom.
         @mkdir(HC_ROOT . '/uploads/h1', 0755, true);
-        file_put_contents(HC_ROOT . '/uploads/h1/ft_big.bin', str_repeat('x', 900 * 1024));
         Cache::clear('storage');
-        $this->assertGreaterThanOrEqual(900 * 1024, Features::storageUsed(1));
+        $before = Features::storageUsed(1);
+        $limitMb = intdiv($before + 600 * 1024, 1048576) + 1;
+        DB::query('UPDATE hotels SET storage_mb = :m WHERE id = 1', ['m' => $limitMb]);
+        Tenant::forget();
+        $big = $limitMb * 1048576 - $before - 100 * 1024;
+        file_put_contents(HC_ROOT . '/uploads/h1/ft_big.bin', str_repeat('x', $big));
+        Cache::clear('storage');
+        $this->assertSame($before + $big, Features::storageUsed(1));
         $up = Uploader::handle($file, 'image');
         $this->assertNotEmpty($up['path'], 'fits');
         try {
