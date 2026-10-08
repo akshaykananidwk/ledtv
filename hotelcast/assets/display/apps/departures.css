@@ -15,6 +15,7 @@
 .df-c-no{width:14%}
 .df-c-dest{-webkit-flex:1;flex:1}
 .df-c-plat{width:10%;text-align:center}
+.df-head .df-c-plat{letter-spacing:0}
 .df-c-status{width:27%;padding-right:0}
 /* Second lines sit beside the tile (rows are one line high). */
 .df-c-dest small,.df-c-status small{display:inline-block;vertical-align:middle;margin:0 0 0 .6rem;max-width:45%}
