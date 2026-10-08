@@ -208,7 +208,11 @@ final class ScreenTransferTest extends TestCase
 
     public function testResellerSeesOnlyOwnCustomersAndCustomerUserNeverGetsTheSwitch(): void
     {
-        [$s, , $html] = self::as('stres1')->get('rooms.php?customer=' . self::$h['gamma']);
+        // Without an open customer a reseller keeps the old redirect to their panel until they pick All customers.
+        [$s, , , $head] = self::as('stres1')->get('rooms.php');
+        $this->assertSame(302, $s);
+        $this->assertStringContainsString('reseller.php', $head);
+        [$s, , $html] = self::as('stres1')->get('rooms.php?view=all&customer=' . self::$h['gamma']);
         $this->assertSame(200, $s);
         $this->assertFalse(TestEnv::hasPhpError($html));
         $this->assertStringContainsString('Screens — your customers', $html);

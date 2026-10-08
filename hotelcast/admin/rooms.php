@@ -339,7 +339,7 @@ if ($action === 'device') {
       <div class="d-flex gap-2 flex-wrap">
         <a href="<?= e(admin_url('rooms.php')) ?>" class="btn btn-light border"><i class="bi bi-arrow-left"></i> <?= e(__('Back')) ?></a>
         <?php if (Auth::can('platform.move') && !(int) $dev['is_revoked']): ?>
-          <button type="button" class="btn btn-outline-primary js-ps-transfer" data-ids="<?= (int) $dev['id'] ?>" data-label="<?= e(trim(($dev['room_number'] ?? '') . ' · ' . $dev['device_uid'], ' ·')) ?>"><i class="bi bi-arrow-left-right"></i> <?= e(__('Transfer to another customer')) ?></button>
+          <button type="button" class="btn btn-outline-primary js-ps-transfer" data-ids="<?= (int) $dev['id'] ?>" data-label="<?= e(dot_trim(($dev['room_number'] ?? '') . ' · ' . $dev['device_uid'])) ?>"><i class="bi bi-arrow-left-right"></i> <?= e(__('Transfer to another customer')) ?></button>
         <?php endif; ?>
         <?php if ($canManage && !(int) $dev['is_revoked']): ?>
         <form method="post" data-confirm="<?= e(__('Revoke this TV? It will stop showing content and go back to its setup screen until registered again.')) ?>">

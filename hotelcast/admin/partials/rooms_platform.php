@@ -6,8 +6,8 @@ declare(strict_types=1);
  * platform admins = every customer, resellers = their own customers; docs/modules/platform_screens.md § 7):
  *
  *  - rooms_view_mode(): "This customer" | "All customers" (GET ?view=, remembered in the session; default
- *    All customers for platform admins, This customer for resellers inside a customer; All customers
- *    whenever no customer is open). Customer users always get 'customer' — the check is server-side
+ *    All customers for platform admins, This customer for resellers; without an open customer platform
+ *    admins always get All customers, resellers only after choosing it — else the old redirect to their panel). Customer users always get 'customer' — the check is server-side
  *    (Auth::can('platform.screens') tests the real role), ?view=all changes nothing for them.
  *  - rooms_view_switch(): the switch shown at the top of both views.
  *  - rooms_all_page(): the All customers view (shared table / filters / bulk bar of Platform → All
@@ -37,8 +37,13 @@ function rooms_view_mode(): string
     if (in_array($want, ['all', 'customer'], true)) {
         $_SESSION['hc_rooms_view'] = $want;
     }
-    $mode = (string) ($_SESSION['hc_rooms_view'] ?? (Auth::role() === 'platform_admin' ? 'all' : 'customer'));
-    return !Tenant::has() || $mode === 'all' ? 'all' : 'customer';
+    $stored = $_SESSION['hc_rooms_view'] ?? null;
+    if (!Tenant::has()) {
+        // Nothing to show in "This customer": platform admins (and resellers who picked All) get All customers;
+        // a reseller without that choice keeps the old redirect to their panel.
+        return Auth::role() === 'platform_admin' || $stored === 'all' ? 'all' : 'customer';
+    }
+    return ($stored ?? (Auth::role() === 'platform_admin' ? 'all' : 'customer')) === 'all' ? 'all' : 'customer';
 }
 
 /** View switch "This customer (<name>)" | "All customers (N TVs)". */

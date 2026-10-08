@@ -32,6 +32,15 @@ screen-wise schedule karo, emergency message moklo, TV reboot/update karo.*
 | Android TV app | [`android/`](android) | Kotlin, ExoPlayer 2.19, Retrofit, OkHttp, Glide, WorkManager — min SDK 21, target 34 |
 | Documentation | [`docs/`](docs) | Install guide, TV setup, admin guide, API, developer guide (tenancy + extension points), security, test report |
 
+## What's new in 2.5.1 — all TVs on Screens & TVs, transfer a TV with everything
+
+Server only (the TV app stays 2.5.0).
+
+| Feature | Where |
+|---|---|
+| **Screens & TVs → All customers**: the Super Admin sees every TV of every customer — including the customers of resellers — on Screens & TVs, with a view switch "This customer (…)" \| "All customers (N TVs)" (default All customers, remembered), customer column with a link to the customer details, search, customer / status filters, "screens without TV" and pagination. Resellers see their own customers; customer users never see the switch | Screens & TVs · [platform_screens.md § 7](docs/modules/platform_screens.md) |
+| **Transfer to another customer — everything**: ⇄ button on every TV (both views, TV detail page, All screens; bulk via checkboxes). Besides the TV (token kept, no setup on the TV) it **copies** the screen details (name / ID, area / floor, PIN, USB / HDMI-CEC mode, power-off times, device schedules) and the content (playlist, media files copied into the new customer's storage, layouts, tickers, scheduled content) to the target screen. The old customer keeps its originals; the target's TV and storage limits are checked; on any error nothing is left behind. Result: "Copied: 1 playlist, 12 media files, 1 ticker; Not copied: …" | Screens & TVs, Platform → All screens · [platform_screens.md § 2b](docs/modules/platform_screens.md) |
+
 ## What's new in 2.5 — plans, roles, all screens, new name
 
 | Feature | Where |

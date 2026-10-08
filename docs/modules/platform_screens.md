@@ -1,6 +1,6 @@
 # Module: Platform screens — all TVs of all customers, moving TVs, unassigned pool, customer detail
 
-Release 2.5. Wording: `hotels` = **customers**, `rooms` = **screens** (screen ID = `room_number`,
+Release 2.5 (2.5.1: All customers view on Screens & TVs, "Transfer everything" — § 2b and § 7). Wording: `hotels` = **customers**, `rooms` = **screens** (screen ID = `room_number`,
 location = floor / groups), `devices` = the physical **TVs / players** registered to a screen.
 
 The owner (Super Admin = `platform_admin`) sees and manages every TV of every customer in one place,
@@ -11,11 +11,11 @@ pages for **their own customers only**.
 |---|---|
 | Migration | `migrations/030_platform_screens.sql`: table `device_pool` (not a tenant table), index `devices.idx_devices_platform_list` |
 | Boot hook | `core/boot.d/platform_screens.php` (permissions) |
-| Server code | `core/PlatformScreens.php` (listing, filters, counters, commands, revoke, move), `core/DevicePool.php` (unassigned pool) |
-| Admin pages | `admin/platform_screens.php` (All screens + pool), `admin/platform_customer.php` (customer detail tabs), `admin/partials/platform_screens.php` (shared table / bulk bar / POST handler), `admin/partials/platform_screens_dashboard.php` (dashboard block), `admin/partials/nav.d/52_platform_screens.php` |
+| Server code | `core/PlatformScreens.php` (listing, filters, counters, commands, revoke, move / `transfer()`), `core/ScreenTransfer.php` (2.5.1 "Transfer everything" copy), `core/DevicePool.php` (unassigned pool) |
+| Admin pages | `admin/platform_screens.php` (All screens + pool), `admin/platform_customer.php` (customer detail tabs), `admin/rooms.php` + `admin/partials/rooms_platform.php` (2.5.1 Screens & TVs → All customers, transfer dialog), `admin/partials/platform_screens.php` (shared table / bulk bar / transfer dialog / POST handler), `admin/partials/platform_screens_dashboard.php` (dashboard block), `admin/partials/nav.d/52_platform_screens.php` |
 | Shared files touched | `core/DeviceManager.php` (2 hooks: platform key in `register()`, pool TVs in `authenticate()`), `admin/platform_hotels.php` (dashboard block include, "Screens (online/total)" + "Users" columns, "Customer details" links) |
-| Translations | `lang/gu_platform_screens.php`, `lang/hi_platform_screens.php` |
-| Tests | `tests/Integration/Apps/PlatformScreensTest.php` |
+| Translations | `lang/gu_platform_screens.php`, `lang/hi_platform_screens.php`, 2.5.1: `lang/gu_screen_transfer.php`, `lang/hi_screen_transfer.php` |
+| Tests | `tests/Integration/Apps/PlatformScreensTest.php`, 2.5.1: `tests/Integration/Apps/ScreenTransferTest.php` |
 
 | permission | roles | used for |
 |---|---|---|
@@ -122,6 +122,44 @@ could use it before the move could use it before as well. When a TV must really 
 (stolen, sold), use **Revoke** — that rotates the token.
 
 ---------------------------------------------------------------------------------------------------
+## 2b. Transfer everything (2.5.1)
+
+The move dialog — **"Transfer to another customer"** (row button <i>⇄</i> on All screens, on Screens & TVs in
+both views and on the TV detail page; bulk through the checkboxes) — has two boxes, both **ticked by
+default**. They only act when the TV changes customer (`PlatformScreens::transfer($ids, $target,
+['mode' => …, 'copy' => ['details' => bool, 'content' => bool]])`, `move()` = transfer without copy).
+
+| box | copied onto the target screen |
+|---|---|
+| **Screen details** | `rooms.name` (not with "Create a new screen": the typed name wins), `floor`, `is_enabled`, `settings_pin`, `notes`, `usb_mode` (only when the target plan has USB mode), `cec_mode`; the screen's own **power-off windows** (`broadcast_commands` `SCREEN_OFF`, mode window, target = this screen) and **device schedules** (volume, mute, input, restart, built-in bell, spoken announcement) aimed at this screen. The screen ID (`room_number`) is kept by the target screen mode "Same screen ID". |
+| **Content** | what the screen plays: its own assignment (playlist or single item), else the first group assignment it follows, else the old customer's default content — copied and **assigned directly** to the target screen (the flash says so). Playlists with all items (order, durations, dayparts), split screen layouts with their zone sources (each item copied once, zone ids rewritten), images / videos with their **files copied** to `uploads/h{target}/media/YYYY/MM/<random>` (+ thumbnail); tickers aimed at this screen (`tickers.target_type = 'room'`, incl. video scale); the screen's scheduled content windows (`SHOW_CONTENT`, mode window, target = this screen). |
+
+**Not copied** (listed in the result flash "Copied: 1 playlist, 2 media files, 1 ticker; Not copied: …"):
+display apps (their data — menu boards, albums, feeds … — lives in the old customer's module tables),
+items whose media file is missing, layouts with such a zone, modules not in the target's plan (layouts,
+tickers, schedules, power schedules, device schedules), bells with an uploaded sound of the old customer,
+schedules / tickers aimed at all screens, groups or floors of the old customer (counted), group membership,
+emergency broadcasts, play statistics. The TV's command history stays deleted (2.5 security review).
+
+Safety:
+
+* **Copy only** — no row or file of the old customer changes. Every source row is read with
+  `hotel_id = <old customer>`; a media path of a third customer (`h{other}/…`) or outside `uploads/` is
+  refused (`ScreenTransfer::sourceFile`). Only the selected TV's screen is read, so nothing else of the old
+  customer reaches the new one.
+* New rows belong to the target (`hotel_id = target`, `created_by` NULL); approval state, validity window
+  and active flag are kept.
+* **One transaction** with the move: target row locked, screen limit (`assertCapacity`), then the
+  **storage limit** of the target (`storage_mb`, `ScreenTransfer::assertStorage`: `STORAGE_LIMIT: …` — nothing
+  is written) before anything is copied. Any error later (copy failure, a TV that clashes, …) rolls back the
+  rows and `ScreenTransfer::cleanup()` deletes the files already copied — no partial garbage.
+* Several TVs of one screen copy that screen once; an item used twice (playlist + layout zone) is copied once.
+* Logs: old customer `screen_copied_out` (which screen, not where to), new customer `screen_copied_in`
+  (summary), platform `screen_transfer`, plus the move logs of § 2. `content_version` of both customers is
+  bumped: the TV's next poll returns the copied content with the target's URLs.
+* Permissions as § 2: `platform.move` (platform admins), CSRF, all ids re-checked.
+
+---------------------------------------------------------------------------------------------------
 ## 3. Unassigned pool (pre-configure TVs before selling)
 
 Platform admins only (`platform.pool`), card "Unassigned pool" on All screens. At most
@@ -189,6 +227,26 @@ form stays on `platform_hotels.php`).
 * Commands are whitelisted; revoke / move / pool operations are transactions.
 * Demo users: refused centrally by `Demo::guard()` like every admin POST.
 
+## 7. Screens & TVs → All customers (2.5.1, `admin/rooms.php`)
+
+Users with `platform.screens` get a view switch at the top of Screens & TVs:
+**"This customer (<name>)" | "All customers (N TVs)"** (resellers: "All my customers").
+
+* Platform admins default to **All customers** (the page title reads "Screens — all customers"); the
+  choice (`?view=all|customer`) is remembered in the session (`hc_rooms_view`). Without an open customer
+  only All customers is possible. Resellers default to This customer when inside a customer, and see only
+  their own customers (`PlatformScreens::scopeHotelIds`).
+* All customers = the All screens table (`ps_table`, `PlatformScreens::list` / `decorate`): customer (link to
+  the customer details), screen, location / group, device, status + last seen, now showing, health; search,
+  customer and status filters (active, online, offline, revoked, all, **screens without TV** —
+  `PlatformScreens::screensWithoutTv`), counters, pagination; bulk bar with commands and transfer. "More
+  filters & CSV" opens Platform → All screens.
+* The customer view is the old page plus, for platform admins, a **Transfer** button per screen with a TV,
+  the bulk action "Transfer TVs to another customer" and the button on the TV detail page.
+* Customer users never get the switch: `rooms_platform_scope()` = `Auth::can('platform.screens')`, which checks
+  the real role; `?view=all` and a posted `ps_form` change nothing for them (old page / normal POST handling),
+  resellers posting a transfer get 403 (`platform.move`).
+
 ---------------------------------------------------------------------------------------------------
 ## ગુજરાતી સારાંશ
 
@@ -213,3 +271,13 @@ form stays on `platform_hotels.php`).
 યુઝર્સ (રોલ, છેલ્લું લૉગિન, સ્ક્રીન ઍક્સેસ; પાસવર્ડ રીસેટ + ઇમેઇલ, નિષ્ક્રિય/સક્રિય, "આ ગ્રાહક તરીકે
 ખોલો") અને પ્રવૃત્તિ. ગ્રાહકોની યાદીમાં "સ્ક્રીન (ઓનલાઇન/કુલ)" અને "યુઝર્સ" કૉલમ, અને ડેશબોર્ડ પર
 ટોચના ગ્રાહકો તથા ગ્રાહક મુજબ ઑફલાઇન TV દેખાય છે.
+
+**2.5.1 — સ્ક્રીન અને TV → બધા ગ્રાહકો**: સુપર એડમિન "સ્ક્રીન અને TV" પાના પર "આ ગ્રાહક" | "બધા ગ્રાહકો"
+વચ્ચે બદલી શકે છે (ડિફોલ્ટ: બધા ગ્રાહકો, રીસેલરના ગ્રાહકો સહિત). શોધ, ગ્રાહક, સ્થિતિ અને "TV વગરની સ્ક્રીન"
+ફિલ્ટર તથા પાના છે. ગ્રાહક યુઝરને આ સ્વિચ ક્યારેય દેખાતી નથી.
+
+**બીજા ગ્રાહકને ટ્રાન્સફર — બધું સાથે**: દરેક TV પર ⇄ બટન (અને ચેકબોક્સથી ઘણા TV). "સ્ક્રીનની વિગતો" (નામ,
+માળ, PIN, USB/CEC, બંધ થવાના સમય, ડિવાઇસ શેડ્યૂલ) અને "કન્ટેન્ટ" (પ્લેલિસ્ટ, મીડિયા ફાઇલો, લેઆઉટ, ટિકર,
+શેડ્યૂલ કરેલું કન્ટેન્ટ) નવા ગ્રાહકમાં **કૉપી** થાય છે — જૂના ગ્રાહક પાસે મૂળ રહે છે. નવા ગ્રાહકની
+સ્ટોરેજ અને TV મર્યાદા તપાસાય છે; ભૂલ થાય તો કંઈ બાકી રહેતું નથી. ડિસ્પ્લે એપ કૉપી થતી નથી (પરિણામમાં
+"કૉપી નથી થયું" યાદી).
