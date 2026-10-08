@@ -295,6 +295,9 @@ final class DeviceSchedulesTest extends TestCase
         // The scheduler task runs every active hotel in its own time zone; a suspended hotel is skipped.
         $now = time();
         DB::query('DELETE FROM device_commands');
+        // The fixed-time schedules above (11:00, 11:30 …) would fire again if the real clock happens to be
+        // within their 10-minute catch-up window: only the schedule created here may be due.
+        DB::query('UPDATE device_schedules SET is_active = 0 WHERE hotel_id = 1');
         $t = self::schedule(['action' => 'unmute', 'options' => '{}', 'run_time' => date('H:i:00', $now)]);
         DB::update('hotels', ['status' => 'suspended'], 'id = :id', ['id' => $h2]);
         Tenant::forget();
