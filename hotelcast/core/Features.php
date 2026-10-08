@@ -101,7 +101,8 @@ final class Features
      *   label, group, description   (English, translated with __())
      *   permissions  Auth permissions belonging to it (Auth::can() is false when no owning feature is on)
      *   pages        admin/*.php basenames            ajax  admin ajax actions ("prefix_*" = every action of a prefix)
-     *   api          REST route prefixes ("pms" = pms and pms/…)   apps  display-app keys
+     *   api          REST route prefixes ("pms" = pms and pms/…), 403 FEATURE_DISABLED centrally
+ *   api_self     REST route prefixes whose handler checks the feature itself     apps  display-app keys
      *   extensions   core/Extensions classes (skipped on TVs when off)  widgets  admin/partials/dashboard.d files
      *   depends      feature keys that must be on as well        core  true = always on, cannot be removed
      */
@@ -225,7 +226,7 @@ final class Features
             'extensions' => ['GuestExtension'], 'widgets' => ['40_guests.php']],
         'room_service' => ['label' => 'Room service & requests', 'group' => 'hospitality', 'description' => 'Guest orders and requests from the phone, live board.',
             'permissions' => ['services.manage', 'guests.setup'], 'pages' => ['orders.php', 'services_setup.php'], 'ajax' => ['guests_*'],
-            'api' => ['guest'], 'extensions' => ['GuestExtension']],
+            'api_self' => ['guest'], 'extensions' => ['GuestExtension']], // guest app link: 404 from Guests::resolveToken, not 403
         'feedback' => ['label' => 'Guest feedback', 'group' => 'hospitality', 'description' => 'Ratings and comments from guests.',
             'permissions' => ['guests.feedback'], 'pages' => ['feedback.php'], 'depends' => ['room_service']],
         'pms' => ['label' => 'PMS integration', 'group' => 'hospitality', 'description' => 'Check-in / out from the hotel PMS over the API.',
@@ -279,7 +280,7 @@ final class Features
         foreach (self::REGISTRY + self::$extra as $k => $d) {
             $out[$k] = $d + [
                 'label' => $k, 'group' => 'advanced', 'description' => '', 'core' => false, 'permissions' => [], 'pages' => [],
-                'ajax' => [], 'api' => [], 'apps' => [], 'nav' => [], 'depends' => [], 'extensions' => [], 'widgets' => [],
+                'ajax' => [], 'api' => [], 'api_self' => [], 'apps' => [], 'nav' => [], 'depends' => [], 'extensions' => [], 'widgets' => [],
             ];
         }
         $extraCount = count(self::$extra);
@@ -407,13 +408,14 @@ final class Features
         return self::ajaxOwners($action)[0] ?? null;
     }
 
-    private static function apiMatch(string $route): array
+    /** Features registering a REST route ($fields: api = gated centrally, api_self = the handler checks itself). */
+    private static function apiMatch(string $route, array $fields = ['api', 'api_self']): array
     {
         $route = trim($route, '/');
         $best = [];
         $bestLen = -1;
         foreach (self::all() as $k => $d) {
-            foreach ($d['api'] as $p) {
+            foreach (array_merge(...array_map(static fn ($f) => $d[$f], $fields)) as $p) {
                 $hit = $p === '' ? $route === '' : ($route === $p || str_starts_with($route, $p . '/'));
                 if ($hit && strlen($p) >= $bestLen) {
                     $best = strlen($p) > $bestLen ? [$k] : array_merge($best, [$k]);
@@ -754,7 +756,7 @@ final class Features
      */
     public static function guardApiRoute(string $route): void
     {
-        $owners = self::apiOwners($route);
+        $owners = array_values(array_filter(self::apiMatch($route, ['api']), static fn ($k) => !self::isCore($k)));
         self::$apiOwners = $owners ?: null;
         if ($owners && Tenant::has()) {
             self::tenantChanged(Tenant::id());
@@ -863,10 +865,14 @@ final class Features
         return (int) DB::value("SELECT COUNT(*) FROM users WHERE hotel_id = :h AND role IN $in", $p + ['h' => $hotelId]);
     }
 
+    /**
+     * Screens counted against max_screens: registered TVs / players (Tenant::tvCount()). Screen records
+     * (rooms) without a TV are free, e.g. the 20 demo rooms of a 3-TV demo. The TV registration
+     * (DeviceManager::register, LICENSE_LIMIT) enforces the limit.
+     */
     public static function screenCount(?int $hotelId = null): int
     {
-        $hotelId ??= Tenant::id();
-        return (int) DB::value('SELECT COUNT(*) FROM rooms WHERE hotel_id = :h', ['h' => $hotelId]);
+        return Tenant::tvCount($hotelId ?? Tenant::id());
     }
 
     /** Error message when the customer may not add $n more users, else null. */

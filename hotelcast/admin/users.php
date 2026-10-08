@@ -22,7 +22,8 @@ function role_options(): array
             $out[$r] = role_label($r);
         }
     }
-    foreach (Roles::all() as $c) {
+    // Custom roles can be given while the plan includes them (users who already have one keep it).
+    foreach (Roles::featureEnabled() ? Roles::all() : [] as $c) {
         if (Roles::canAssign($c['key'])) {
             $out[$c['key']] = $c['name'];
         }

@@ -79,9 +79,6 @@ if (is_post()) {
                 }
                 // Users limited to some TVs edit only their rooms, never add rooms and only (un)assign their groups.
                 $existing ? Access::requireRoom($id) : Access::requireUnrestricted('room create');
-                if (!$existing && ($limitErr = Features::screenLimitError())) { // 2.5 plans: max screens
-                    throw new InvalidArgumentException($limitErr);
-                }
                 if (Access::restricted()) {
                     foreach (Tenant::assertOwnsAll('room_groups', int_ids($_POST['groups'] ?? [])) as $gid) {
                         Access::requireGroup($gid);
@@ -147,11 +144,6 @@ if (is_post()) {
                 $numbers = parse_room_numbers(req_str('numbers', $_POST, 2000));
                 if (!$numbers) {
                     flash('danger', __('Enter room numbers, e.g. 101-120 or 101, 102, 105.'));
-                    redirect(admin_url('rooms.php', ['action' => 'bulk_add']));
-                }
-                $newCount = count(array_filter($numbers, static fn ($n) => !DB::value('SELECT id FROM rooms WHERE hotel_id = :hid AND room_number = :n', ['n' => $n] + hid())));
-                if ($newCount > 0 && ($limitErr = Features::screenLimitError($newCount))) { // 2.5 plans: max screens
-                    flash('danger', $limitErr);
                     redirect(admin_url('rooms.php', ['action' => 'bulk_add']));
                 }
                 $floor = req_str('floor', $_POST, 20);

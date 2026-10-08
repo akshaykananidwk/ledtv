@@ -184,7 +184,7 @@ final class DevicePool
         if (!$row['last_ping'] || strtotime((string) $row['last_ping']) < time() - 3) {
             DB::query('UPDATE device_pool SET last_ping = :n, public_ip = :ip WHERE id = :id', ['n' => now(), 'ip' => client_ip(), 'id' => $row['id']]);
         }
-        $route = (string) ($GLOBALS['route'] ?? '');
+        $route = self::route();
         if ($route === 'device/command' || str_starts_with($route, 'device/command/')) {
             $content = self::waitingContent($row);
             $changed = $content['hash'] !== (string) ($_GET['hash'] ?? '');
@@ -220,6 +220,20 @@ final class DevicePool
             Api::ok(['saved' => 0]);
         }
         Api::error('NOT_ASSIGNED', 'This TV is waiting to be assigned to a customer.', 409);
+    }
+
+    /** Route of the current API request (api/index.php's $route, else from the URL). */
+    private static function route(): string
+    {
+        if (isset($GLOBALS['route']) && is_string($GLOBALS['route'])) {
+            return $GLOBALS['route'];
+        }
+        $r = (string) ($_GET['r'] ?? '');
+        if ($r === '') {
+            $uri = (string) (parse_url((string) ($_SERVER['REQUEST_URI'] ?? ''), PHP_URL_PATH) ?: '');
+            $r = ($pos = strpos($uri, '/api/')) !== false ? substr($uri, $pos + 5) : '';
+        }
+        return trim((string) preg_replace('#^/?index\.php#', '', $r), '/');
     }
 
     // ------------------------------------------------------------------ admin

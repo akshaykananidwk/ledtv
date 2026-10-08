@@ -663,6 +663,11 @@ final class Auth
                 redirect(admin_url(in_array($script, ['', 'index.php'], true) ? 'billing.php' : $script));
             }
         }
+        if ($permission === 'dashboard.view' && !self::can($permission) && self::customRoleId() !== null && !self::isAjax()
+            && ($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'GET' && basename((string) ($_SERVER['SCRIPT_NAME'] ?? '')) === 'index.php') {
+            // Custom role without the dashboard: go to the first page the role may open (after login, "Home").
+            redirect(admin_url(self::homePage()));
+        }
         if ($permission !== null && !self::can($permission)) {
             http_response_code(403);
             if (self::isAjax()) {

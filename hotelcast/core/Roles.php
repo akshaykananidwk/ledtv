@@ -163,10 +163,34 @@ final class Roles
         };
     }
 
+    /**
+     * Does the customer's plan include $perm? Like Auth::planAllows(), but without the platform admin's
+     * bypass (core/Features.php): the matrix shows the CUSTOMER's plan even to a platform admin.
+     */
+    public static function planIncludes(string $perm): bool
+    {
+        if (Auth::$planOverride === null && Auth::role() === 'platform_admin' && Tenant::has() && class_exists('Features')
+            && method_exists('Features', 'permissionOwners') && method_exists('Features', 'anyEnabled')) {
+            try {
+                $owners = Features::permissionOwners($perm);
+                return !$owners || Features::anyEnabled($owners);
+            } catch (Throwable) {
+                return true;
+            }
+        }
+        return Auth::planAllows($perm);
+    }
+
+    /** Is the custom roles feature in the plan (core/Features.php "custom_roles" owns roles.manage)? */
+    public static function featureEnabled(): bool
+    {
+        return self::planIncludes('roles.manage');
+    }
+
     /** Permissions the customer's plan includes (others are hidden in the matrix and always denied). */
     public static function visiblePermissions(): array
     {
-        return array_values(array_filter(array_keys(self::catalog()), static fn ($p) => Auth::planAllows($p)));
+        return array_values(array_filter(array_keys(self::catalog()), static fn ($p) => self::planIncludes($p)));
     }
 
     /**
@@ -224,9 +248,11 @@ final class Roles
             if (!$perms) {
                 continue;
             }
+            $label = (string) ($f['label'] ?? $f['name'] ?? $f['title'] ?? $key);
+            $desc = (string) ($f['description'] ?? '');
             $out[$key] = [
-                'label' => (string) ($f['label'] ?? $f['name'] ?? $f['title'] ?? $key),
-                'description' => (string) ($f['description'] ?? ''),
+                'label' => $label !== '' ? __($label) : $key,
+                'description' => $desc !== '' ? __($desc) : '',
                 'permissions' => $perms,
             ];
         }
@@ -383,7 +409,7 @@ final class Roles
             return false;
         }
         $mine = self::editorPermissions();
-        $needed = array_filter(self::permissionsOfSpec($spec), static fn ($p) => Auth::planAllows($p));
+        $needed = array_filter(self::permissionsOfSpec($spec), static fn ($p) => self::planIncludes($p));
         return !array_diff($needed, $mine);
     }
 
@@ -407,10 +433,11 @@ final class Roles
         foreach ($known as $p) {
             $was = in_array($p, $existing, true);
             $want = in_array($p, $requested, true);
-            $locked = !Auth::planAllows($p)
+            $inPlan = self::planIncludes($p);
+            $locked = !$inPlan
                 || (!$isAdmin && (!in_array($p, $mine, true) || in_array($p, self::ADMIN_ONLY, true)));
             $on = $locked ? $was : $want;
-            if ($locked && $want !== $was && Auth::planAllows($p)) {
+            if ($locked && $want !== $was && $inPlan) {
                 $kept[] = $p;
             }
             if ($on) {

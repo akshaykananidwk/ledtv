@@ -142,6 +142,7 @@ if ($action === 'view') {
         <form method="post"><?= Csrf::field() ?><input type="hidden" name="op" value="enter"><input type="hidden" name="id" value="<?= $hid ?>">
           <button class="btn btn-primary"><i class="bi bi-box-arrow-in-right"></i> <?= e(__('Enter hotel')) ?></button></form>
         <a class="btn btn-outline-primary" href="<?= e(admin_url('platform_hotels.php', ['action' => 'edit', 'id' => $hid])) ?>"><i class="bi bi-pencil"></i> <?= e(__('Edit')) ?></a>
+        <a class="btn btn-outline-primary" href="<?= e(admin_url('platform_customer.php', ['id' => $hid])) ?>"><i class="bi bi-card-list"></i> <?= e(__('Customer details')) ?></a><?php /* 2.5 platform screens */ ?>
         <?php if ($h['status'] === 'active'): ?>
           <form method="post" data-confirm="<?= e(__('Suspend this hotel? Its TVs show the "service paused" screen and its admin panel becomes read-only.')) ?>">
             <?= Csrf::field() ?><input type="hidden" name="op" value="status"><input type="hidden" name="status" value="suspended"><input type="hidden" name="id" value="<?= $hid ?>">
@@ -243,6 +244,7 @@ if ($action === 'view') {
 $q = req_str('q', $_GET, 60);
 $fStatus = req_str('status', $_GET, 20);
 $hotels = Hotels::all(null, $q, $fStatus);
+$psUsers = PlatformScreens::usersPerCustomer(null); // 2.5 platform screens: "Users" column
 $totals = ['hotels' => count($hotels), 'tvs' => array_sum(array_column($hotels, 'tv_count')), 'online' => array_sum(array_column($hotels, 'tv_online')),
     'suspended' => count(array_filter($hotels, fn ($h) => $h['status'] !== 'active'))];
 $pageTitle = __('Hotels');
@@ -258,6 +260,7 @@ require __DIR__ . '/partials/header.php';
     <div class="col-6 col-lg-3"><div class="card h-100"><div class="stat-card"><div class="stat-icon <?= e($cls) ?>"><i class="bi <?= e($icon) ?>"></i></div><div><div class="stat-value"><?= (int) $val ?></div><div class="stat-label"><?= e($label) ?></div></div></div></div></div>
   <?php endforeach; ?>
 </div>
+<?php require __DIR__ . '/partials/platform_screens_dashboard.php'; // 2.5: screens counters, top / offline customers ?>
 <form class="d-flex flex-wrap gap-2 mb-3" method="get">
   <input class="form-control" style="max-width:18rem" name="q" value="<?= e($q) ?>" placeholder="<?= e(__('Search hotel, city, email…')) ?>">
   <select class="form-select" style="max-width:12rem" name="status">
@@ -272,7 +275,7 @@ require __DIR__ . '/partials/header.php';
 <?php else: ?>
   <div class="table-responsive">
     <table class="table table-hc table-hover">
-      <thead><tr><th><?= e(__('Hotel')) ?></th><th class="d-none d-md-table-cell"><?= e(__('Plan')) ?></th><th><?= e(__('TVs')) ?></th><th class="d-none d-lg-table-cell"><?= e(__('Reseller')) ?></th><th><?= e(__('Status')) ?></th><th class="text-end"><?= e(__('Actions')) ?></th></tr></thead>
+      <thead><tr><th><?= e(__('Hotel')) ?></th><th class="d-none d-md-table-cell"><?= e(__('Plan')) ?></th><th><?= e(__('TVs')) ?></th><th class="d-none d-md-table-cell"><?= e(__('Screens (online/total)')) ?></th><th class="d-none d-md-table-cell"><?= e(__('Users')) ?></th><th class="d-none d-lg-table-cell"><?= e(__('Reseller')) ?></th><th><?= e(__('Status')) ?></th><th class="text-end"><?= e(__('Actions')) ?></th></tr></thead>
       <tbody>
       <?php foreach ($hotels as $h): $max = $h['max_tvs'] !== null ? (int) $h['max_tvs'] : ($h['plan_max_tvs'] !== null ? (int) $h['plan_max_tvs'] : null); ?>
         <tr>
@@ -280,11 +283,14 @@ require __DIR__ . '/partials/header.php';
             <div class="small text-muted"><?= e(trim(($h['city'] ?? '') . ' #' . $h['id'])) ?><?= (int) $h['unpaid_invoices'] ? ' · <span class="text-danger">' . e(__(':n unpaid', ['n' => $h['unpaid_invoices']])) . '</span>' : '' ?></div></td>
           <td class="d-none d-md-table-cell small"><?= e($h['plan_name'] ?? '—') ?></td>
           <td class="text-nowrap"><?= e(tv_usage_label((int) $h['tv_count'], $max)) ?> <span class="small text-success">(<?= (int) $h['tv_online'] ?> <?= e(__('online')) ?>)</span></td>
+          <td class="d-none d-md-table-cell text-nowrap"><a class="text-decoration-none" href="<?= e(admin_url('platform_customer.php', ['id' => $h['id'], 'tab' => 'screens'])) ?>"><span class="text-success"><?= (int) $h['tv_online'] ?></span> / <?= (int) $h['tv_count'] ?></a></td>
+          <td class="d-none d-md-table-cell"><a class="text-decoration-none" href="<?= e(admin_url('platform_customer.php', ['id' => $h['id'], 'tab' => 'users'])) ?>"><?= (int) ($psUsers[(int) $h['id']] ?? 0) ?></a></td>
           <td class="d-none d-lg-table-cell small"><?= e($h['reseller_name'] ?? '—') ?></td>
           <td><?= Hotels::statusBadge($h['status'] === 'active' && $h['expires_at'] && strtotime((string) $h['expires_at']) < time() ? 'expired' : $h['status']) ?></td>
           <td class="text-end text-nowrap">
             <form method="post" class="d-inline"><?= Csrf::field() ?><input type="hidden" name="op" value="enter"><input type="hidden" name="id" value="<?= (int) $h['id'] ?>">
               <button class="btn btn-sm btn-primary" title="<?= e(__('Enter hotel')) ?>"><i class="bi bi-box-arrow-in-right"></i> <span class="d-none d-sm-inline"><?= e(__('Enter')) ?></span></button></form>
+            <a class="btn btn-sm btn-light border" href="<?= e(admin_url('platform_customer.php', ['id' => $h['id']])) ?>" title="<?= e(__('Customer details')) ?>"><i class="bi bi-card-list"></i></a>
             <a class="btn btn-sm btn-light border" href="<?= e(admin_url('platform_hotels.php', ['action' => 'edit', 'id' => $h['id']])) ?>" title="<?= e(__('Edit')) ?>"><i class="bi bi-pencil"></i></a>
           </td>
         </tr>

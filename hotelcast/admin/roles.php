@@ -50,7 +50,7 @@ if (is_post()) {
             }
             if ($errors) {
                 flash_errors($errors);
-                $_SESSION['hc_role_form'] = ['name' => $data['name'], 'description' => $data['description'], 'perms' => $requested];
+                $_SESSION['hc_role_form'] = ['for' => $id, 'name' => $data['name'], 'description' => $data['description'], 'perms' => $requested];
                 redirect(admin_url('roles.php', $id ? ['action' => 'edit', 'id' => $id] : ['action' => 'new']));
             }
             $newId = Roles::save($data, $perms, $existing ? $id : null);
@@ -266,10 +266,10 @@ if (in_array($action, ['new', 'edit', 'copy'], true)) {
         $role['description'] = (string) $src['description'];
         $role['permissions'] = array_values(array_filter($src['permissions'], static fn ($p) => $isAdmin || !in_array($p, Roles::ADMIN_ONLY, true)));
     }
-    if (!empty($_SESSION['hc_role_form']) && is_array($_SESSION['hc_role_form'])) {
-        // Values of a form that failed validation.
-        $old = $_SESSION['hc_role_form'];
-        unset($_SESSION['hc_role_form']);
+    $old = $_SESSION['hc_role_form'] ?? null;
+    unset($_SESSION['hc_role_form']);
+    if (is_array($old) && $action !== 'copy' && (int) ($old['for'] ?? -1) === (int) $role['id']) {
+        // Values of this form that failed validation.
         $role['name'] = (string) ($old['name'] ?? $role['name']);
         $role['description'] = (string) ($old['description'] ?? $role['description']);
         $role['permissions'] = array_values(array_filter((array) ($old['perms'] ?? []), 'is_string'));
