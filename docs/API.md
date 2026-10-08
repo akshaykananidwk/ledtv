@@ -1,4 +1,7 @@
-# HotelCast API Documentation
+# Krishna Cloud TV Management API Documentation (code name HotelCast)
+
+> Field names keep their original hotel wording: `hotel` / `hotel_id` = the **customer**, `room` /
+> `room_number` = the **screen** (screen name / ID). See [modules/terminology.md](modules/terminology.md).
 
 Base URL: `https://<your-domain>/<install-path>/api`
 
@@ -66,8 +69,8 @@ Response `data`:
 {
   "token": "f3a9...64 hex chars",
   "device_id": "2b1c5d9e-...",
-  "hotel": { "id": 1, "name": "Hotel Dwarka Palace" },
-  "room": { "id": 12, "number": "101", "name": "Deluxe 101", "floor": "1" },
+  "hotel": { "id": 1, "name": "Krishna Showroom" },
+  "room": { "id": 12, "number": "101", "name": "Entrance", "floor": "1" },
   "poll_interval": 8,
   "heartbeat_interval": 60,
   "settings_pin_hash": "sha256 hex of 4 digit PIN"
@@ -204,8 +207,8 @@ Returns the Content object currently scheduled for a room. A device may only rea
   "generated_at": "2026-10-05T18:30:00+05:30",
   "mode": "assigned",
   "screen_on": true,
-  "room": { "id": 12, "number": "101", "name": "Deluxe 101", "floor": "1" },
-  "hotel": { "id": 1, "name": "Hotel Dwarka Palace", "logo_url": "https://.../uploads/h1/branding/2026/10/logo.png" },
+  "room": { "id": 12, "number": "101", "name": "Entrance", "floor": "1" },
+  "hotel": { "id": 1, "name": "Krishna Showroom", "logo_url": "https://.../uploads/h1/branding/2026/10/logo.png" },
   "branding": { "product": "HotelCast", "logo_url": null, "color": "#7B1FA2", "support": "+91 98765 43210" },
   "suspended": null,
   "playlist": { "id": 3, "name": "Morning loop", "transition": "fade", "loop": true },

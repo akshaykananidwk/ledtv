@@ -102,7 +102,7 @@ require __DIR__ . '/partials/header.php';
       <div class="col-12"><div class="form-check form-switch"><input class="form-check-input" type="checkbox" role="switch" id="d_en" name="demo_public_enabled" value="1"<?= Demo::publicEnabled() ? ' checked' : '' ?>>
         <label class="form-check-label fw-semibold" for="d_en"><?= e(__('Public demo on')) ?></label></div>
         <div class="form-text"><?= e(__('Anyone can open :url, look around a read-only admin panel and watch the TV simulator. Data is reset every night.', ['url' => base_url('demo.php')])) ?></div></div>
-      <div class="col-12"><label class="form-label" for="d_name"><?= e(__('Demo business name')) ?></label><input class="form-control" id="d_name" name="demo_hotel_name" maxlength="100" value="<?= e((string) Settings::platform('demo_hotel_name', '')) ?>" placeholder="Hotel Dwarka Palace (Demo)"></div>
+      <div class="col-12"><label class="form-label" for="d_name"><?= e(__('Demo business name')) ?></label><input class="form-control" id="d_name" name="demo_hotel_name" maxlength="100" value="<?= e((string) Settings::platform('demo_hotel_name', '')) ?>" placeholder="Krishna Showroom (Demo)"></div>
       <div class="col-12"><button class="btn btn-primary"><i class="bi bi-check-lg"></i> <?= e(__('Save settings')) ?></button></div>
     </form>
     <?php if ($public): ?>

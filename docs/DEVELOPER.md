@@ -1,4 +1,8 @@
-# HotelCast — Developer Guide (2.0)
+# Krishna Cloud TV Management (code name HotelCast) — Developer Guide
+
+> **Terminology (2.5):** in the UI a `hotels` row is a **customer** and a `rooms` row is a **screen**
+> (`room_number` = screen name / ID). Keep the database / API names, use the UI words in every new string —
+> see [modules/terminology.md](modules/terminology.md).
 
 PHP 8.1+, MySQL 8 / MariaDB 10.4+, no Composer, no build step. Classes live in `hotelcast/core/` and
 are autoloaded by name (`core/<Class>.php`, then `core/Extensions/<Class>.php`, `core/Tasks/<Class>.php`).

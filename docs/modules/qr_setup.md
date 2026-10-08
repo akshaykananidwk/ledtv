@@ -66,7 +66,7 @@ Poll every `poll_interval` seconds.
   "server_url": "https://ledtv.akdwk.in/",
   "room_number": "101",
   "registration_key": "<hotel registration key>",
-  "hotel_name": "Hotel Dwarka Palace"
+  "hotel_name": "Krishna Showroom"
 } }
 ```
 
