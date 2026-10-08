@@ -29,7 +29,7 @@
     <string name="server_url">Server URL</string>
     <string name="server_url_hint">e.g. https://tv.example.com/hotelcast or http://192.168.1.10/hotelcast</string>
     <string name="room_number">Screen name / ID</string>
-    <string name="room_number_hint">e.g. 101 or Counter1</string>
+    <string name="room_number_hint">e.g. 101 or Entrance</string>
     <string name="registration_key">Registration key</string>
     <string name="registration_key_hint">Registration key of your account</string>
     <string name="save_register">Save &amp; Register</string>

@@ -1,6 +1,6 @@
-# HotelCast bulk setup file. One TV per line: tv_address,room_number
+# Krishna Cloud TV Management bulk setup file. One TV per line: tv_address,room (room = screen name / ID)
 # tv_address = IP (old TVs, port 5555 is used) or IP:PORT shown in Wireless debugging (Android 11+).
-# The server line is filled in automatically when you download this file from Admin -> Rooms.
+# The server line is filled in automatically when you download this file from Admin -> Screens & TVs.
 server,https://your-domain.com/hotelcast
 key,YOUR16CHARREGKEY
 192.168.10.7:40727,101

@@ -1,42 +1,42 @@
-# HotelCast — Admin User Guide
+# Krishna Cloud TV Management — Admin User Guide
 
-Open `https://your-domain/hotelcast/admin/` and log in. Switch the language (English / ગુજરાતી)
+Open `https://your-domain/hotelcast/admin/` and log in. Switch the language (English / ગુજરાતી / हिन्दी)
 from the top bar. Everything works on a phone, tablet or PC.
 
 ## Roles
 
-HotelCast is a SaaS platform. From top to bottom: the **Super Admin (Platform)** owns the platform,
-each customer (hotel) has one or more **Admins**, and the Admin adds the people who work with the TVs.
+Krishna Cloud TV Management is a digital-signage SaaS platform for any business (temples, shops, restaurants, hospitals, schools, offices, factories, hotels). From top to bottom: the **Super Admin (Platform)** owns the platform,
+each customer (a business) has one or more **Admins**, and the Admin adds the people who work with the TVs.
 
 | Role (shown as) | Scope | Can do |
 |------|-------|--------|
-| **Super Admin (Platform)** | whole platform | Hotels (customers), plans, invoices, resellers, licenses, platform settings & branding, features (e.g. hotel chains), auto-update / backups; can *enter* any hotel and works there as its Admin |
-| **Reseller** | own hotels | Create hotels (within an allowance), enter and manage them, see their invoices and the commission report |
-| **Admin** | one hotel (customer) | Everything inside the hotel: users, settings, billing (read-only invoices) and all of the below. Always controls all TVs |
-| **Manager** | one hotel | Rooms, groups, content, playlists, broadcasts, schedules, device commands (reboot…), APK manager, logs |
-| **Staff** | one hotel | View dashboard/rooms/content, push existing content and playlists, send emergency messages |
-| **Reception** | one hotel | Front desk: view dashboard and rooms; guests check-in/out and service orders (modules added in 2.x) |
+| **Super Admin (Platform)** | whole platform | Customers, plans, invoices, resellers, licenses, platform settings & branding, features (e.g. chains), auto-update / backups; can *enter* any customer and works there as its Admin |
+| **Reseller** | own customers | Create customers (within an allowance), enter and manage them, see their invoices and the commission report |
+| **Admin** | one customer | Everything of the customer: users, settings, billing (read-only invoices) and all of the below. Always controls all TVs |
+| **Manager** | one customer | Screens, groups, content, playlists, broadcasts, schedules, device commands (reboot…), APK manager, logs |
+| **Staff** | one customer | View dashboard/screens/content, push existing content and playlists, send emergency messages |
+| **Reception** | one customer | Front desk: view dashboard and screens; guests check-in/out and service orders (Hospitality module) |
 
 Older screens and documents call the Admin "Super Admin" and the Super Admin (Platform) "Platform
 Admin". Only the names changed; the accounts and their rights are the same.
 
 **Different people for different TVs.** When the Admin adds or edits a Manager, Staff or Reception
-user (**Users**), they choose **All TVs** (default) or **Only these TVs** and tick groups and/or rooms.
-Such a user then sees and controls only those TVs: rooms list, dashboard numbers, broadcasts, commands,
-power, schedules, emergency messages, guests and orders of those rooms. They cannot send to "All
-rooms", cannot add or delete rooms or groups, cannot change hotel-wide TV settings (volume rules, guest
+user (**Users**), they choose **All TVs** (default) or **Only these TVs** and tick groups and/or screens.
+Such a user then sees and controls only those TVs: screens list, dashboard numbers, broadcasts, commands,
+power, schedules, emergency messages, guests and orders of those screens. They cannot send to "All
+screens", cannot add or delete screens or groups, cannot change TV settings for all screens (volume rules, guest
 menu, power-off mode) and can stop only emergency messages that show on their TVs. The content library
-and playlists stay shared. A group gives access to every room in the group, also rooms added later.
+and playlists stay shared. A group gives access to every screen in the group, also screens added later.
 Details: `docs/modules/user_access.md`.
 
-A hotel's users only ever see **their own hotel** — rooms, TVs, content, logs and users of other
-hotels on the same platform are invisible and cannot be opened even with a guessed link.
+A customer's users only ever see **their own customer** — screens, TVs, content, logs and users of other
+customers on the same platform are invisible and cannot be opened even with a guessed link.
 
 When a 1.x installation is upgraded to 2.0, the first Super Admin automatically becomes **Platform
-Admin** (now shown as Super Admin (Platform)) and still manages the hotel as before; other Super Admins
-stay hotel Admins.
+Admin** (now shown as Super Admin (Platform)) and still manages the customer as before; other Super Admins
+stay customer Admins.
 
-**Hotel chains** (one owner, several hotels) are switched off by default. The Super Admin (Platform)
+**Chains** (one owner, several customers / locations) are switched off by default. The Super Admin (Platform)
 can switch them on in **Platform settings → Features**; while off, the chain menus and pages are hidden
 and existing chain data is kept.
 
@@ -44,24 +44,25 @@ Five wrong passwords lock an account for 15 minutes (an Admin can unlock it in *
 
 ## 1. Dashboard
 
-Live numbers (rooms, TVs online/offline, rooms without a TV), a room grid that refreshes every
+Live numbers (screens, TVs online/offline, screens without a TV), a screen grid that refreshes every
 10 seconds (green = online, red = offline, grey = no TV yet) showing what each TV is playing, recent
 activity, and quick buttons: **Broadcast**, **Emergency message**, **Refresh all TVs**.
 
-## 2. Setting up rooms and TVs
+## 2. Setting up screens and TVs
 
-* TVs register themselves: on the TV enter the server address, room number and the **registration key**
-  (Admin → Settings → Devices). If *Auto-create rooms* is on, the room appears automatically
-  (room `305` → floor `3`).
-* Or add rooms first in **Rooms → Add room**, or **Bulk add** (e.g. `101-120`, floor `1`).
-* Each room shows its TV status, last seen, IP, app version, Android version and Wi-Fi.
-* Per room you can assign content/playlist, switch the TV **off/on**, set a room-specific settings PIN,
+* TVs register themselves: on the TV enter the server address, a screen name / ID and the **registration key**
+  (Admin → Settings → Devices). If *Create screens automatically* is on, the screen appears automatically
+  (screen `305` → area / floor `3`). Each screen has a **screen name / ID** (what the TV types or the QR
+  setup picks) and an optional **location** (area / floor, groups).
+* Or add screens first in **Screens & TVs → Add screen**, or **Bulk add screens** (e.g. `101-120`, floor `1`).
+* Each screen shows its TV status, last seen, IP, app version, Android version and Wi-Fi.
+* Per screen you can assign content/playlist, switch the TV **off/on**, set a screen-specific settings PIN,
   **reboot**, **clear cache**, **refresh**, or **revoke** a TV (it must register again).
 
 ## 3. Groups
 
-**Groups** collect rooms by floor, zone (e.g. "Suites") or anything else. *Auto-create floor groups*
-builds one group per floor. A group can have its own content — rooms without their own content show it.
+**Groups** collect screens by floor, zone (e.g. "Display walls") or anything else. *Auto-create floor groups*
+builds one group per floor. A group can have its own content — screens without their own content show it.
 
 ## 4. Content library
 
@@ -72,7 +73,7 @@ builds one group per floor. A group can have its own content — rooms without t
 | Live Stream | Dwarkadhish live darshan — paste the HLS (`.m3u8`) or RTSP address |
 | Temple Timetable | Type the times and darshan names; the current darshan is highlighted on the TV |
 | Announcement | Full-screen message or scrolling marquee, colours and font size |
-| Custom HTML | Hotel menu, local guide, offers designed in HTML |
+| Custom HTML | Restaurant menu, local guide, offers designed in HTML |
 | Web URL / YouTube | Any web page or YouTube video/live |
 | Clock | Big digital or analog clock |
 
@@ -86,20 +87,20 @@ transition (fade / slide / none). A playlist of images is a slideshow.
 ## 6. Broadcast
 
 1. Choose **what**: a content item or a playlist.
-2. Choose **where**: all rooms, selected rooms, groups or floors.
+2. Choose **where**: all screens, selected screens, groups or floors.
 3. **Push now** — TVs switch within one poll interval (default 8 s).
    Or **Schedule**:
    * *Once at a time* — e.g. switch every TV to the darshan stream tomorrow at 06:25.
    * *Time window* — e.g. show the Aarti stream **every day 19:15–20:00**, or a breakfast offer on
-     **Sat/Sun 07:00–10:30**. Outside the window rooms go back to their normal content automatically.
+     **Sat/Sun 07:00–10:30**. Outside the window screens go back to their normal content automatically.
 
 **Emergency message** overrides everything on the selected TVs immediately (red full-screen) until you
 press **Stop** (the red banner at the top of every admin page also has a Stop button).
 
 Managers also get **device commands**: reboot, clear cache, reload app, screen on/off, ping.
 
-Priority on a TV: *room off* → *emergency* → *active time window* → *room content* → *group content*
-→ *hotel default content* → *welcome screen*.
+Priority on a TV: *screen off* → *emergency* → *active time window* → *screen content* → *group content*
+→ *default content* → *welcome screen*.
 
 ## 7. Schedule
 
@@ -109,34 +110,34 @@ Calendar of all scheduled broadcasts (month/week/day), with a list to edit, canc
 
 **TV Power** (Manager+):
 
-* **Turn TVs off / on now** — all, selected rooms, groups or floors. A room switched off stays off,
+* **Turn TVs off / on now** — all, selected screens, groups or floors. A screen switched off stays off,
   even after a TV restart, until you turn it on.
-* **Daily schedules** — e.g. *OFF 23:00 → ON 06:00, every day, all rooms* or *OFF 01:00 → ON 05:30 on
+* **Daily schedules** — e.g. *OFF 23:00 → ON 06:00, every day, all screens* or *OFF 01:00 → ON 05:30 on
   floor 2*. Overnight times are supported. Pause/resume or delete any schedule.
-* A guest can always switch on the TV with the remote; an emergency message wakes all TVs.
+* Anyone can always switch on the TV with the remote; an emergency message wakes all TVs.
 * Real standby / wake needs the TV app as *device owner* and the TV's *Quick start / Network standby*
   setting on — see `android/README.md` → *TV power*. Without it the TV only shows a black screen.
 
 ## 8. APK Manager (TV app updates)
 
 Upload a new signed APK with its version name and version code, then **Push App Update** to all or
-selected rooms. TVs download it, verify the SHA-256, install it (silently when the app is device owner)
+selected screens. TVs download it, verify the SHA-256, install it (silently when the app is device owner)
 and restart. The device table shows each TV's current app version and update status.
 
 ## 9. Logs & reports
 
-TV online/offline history, content play history per room, broadcast delivery, user activity, system
-errors and update logs — filter by room/user/date and export to CSV.
+TV online/offline history, content play history per screen, broadcast delivery, user activity, system
+errors and update logs — filter by screen/user/date and export to CSV.
 
 ## 10. Settings (Super Admin)
 
-All settings below are **per hotel**.
+All settings below are **per customer**.
 
-* **General** — hotel name, logo, time zone, default language.
+* **General** — business name, logo, time zone, default language.
 * **TV & Display** — poll interval (3–60 s), offline threshold, default content, clock/logo/weather
   overlays, bottom ticker text and colours.
-* **Devices** — registration key (regenerate if leaked; it also tells the platform which hotel a TV
-  belongs to), auto-create rooms, TV settings PIN.
+* **Devices** — registration key (regenerate if leaked; it also tells the platform which customer a TV
+  belongs to), auto-create screens, TV settings PIN.
 * **Media** — CDN base URL, upload limits, image size.
 * **Notifications** — email and/or WhatsApp (e.g. CallMeBot URL with `{message}`) when TVs go offline;
   *Send test notification*.
@@ -152,101 +153,101 @@ update history with **Rollback** per row, **Backups** (create, download, upload,
 
 Add users with a role and language, reset passwords, disable accounts, unlock locked accounts, see each
 user's activity and active sessions (and log them out remotely). For Managers, Staff and Reception choose
-**All TVs** or **Only these TVs** (groups / rooms, searchable); the **TVs** column shows each user's scope
+**All TVs** or **Only these TVs** (groups / screens, searchable); the **TVs** column shows each user's scope
 and a "Who can do what" box explains the roles.
 
-## 13. Billing (hotel Super Admin)
+## 13. Billing (customer Admin)
 
-**Billing** shows the hotel's plan, the amount due and every invoice (read-only) with a printable /
-PDF view. If the hotel is suspended for non-payment, the admin panel shows a red banner, TVs show a
-polite *"Service paused — please contact reception"* screen and all changes are disabled — only
-Billing, the profile and logout keep working. Payment recorded by the platform reactivates the hotel
+**Billing** shows the customer's plan, the amount due and every invoice (read-only) with a printable /
+PDF view. If the customer is suspended for non-payment, the admin panel shows a red banner, TVs show a
+polite *"Service paused — please contact the administrator"* screen and all changes are disabled — only
+Billing, the profile and logout keep working. Payment recorded by the platform reactivates the customer
 automatically.
 
 ---------------------------------------------------------------------------------------------------
-# Platform administration (multi-hotel / SaaS)
+# Platform administration (multi-customer / SaaS)
 
-The **Platform** section of the menu is visible to Platform Admins. The hotel menu above it always
-belongs to the hotel you are currently in (your own hotel, or the one you *entered*).
+The **Platform** section of the menu is visible to Platform Admins. The customer menu above it always
+belongs to the customer you are currently in (your own customer, or the one you *entered*).
 
-## 14. Hotels
+## 14. Customers
 
-* List of all hotels with plan, TVs (used / limit, online), reseller, unpaid invoices and status;
+* List of all customers with plan, TVs (used / limit, online), reseller, unpaid invoices and status;
   search and filter by status.
-* **New hotel**: name, plan, reseller (or direct customer), max TVs (empty = plan limit), valid-until
+* **New customer**: name, plan, reseller (or direct customer), max TVs (empty = plan limit), valid-until
   date, status, contact person, phone / WhatsApp, billing email, GSTIN, address, optional
-  **branding override** (product name, colour, logo) and the hotel's **first super admin** login.
+  **branding override** (product name, colour, logo) and the customer's **first super admin** login.
   A unique registration key is generated automatically.
-* **Hotel details**: TVs, rooms, expiry, registration key (*New registration key*), the login link
-  `…/admin/login.php?b=<slug>` that shows the hotel's branding, users, invoices, *Add a super admin*.
-* **Suspend / Activate**: a suspended (or expired) hotel's TVs show the *service paused* screen
+* **Customer details**: TVs, screens, expiry, registration key (*New registration key*), the login link
+  `…/admin/login.php?b=<slug>` that shows the customer's branding, users, invoices, *Add a super admin*.
+* **Suspend / Activate**: a suspended (or expired) customer's TVs show the *service paused* screen
   (emergency messages still work), new TVs cannot register (`HOTEL_SUSPENDED`), and its admin panel
   is read-only except Billing.
-* **Enter hotel**: switches your session into that hotel — every hotel page (rooms, content, users,
-  settings…) now works on it. A coloured banner *"You are managing hotel X"* is shown with
+* **Enter customer**: switches your session into that customer — every customer page (screens, content, users,
+  settings…) now works on it. A coloured banner *"You are managing customer X"* is shown with
   **Back to platform**.
 
 ## 15. Plans & TV limits
 
-**Plans** hold the price per TV per month, an optional TV limit and the modules included (guests,
-room service, advertising, analytics, templates, mobile app, support). A hotel's TV limit is its own
+**Plans** hold the price per TV per month, an optional TV limit and the features included (see [modules/plans_features.md](modules/plans_features.md); e.g. guests,
+room service (Hospitality), advertising, analytics, templates, mobile app, support). A customer's TV limit is its own
 *Max TVs* or else its plan's limit; when it is reached, a new TV is refused with `LICENSE_LIMIT`
-(remove / revoke an old TV in Rooms & TVs to free a slot). The dashboard widget *Plan & TV limit*
-shows the usage to the hotel's Super Admin.
+(remove / revoke an old TV in Screens & TVs to free a slot). The dashboard widget *Plan & TV limit*
+shows the usage to the customer's Super Admin.
 
 ## 16. Invoices (manual billing)
 
-* **Generate monthly invoices** (pick the month, default last month): one invoice per active hotel
+* **Generate monthly invoices** (pick the month, default last month): one invoice per active customer
   with a plan and at least one TV — *active TVs × plan price*, plus tax (Platform settings → Billing).
-  Hotels already invoiced for that month are skipped, so it is safe to click twice. With *Generate
+  Customers already invoiced for that month are skipped, so it is safe to click twice. With *Generate
   automatically* switched on this runs by itself on the 1st of every month.
-* **Single invoice**: any hotel, month, optional TV count / price override and notes.
+* **Single invoice**: any customer, month, optional TV count / price override and notes.
 * Numbers are sequential per year: `<prefix>-<year>-0001`.
 * **Mark paid**: payment date, method (UPI, bank transfer, cheque, cash) and reference (UTR / cheque
   no.). **Cancel** an unpaid invoice. **Send reminder** by email / WhatsApp. **Print** opens a clean
   invoice page (browser *Print → Save as PDF*).
-* **Overdue**: every day the platform reminds overdue hotels (every *N* days, email and/or WhatsApp)
-  and **automatically suspends** a hotel whose invoice is more than *auto-suspend days* overdue. As
-  soon as the payment is recorded the hotel is **reactivated automatically** (a manual suspension is
+* **Overdue**: every day the platform reminds overdue customers (every *N* days, email and/or WhatsApp)
+  and **automatically suspends** a customer whose invoice is more than *auto-suspend days* overdue. As
+  soon as the payment is recorded the customer is **reactivated automatically** (a manual suspension is
   never lifted automatically). *Run overdue check* runs the job immediately.
 
 ## 17. Resellers
 
-* **Resellers**: company, contact, commission %, hotel allowance (max number of hotels), status, and
-  branding for their hotels (product name, colour, logo, support phone / email — used on their
-  hotels' TVs, login link and admin panel).
+* **Resellers**: company, contact, commission %, customer allowance (max number of customers), status, and
+  branding for their customers (product name, colour, logo, support phone / email — used on their
+  customers' TVs, login link and admin panel).
 * **Reseller logins**: add one or more logins (role *Reseller*); disable / enable them. Suspending a
   reseller logs its users out and blocks their login.
-* The **reseller panel** (*My hotels*) shows only the reseller's own hotels with TV status, lets them
-  **Add hotel** (with its first super admin, within the allowance), **Enter** a hotel to manage it,
-  see the invoices of their hotels and the **commission report** for a date range:
-  *commission = paid invoices of their hotels, without tax × commission %*. Resellers cannot change
+* The **reseller panel** (*My customers*) shows only the reseller's own customers with TV status, lets them
+  **Add customer** (with its first super admin, within the allowance), **Enter** a customer to manage it,
+  see the invoices of their customers and the **commission report** for a date range:
+  *commission = paid invoices of their customers, without tax × commission %*. Resellers cannot change
   plans' prices, TV limits, expiry dates or status — that stays with the platform.
 
 ## 18. Licenses (self-hosted customers)
 
-For hotels that run HotelCast on their own server (*standalone* mode, see INSTALL.md):
+For customers that run the server on their own hosting (*standalone* mode, see INSTALL.md):
 **New license** generates a key `HC-XXXXX-XXXXX-XXXXX-XXXXX` with customer name, max TVs, valid-until
-date and an optional billing hotel (suspending that hotel also invalidates the license). The
+date and an optional billing customer (suspending that customer also invalidates the license). The
 installation checks the key once a day; the key is **bound to the domain of its first check**
 (*Reset domain* when the customer moves servers). **Revoke** stops the installation after its next
 check (its TVs show the *service paused* screen). The list shows the last check, version and TV count.
 
 ## 19. Platform settings
 
-* **Branding** (white-label): product name (replaces "HotelCast"), logo, primary colour, support phone
+* **Branding** (white-label): product name (replaces "Krishna Cloud TV Management"), logo, primary colour, support phone
   and email, footer text — used on the login page, admin panel, installer, invoices and every TV.
-  Resellers and hotels can override it.
+  Resellers and customers can override it.
 * **Billing**: currency (INR default), tax % and label (GST), invoice prefix, payment due days,
   auto-suspend after *N* days overdue (0 = never), reminders by email / WhatsApp and how often,
   WhatsApp gateway URL (`{phone}` and `{message}` placeholders), your company details printed on
   invoices (address, GSTIN, bank / UPI).
-* **Notifications**: platform admin email(s) for alerts (e.g. auto-suspended hotels) and the sender
+* **Notifications**: platform admin email(s) for alerts (e.g. auto-suspended customers) and the sender
   address for invoices / reminders.
 * **Platform admins**: add more platform admins, disable them.
 * **License**: on a self-hosted installation the license status, last check and *Check license now*.
 
-**Support** (menu placeholder) lists hotels with offline TVs; the full support dashboard follows in a
+**Support** (menu placeholder) lists customers with offline TVs; the full support dashboard follows in a
 later release.
 
 
@@ -255,12 +256,13 @@ later release.
 
 Step-by-step guides for the new pages are in:
 
-* Front desk, check-in mode, PMS, room service, requests, feedback: [modules/guests_services.md](modules/guests_services.md)
+* Front desk, check-in mode, PMS, room service, requests, feedback (Hospitality module): [modules/guests_services.md](modules/guests_services.md)
 * Ads & sponsor reports, analytics, templates & local guide: [modules/ads_analytics_templates.md](modules/ads_analytics_templates.md)
 * TV controls (volume, inputs, messages), support tools, phone app & notifications, setup file: [modules/pwa_support_devices.md](modules/pwa_support_devices.md)
 * Bulk TV setup on Windows: [../tools/windows/README.md](../tools/windows/README.md)
 
 * Add TVs with a QR code (no typing on the TV): [modules/qr_setup.md](modules/qr_setup.md)
-* Online sign-up, free trial and demo hotel: [modules/signup_demo.md](modules/signup_demo.md)
+* Online sign-up, free trial and demo: [modules/signup_demo.md](modules/signup_demo.md)
 * Ad marketplace (local businesses book ads, revenue share): [modules/ad_marketplace.md](modules/ad_marketplace.md)
-* Hotel chain dashboard: [modules/hotel_chains.md](modules/hotel_chains.md)
+* Chain dashboard: [modules/hotel_chains.md](modules/hotel_chains.md)
+* Terminology (UI term ↔ database / API name): [modules/terminology.md](modules/terminology.md)

@@ -47,8 +47,9 @@ if (Access::restricted()) {
 }
 $tvSum = Analytics::tvSummary($tvs);
 $tvRows = Analytics::publicTvRows($tvs);
-$occ = Analytics::occupancy($from, $to);
-$gs = Analytics::guestServices($from, $to);
+// Occupancy and guest services belong to the Hospitality features (2.5): hidden when the plan has none of them.
+$occ = Features::enabled('guests') ? Analytics::occupancy($from, $to) : null;
+$gs = Features::anyEnabled(['room_service', 'feedback']) ? Analytics::guestServices($from, $to) : null;
 $watts = Analytics::watts();
 
 $csv = (string) ($_GET['csv'] ?? '');

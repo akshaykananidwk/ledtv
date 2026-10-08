@@ -25,7 +25,7 @@
     <string name="server_url">સર્વર URL</string>
     <string name="server_url_hint">દા.ત. https://tv.example.com/hotelcast અથવા http://192.168.1.10/hotelcast</string>
     <string name="room_number">સ્ક્રીનનું નામ / ID</string>
-    <string name="room_number_hint">દા.ત. 101 અથવા Counter1</string>
+    <string name="room_number_hint">દા.ત. 101 અથવા Entrance</string>
     <string name="registration_key">નોંધણી કી</string>
     <string name="registration_key_hint">તમારા એકાઉન્ટની નોંધણી કી</string>
     <string name="save_register">સાચવો અને નોંધણી કરો</string>

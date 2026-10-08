@@ -1,14 +1,14 @@
 ﻿<#
-  Krishna Cloud LED TV bulk setup tool (Windows PowerShell 5.1+).
+  Krishna Cloud TV Management bulk setup tool (Windows PowerShell 5.1+).
 
   For every TV listed in tvs.csv it:
     1. connects with adb (pairs first on Android 11+ "Wireless debugging" TVs - asks for the 6-digit code)
-    2. installs / updates the Krishna Cloud LED TV APK found in this folder
+    2. installs / updates the Krishna Cloud TV APK found in this folder
     3. removes extra Android users (Kids / guest profiles) - required for device owner
     4. checks Google accounts (device owner is impossible while an account exists)
     5. makes the TV app the device owner (kiosk, real standby/wake, silent updates, reboot)
     6. allows auto-start (SYSTEM_ALERT_WINDOW)
-    7. sends server address, room number and registration key to the app and waits until the TV
+    7. sends server address, screen name / ID and registration key to the app and waits until the TV
        has registered with the server
   and writes a colour summary plus a log file.
 
@@ -94,8 +94,8 @@ function Shell([string]$serial, [string]$cmd, [int]$timeoutSec = 60) {
 # ------------------------------------------------------------------ input files
 if (-not $Csv) { $Csv = Join-Path $Here "tvs.csv" }
 if (-not (Test-Path $Csv)) {
-    Log "tvs.csv not found. Download it from Admin -> Rooms -> 'Download setup file' (or copy tvs.sample.csv)." "Red"
-    Log "tvs.csv મળી નથી. Admin -> Rooms -> 'Download setup file' માંથી download કરો." "Red"
+    Log "tvs.csv not found. Download it from Admin -> Screens & TVs -> 'Download setup file' (or copy tvs.sample.csv)." "Red"
+    Log "tvs.csv મળી નથી. Admin -> Screens & TVs -> 'Download setup file' માંથી download કરો." "Red"
     exit 1
 }
 $Server = ""; $Key = ""; $Tvs = @()
@@ -114,7 +114,7 @@ if ($Tvs.Count -eq 0) { Log "No TVs in tvs.csv." "Red"; exit 1 }
 $Apk = Get-ChildItem -Path $Here -Filter "*-TV-*.apk" | Sort-Object LastWriteTime -Descending | Select-Object -First 1
 if (-not $Apk) { Log "Put KrishnaCloud-TV-x.y.z.apk in this folder first. / APK ફાઇલ આ folder માં મૂકો." "Red"; exit 1 }
 
-Title "Krishna Cloud LED TV bulk setup: $($Tvs.Count) TV(s)" "Krishna Cloud LED TV setup: $($Tvs.Count) TV"
+Title "Krishna Cloud TV bulk setup: $($Tvs.Count) TV(s)" "Krishna Cloud TV setup: $($Tvs.Count) TV"
 Log "Server: $Server"
 Log "APK:    $($Apk.Name)"
 Write-Host ""
@@ -162,7 +162,7 @@ function Connect-Tv([string]$address) {
 }
 
 foreach ($tv in $Tvs) {
-    Title "Room $($tv.Room)  ($($tv.Address))" "રૂમ $($tv.Room)"
+    Title "Screen $($tv.Room)  ($($tv.Address))" "સ્ક્રીન $($tv.Room)"
     $res = [ordered]@{ Room = $tv.Room; Address = $tv.Address; Connected = "no"; Installed = "no"; DeviceOwner = "no"; Registered = "no"; Note = "" }
     try {
         $serial = Connect-Tv $tv.Address
@@ -217,7 +217,7 @@ foreach ($tv in $Tvs) {
         Shell $serial "am force-stop $Package" | Out-Null
         $cmd = "am start -n $Package/.SettingsActivity --es hc_server '$Server' --es hc_room '$($tv.Room)' --es hc_key '$Key' --ez hc_autoregister true --ez hc_force true"
         Shell $serial $cmd | Out-Null
-        Log "  Registering room $($tv.Room) ..."
+        Log "  Registering screen $($tv.Room) ..."
         $deadline = (Get-Date).AddSeconds(45)
         $reg = ""
         while ((Get-Date) -lt $deadline) {
@@ -239,7 +239,7 @@ foreach ($tv in $Tvs) {
 
 # ------------------------------------------------------------------ summary
 Title "Summary / પરિણામ" ""
-Write-Host ("{0,-8} {1,-22} {2,-9} {3,-9} {4,-12} {5,-10} {6}" -f "Room", "TV", "Connect", "Install", "DeviceOwner", "Registered", "Note")
+Write-Host ("{0,-8} {1,-22} {2,-9} {3,-9} {4,-12} {5,-10} {6}" -f "Screen", "TV", "Connect", "Install", "DeviceOwner", "Registered", "Note")
 foreach ($r in $Results) {
     $c = if ($r.Registered -eq "yes" -and $r.DeviceOwner -eq "yes") { "Green" } elseif ($r.Registered -eq "yes") { "Yellow" } else { "Red" }
     $row = "{0,-8} {1,-22} {2,-9} {3,-9} {4,-12} {5,-10} {6}" -f $r.Room, $r.Address, $r.Connected, $r.Installed, $r.DeviceOwner, $r.Registered, $r.Note

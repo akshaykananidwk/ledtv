@@ -25,7 +25,7 @@
     <string name="server_url">सर्वर URL</string>
     <string name="server_url_hint">जैसे https://tv.example.com/hotelcast या http://192.168.1.10/hotelcast</string>
     <string name="room_number">स्क्रीन का नाम / ID</string>
-    <string name="room_number_hint">जैसे 101 या Counter1</string>
+    <string name="room_number_hint">जैसे 101 या Entrance</string>
     <string name="registration_key">पंजीकरण कुंजी</string>
     <string name="registration_key_hint">आपके खाते की पंजीकरण कुंजी</string>
     <string name="save_register">सहेजें और पंजीकरण करें</string>

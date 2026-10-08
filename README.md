@@ -1,14 +1,19 @@
-# Krishna Cloud LED TV — TV Remote Management System
+# Krishna Cloud TV Management — digital signage & TV management SaaS
 
-> Product name: **Krishna Cloud LED TV**. "HotelCast" remains the internal code name (folder `hotelcast/`, Android package `com.hotelcast.tv`). Changing those would break updates of TVs that are already installed.
+> Product name: **Krishna Cloud TV Management** (until 2.4: "Krishna Cloud LED TV"). "HotelCast" remains the
+> internal code name (folder `hotelcast/`, Android package `com.hotelcast.tv`, database tables `hotels` / `rooms`,
+> API fields `hotel_id` / `room_number`). Changing those would break updates of TVs that are already installed —
+> see [docs/modules/terminology.md](docs/modules/terminology.md) for the UI term ↔ database / API name mapping.
 
-Control every Android TV in your hotel from one browser tab. When a TV is switched on, the
-HotelCast app opens full-screen and shows whatever the admin has pushed — **Dwarkadhish live
-darshan**, the **temple timetable**, hotel **announcements**, **offers**, **videos**, slideshows,
-web pages — room by room, floor by floor, or the whole hotel at once. No room visits needed.
+Control every Android TV, Smart-TV browser and display of a business from one browser tab — temples, shops,
+showrooms, restaurants, hospitals and clinics, schools, offices, factories and hotels. When a TV is switched on,
+the app opens full-screen and shows whatever the admin has pushed — **live darshan**, **timetables**, menus,
+**announcements**, **offers**, **videos**, slideshows, token displays, web pages — screen by screen, per area /
+floor, or on every screen at once. One server hosts many **customers** (multi-tenant SaaS) with plans, invoices,
+resellers and white-label branding; each customer manages its own **screens**.
 
-*Hotel ni darek Android TV ne admin panel thi remotely control karo — content push karo, room-wise
-schedule karo, emergency message moklo, TV reboot/update karo.*
+*Tamara business na darek TV / screen ne admin panel thi remotely control karo — content push karo,
+screen-wise schedule karo, emergency message moklo, TV reboot/update karo.*
 
 ```
  Admin Panel (PC / tablet / phone)
@@ -18,7 +23,7 @@ schedule karo, emergency message moklo, TV reboot/update karo.*
         ▲
         │  poll every 5–10 s (hash-based, content only sent when it changes)
         │
- Android TV app (each room)  ── offline cache: keeps showing the last content without internet
+ Android TV app / web player (each screen)  ── offline cache: keeps showing the last content without internet
 ```
 
 | Part | Folder | Tech |
@@ -26,6 +31,18 @@ schedule karo, emergency message moklo, TV reboot/update karo.*
 | Server: admin panel + REST API + installer + auto-updater | [`hotelcast/`](hotelcast) | PHP 8.1+, MySQL 8 / MariaDB 10.6, Apache, Bootstrap 5, vanilla JS — no Composer, no Node |
 | Android TV app | [`android/`](android) | Kotlin, ExoPlayer 2.19, Retrofit, OkHttp, Glide, WorkManager — min SDK 21, target 34 |
 | Documentation | [`docs/`](docs) | Install guide, TV setup, admin guide, API, developer guide (tenancy + extension points), security, test report |
+
+## What's new in 2.5 — plans, roles, all screens, new name
+
+| Feature | Where |
+|---|---|
+| **New name: Krishna Cloud TV Management** — a general digital-signage SaaS. In the UI "Hotel" is now **Customer** (platform) / **Business** (customer side) and "Room" is **Screen** (screen name / ID + optional area / floor). Hotel wording remains only in the optional **Hospitality** module (guests, room service, PMS, feedback, local guide). Database, API and JSON names are unchanged | everywhere · [terminology.md](docs/modules/terminology.md) |
+| **Plans & features**: every module belongs to a feature; plans (Basic / Business / Hospitality …) switch feature groups on or off per customer, plus per-customer add / remove overrides. Pages, menus, API routes, TV extensions and permissions follow the plan | Platform → Plans, Customer details · [plans_features.md](docs/modules/plans_features.md) |
+| **Custom roles (RBAC)**: copy a built-in role, pick permissions from a matrix (hidden when the plan lacks the feature), assign it to users; escalation-safe | Admin → Roles · [roles.md](docs/modules/roles.md) |
+| **All screens**: every TV of every customer in one table with filters, bulk commands, **move a TV** to another customer / screen, an **unassigned pool** for TVs registered with the platform key, and a **customer details** page (TVs, users, plan, features) | Platform → All screens · [platform_screens.md](docs/modules/platform_screens.md) |
+| **Hindi admin panel**: the admin language menu now offers English / ગુજરાતી / हिन्दी (main pages translated, the rest falls back to English) | language menu |
+| Demo data is a general business ("Krishna Showroom": Entrance, Counter 1 …); hospitality demo data only when the demo customer's plan has the Hospitality features | Platform → Demo |
+| TV app 2.5.0 (versionCode 13): new name ("Krishna Cloud TV" on the launcher), "Screen name / ID" instead of room number, QR setup wording | [android/README.md](android/README.md) |
 
 ## What's new in 2.4 — features 26–50
 
@@ -61,7 +78,7 @@ schedule karo, emergency message moklo, TV reboot/update karo.*
 | Feature | Where |
 |---|---|
 | **Ticker bar per TV / group / all**: own text, colours, speed, font size, height, top or bottom, date/time windows. The video shrinks so the bar never covers it | Admin → **Ticker** · [docs/modules/ticker_bar.md](docs/modules/ticker_bar.md) |
-| **Per-user TV access**: the Admin gives each Manager / Staff / Reception user "All TVs" or only chosen groups / rooms | Admin → **Users** · [docs/modules/user_access.md](docs/modules/user_access.md) |
+| **Per-user TV access**: the Admin gives each Manager / Staff / Reception user "All TVs" or only chosen groups / screens | Admin → **Users** · [docs/modules/user_access.md](docs/modules/user_access.md) |
 | **SaaS role names**: Super Admin (Platform) → Admin (per customer) → Manager / Staff / Reception | everywhere |
 | **Hotel chains hidden by default** (Platform settings → Features to turn them on) | Platform settings |
 | TV app 2.1.1: QR setup works on old TVs (bundled root certificates, wrong-clock handling, connection diagnostics) | TV app |
@@ -74,17 +91,17 @@ HTML timetable with the current darshan highlighted · marquee or full-screen an
 clock, weather, logo and ticker overlays · emergency override · offline cache of content and media ·
 remote reboot, clear-cache, screen on/off, silent APK update · PIN-protected settings · English + ગુજરાતી.
 
-**Admin panel** — live dashboard · rooms with online/offline, IP, app version, Wi-Fi · floor/zone groups ·
+**Admin panel** — live dashboard · screens with online/offline, IP, app version, Wi-Fi · area/floor/zone groups ·
 content library (uploads with resize/compression, streams, URLs, announcements, timetable builder, HTML) ·
 drag-and-drop playlists · push now / schedule / daily time windows / repeat days · emergency broadcast ·
 calendar · users with Super Admin / Manager / Staff roles · APK manager · logs & reports with CSV export ·
-settings · GitHub auto-update with backup + auto-rollback · TV-simulator preview of any content or room.
+settings · GitHub auto-update with backup + auto-rollback · TV-simulator preview of any content or screen.
 
-**Multi-hotel platform (2.0)** — one server hosts many hotels, each with its own login and fully
-isolated data · platform admin: hotels (create / suspend / enter), plans with TV limits, monthly
+**Multi-customer platform (2.0)** — one server hosts many customers, each with its own login and fully
+isolated data · platform admin: customers (create / suspend / enter), plans with TV limits, monthly
 invoices with tax (manual payments, overdue reminders, auto-suspend & reactivation), resellers with
 commission reports, license keys for self-hosted installs · white-label branding (platform → reseller →
-hotel) on login, admin panel, invoices and TVs · roles Platform Admin / Reseller / Super Admin /
+customer) on login, admin panel, invoices and TVs · roles Platform Admin / Reseller / Super Admin /
 Manager / Staff / Reception · extension points for modules ([docs/DEVELOPER.md](docs/DEVELOPER.md)).
 
 ## What's new in 2.1
@@ -108,18 +125,18 @@ Manager / Staff / Reception · extension points for modules ([docs/DEVELOPER.md]
 | 7, 12 | 28 ready-made templates (festivals, notices, temple, local guide) — replaces #13 AI for now | Admin → Templates |
 | 4, 5, 15, 16 | TV guest menu (QR, Live TV, HDMI, cast), volume + night limit, screenshots, messages | Admin → TV controls, `docs/modules/pwa_support_devices.md` |
 | 14 | Admin as installable phone app (PWA) with web-push notifications | Admin → Notifications |
-| 23 | Windows bulk TV setup tool | `tools/windows/`, Admin → Rooms → Download setup file |
+| 23 | Windows bulk TV setup tool | `tools/windows/`, Admin → Screens & TVs → Download setup file |
 | 24 | Support: TV logs, crash reports, platform support dashboard | Admin → Support |
 
 Developer extension points: `docs/DEVELOPER.md`. Full 2.0 contract: `docs/V2_SPEC.md`.
 
 ## Quick start
 
-1. **Server** — upload `dist/hotelcast-2.1.0.zip` to your hosting, extract, open
+1. **Server** — upload `dist/hotelcast-2.5.0.zip` (built by `tools/build-release.sh`) to your hosting, extract, open
    `https://your-domain/hotelcast/install/` and follow the 7-step wizard → [docs/INSTALL.md](docs/INSTALL.md)
-2. **TVs** — install `android/release/HotelCast-TV-2.1.0.apk` on each TV (USB pen-drive or `adb`), open it,
-   enter server address + room number + registration key → [android/README.md](android/README.md)
-3. **Use it** — Admin → Content → add content → Broadcast → choose rooms → *Push now* → [docs/ADMIN_GUIDE.md](docs/ADMIN_GUIDE.md)
+2. **TVs** — install `android/release/KrishnaCloud-TV-2.5.0.apk` on each TV (USB pen-drive or `adb`), open it,
+   scan the QR code with your phone (or enter server address + screen name / ID + registration key) → [android/README.md](android/README.md)
+3. **Use it** — Admin → Content → add content → Broadcast → choose screens → *Push now* → [docs/ADMIN_GUIDE.md](docs/ADMIN_GUIDE.md)
 
 ## Auto-update (GitHub)
 
@@ -147,12 +164,12 @@ hotelcast/            Server application (this is what you upload)
   core/               PHP classes: DB, Auth, Csrf, ContentManager, ContentResolver, Broadcaster,
                       DeviceManager, Scheduler, Updater, Backup, Migrator, HealthCheck, …
   migrations/         001_init.sql, 002_… (run automatically by installer/updater)
-  lang/               gu.php — Gujarati translations
+  lang/               gu*.php / hi*.php — Gujarati and Hindi translations
   assets/             CSS/JS + vendored Bootstrap, icons, SortableJS, FullCalendar, hls.js
   uploads/ backups/ logs/ storage/   runtime data (protected, never overwritten)
   tests/              PHPUnit unit + integration tests, load test
   version.json        {"version":"1.0.0","commit":"…","date":"…"}
-android/              Android Studio project (Kotlin) + release/HotelCast-TV-2.1.0.apk
+android/              Android Studio project (Kotlin) + release/KrishnaCloud-TV-2.5.0.apk
 docs/                 INSTALL, ADMIN_GUIDE, API, SECURITY, TEST_REPORT
 tools/build-release.sh  builds dist/hotelcast-<version>.zip
 ```
@@ -171,7 +188,7 @@ php tests/load/load_test.php --url=https://your-domain/hotelcast/ --key=REGISTRA
 php -S 127.0.0.1:8080 -t hotelcast hotelcast/tests/router.php
 
 # Android
-cd android && ./gradlew testReleaseUnitTest assembleRelease
+cd android && ./gradlew testReleaseUnitTest lintRelease assembleRelease
 ```
 
 Results: [docs/TEST_REPORT.md](docs/TEST_REPORT.md). Security design: [docs/SECURITY.md](docs/SECURITY.md).
@@ -179,6 +196,7 @@ API reference: [docs/API.md](docs/API.md).
 
 ## ગુજરાતી સારાંશ
 
-HotelCast થી હોટેલના દરેક રૂમના Android TV ને એક જ બ્રાઉઝર પરથી કંટ્રોલ કરો: દ્વારકાધીશ લાઇવ દર્શન,
-મંદિરના દર્શન સમય, હોટેલની જાહેરાતો, ઓફર અને વિડિયો — તરત જ બધા TV પર. સર્વર પર ફાઇલો અપલોડ કરો,
-`/install` ખોલો અને સ્ટેપ ફોલો કરો. એડમિન પેનલ અંગ્રેજી અને ગુજરાતી બંનેમાં ઉપલબ્ધ છે.
+Krishna Cloud TV Management થી મંદિર, દુકાન, શોરૂમ, રેસ્ટોરન્ટ, હૉસ્પિટલ, શાળા, ઑફિસ, ફેક્ટરી કે હોટેલની
+દરેક સ્ક્રીન (Android TV) ને એક જ બ્રાઉઝર પરથી કંટ્રોલ કરો: લાઇવ દર્શન, દર્શન સમય, મેનુ, જાહેરાતો, ઓફર
+અને વિડિયો — તરત જ બધી સ્ક્રીન પર. એક સર્વર પર ઘણા ગ્રાહકો (customers) — દરેકની પોતાની સ્ક્રીન. સર્વર પર
+ફાઇલો અપલોડ કરો, `/install` ખોલો અને સ્ટેપ ફોલો કરો. એડમિન પેનલ અંગ્રેજી, ગુજરાતી અને હિન્દીમાં ઉપલબ્ધ છે.

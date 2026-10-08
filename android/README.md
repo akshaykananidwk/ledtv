@@ -1,7 +1,8 @@
-# HotelCast TV – Android TV client
+# Krishna Cloud TV – Android TV client
 
-Kiosk player for the HotelCast hotel-TV management system. It registers with the HotelCast
-server, polls for content and commands every few seconds, and plays the room's playlist full screen
+Kiosk player for **Krishna Cloud TV Management** (code name HotelCast), the digital-signage / TV management
+SaaS for temples, shops, restaurants, hospitals, schools, offices, factories and hotels. It registers with the
+server, polls for content and commands every few seconds, and plays the screen's playlist full screen
 (images, videos, live streams, timetables / HTML / web pages / YouTube, announcements, clocks) with a
 logo / clock / weather / ticker overlay and full-screen emergency broadcasts. The server contract is
 in [`../docs/API.md`](../docs/API.md).
@@ -9,9 +10,15 @@ in [`../docs/API.md`](../docs/API.md).
 | | |
 |---|---|
 | Package / applicationId | `com.hotelcast.tv` |
-| Version | 2.4.0 (versionCode 11) |
+| Version | 2.5.0 (versionCode 13) |
 | Android | 5.0 (API 21) and newer, targetSdk 34 |
-| Signed release APK | `release/KrishnaCloud-TV-2.4.0.apk` (same signing key as 1.x / 2.x, signer SHA-256 `b0f2c899…1a156c`, so OTA `UPDATE_APP` from older versions works) |
+| App name | "Krishna Cloud TV Management" (`app_name`); launcher label "Krishna Cloud TV" (`app_label`, TV launchers truncate long names) |
+| Signed release APK | `release/KrishnaCloud-TV-2.5.0.apk` (same signing key as 1.x / 2.x, signer SHA-256 `b0f2c899…1a156c`, so OTA `UPDATE_APP` from older versions works) |
+
+What is new in 2.5: the product is renamed **Krishna Cloud TV Management**; on the TV a *room* is now a
+**screen** (setup field "Screen name / ID", "Screen 101" on the welcome screen, QR setup "Choose the screen"),
+"Hotel" in device info is "Customer", the suspended screen says "Please contact the administrator", the
+guest menu is the "TV menu". The server contract is unchanged (`room_number`, `room`, `hotel` JSON fields).
 
 What is new in 2.4 (device features, see [`../docs/modules/device_features.md`](../docs/modules/device_features.md)):
 **live screen view** (`LIVE_VIEW`: small screenshots every 4 s while the admin page is open),
@@ -87,7 +94,7 @@ If that file does not exist, it falls back to environment variables (useful on C
 Check a signature with:
 
 ```bash
-$ANDROID_HOME/build-tools/34.0.0/apksigner verify --print-certs release/KrishnaCloud-TV-2.4.0.apk
+$ANDROID_HOME/build-tools/34.0.0/apksigner verify --print-certs release/KrishnaCloud-TV-2.5.0.apk
 ```
 
 ---
@@ -103,12 +110,12 @@ $ANDROID_HOME/build-tools/34.0.0/apksigner verify --print-certs release/KrishnaC
 3. From a PC on the same network:
    ```bash
    adb connect 192.168.1.45:5555          # the TV's IP address
-   adb install -r KrishnaCloud-TV-2.4.0.apk
+   adb install -r KrishnaCloud-TV-2.5.0.apk
    ```
 
 ### b) With a USB pen drive and a file manager
 
-1. Copy `KrishnaCloud-TV-2.4.0.apk` to a FAT32/exFAT pen drive and plug it into the TV.
+1. Copy `KrishnaCloud-TV-2.5.0.apk` to a FAT32/exFAT pen drive and plug it into the TV.
 2. Install a file manager on the TV, such as *File Commander*, *X-plore* or *FX File Explorer*.
 3. Allow unknown sources:
    * Android 8 and newer: *Settings → Apps → Security & restrictions → Unknown sources* (or *Install
@@ -123,12 +130,12 @@ With no registration yet, the app opens the **QR setup screen** directly, withou
 setup form (still without a PIN before the first registration). Enter these three values, then
 select **Save & Register**:
 
-* **Server URL**: the HotelCast install address, for example `https://hotel.com/hotelcast` or
+* **Server URL**: the server install address, for example `https://tv.example.com/hotelcast` or
   `http://192.168.1.10/hotelcast`. Pre-filled with the built-in server (`https://ledtv.akdwk.in/`)
   when nothing is configured. The app appends `/api/` itself. Scheme-less input is accepted:
   LAN IPs get `http://` and domain names get `https://`. If you paste a URL that already ends in
   `/api`, `/admin` or `index.php`, the app strips it.
-* **Room number**, for example `101`.
+* **Screen name / ID**, for example `101` or `Entrance` (API field `room_number`).
 * **Registration key**, from *Admin → Settings → Devices*.
 
 **Test Connection** calls `GET /api/health` and shows the server version and database status.
@@ -138,33 +145,33 @@ select **Save & Register**:
 
 **English**
 
-1. Install the APK (pen drive or adb, §2) and open **HotelCast TV**. A new TV shows a big QR code and
+1. Install the APK (pen drive or adb, §2) and open **Krishna Cloud TV**. A new TV shows a big QR code and
    a 6-character code (e.g. `AB3 K9Z`).
 2. If the TV is not on the network yet, select **Open Wi-Fi settings**, connect, and press BACK —
    the screen shows the network state and retries by itself.
 3. On your phone, **scan the QR code** with the camera.
 4. **Log in to the admin panel** (if you are not already).
-5. **Choose the room** and confirm. Within a few seconds the TV shows *Assigned to room 101 –
+5. **Choose the screen** and confirm. Within a few seconds the TV shows *Assigned to screen 101 –
    connecting…*, then *Registered ✔* and opens the player.
 
 No camera? Enter the code shown on the TV in the admin panel instead. The code is valid for the
 time shown on screen (countdown); an expired code is replaced automatically.
 
 Buttons on the QR screen (D-pad): **Enter details manually** (classic form), **Change server** (only
-the server URL — for hotels running their own HotelCast server; the QR flow then continues against
+the server URL — for businesses running their own server; the QR flow then continues against
 that server; **Use default** goes back to the built-in one), **Open Wi-Fi settings**, and **Try again**
 after a failed registration (e.g. `LICENSE_LIMIT`, `HOTEL_SUSPENDED`, `INVALID_REGISTRATION_KEY` are
 explained on screen).
 
 **ગુજરાતી**
 
-1. APK ઇન્સ્ટોલ કરો (પેન ડ્રાઇવ અથવા adb, §2) અને **HotelCast TV** ખોલો. નવું ટીવી મોટો QR કોડ અને
+1. APK ઇન્સ્ટોલ કરો (પેન ડ્રાઇવ અથવા adb, §2) અને **Krishna Cloud TV** ખોલો. નવું ટીવી મોટો QR કોડ અને
    6 અક્ષરનો કોડ (દા.ત. `AB3 K9Z`) બતાવશે.
 2. ટીવી હજી નેટવર્ક પર ન હોય તો **Wi-Fi સેટિંગ્સ ખોલો** પસંદ કરો, Wi-Fi જોડો અને BACK દબાવો — સ્ક્રીન
    નેટવર્કની સ્થિતિ બતાવે છે અને જાતે ફરી પ્રયાસ કરે છે.
 3. તમારા ફોનના કૅમેરાથી **QR કોડ સ્કેન કરો**.
 4. **એડમિન પેનલમાં લૉગ ઇન કરો** (જો પહેલેથી ન હોય તો).
-5. **રૂમ પસંદ કરો** અને પુષ્ટિ કરો. થોડી સેકન્ડમાં ટીવી *રૂમ 101 સોંપાયો – જોડાઈ રહ્યા છીએ…*,
+5. **સ્ક્રીન પસંદ કરો** અને પુષ્ટિ કરો. થોડી સેકન્ડમાં ટીવી *સ્ક્રીન 101 સોંપાઈ – જોડાઈ રહ્યા છીએ…*,
    પછી *નોંધણી થઈ ગઈ ✔* બતાવે છે અને પ્લેયર ખોલે છે.
 
 કૅમેરા નથી? ટીવી પર દેખાતો કોડ એડમિન પેનલમાં દાખલ કરો. કોડ સ્ક્રીન પરના સમય (કાઉન્ટડાઉન) સુધી માન્ય
@@ -203,7 +210,7 @@ while the QR screen is open, the QR screen closes and the player opens.
 The app declares `HOME`, `LAUNCHER` and `LEANBACK_LAUNCHER` intent filters.
 
 * **Simple:** press the remote's HOME button once after installing. If the TV asks which launcher
-  to use, choose **HotelCast TV → Always**.
+  to use, choose **Krishna Cloud TV → Always**.
 * **Over adb (Android 7 and newer):**
   ```bash
   adb shell cmd package set-home-activity com.hotelcast.tv/.MainActivity
@@ -238,7 +245,7 @@ Device-owner mode enables these features:
 Setup: the TV must have **no Google or other accounts** (factory reset it if needed). Then run:
 
 ```bash
-adb install -r KrishnaCloud-TV-2.4.0.apk
+adb install -r KrishnaCloud-TV-2.5.0.apk
 adb shell dpm set-device-owner com.hotelcast.tv/.AdminReceiver
 adb shell am start -n com.hotelcast.tv/.MainActivity
 ```
@@ -271,7 +278,7 @@ On a TV that is not device owner, `UPDATE_APP` downloads the APK and checks it b
 
 It then opens the system installer (`ACTION_INSTALL_PACKAGE` through a `FileProvider`). Someone
 with the remote has to confirm the install. On Android 8 and newer, allow **Install unknown apps**
-for HotelCast TV once. The app opens that setting itself if it is missing.
+for Krishna Cloud TV once. The app opens that setting itself if it is missing.
 
 ---
 
@@ -299,7 +306,7 @@ A **PIN** prompt appears next:
 
 The screen works with the D-pad: large, focusable fields and buttons with a yellow focus ring.
 
-* Server URL, room number and registration key.
+* Server URL, screen name / ID and registration key.
 * **Save & Register**: registers or re-registers the TV and rotates its token.
 * **Test Connection**.
 * **Clear Cache**: deletes cached media and the content JSON, then downloads again.
@@ -380,8 +387,8 @@ after 60 s.
 |---|---|
 | `emergency` / `emergency != null` | Full-screen message above everything, in the server's colours |
 | `off`, `screen_on:false`, or `SCREEN_OFF` command | TV goes to standby (see *TV power* below); black screen as fallback |
-| `suspended` (hotel suspended / licence expired) | Polite full-screen message (`suspended.title/message`, branding logo and support number); nothing plays |
-| `empty` (or no playable items) | Hotel logo (or branding logo), "Welcome to …", the room number and the product name |
+| `suspended` (customer suspended / licence expired) | Polite full-screen message (`suspended.title/message`, branding logo and support number); nothing plays |
+| `empty` (or no playable items) | Business logo (or branding logo), "Welcome to …", "Screen <ID>" and the product name |
 | anything else | Playlist plus overlay (logo top-left, clock and weather top-right) and the ticker bar (see below) |
 
 ### Ticker bar (2.2)
@@ -701,7 +708,7 @@ adb shell am broadcast -a com.hotelcast.tv.PROVISION -n com.hotelcast.tv/.Provis
 | extra | |
 |---|---|
 | `hc_server` | Server URL (normalised like the setup screen) |
-| `hc_room` | Room number (letters/digits/space `. _ / -`, max 32) |
+| `hc_room` | Screen name / ID (letters/digits/space `. _ / -`, max 32) |
 | `hc_key` | Registration key |
 | `hc_autoregister` | `true` = register immediately; otherwise the fields are only filled in / saved |
 | `hc_force` | `true` = accept even if the TV is already registered (re-provisioning) |

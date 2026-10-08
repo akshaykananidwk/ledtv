@@ -31,6 +31,7 @@
             <file>tests/Integration/PwaSupportDevicesTest.php</file>
             <file>tests/Integration/UserAccessTest.php</file>
             <file>tests/Integration/TickersTest.php</file>
+            <file>tests/Integration/TerminologyTest.php</file>
             <directory>tests/Integration/Apps</directory>
         </testsuite>
     </testsuites>

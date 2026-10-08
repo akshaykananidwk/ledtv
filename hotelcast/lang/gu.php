@@ -587,6 +587,7 @@ return [
     'System errors' => 'સિસ્ટમ ભૂલો',
     'System health' => 'સિસ્ટમ હેલ્થ',
     'System information' => 'સિસ્ટમ માહિતી',
+    'Thank you' => 'આભાર',
     'TV' => 'TV',
     'TV & Display' => 'TV અને ડિસ્પ્લે',
     'TV access revoked. It will return to its setup screen.' => 'TV નો પ્રવેશ રદ કર્યો. તે સેટઅપ સ્ક્રીન પર પાછું જશે.',
