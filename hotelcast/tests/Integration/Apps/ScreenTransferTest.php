@@ -234,7 +234,8 @@ final class ScreenTransferTest extends TestCase
             $this->assertStringNotContainsString('roomsViewSwitch', $html);
             $this->assertStringNotContainsString('Screens — all customers', $html);
             $this->assertStringNotContainsString('js-ps-transfer', $html);
-            $this->assertStringNotContainsString('B1', $html);
+            $this->assertStringNotContainsString(self::$tv['tvB1']['uid'], $html);
+            $this->assertStringNotContainsString('>BEMPTY<', $html);
             $this->assertStringNotContainsString('Beta Temple', $html);
         }
         // Posting the platform form as a customer / reseller moves nothing.
@@ -390,7 +391,8 @@ final class ScreenTransferTest extends TestCase
         $this->assertStringNotContainsString('uploads/h' . $a . '/', (string) json_encode($d['content']));
         [$s] = TestEnv::http('GET', $d['content']['items'][0]['url']);
         $this->assertSame(200, $s, 'copied media file is served');
-        $this->assertSame('Sale today', $d['content']['overlay']['ticker']['message'] ?? $d['content']['ticker']['message'] ?? null);
+        $this->assertSame(['Sale today'], $d['content']['overlay']['ticker']['messages'] ?? null, 'only the screen\'s own ticker comes along');
+        $this->assertSame('fit', $d['content']['overlay']['ticker']['video_scale']);
 
         // Activity logs on both customers and the platform.
         $this->assertSame(1, (int) DB::value("SELECT COUNT(*) FROM activity_logs WHERE hotel_id = :h AND action = 'screen_copied_out'", ['h' => $a]));
@@ -449,7 +451,6 @@ final class ScreenTransferTest extends TestCase
         }
         $this->assertSame($before, self::counts($d), 'no rows, no screen, no files');
         $this->assertSame($devBefore, self::device('tvA3'), 'the TV stays');
-        // Without content the TV fits.
         DB::query('UPDATE hotels SET storage_mb = NULL, max_tvs = :m WHERE id = :id', ['m' => Tenant::tvCount($d), 'id' => $d]);
         Tenant::forget($d);
         // Screen limit full → LICENSE_LIMIT, nothing copied.
