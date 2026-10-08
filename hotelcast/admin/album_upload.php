@@ -286,7 +286,7 @@ if ($viewId > 0) {
             <input class="form-control" id="a_name" name="name" value="<?= e($edit['name']) ?>" maxlength="120" required></div>
           <div class="form-check form-switch mb-2"><input class="form-check-input" type="checkbox" role="switch" id="a_guest" name="guest_upload" value="1"<?= (int) $edit['guest_upload'] ? ' checked' : '' ?>>
             <label class="form-check-label" for="a_guest"><?= e(__('Guests may upload photos with a link / QR code')) ?></label></div>
-          <div class="form-check form-switch mb-2"><input class="form-check-input" type="checkbox" role="switch" id="a_mod" name="guest_moderation" value="1"<?= (int) $edit['guest_moderation'] ? ' checked' : '' ?>>
+          <input type="hidden" name="guest_moderation" value="0"><div class="form-check form-switch mb-2"><input class="form-check-input" type="checkbox" role="switch" id="a_mod" name="guest_moderation" value="1"<?= (int) $edit['guest_moderation'] ? ' checked' : '' ?>>
             <label class="form-check-label" for="a_mod"><?= e(__('Guest photos wait for approval before they appear on the TV')) ?></label></div>
           <div class="mb-3"><label class="form-label" for="a_max"><?= e(__('Maximum guest photos')) ?></label>
             <input class="form-control" type="number" id="a_max" name="guest_max" min="1" max="<?= Albums::GUEST_MAX_LIMIT ?>" value="<?= (int) $edit['guest_max'] ?>"></div>
@@ -334,7 +334,7 @@ require __DIR__ . '/partials/header.php';
 <?php endif; ?>
 <div class="card mb-3"><div class="card-body">
   <form method="post" class="row g-2 align-items-end"><?= Csrf::field() ?><input type="hidden" name="op" value="album_save"><input type="hidden" name="album_id" value="0">
-    <input type="hidden" name="guest_moderation" value="1"><input type="hidden" name="guest_max" value="100">
+    <input type="hidden" name="guest_max" value="100">
     <div class="col-12 col-md-8"><label class="form-label" for="new_name"><?= e(__('New album')) ?></label>
       <input class="form-control form-control-lg" id="new_name" name="name" value="<?= e($new['name']) ?>" maxlength="120" required placeholder="<?= e(__('e.g. Wedding of Riya & Aarav')) ?>"></div>
     <div class="col-12 col-md-4"><button class="btn btn-primary btn-lg w-100"><i class="bi bi-plus-lg"></i> <?= e(__('Create album')) ?></button></div>

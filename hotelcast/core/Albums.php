@@ -57,7 +57,8 @@ final class Albums
         return [[
             'name' => mb_substr($name, 0, 120),
             'guest_upload' => !empty($in['guest_upload']) ? 1 : 0,
-            'guest_moderation' => !empty($in['guest_moderation']) ? 1 : 0,
+            // Moderation stays on unless explicitly switched off (the edit form posts 0 for an unticked box).
+            'guest_moderation' => array_key_exists('guest_moderation', $in) && empty($in['guest_moderation']) ? 0 : 1,
             'guest_max' => $max,
         ], $errors];
     }

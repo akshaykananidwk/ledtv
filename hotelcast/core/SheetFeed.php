@@ -135,6 +135,7 @@ final class SheetFeed
         'binary' => 'This is not a CSV file.',
         'network' => 'Could not reach Google Sheets (:e).',
         'http' => 'Google Sheets answered with error :c. Is the sheet still published?',
+        'url' => 'Only Google Sheets links (https://docs.google.com/spreadsheets/…) are allowed.',
     ];
 
     /** Translated text of a stored error ([code, params]), '' for none. */
@@ -158,6 +159,10 @@ final class SheetFeed
     public static function get(string $url, int $refreshMin, bool $fetch = true): array
     {
         $empty = ['rows' => [], 'ok_at' => null, 'checked_at' => 0, 'error' => null];
+        if (self::normalizeUrl($url) !== $url) {
+            // Never fetch anything but a canonical docs.google.com URL (tampered settings, SSRF).
+            return ['error' => ['url', []]] + $empty;
+        }
         $entry = Cache::get(self::ns(), $url, 90 * 86400);
         $entry = is_array($entry) ? $entry + $empty : $empty;
         if (!$fetch || time() - (int) $entry['checked_at'] < max(1, $refreshMin) * 60) {

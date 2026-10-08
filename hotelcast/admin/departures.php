@@ -45,7 +45,6 @@ if (is_post()) {
                 $date = $allowed[0];
             }
             if (!isset(Departures::STATUSES[$status]) || (!empty($existing['service_date']) && $existing['service_date'] !== $date)) {
-                http_response_code(422);
                 flash('warning', __('Unknown action.'));
                 redirect(admin_url('departures.php'));
             }

@@ -29,6 +29,12 @@ final class Queue
         return date('Y-m-d');
     }
 
+    /** Current time with microseconds (queued_at / called_at order the line and the calls). */
+    public static function nowMicro(): string
+    {
+        return (new DateTime())->format('Y-m-d H:i:s.u');
+    }
+
     // ------------------------------------------------------------------ services / counters
 
     public static function services(bool $activeOnly = false): array
@@ -203,7 +209,7 @@ final class Queue
             $last = $s['last_date'] === $today ? (int) $s['last_number'] : (int) $s['start_number'] - 1;
             $number = max($last + 1, (int) $s['start_number']);
             DB::update('queue_services', ['last_date' => $today, 'last_number' => $number], 'id = :id', ['id' => $serviceId]);
-            $now = now();
+            $now = self::nowMicro();
             return DB::insert('queue_tokens', [
                 'service_id' => $serviceId,
                 'origin_service_id' => $serviceId,
@@ -216,7 +222,7 @@ final class Queue
                 'source' => ($o['source'] ?? 'desk') === 'self' ? 'self' : 'desk',
                 'issued_by' => $o['user'] ?? null,
                 'ip_address' => isset($o['ip']) ? mb_substr((string) $o['ip'], 0, 45) : null,
-                'created_at' => $now,
+                'created_at' => substr($now, 0, 19),
                 'queued_at' => $now,
             ]);
         });
@@ -275,7 +281,7 @@ final class Queue
             self::closeOpen($counter, 'done');
             $sql = "UPDATE queue_tokens SET status = 'called', counter_id = :c, called_at = :t, recall_count = 0
                     WHERE hotel_id = :h AND token_date = :d AND status = 'waiting'";
-            $p = ['c' => (int) $counter['id'], 't' => now(), 'h' => Tenant::id(), 'd' => self::today()];
+            $p = ['c' => (int) $counter['id'], 't' => self::nowMicro(), 'h' => Tenant::id(), 'd' => self::today()];
             $services = self::counterServices($counter);
             if ($services !== null) {
                 [$in, $ip] = DB::in($services, 's');
@@ -323,7 +329,7 @@ final class Queue
             $n = DB::query(
                 "UPDATE queue_tokens SET status = 'called', counter_id = :c, called_at = :t, recall_count = 0, done_at = NULL
                  WHERE id = :id AND hotel_id = :h AND status IN ('waiting','skipped','no_show')",
-                ['c' => (int) $counter['id'], 't' => now(), 'id' => (int) $pick['id'], 'h' => Tenant::id()]
+                ['c' => (int) $counter['id'], 't' => self::nowMicro(), 'id' => (int) $pick['id'], 'h' => Tenant::id()]
             )->rowCount();
             return $n === 1 ? self::current($counter) : null;
         });
@@ -357,7 +363,7 @@ final class Queue
         if (!$t) {
             return null;
         }
-        DB::query('UPDATE queue_tokens SET recall_count = recall_count + 1, called_at = :t WHERE id = :id AND hotel_id = :h', ['t' => now(), 'id' => (int) $t['id'], 'h' => Tenant::id()]);
+        DB::query('UPDATE queue_tokens SET recall_count = recall_count + 1, called_at = :t WHERE id = :id AND hotel_id = :h', ['t' => self::nowMicro(), 'id' => (int) $t['id'], 'h' => Tenant::id()]);
         return self::findToken((int) $t['id']);
     }
 
@@ -396,7 +402,7 @@ final class Queue
         }
         DB::query(
             "UPDATE queue_tokens SET service_id = :s, status = 'waiting', counter_id = NULL, queued_at = :t, called_at = NULL WHERE id = :id AND hotel_id = :h",
-            ['s' => $serviceId, 't' => now(), 'id' => (int) $t['id'], 'h' => Tenant::id()]
+            ['s' => $serviceId, 't' => self::nowMicro(), 'id' => (int) $t['id'], 'h' => Tenant::id()]
         );
         return self::findToken((int) $t['id']);
     }

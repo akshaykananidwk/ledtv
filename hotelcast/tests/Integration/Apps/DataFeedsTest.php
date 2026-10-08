@@ -486,6 +486,16 @@ final class DataFeedsTest extends TestCase
         $boss->post('data_feeds.php', ['op' => 'key', 'provider' => 'goldapi', 'clear' => '1']);
         Settings::flush();
         $this->assertSame('', DataFeeds::hotelKey('goldapi', 1));
+        // "Refresh now": the sandbox server only reaches the mock file (HTTP 503) → error stored, page fine.
+        [$code] = $boss->post('data_feeds.php', ['op' => 'refresh', 'provider' => 'open_er_api']);
+        $this->assertSame(302, $code);
+        $row = self::feedRow('open_er_api');
+        $this->assertNotNull($row);
+        $this->assertStringContainsString('503', (string) $row['error']);
+        [$code, , $page] = $boss->get('data_feeds.php');
+        $this->assertSame(200, $code);
+        $this->assertStringContainsString('Error (HTTP 503)', $page);
+        $this->assertFalse(TestEnv::hasPhpError($page));
         $mgr = new AdminSession(self::$url, 'dfMgr');
         [$code] = $mgr->get('data_feeds.php');
         $this->assertSame(403, $code);

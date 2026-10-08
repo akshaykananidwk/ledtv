@@ -49,7 +49,8 @@ CREATE TABLE IF NOT EXISTS queue_counters (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- origin_service_id = the service that issued the number (unique per day); service_id = the queue
--- the token waits in now (changes on "transfer"). queued_at orders the waiting line.
+-- the token waits in now (changes on "transfer"). queued_at (microseconds) orders the waiting line,
+-- so a transferred token always queues behind the tokens already waiting.
 CREATE TABLE IF NOT EXISTS queue_tokens (
   id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   hotel_id INT UNSIGNED NOT NULL,
@@ -67,8 +68,8 @@ CREATE TABLE IF NOT EXISTS queue_tokens (
   ip_address VARCHAR(45) NULL,
   recall_count INT UNSIGNED NOT NULL DEFAULT 0,
   created_at DATETIME NOT NULL,
-  queued_at DATETIME NOT NULL,
-  called_at DATETIME NULL,
+  queued_at DATETIME(6) NOT NULL,
+  called_at DATETIME(6) NULL,
   done_at DATETIME NULL,
   UNIQUE KEY uq_qt_number (origin_service_id, token_date, number),
   KEY idx_qt_wait (hotel_id, token_date, status, service_id, queued_at),
