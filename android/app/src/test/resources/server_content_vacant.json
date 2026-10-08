@@ -31,6 +31,7 @@
         "color": "#7B1FA2",
         "support": null
     },
+    "tz_offset_min": 330,
     "off_reason": "vacant",
     "volume": {
         "default": 30,
@@ -61,6 +62,6 @@
             "text": "Connect your phone to the Wi-Fi 'Hotel-Guest', open YouTube or another app with the Cast icon, tap Cast and choose this TV. Wi-Fi password: pa;ss:wo\"rd"
         }
     ],
-    "hash": "d33002c5452c90c4973ed95b5bcb88bc0f825ecd",
-    "generated_at": "2026-10-08T11:49:17+05:30"
+    "hash": "b665ae32e45199249cca0d9adbcc87e351ad5edc",
+    "generated_at": "2026-10-08T11:54:21+05:30"
 }

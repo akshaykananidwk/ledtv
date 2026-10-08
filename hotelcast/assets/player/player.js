@@ -1017,6 +1017,13 @@
   // ------------------------------------------------------------------- clock
   var DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
   function pad(n) { return (n < 10 ? '0' : '') + n; }
+  /** "Now" as a Date whose local fields show the hotel's wall-clock time (content.tz_offset_min). */
+  function hotelNow() {
+    var d = new Date();
+    var tz = S.content && typeof S.content.tz_offset_min === 'number' ? S.content.tz_offset_min : null;
+    if (tz === null) return d;
+    return new Date(d.getTime() + (tz + d.getTimezoneOffset()) * 60000);
+  }
   function fmtTime(d, f) {
     var h = d.getHours(), h12 = h % 12 || 12;
     var map = {
@@ -1042,7 +1049,7 @@
         '<line class="sh" y2="-82" stroke="#e11d48" stroke-width="2"/><circle r="5" fill="currentColor"/></svg><div class="hc-date"></div>';
       var hands = box.getElementsByTagName('line');
       var tick = function () {
-        var d = new Date();
+        var d = hotelNow();
         hands[12].setAttribute('transform', 'rotate(' + ((d.getHours() % 12) * 30 + d.getMinutes() / 2) + ')');
         hands[13].setAttribute('transform', 'rotate(' + (d.getMinutes() * 6) + ')');
         hands[14].setAttribute('transform', 'rotate(' + (d.getSeconds() * 6) + ')');
@@ -1053,7 +1060,7 @@
     } else {
       box.innerHTML = '<div class="hc-time"></div><div class="hc-date"></div>';
       var tick2 = function () {
-        var d = new Date();
+        var d = hotelNow();
         box.firstChild.textContent = fmtTime(d, 'hh:mm');
         box.lastChild.textContent = fmtTime(d, 'a') + ' · ' + dateText(d);
       };
@@ -1102,7 +1109,7 @@
     box.innerHTML = html;
     var clk = box.querySelector ? box.querySelector('.hc-ov-clock') : null;
     if (clk) {
-      var tick = function () { clk.textContent = fmtTime(new Date(), ov.clock_format); };
+      var tick = function () { clk.textContent = fmtTime(hotelNow(), ov.clock_format); };
       tick();
       var iv = setInterval(tick, 1000);
       stops.push(function () { clearInterval(iv); });

@@ -292,6 +292,9 @@ final class ContentResolver
     private static function finish(array $content, array $room = []): array
     {
         $content['branding'] = Branding::forTv();
+        // Hotel UTC offset (minutes) so players on devices with another clock zone (web player on a UTC
+        // Raspberry Pi, a PC abroad) show the hotel's local time. Android TVs use their own zone.
+        $content['tz_offset_min'] = intdiv((new DateTime())->getOffset(), 60);
         foreach (self::extensions() as $ext) {
             try {
                 $ext->apply($content, $room);

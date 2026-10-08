@@ -27,6 +27,17 @@ schedule karo, emergency message moklo, TV reboot/update karo.*
 | Android TV app | [`android/`](android) | Kotlin, ExoPlayer 2.19, Retrofit, OkHttp, Glide, WorkManager — min SDK 21, target 34 |
 | Documentation | [`docs/`](docs) | Install guide, TV setup, admin guide, API, developer guide (tenancy + extension points), security, test report |
 
+## What's new in 2.4 — features 26–50
+
+| # | Feature | Docs |
+|---|---|---|
+| 26–30 | Air quality + coastal/ferry warning, Panchang + Choghadiya (offline), festival countdown, birthday wall, Google reviews | [widgets_26_30.md](docs/modules/widgets_26_30.md) |
+| 31–35 | Calendar (drag & drop), content approval, start/expiry dates, playlist time windows, holiday calendar | [scheduling.md](docs/modules/scheduling.md) |
+| 36–37 | Video wall (up to 4×4) and synchronized playback | [video_wall_sync.md](docs/modules/video_wall_sync.md) |
+| 38–40, 43, 47, 49 | Volume / input / restart / bell schedules, spoken announcements, presence sensors, proof-of-play report | [device_schedules.md](docs/modules/device_schedules.md) |
+| 41, 42, 44, 48, 50 | Live screen view, USB/offline mode, TV health, text-to-speech, HDMI-CEC (boxes) | [device_features.md](docs/modules/device_features.md) |
+| 45–46 | Web player for Smart-TV browsers / PCs, Fire TV & Raspberry Pi setup | [web_player.md](docs/modules/web_player.md) |
+
 ## What's new in 2.3 — 25 new features
 
 | # | Feature | Where |

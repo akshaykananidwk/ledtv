@@ -1,3 +1,17 @@
+# 2.4.0 — features 26–50 (2026-10-08)
+
+| Area | Result |
+|------|--------|
+| PHPUnit full suite | ✅ **508 tests, 19,267 assertions, 0 failures** (run twice in a row by QA, no flakiness; 3 flaky / time-of-day tests found earlier and fixed) |
+| Android unit tests (sync clock/plan, wall geometry, USB playlist, announcer queue, health, CEC, RELOAD-to-front) | ✅ **216 tests, 0 failures**; lint 0 errors; APK `KrishnaCloud-TV-2.4.0.apk` (code 11), same signing key |
+| Web player end-to-end (headless Chromium) | ✅ 40/40 checks (QR + manual setup, playlist/app/layout/ticker, emergency, commands, reload, offline) |
+| Browser QA: 5 new display apps × en/gu × 1080p/720p × 3 themes; every new admin page × 4 roles; phone width; calendar drag/drop, approvals, holidays, video wall 2×2, sync, device schedules, presence, play report, live view, TV health | ✅ 9 bugs fixed (web players offered APK updates, AQI/panchang/festivals overflow, broken Gujarati/Hindi characters from byte-wise trim in 10 files, wrong "Plays" translation, initials, spacing) + web player clock now uses the hotel time zone |
+| Security review (presence webhook, live view uploads, web player, sounds, CSV, data feeds, approval bypass, tenancy, Android payloads) | ✅ 4 issues fixed (PLAY_SOUND restricted to the sound library — no LAN fetches, approval checks for ads/guide/app images, live frames re-encoded, CSV paste size limit) + regression tests |
+
+Not verified here (needs hardware): sync accuracy and video walls on real TVs, HDMI-CEC, USB drives, TTS voices, Raspberry Pi, real Open-Meteo / Google APIs.
+
+---
+
 # 2.3.0 — 25 new features (2026-10-08)
 
 | Area | Result |
