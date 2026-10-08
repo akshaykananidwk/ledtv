@@ -4,9 +4,12 @@ declare(strict_types=1);
 /**
  * Demo mode (#21) and the reusable sample content.
  *
- *  - Sample content (rooms, groups, timetable, announcements, playlist) for the current hotel:
+ *  - Sample content (screens, groups, timetable, announcements, playlist) for the current customer:
  *    Demo::sampleContent() — used by the installer ("load demo data"), by the public sign-up (#17,
- *    rooms 101..N) and by the demo hotels.
+ *    screens 101..N) and by the demo customers. 2.5: a general business ("Krishna Showroom") instead of
+ *    a hotel; screen IDs stay short numbers (easy to type with a TV remote), screen names describe the
+ *    place (Entrance, Counter 1 …). Hospitality sample data (guests, room service, feedback) is only
+ *    added when the demo customer's plan includes those features.
  *  - Public demo: one shared hotel (hotels.demo_kind = 'public', platform setting demo_hotel_id) with
  *    rich sample data, a read-only demo user (every admin POST is rejected by Demo::guard(), a boot
  *    hook) and public pages demo.php / demo_tv.php. Reset nightly by DemoResetTask.
@@ -30,16 +33,24 @@ final class Demo
     // ------------------------------------------------------------------ sample content
 
     /**
-     * Demo rooms, groups, content and playlist (English + Gujarati) for the CURRENT hotel.
-     * $floors = [floor => number of rooms] → rooms <floor>01 … (e.g. [1 => 10, 2 => 10] = 101–110, 201–210).
-     * The last two rooms of a floor with 9+ rooms are suites (VIP group). Returns log lines.
+     * Demo screens, groups, content and playlist (English + Gujarati) for the CURRENT customer.
+     * $floors = [area/floor => number of screens] → screen IDs <floor>01 … (e.g. [1 => 10, 2 => 10] = 101–110, 201–210),
+     * named after typical places of a shop / office (Entrance, Counter 1 …). The last two screens of an area with
+     * 9+ screens are display walls (promo group). Returns log lines.
      */
     public static function sampleContent(array $floors = [1 => 10, 2 => 10]): array
     {
         return self::seed($floors)['log'];
     }
 
-    /** sampleContent() returning the created ids too: ['log', 'rooms' => [number => id], 'groups', 'content', 'playlist']. */
+    /** Screen names per area/floor (index 0 = first screen); the last two of a big area are display walls. */
+    private const SCREEN_NAMES = [
+        1 => ['Entrance', 'Counter 1', 'Counter 2', 'Counter 3', 'Waiting area', 'Billing desk', 'Showroom 1', 'Showroom 2'],
+        2 => ['Lift lobby', 'Showroom 3', 'Showroom 4', 'Cafeteria', 'Office', 'Training hall', 'Meeting room', 'Staff room'],
+    ];
+    private const AREA_NAMES = [0 => 'Ground floor', 1 => 'Ground floor', 2 => 'First floor', 3 => 'Second floor'];
+
+    /** sampleContent() returning the created ids too: ['log', 'rooms' => [screen ID => id], 'groups', 'content', 'playlist']. */
     public static function seed(array $floors = [1 => 10, 2 => 10]): array
     {
         Tenant::id(); // needs a hotel context
@@ -48,19 +59,21 @@ final class Demo
         $rooms = [];
         $vip = null;
         foreach ($floors as $floor => $count) {
-            $groups[(int) $floor] = DB::insert('room_groups', ['name' => 'Floor ' . $floor, 'type' => 'floor', 'description' => 'All rooms on floor ' . $floor, 'created_at' => now()]);
+            $area = self::AREA_NAMES[(int) $floor] ?? ('Floor ' . $floor);
+            $groups[(int) $floor] = DB::insert('room_groups', ['name' => $area, 'type' => 'floor', 'description' => 'All screens on the ' . strtolower($area), 'created_at' => now()]);
         }
         $n = 0;
         foreach ($floors as $floor => $count) {
             $count = max(0, min(99, (int) $count));
             for ($i = 1; $i <= $count; $i++) {
                 $num = $floor . str_pad((string) $i, 2, '0', STR_PAD_LEFT);
-                $suite = $count >= 9 && $i > $count - 2;
-                $rid = DB::insert('rooms', ['room_number' => $num, 'name' => ($suite ? 'Suite ' : 'Deluxe ') . $num, 'floor' => (string) $floor, 'created_at' => now()]);
+                $wall = $count >= 9 && $i > $count - 2;
+                $name = $wall ? 'Display wall ' . $num : (self::SCREEN_NAMES[(int) $floor][$i - 1] ?? 'Screen ' . $num);
+                $rid = DB::insert('rooms', ['room_number' => $num, 'name' => $name, 'floor' => (string) $floor, 'created_at' => now()]);
                 $rooms[$num] = $rid;
                 DB::insert('room_group_members', ['room_id' => $rid, 'group_id' => $groups[(int) $floor]]);
-                if ($suite) {
-                    $vip ??= DB::insert('room_groups', ['name' => 'Suites (VIP)', 'type' => 'zone', 'description' => 'Premium suites', 'created_at' => now()]);
+                if ($wall) {
+                    $vip ??= DB::insert('room_groups', ['name' => 'Display walls (promo)', 'type' => 'zone', 'description' => 'Big screens for offers and promotions', 'created_at' => now()]);
                     DB::insert('room_group_members', ['room_id' => $rid, 'group_id' => $vip]);
                 }
                 $n++;
@@ -69,7 +82,7 @@ final class Demo
         if ($vip) {
             $groups['vip'] = $vip;
         }
-        $log[] = "Created $n demo rooms in " . count($groups) . ' groups';
+        $log[] = "Created $n demo screens in " . count($groups) . ' groups';
 
         $c = [];
         $c['timetable'] = DB::insert('content_items', [
@@ -104,16 +117,16 @@ final class Demo
             'title' => 'Welcome message / સ્વાગત',
             'type' => 'announcement',
             'duration' => 12,
-            'body' => 'જય દ્વારકાધીશ! Welcome to our hotel',
-            'settings' => json_out(['subtitle' => 'Breakfast 7:00–10:30 AM · Wi-Fi: Hotel-Guest', 'style' => 'fullscreen', 'bg_color' => '#0D47A1', 'text_color' => '#FFFFFF', 'font_size' => 56]),
+            'body' => 'સ્વાગત છે! Welcome to Krishna Showroom',
+            'settings' => json_out(['subtitle' => 'Open daily 10:00 AM – 9:00 PM · Free Wi-Fi: Krishna-Guest', 'style' => 'fullscreen', 'bg_color' => '#0D47A1', 'text_color' => '#FFFFFF', 'font_size' => 56]),
             'created_at' => now(),
         ]);
         $c['offer'] = DB::insert('content_items', [
-            'title' => 'Restaurant offer',
+            'title' => 'Festive offer',
             'type' => 'announcement',
             'duration' => 10,
-            'body' => 'Gujarati Thali — 20% off for in-house guests! ગુજરાતી થાળી પર 20% છૂટ',
-            'settings' => json_out(['subtitle' => 'Ground floor restaurant · 12:00–3:00 PM, 7:00–10:30 PM', 'style' => 'fullscreen', 'bg_color' => '#1B5E20', 'text_color' => '#FFFFFF', 'font_size' => 52]),
+            'body' => 'Festive offer — 20% off on all LED TVs! બધા LED TV પર 20% છૂટ',
+            'settings' => json_out(['subtitle' => 'Ask at any counter · Valid till Diwali', 'style' => 'fullscreen', 'bg_color' => '#1B5E20', 'text_color' => '#FFFFFF', 'font_size' => 52]),
             'created_at' => now(),
         ]);
         $c['clock'] = DB::insert('content_items', [
@@ -129,14 +142,14 @@ final class Demo
         ]);
         $log[] = 'Created ' . count($c) . ' demo content items';
 
-        $pl = DB::insert('content_playlists', ['name' => 'Welcome loop / સ્વાગત', 'description' => 'Default loop for all rooms', 'transition' => 'fade', 'created_at' => now()]);
+        $pl = DB::insert('content_playlists', ['name' => 'Welcome loop / સ્વાગત', 'description' => 'Default loop for all screens', 'transition' => 'fade', 'created_at' => now()]);
         foreach (['welcome', 'timetable', 'offer', 'clock'] as $i => $k) {
             DB::insert('playlist_items', ['playlist_id' => $pl, 'content_id' => $c[$k], 'sort_order' => $i]);
         }
         Settings::set('default_playlist_id', (string) $pl);
-        // Ticker bar (2.2): one hotel-wide ticker (admin → Ticker bar).
+        // Ticker bar (2.2): one ticker for all screens (admin → Ticker bar).
         DB::insert('tickers', [
-            'name' => 'Aarti timings', 'message' => 'મંગળા આરતી સવારે 6:30 · Mangla Aarti 6:30 AM · Sandhya Aarti 7:30 PM · Checkout 10:00 AM',
+            'name' => 'Opening hours', 'message' => 'Open daily 10:00 AM – 9:00 PM · દરરોજ સવારે 10 થી રાત્રે 9 · Mangla Aarti 6:30 AM · Sandhya Aarti 7:30 PM',
             'target_type' => 'all', 'target_id' => null, 'text_color' => '#FFD700', 'bg_color' => '#000000', 'speed' => 5,
             'font_size' => 26, 'height' => 56, 'position' => 'bottom', 'reserve_space' => 1, 'is_active' => 1,
             'created_at' => now(), 'updated_at' => now(),
@@ -215,7 +228,7 @@ final class Demo
      */
     public static function resetPublic(): int
     {
-        $name = trim((string) Settings::platform('demo_hotel_name', '')) ?: 'Hotel Dwarka Palace (Demo)';
+        $name = trim((string) Settings::platform('demo_hotel_name', '')) ?: 'Krishna Showroom (Demo)';
         $hid = self::publicHotelId();
         if ($hid) {
             self::purge($hid);
@@ -225,7 +238,7 @@ final class Demo
         } else {
             $hid = Hotels::create([
                 'name' => $name, 'city' => 'Dwarka', 'max_tvs' => 3, 'demo_kind' => 'public',
-                'notes' => 'Public demo hotel — data is reset every night.',
+                'notes' => 'Public demo — data is reset every night.',
             ]);
         }
         self::forget();
@@ -465,18 +478,18 @@ final class Demo
             $rooms = $s['rooms'];
             $c = $s['content'];
             $c['pool'] = DB::insert('content_items', [
-                'title' => 'Pool & spa timings', 'type' => 'announcement', 'duration' => 10,
-                'body' => 'Swimming pool 7 AM – 9 PM · સ્વિમિંગ પૂલ સવારે 7 થી રાત્રે 9',
-                'settings' => json_out(['subtitle' => 'Towels at the pool desk · Spa on request', 'style' => 'fullscreen', 'bg_color' => '#006064', 'text_color' => '#FFFFFF', 'font_size' => 50]),
+                'title' => 'New arrivals', 'type' => 'announcement', 'duration' => 10,
+                'body' => 'New arrivals: 4K smart TVs & soundbars · નવા 4K સ્માર્ટ TV',
+                'settings' => json_out(['subtitle' => 'Live demo at Showroom 2 · Easy EMI available', 'style' => 'fullscreen', 'bg_color' => '#006064', 'text_color' => '#FFFFFF', 'font_size' => 50]),
                 'created_at' => now(),
             ]);
             $c['checkout'] = DB::insert('content_items', [
-                'title' => 'Checkout reminder (ticker)', 'type' => 'announcement', 'duration' => 15,
-                'body' => 'Checkout time is 10:00 AM — late checkout on request at reception',
+                'title' => 'Token reminder (ticker)', 'type' => 'announcement', 'duration' => 15,
+                'body' => 'Please take a token at the entrance — we will call your number on the screen',
                 'settings' => json_out(['style' => 'marquee', 'bg_color' => '#212121', 'text_color' => '#FFD54F', 'font_size' => 40]),
                 'created_at' => now(),
             ]);
-            $promo = DB::insert('content_playlists', ['name' => 'Restaurant & offers', 'description' => 'Suites loop', 'transition' => 'slide', 'created_at' => now()]);
+            $promo = DB::insert('content_playlists', ['name' => 'Offers & promotions', 'description' => 'Display walls loop', 'transition' => 'slide', 'created_at' => now()]);
             foreach (['offer', 'pool', 'timetable', 'clock'] as $i => $k) {
                 DB::insert('playlist_items', ['playlist_id' => $promo, 'content_id' => $c[$k], 'sort_order' => $i]);
             }
@@ -484,9 +497,9 @@ final class Demo
                 DB::update('room_groups', ['playlist_id' => $promo], 'id = :id', ['id' => $s['groups']['vip']]);
             }
             Broadcaster::schedule([
-                'title' => 'Breakfast offer (daily 07:00–10:30)', 'target_type' => 'all', 'target_ids' => [],
+                'title' => 'Morning offer (daily 10:00–12:00)', 'target_type' => 'all', 'target_ids' => [],
                 'content_id' => $c['offer'], 'playlist_id' => null, 'mode' => 'window', 'start_at' => null, 'end_at' => null,
-                'daily_start' => '07:00:00', 'daily_end' => '10:30:00', 'repeat_days' => null,
+                'daily_start' => '10:00:00', 'daily_end' => '12:00:00', 'repeat_days' => null,
             ]);
 
             // Three simulated TVs, always online.
@@ -559,11 +572,14 @@ final class Demo
         }
     }
 
-    /** Guests, room service, ads — only when those modules' tables exist. Failures are logged, not fatal. */
+    /**
+     * Guests, room service, ads — only when those modules' tables exist and (hospitality) when the demo
+     * customer's plan includes them. Failures are logged, not fatal.
+     */
     private static function modules(array $rooms, array $c, array $tvRooms): void
     {
         $hid = Tenant::id();
-        if (self::tableExists('guest_stays') && class_exists('Guests')) {
+        if (self::tableExists('guest_stays') && class_exists('Guests') && Features::enabled('guests', $hid)) {
             try {
                 foreach ([['101', 'Mr.', 'Rajesh Shah', 'gu', 2], ['102', 'Mrs.', 'Priya Patel', 'en', 1], ['201', 'Mr.', 'Amit Mehta', 'hi', 3], ['205', 'Ms.', 'Neha Sharma', 'en', 2]] as [$num, $sal, $name, $lang, $nights]) {
                     if (isset($rooms[$num])) {
@@ -577,7 +593,7 @@ final class Demo
                 Logger::error('Demo guests failed: ' . $e->getMessage());
             }
         }
-        if (self::tableExists('guest_menu_categories') && class_exists('GuestServices')) {
+        if (self::tableExists('guest_menu_categories') && class_exists('GuestServices') && Features::enabled('room_service', $hid)) {
             try {
                 $menu = [
                     ['Breakfast', 'નાસ્તો', 'नाश्ता', [['Poha', 'પૌંઆ', 80, 'veg'], ['Masala dosa', 'મસાલા ઢોસા', 140, 'veg'], ['Omelette & toast', 'ઑમલેટ અને ટોસ્ટ', 120, 'egg']]],
@@ -609,7 +625,7 @@ final class Demo
             try {
                 $adContent = DB::insert('content_items', [
                     'title' => 'Ad: Dwarka Sweets', 'type' => 'announcement', 'duration' => 8,
-                    'body' => 'Dwarka Sweets — fresh pedas & farsan · 10% off with your room key',
+                    'body' => 'Dwarka Sweets — fresh pedas & farsan · 10% off this week',
                     'settings' => json_out(['subtitle' => 'Near Jagat Mandir · Open 8 AM – 10 PM', 'style' => 'fullscreen', 'bg_color' => '#E65100', 'text_color' => '#FFFFFF', 'font_size' => 50]),
                     'created_at' => now(),
                 ]);
@@ -685,7 +701,7 @@ final class Demo
         return self::$tables[$table];
     }
 
-    /** Room list of the public demo hotel for demo.php (number, name, has TV). */
+    /** Screen list of the public demo customer for demo.php (screen ID, name, has TV). */
     public static function publicRooms(int $hotelId): array
     {
         return DB::all(

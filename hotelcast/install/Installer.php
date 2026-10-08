@@ -195,7 +195,7 @@ final class Installer
     {
         Tenant::set(Tenant::current() ?? 1);
         if ((int) DB::value('SELECT COUNT(*) FROM rooms WHERE hotel_id = :h', ['h' => Tenant::id()]) > 0) {
-            return ['Demo data skipped (rooms already exist)'];
+            return ['Demo data skipped (screens already exist)'];
         }
         return Demo::sampleContent([1 => 10, 2 => 10]);
     }

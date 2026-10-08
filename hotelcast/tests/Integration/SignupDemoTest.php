@@ -874,10 +874,10 @@ final class SignupDemoTest extends TestCase
     {
         $hid = Hotels::create(['name' => 'Installer Check']);
         $log = Tenant::run($hid, fn () => Installer::demoData());
-        $this->assertContains('Created 20 demo rooms in 3 groups', $log);
-        $this->assertSame(['Demo data skipped (rooms already exist)'], Tenant::run($hid, fn () => Installer::demoData()));
-        $this->assertSame(4, (int) DB::value("SELECT COUNT(*) FROM rooms r JOIN room_group_members m ON m.room_id = r.id JOIN room_groups g ON g.id = m.group_id WHERE r.hotel_id = :h AND g.name = 'Suites (VIP)'", ['h' => $hid]));
-        $this->assertSame(4, (int) DB::value("SELECT COUNT(*) FROM rooms WHERE hotel_id = :h AND name LIKE 'Suite %'", ['h' => $hid]));
+        $this->assertContains('Created 20 demo screens in 3 groups', $log);
+        $this->assertSame(['Demo data skipped (screens already exist)'], Tenant::run($hid, fn () => Installer::demoData()));
+        $this->assertSame(4, (int) DB::value("SELECT COUNT(*) FROM rooms r JOIN room_group_members m ON m.room_id = r.id JOIN room_groups g ON g.id = m.group_id WHERE r.hotel_id = :h AND g.name = 'Display walls (promo)'", ['h' => $hid]));
+        $this->assertSame(4, (int) DB::value("SELECT COUNT(*) FROM rooms WHERE hotel_id = :h AND name LIKE 'Display wall %'", ['h' => $hid]));
     }
 
     public function testGujaratiTranslationsComplete(): void
