@@ -615,6 +615,18 @@ final class PlatformScreens
      */
     public static function move(array $deviceIds, int $targetHotel, array $opt): int
     {
+        return self::transfer($deviceIds, $targetHotel, $opt)['moved'];
+    }
+
+    /**
+     * move() with the 2.5.1 "Transfer everything" options (core/ScreenTransfer.php):
+     * $opt['copy'] = ['details' => bool, 'content' => bool]. Only TVs that change customer copy anything.
+     * The copy runs in the same transaction as the move; storage is checked before anything is written and
+     * copied files are removed again when the transaction fails. Returns
+     * ['moved' => n, 'summary' => string ('' without copy), 'report' => ScreenTransfer context].
+     */
+    public static function transfer(array $deviceIds, int $targetHotel, array $opt): array
+    {
         if (self::scopeHotelIds() !== null) {
             // 2.5 security review: moving TVs between customers is for platform admins only (platform.move).
             Logger::write('security', 'warning', 'All screens: move refused (not a platform admin)', ['user' => self::userId()]);
@@ -638,60 +650,99 @@ final class PlatformScreens
         foreach ($devs as $d) {
             $roomNumbers[(int) $d['id']] = $d['room_id'] ? (array) DB::one('SELECT room_number, name, floor FROM rooms WHERE id = :id', ['id' => (int) $d['room_id']]) : [];
         }
-        $moved = DB::transaction(static function () use ($devs, $targetHotel, $mode, $roomId, $name, $roomNumbers): array {
-            DB::one('SELECT id FROM hotels WHERE id = :id FOR UPDATE', ['id' => $targetHotel]);
-            // Only TVs that do not already count for the target need a free slot.
-            $incoming = count(array_filter($devs, static fn ($d) => (int) $d['hotel_id'] !== $targetHotel || !$d['room_id']));
-            self::assertCapacity($targetHotel, $incoming);
-            $done = [];
-            $many = count($devs) > 1;
-            foreach (array_values($devs) as $i => $d) {
-                $copy = $roomNumbers[(int) $d['id']] ?? [];
-                $room = self::targetRoom($targetHotel, $mode, $roomId, $mode === 'new' && $many ? trim($name) . ' ' . ($i + 1) : $name, (string) ($copy['room_number'] ?? ''), $copy);
-                $from = (int) $d['hotel_id'];
-                if ($from === $targetHotel && (int) $d['room_id'] === (int) $room['id']) {
-                    continue;
-                }
-                if ($from !== $targetHotel) {
-                    // (hotel_id, device_uid) is unique: an old revoked / screen-less record of this TV in the
-                    // target customer is replaced; an active one blocks the move.
-                    $clash = DB::one('SELECT id, is_revoked, room_id FROM devices WHERE hotel_id = :h AND device_uid = :u AND id <> :id', ['h' => $targetHotel, 'u' => $d['device_uid'], 'id' => (int) $d['id']]);
-                    if ($clash && !(int) $clash['is_revoked'] && $clash['room_id']) {
-                        throw new RuntimeException(__(':c already has an active TV with the device ID :u.', ['c' => self::hotelName($targetHotel), 'u' => $d['device_uid']]));
+        $copyOpt = ScreenTransfer::options((array) ($opt['copy'] ?? []));
+        $copying = $copyOpt['details'] || $copyOpt['content'];
+        $ctx = ScreenTransfer::context($targetHotel);
+        try {
+            $moved = DB::transaction(static function () use ($devs, $targetHotel, $mode, $roomId, $name, $roomNumbers, $copyOpt, $copying, &$ctx): array {
+                DB::one('SELECT id FROM hotels WHERE id = :id FOR UPDATE', ['id' => $targetHotel]);
+                // Only TVs that do not already count for the target need a free slot.
+                $incoming = count(array_filter($devs, static fn ($d) => (int) $d['hotel_id'] !== $targetHotel || !$d['room_id']));
+                self::assertCapacity($targetHotel, $incoming);
+                // 2.5.1 "Transfer everything": what each source screen brings along (read only), storage checked first.
+                $plans = [];
+                if ($copying) {
+                    $bytes = 0;
+                    foreach ($devs as $d) {
+                        $from = (int) $d['hotel_id'];
+                        if ($from === $targetHotel || !$d['room_id'] || isset($plans[(int) $d['room_id']])) {
+                            continue;
+                        }
+                        $src = DB::one('SELECT * FROM rooms WHERE id = :id AND hotel_id = :h', ['id' => (int) $d['room_id'], 'h' => $from]);
+                        if ($src) {
+                            $plans[(int) $d['room_id']] = ScreenTransfer::collect($src, $from, $copyOpt);
+                            $bytes += ScreenTransfer::bytes($plans[(int) $d['room_id']]);
+                        }
                     }
-                    if ($clash) {
-                        DB::query('DELETE FROM devices WHERE id = :id AND hotel_id = :h', ['id' => (int) $clash['id'], 'h' => $targetHotel]);
+                    ScreenTransfer::assertStorage($targetHotel, $bytes);
+                }
+                $done = [];
+                $many = count($devs) > 1;
+                foreach (array_values($devs) as $i => $d) {
+                    $copy = $roomNumbers[(int) $d['id']] ?? [];
+                    $room = self::targetRoom($targetHotel, $mode, $roomId, $mode === 'new' && $many ? trim($name) . ' ' . ($i + 1) : $name, (string) ($copy['room_number'] ?? ''), $copy);
+                    $from = (int) $d['hotel_id'];
+                    if ($from === $targetHotel && (int) $d['room_id'] === (int) $room['id']) {
+                        continue;
                     }
-                    self::clearDeviceState($d);
-                    // device_commands has no hotel_id: the old customer's commands (message texts, announcements…)
-                    // would show on the new customer's TV page. The old customer no longer sees this TV, so they go.
-                    DB::query('DELETE FROM device_commands WHERE device_id = :d', ['d' => (int) $d['id']]);
+                    if ($from !== $targetHotel) {
+                        // (hotel_id, device_uid) is unique: an old revoked / screen-less record of this TV in the
+                        // target customer is replaced; an active one blocks the move.
+                        $clash = DB::one('SELECT id, is_revoked, room_id FROM devices WHERE hotel_id = :h AND device_uid = :u AND id <> :id', ['h' => $targetHotel, 'u' => $d['device_uid'], 'id' => (int) $d['id']]);
+                        if ($clash && !(int) $clash['is_revoked'] && $clash['room_id']) {
+                            throw new RuntimeException(__(':c already has an active TV with the device ID :u.', ['c' => self::hotelName($targetHotel), 'u' => $d['device_uid']]));
+                        }
+                        if ($clash) {
+                            DB::query('DELETE FROM devices WHERE id = :id AND hotel_id = :h', ['id' => (int) $clash['id'], 'h' => $targetHotel]);
+                        }
+                        self::clearDeviceState($d);
+                        // device_commands has no hotel_id: the old customer's commands (message texts, announcements…)
+                        // would show on the new customer's TV page. The old customer no longer sees this TV, so they go.
+                        DB::query('DELETE FROM device_commands WHERE device_id = :d', ['d' => (int) $d['id']]);
+                    }
+                    DB::query(
+                        'UPDATE devices SET hotel_id = :t, room_id = :r, current_hash = NULL, current_item_id = NULL, health_alerts = NULL, offline_notified = 0
+                         WHERE id = :id AND hotel_id = :f',
+                        ['t' => $targetHotel, 'r' => (int) $room['id'], 'id' => (int) $d['id'], 'f' => $from]
+                    );
+                    DB::query('INSERT INTO device_status_logs (hotel_id, device_id, room_id, status, created_at) VALUES (:h, :d, :r, :s, :c)', [
+                        'h' => $targetHotel, 'd' => (int) $d['id'], 'r' => (int) $room['id'], 's' => $d['status'] === 'online' ? 'online' : 'offline', 'c' => now(),
+                    ]);
+                    if (isset($plans[(int) $d['room_id']]) && $from !== $targetHotel) {
+                        ScreenTransfer::apply($ctx, $plans[(int) $d['room_id']], $room, $copyOpt, $mode === 'new');
+                    }
+                    $what = $d['device_uid'] . ' (' . ($d['model'] ?: 'TV') . ')';
+                    if ($from !== $targetHotel) {
+                        ActivityLog::add('device_moved_out', 'device', (int) $d['id'], 'TV ' . $what . ' moved to another customer by the platform', $from);
+                        ActivityLog::add('device_moved_in', 'device', (int) $d['id'], 'TV ' . $what . ' assigned to screen ' . $room['room_number'] . ' by the platform', $targetHotel);
+                    } else {
+                        ActivityLog::add('device_moved', 'device', (int) $d['id'], 'TV ' . $what . ' moved to screen ' . $room['room_number'] . ' by the platform', $targetHotel);
+                    }
+                    ActivityLog::add('device_move', 'device', (int) $d['id'], 'TV ' . $what . ': ' . self::hotelName($from) . ' #' . $from . ' → ' . self::hotelName($targetHotel) . ' #' . $targetHotel . ', screen ' . $room['room_number'], null);
+                    $done[] = $from;
                 }
-                DB::query(
-                    'UPDATE devices SET hotel_id = :t, room_id = :r, current_hash = NULL, current_item_id = NULL, health_alerts = NULL, offline_notified = 0
-                     WHERE id = :id AND hotel_id = :f',
-                    ['t' => $targetHotel, 'r' => (int) $room['id'], 'id' => (int) $d['id'], 'f' => $from]
-                );
-                DB::query('INSERT INTO device_status_logs (hotel_id, device_id, room_id, status, created_at) VALUES (:h, :d, :r, :s, :c)', [
-                    'h' => $targetHotel, 'd' => (int) $d['id'], 'r' => (int) $room['id'], 's' => $d['status'] === 'online' ? 'online' : 'offline', 'c' => now(),
-                ]);
-                $what = $d['device_uid'] . ' (' . ($d['model'] ?: 'TV') . ')';
-                if ($from !== $targetHotel) {
-                    ActivityLog::add('device_moved_out', 'device', (int) $d['id'], 'TV ' . $what . ' moved to another customer by the platform', $from);
-                    ActivityLog::add('device_moved_in', 'device', (int) $d['id'], 'TV ' . $what . ' assigned to screen ' . $room['room_number'] . ' by the platform', $targetHotel);
-                } else {
-                    ActivityLog::add('device_moved', 'device', (int) $d['id'], 'TV ' . $what . ' moved to screen ' . $room['room_number'] . ' by the platform', $targetHotel);
+                if ($copying && $plans) {
+                    $sum = ScreenTransfer::summary($ctx);
+                    foreach (array_unique(array_map(static fn ($p) => (int) $p['from'], $plans)) as $from) {
+                        $screens = implode(', ', array_map(static fn ($p) => (string) $p['room']['room_number'], array_filter($plans, static fn ($p) => (int) $p['from'] === $from)));
+                        // The old customer learns what was copied out, not where to (same rule as device_moved_out).
+                        ActivityLog::add('screen_copied_out', 'room', null, 'Screen ' . $screens . ' copied to another customer by the platform (originals kept)', $from);
+                    }
+                    ActivityLog::add('screen_copied_in', 'room', null, 'Screen content and settings copied in by the platform: ' . $sum, $targetHotel);
+                    ActivityLog::add('screen_transfer', 'room', null, self::hotelName($targetHotel) . ' #' . $targetHotel . ': ' . $sum, null);
                 }
-                ActivityLog::add('device_move', 'device', (int) $d['id'], 'TV ' . $what . ': ' . self::hotelName($from) . ' #' . $from . ' → ' . self::hotelName($targetHotel) . ' #' . $targetHotel . ', screen ' . $room['room_number'], null);
-                $done[] = $from;
-            }
-            return $done;
-        });
+                return $done;
+            });
+        } catch (Throwable $e) {
+            ScreenTransfer::cleanup($ctx); // the rows are rolled back; the copied files go too
+            throw $e;
+        }
+        ScreenTransfer::committed($ctx);
         foreach (array_unique(array_merge($moved, [$targetHotel])) as $hid) {
             Tenant::forget((int) $hid);
             Tenant::run((int) $hid, static fn () => Settings::bumpContentVersion());
         }
         self::forget();
-        return count($moved);
+        return ['moved' => count($moved), 'summary' => $copying && $ctx['pairs'] ? ScreenTransfer::summary($ctx) : '', 'report' => $ctx];
     }
 }
