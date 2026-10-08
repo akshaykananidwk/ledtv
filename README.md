@@ -43,6 +43,7 @@ schedule karo, emergency message moklo, TV reboot/update karo.*
 | 17, 18 | Countdown, QR (URL / UPI / WhatsApp / Wi-Fi) | Apps |
 | 20 | 12 themes (Diwali, Navratri, Janmashtami, wedding …) + bundled Gujarati/Hindi fonts | every app · [display_apps.md](docs/modules/display_apps.md) |
 | 21–25 | Gold/silver rates, stock market, cricket, currency, train/flight status (manual or API key) + ticker placeholders `{gold_24k}` `{usd_inr}` … | [data_feeds.md](docs/modules/data_feeds.md) |
+| 26–30 | Air quality + rain / heat / sea-ferry warnings, offline panchang + choghadiya, festival calendar with countdown, birthday / anniversary wall (consent, CSV), Google reviews | Apps · Festivals · Birthdays · [widgets_26_30.md](docs/modules/widgets_26_30.md) |
 
 ## What's new in 2.2
 
