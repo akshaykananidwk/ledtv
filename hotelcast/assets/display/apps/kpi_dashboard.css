@@ -14,6 +14,7 @@
 .kp-rows-2 .kp-tile{height:48.5%}
 .kp-rows-3 .kp-tile{height:32%}
 .kp-tile > *{-webkit-flex-shrink:0;flex-shrink:0}
+.hc-app-kpi_dashboard .hc-title{font-size:2.2rem}
 .hc-app-kpi_dashboard .hc-title h1{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .kp-label{font-size:1.4rem;color:var(--hc-muted);font-weight:700;line-height:1.2;overflow:hidden;max-height:3.4rem}
 .kp-value{white-space:nowrap;overflow:hidden;line-height:1.1;margin:.2rem 0;font-size:3.8rem}
