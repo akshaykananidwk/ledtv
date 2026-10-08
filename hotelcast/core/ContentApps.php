@@ -53,7 +53,7 @@ final class ContentApps
         $out = [];
         foreach ($ids as $id) {
             $row = ContentManager::findOwn((int) $id);
-            if (!$row || $row['type'] !== 'image') {
+            if (!$row || $row['type'] !== 'image' || !ContentRules::approved($row)) { // 2.4: never content waiting for approval
                 continue;
             }
             $url = $row['file_path'] ? media_url((string) $row['file_path']) : ((string) $row['url'] ?: null);

@@ -157,6 +157,16 @@ final class LiveView
         if ($retry > 0) {
             throw new RangeException((string) $retry);
         }
+        // Security (2.4 review): re-encode with GD like every other upload, so only pixels are kept (no
+        // appended / polyglot payload, no metadata) from a TV whose token may be in a guest's hands.
+        $im = @imagecreatefromstring($jpeg);
+        if ($im === false) {
+            throw new InvalidArgumentException('image must be a JPEG file');
+        }
+        ob_start();
+        imagejpeg($im, null, 80);
+        $jpeg = (string) ob_get_clean();
+        imagedestroy($im);
         $file = self::framePath($hid, (int) $device['id']);
         $dir = dirname($file);
         if (!is_dir($dir) && !@mkdir($dir, 0750, true) && !is_dir($dir)) {

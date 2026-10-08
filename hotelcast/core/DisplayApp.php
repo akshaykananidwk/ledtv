@@ -246,7 +246,7 @@ abstract class DisplayApp
             return null;
         }
         $row = ContentManager::findOwn($contentId);
-        if (!$row || $row['type'] !== 'image') {
+        if (!$row || $row['type'] !== 'image' || !ContentRules::approved($row)) { // 2.4: never content waiting for approval
             return null;
         }
         return $row['file_path'] ? media_url((string) $row['file_path']) : ((string) $row['url'] ?: null);

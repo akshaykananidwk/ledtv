@@ -19,7 +19,7 @@ final class GuideExtension implements ContentExtension
             return;
         }
         $item = ContentManager::findOwn($id);
-        if (!$item || !(int) $item['is_active']) {
+        if (!$item || !ContentRules::playable($item)) { // 2.4: approved + validity window, like every TV item
             return;
         }
         $tv = ContentManager::toTvItem($item);

@@ -145,18 +145,20 @@ final class PanchangApp extends WidgetApp
         $html = '<div class="pc-wrap' . ($config['show_panchang'] && $config['show_choghadiya'] ? ' pc-both' : '') . '" data-next="' . ((int) $p['next_sunrise'] * 1000) . '">';
         if ($config['show_panchang']) {
             $over = self::parseOverrides((string) $config['overrides'])[$p['date']] ?? null;
+            // [label, value, "until …" (own small line, so the card fits a 16:9 screen), set by the hotel]
             $rows = [
-                [__('Tithi'), $over ?? (__($p['tithi']['name']) . ' · ' . __('until :t', ['t' => $t($p['tithi']['end'])])), $over !== null],
-                [__('Nakshatra'), __($p['nakshatra']['name']) . ' · ' . __('until :t', ['t' => $t($p['nakshatra']['end'])]), false],
-                [__('Yoga'), __($p['yoga']['name']), false],
-                [__('Sunrise'), $t($p['sunrise']), false],
-                [__('Sunset'), $t($p['sunset']), false],
+                [__('Tithi'), $over ?? __($p['tithi']['name']), $over === null ? __('until :t', ['t' => $t($p['tithi']['end'])]) : '', $over !== null],
+                [__('Nakshatra'), __($p['nakshatra']['name']), __('until :t', ['t' => $t($p['nakshatra']['end'])]), false],
+                [__('Yoga'), __($p['yoga']['name']), '', false],
+                [__('Sunrise'), $t($p['sunrise']), '', false],
+                [__('Sunset'), $t($p['sunset']), '', false],
             ];
             $html .= '<div class="pc-card hc-card"><div class="pc-date">' . e(self::dateLabel($p['date'], true, true)) . '</div>'
                 . '<div class="pc-samvat">' . e(__('Vikram Samvat :y', ['y' => $p['month']['samvat']])) . '</div>'
                 . self::tithiLines($p, $over, (string) $ctx['lang']) . '<dl class="pc-list">';
-            foreach ($rows as [$k, $v, $mine]) {
-                $html .= '<div class="pc-row"><dt>' . e($k) . '</dt><dd>' . e($v) . ($mine ? ' <span class="pc-mine">' . e(__('(set by the hotel)')) . '</span>' : '') . '</dd></div>';
+            foreach ($rows as [$k, $v, $until, $mine]) {
+                $html .= '<div class="pc-row"><dt>' . e($k) . '</dt><dd>' . e($v) . ($until !== '' ? '<span class="pc-until">' . e($until) . '</span>' : '')
+                    . ($mine ? ' <span class="pc-mine">' . e(__('(set by the hotel)')) . '</span>' : '') . '</dd></div>';
             }
             $html .= '</dl><div class="pc-approx">' . e(__('Approximate — computed for :place; times may differ by a few minutes from your panchang.', ['place' => (string) Settings::get('weather_city', '') ?: sprintf('%.2f, %.2f', $loc[0], $loc[1])])) . '</div></div>';
         }

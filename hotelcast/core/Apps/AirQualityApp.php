@@ -100,7 +100,8 @@ final class AirQualityApp extends WidgetApp
         $warn = $fc ? AirQuality::warnings($fc['data'], $config) : [];
         $banner = '';
         if ($warn) {
-            $banner = '<div class="aq-warnings">';
+            // Several warnings: two columns, smaller text, and a smaller dial below (everything fits a 16:9 screen).
+            $banner = '<div class="aq-warnings' . (count($warn) > 1 ? ' aq-warn-many' : '') . '">';
             foreach ($warn as $w) {
                 $banner .= '<div class="aq-warn aq-warn-' . e($w['type']) . '"><span class="aq-warn-ico">' . match ($w['type']) { 'rain' => '🌧', 'heat' => '🌡', 'storm' => '⛈', 'ferry' => '⛴', default => '💨' } . '</span>' . e($w['text']) . '</div>';
             }
@@ -121,7 +122,7 @@ final class AirQualityApp extends WidgetApp
         }
         $src = 'Open-Meteo' . ($idx['scale'] === 'in' ? ' · ' . __('CPCB categories') : '');
         return $banner
-            . '<div class="aq-main-row">'
+            . '<div class="aq-main-row' . ($warn ? ' aq-tight' : '') . (count($warn) > 2 ? ' aq-tighter' : '') . '">'
             . '<div class="aq-dial" style="background:' . e($idx['color']) . ';color:' . e($idx['fg']) . '"><div class="aq-num">' . (int) $idx['aqi'] . '</div><div class="aq-cat">' . e(AirQuality::label($idx['category'])) . '</div></div>'
             . '<div class="aq-side"><div class="aq-scale hc-muted">' . e($scale) . '</div>'
             . '<div class="aq-pms">' . $pm($idx['pm25'], 'PM2.5', 'pm25') . $pm($idx['pm10'], 'PM10', 'pm10') . '</div>'

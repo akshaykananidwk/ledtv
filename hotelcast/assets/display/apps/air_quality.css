@@ -4,7 +4,7 @@
 .aq-warn-heat{background:#C2410C}
 .aq-warn-ferry{background:#1D4ED8}
 .aq-warn-ico{font-size:1.8rem;margin-right:.8rem}
-.aq-main-row{display:-webkit-flex;display:flex;-webkit-align-items:center;align-items:center;-webkit-flex:1;flex:1;min-height:0}
+.aq-main-row{display:-webkit-flex;display:flex;-webkit-align-items:center;align-items:center;-webkit-flex:1;flex:1;min-height:0;overflow:hidden;padding:.55rem}
 .aq-dial{width:17rem;height:17rem;border-radius:50%;display:-webkit-flex;display:flex;-webkit-flex-direction:column;flex-direction:column;-webkit-align-items:center;align-items:center;-webkit-justify-content:center;justify-content:center;-webkit-flex-shrink:0;flex-shrink:0;margin-right:2.5rem;box-shadow:0 0 0 .5rem rgba(255,255,255,.15)}
 .aq-num{font-size:6.5rem;font-weight:800;line-height:1}
 .aq-cat{font-size:1.7rem;font-weight:700;text-align:center;padding:0 1rem}
@@ -21,3 +21,20 @@
 .aq-bands{display:-webkit-flex;display:flex;margin-top:1rem;border-radius:.5rem;overflow:hidden}
 .aq-band{-webkit-flex:1;flex:1;text-align:center;font-size:.95rem;font-weight:700;color:#111;padding:.35rem .2rem;opacity:.55}
 .aq-band.is-on{opacity:1;-webkit-transform:scaleY(1.25);transform:scaleY(1.25)}
+/* Warnings present: smaller dial and numbers; several warnings: two columns of smaller banners. */
+.aq-warn-many{display:-webkit-flex;display:flex;-webkit-flex-wrap:wrap;flex-wrap:wrap;margin-right:-.4rem}
+.aq-warn-many .aq-warn{-webkit-flex:1 1 40%;flex:1 1 40%;min-width:0;margin-right:.4rem;font-size:1.05rem;line-height:1.25;padding:.4rem .9rem}
+.aq-warn-many .aq-warn-ico{font-size:1.4rem;margin-right:.6rem}
+.aq-tight .aq-dial{width:13.5rem;height:13.5rem;margin-right:2rem}
+.aq-tight .aq-num{font-size:5rem}
+.aq-tight .aq-cat{font-size:1.35rem}
+.aq-tight .aq-pm-val{font-size:2.8rem}
+.aq-tight .aq-pms{margin-bottom:.6rem}
+.aq-tight .aq-advice{font-size:1.3rem}
+.aq-tighter .aq-dial{width:11.5rem;height:11.5rem}
+.aq-tighter .aq-num{font-size:4.2rem}
+.aq-tighter .aq-cat{font-size:1.15rem}
+.aq-tighter .aq-scale{font-size:1rem;margin-bottom:.3rem}
+.aq-tighter .aq-pm-label{font-size:1.05rem}
+.aq-tighter .aq-pm-val{font-size:2.3rem}
+.aq-tighter .aq-advice{font-size:1.15rem}

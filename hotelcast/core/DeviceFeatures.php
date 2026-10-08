@@ -44,12 +44,25 @@ final class DeviceFeatures
         return self::roomFlags($flags);
     }
 
-    /** PLAY_SOUND payload {url, volume, repeat}. Throws InvalidArgumentException. */
+    /**
+     * PLAY_SOUND payload {url, volume, repeat}. Throws InvalidArgumentException.
+     * Security (2.4 review): the TV fetches this URL from inside the hotel network, so only sounds of the
+     * current hotel's library are accepted — a `sound` reference ("b:school_bell" / "u:12", Sounds::resolve)
+     * or exactly the URL of one of them. Any other URL (intranet hosts, router admin pages, other sites)
+     * is refused, so admin users cannot use the TVs as a request proxy into the LAN.
+     */
     public static function playSoundPayload(array $in): array
     {
+        $ref = trim((string) ($in['sound'] ?? ''));
         $url = trim((string) ($in['url'] ?? ''));
+        if ($ref !== '') {
+            $url = (string) (Sounds::resolve($ref)['url'] ?? ''); // another hotel's sound id → 404
+        }
         if ($url === '' || strlen($url) > 2048 || !ContentManager::validUrl($url, ['http', 'https'])) {
             throw new InvalidArgumentException(__('Enter a valid sound URL (http or https).'));
+        }
+        if (!in_array($url, array_column(Sounds::all(), 'url'), true)) {
+            throw new InvalidArgumentException(__('Choose a sound from the sound library (Device schedules → Sounds).'));
         }
         $vol = $in['volume'] ?? 100;
         $rep = $in['repeat'] ?? 1;

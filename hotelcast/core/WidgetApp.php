@@ -74,7 +74,7 @@ abstract class WidgetApp extends DataFeedApp
     {
         $out = '';
         foreach (preg_split('/\s+/u', trim($name)) ?: [] as $w) {
-            if ($w !== '') {
+            if (preg_match('/^\p{L}/u', $w)) { // skips "&", "-", numbers ("Amit & Neha Shah" → AN)
                 $out .= mb_strtoupper(mb_substr($w, 0, 1));
             }
             if (mb_strlen($out) >= 2) {

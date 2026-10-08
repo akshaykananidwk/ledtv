@@ -237,14 +237,19 @@ final class Ads
         $day = date('Y-m-d', $ts);
         $rows = DB::all(
             "SELECT c.*, ci.id AS ci_id, ci.title AS ci_title, ci.type AS ci_type, ci.file_path AS ci_file_path, ci.url AS ci_url,
-                    ci.body AS ci_body, ci.settings AS ci_settings, ci.duration AS ci_duration
+                    ci.body AS ci_body, ci.settings AS ci_settings, ci.duration AS ci_duration,
+                    ci.approval_status AS ci_approval_status, ci.valid_from AS ci_valid_from, ci.valid_to AS ci_valid_to
              FROM ad_campaigns c
              JOIN content_items ci ON ci.id = c.content_id AND ci.hotel_id = c.hotel_id AND ci.is_active = 1
              WHERE c.hotel_id = :h AND c.status = 'active' AND c.start_date <= :d AND (c.end_date IS NULL OR c.end_date >= :d2)
              ORDER BY c.priority DESC, c.id",
             ['h' => Tenant::id(), 'd' => $day, 'd2' => $day]
         );
-        return array_values(array_filter($rows, fn ($c) => self::isLive($c, $ts)));
+        // 2.4 security review: an ad is content on air too — only approved items inside their validity window.
+        return array_values(array_filter($rows, fn ($c) => self::isLive($c, $ts) && ContentRules::playable(
+            ['is_active' => 1, 'approval_status' => $c['ci_approval_status'] ?? 'approved', 'valid_from' => $c['ci_valid_from'] ?? null, 'valid_to' => $c['ci_valid_to'] ?? null],
+            $ts
+        )));
     }
 
     /** TV ContentItem of a campaign's ad (with ad_campaign_id). */

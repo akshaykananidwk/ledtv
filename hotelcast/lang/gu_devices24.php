@@ -19,6 +19,7 @@ return [
     'now :v' => 'હમણાં :v',
     'Choose a valid CEC mode.' => 'માન્ય CEC મોડ પસંદ કરો.',
     'Enter a valid sound URL (http or https).' => 'માન્ય સાઉન્ડ URL (http અથવા https) દાખલ કરો.',
+    'Choose a sound from the sound library (Device schedules → Sounds).' => 'ધ્વનિ લાઇબ્રેરીમાંથી અવાજ પસંદ કરો (ડિવાઇસ સમયપત્રક → અવાજ).',
     'This TV is revoked.' => 'આ ટીવી રદ કરેલું છે.',
     'Saved. The TV picks up the change within a few seconds.' => 'સાચવ્યું. ટીવી થોડી સેકન્ડમાં ફેરફાર લઈ લેશે.',
     ':d d :h h' => ':d દિ :h ક',

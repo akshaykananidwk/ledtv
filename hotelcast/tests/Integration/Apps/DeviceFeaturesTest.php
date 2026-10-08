@@ -141,14 +141,16 @@ final class DeviceFeaturesTest extends TestCase
 
         [, $n] = TvControls::send('SPEAK', 'rooms', [self::$room['101']], ['text' => '  નાસ્તો તૈયાર છે  ', 'lang' => 'gu', 'rate' => '1.25', 'repeat' => '2', 'volume' => '80', 'chime_before' => '1'], self::$u['fmgr']);
         $this->assertSame(1, $n);
-        [, $n] = TvControls::send('PLAY_SOUND', 'rooms', [self::$room['101']], ['url' => 'https://cdn.example.com/sounds/bell.mp3', 'volume' => '60', 'repeat' => '3']);
+        // 2.4 security review: PLAY_SOUND only plays sounds of the hotel's own library (no arbitrary URLs).
+        $bell = (string) Sounds::resolve('b:temple_bell')['url'];
+        [, $n] = TvControls::send('PLAY_SOUND', 'rooms', [self::$room['101']], ['sound' => 'b:temple_bell', 'volume' => '60', 'repeat' => '3']);
         $this->assertSame(1, $n);
         [$bid, $n] = Broadcaster::sendCommand('SPEAK', 'all', [], ['text' => 'Pool closes at 8', 'lang' => 'en', 'rate' => 1, 'repeat' => 1, 'chime_before' => false]);
         $this->assertSame(3 - 1, $n, 'hotel 1 has two TVs');
         [$list, $raw] = self::poll('tv101');
         $this->assertSame(['SPEAK', 'PLAY_SOUND', 'SPEAK'], array_column($list, 'command'));
         $this->assertStringContainsString('"command":"SPEAK","payload":{"text":"નાસ્તો તૈયાર છે","lang":"gu","rate":1.25,"repeat":2,"volume":80,"chime_before":true}', $raw);
-        $this->assertStringContainsString('"command":"PLAY_SOUND","payload":{"url":"https://cdn.example.com/sounds/bell.mp3","volume":60,"repeat":3}', $raw);
+        $this->assertStringContainsString('"command":"PLAY_SOUND","payload":{"url":' . json_encode($bell, JSON_UNESCAPED_SLASHES) . ',"volume":60,"repeat":3}', $raw);
         // The TV's ack message (voice used / fallback) lands in the broadcast log.
         $this->assertSame(1, (int) DB::value("SELECT COUNT(*) FROM broadcast_logs WHERE broadcast_id = :b AND event = 'acked'", ['b' => $bid]));
 
@@ -156,6 +158,7 @@ final class DeviceFeaturesTest extends TestCase
             ['SPEAK', ['text' => '']], ['SPEAK', ['text' => 'x', 'lang' => 'fr']], ['SPEAK', ['text' => 'x', 'repeat' => 9]],
             ['SPEAK', ['text' => 'x', 'rate' => 5]], ['PLAY_SOUND', ['url' => 'javascript:alert(1)']], ['PLAY_SOUND', ['url' => 'ftp://x/a.mp3']],
             ['PLAY_SOUND', ['url' => 'https://x/a.mp3', 'volume' => 150]], ['PLAY_SOUND', ['url' => 'https://x/a.mp3', 'repeat' => 0]],
+            ['PLAY_SOUND', ['url' => 'https://cdn.example.com/sounds/bell.mp3']], ['PLAY_SOUND', ['sound' => 'b:nope']],
         ] as [$cmd, $in]) {
             try {
                 TvControls::send($cmd, 'rooms', [self::$room['101']], $in);

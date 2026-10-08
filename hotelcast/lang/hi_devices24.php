@@ -19,6 +19,7 @@ return [
     'now :v' => 'अभी :v',
     'Choose a valid CEC mode.' => 'मान्य CEC मोड चुनें।',
     'Enter a valid sound URL (http or https).' => 'मान्य साउंड URL (http या https) दर्ज करें।',
+    'Choose a sound from the sound library (Device schedules → Sounds).' => 'साउंड लाइब्रेरी से एक ध्वनि चुनें (डिवाइस शेड्यूल → ध्वनियाँ)।',
     'This TV is revoked.' => 'यह टीवी रद्द किया गया है।',
     'Saved. The TV picks up the change within a few seconds.' => 'सहेजा गया। टीवी कुछ सेकंड में बदलाव ले लेगा।',
     ':d d :h h' => ':d दि :h घं',

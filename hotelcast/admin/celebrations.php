@@ -33,6 +33,11 @@ if (is_post()) {
             }
             $csv = (string) file_get_contents((string) $f['tmp_name']);
         }
+        // Security (2.4 review): the pasted text has the same 1 MB limit as the file (post_max_size is 260 MB).
+        if (strlen($csv) > 1024 * 1024) {
+            flash('danger', __('The CSV file is too large (max. 1 MB).'));
+            redirect(admin_url('celebrations.php'));
+        }
         if (trim($csv) === '') {
             flash('warning', __('Choose a CSV file or paste the lines.'));
             redirect(admin_url('celebrations.php'));
