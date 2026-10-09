@@ -73,7 +73,7 @@ $parseRole = static function (string $spec) use ($id): ?array {
 
 if (is_post()) {
     $op = req_str('op', $_POST, 30);
-    $platformOps = ['limits', 'status', 'regen_key', 'set_chain', 'branding', 'delete', 'extend'];
+    $platformOps = ['limits', 'status', 'regen_key', 'set_chain', 'branding', 'delete', 'extend', 'archive', 'restore'];
     $scopedOps = ['enter', 'user_reset', 'user_toggle', 'user_create', 'user_role'];
     if (in_array($op, $platformOps, true)) {
         require_can('platform.manage');
@@ -168,6 +168,20 @@ if (is_post()) {
                     ActivityLog::add('hotel_extend', 'hotel', $id, 'Validity extended by ' . $days . ' days', $id);
                     flash('success', __('Validity extended by :n days.', ['n' => $days]));
                     redirect($url('billing'));
+
+                case 'archive':
+                    Hotels::archive($id);
+                    ActivityLog::add('hotel_archive', 'hotel', $id, $h['name'] . ' archived');
+                    ActivityLog::add('hotel_archive', 'hotel', $id, 'Account archived by the platform', $id);
+                    flash('success', __('Customer ":n" archived. It is suspended and hidden from the list; restore it any time.', ['n' => $h['name']]));
+                    redirect(admin_url('platform_hotels.php'));
+
+                case 'restore':
+                    Hotels::restore($id);
+                    ActivityLog::add('hotel_restore', 'hotel', $id, $h['name'] . ' restored');
+                    ActivityLog::add('hotel_restore', 'hotel', $id, 'Account restored by the platform', $id);
+                    flash('success', __('Customer ":n" restored and active again.', ['n' => $h['name']]));
+                    redirect($url('summary'));
 
                 case 'regen_key':
                     Settings::setFor($id, 'registration_key', Hotels::newRegistrationKey());
@@ -298,7 +312,7 @@ require __DIR__ . '/partials/header.php';
   <div class="c360-head">
     <span class="c360-avatar"><?= e($initial) ?></span>
     <div>
-      <h1 class="d-flex align-items-center flex-wrap gap-2"><?= e($h['name']) ?> <span data-status-badge="<?= $id ?>"><?= Hotels::statusBadge($state) ?></span><?php if ($h['is_trial']): ?><span class="badge text-bg-info"><?= e(__('Trial')) ?></span><?php endif; ?></h1>
+      <h1 class="d-flex align-items-center flex-wrap gap-2"><?= e($h['name']) ?> <span data-status-badge="<?= $id ?>"><?= Hotels::statusBadge($state) ?></span><?php if ($h['is_trial']): ?><span class="badge text-bg-info"><?= e(__('Trial')) ?></span><?php endif; ?><?php if (!empty($h['archived_at'])): ?><span class="badge text-bg-secondary" data-archived><?= e(__('Archived')) ?></span><?php endif; ?></h1>
       <div class="c360-meta">
         <span><i class="bi bi-hash"></i><?= $id ?></span>
         <?php if ($h['city']): ?><span><i class="bi bi-geo-alt"></i> <?= e($h['city']) ?></span><?php endif; ?>
@@ -733,6 +747,15 @@ elseif ($tab === 'settings'):
           </form>
         </div></div>
         <div class="card danger-zone"><div class="card-header"><i class="bi bi-exclamation-octagon"></i> <?= e(__('Danger zone')) ?></div><div class="card-body">
+          <?php if (empty($h['archived_at'])): ?>
+          <p class="small mb-2"><?= e(__('Archive = the recommended way to end a customer: it is suspended, hidden from the customers list and can be restored with all its data.')) ?></p>
+          <form method="post" class="mb-3" data-confirm="<?= e(__('Archive this customer? Its TVs show the "service paused" screen and its users are logged out. You can restore it later.')) ?>">
+            <?= Csrf::field() ?><input type="hidden" name="op" value="archive"><input type="hidden" name="id" value="<?= $id ?>">
+            <button class="btn btn-outline-secondary"><i class="bi bi-archive"></i> <?= e(__('Archive customer')) ?></button></form>
+          <?php else: ?>
+          <form method="post" class="mb-3"><?= Csrf::field() ?><input type="hidden" name="op" value="restore"><input type="hidden" name="id" value="<?= $id ?>">
+            <button class="btn btn-success"><i class="bi bi-arrow-counterclockwise"></i> <?= e(__('Restore customer')) ?></button></form>
+          <?php endif; ?>
           <p class="small mb-2"><?= e(__('Deleting a customer removes its users, screens, TVs, content, playlists, logs and invoices permanently. Its TVs return to the setup screen. This cannot be undone.')) ?></p>
           <button type="button" class="btn btn-outline-danger" data-delete-customer="<?= $id ?>" data-name="<?= e($h['name']) ?>"><i class="bi bi-trash"></i> <?= e(__('Delete customer')) ?></button>
           <?= panel_delete_customer_modal() ?>

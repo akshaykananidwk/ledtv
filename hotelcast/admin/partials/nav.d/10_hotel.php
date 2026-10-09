@@ -10,7 +10,7 @@ declare(strict_types=1);
 return [
     ['index', 'index.php', 'dashboard.view', 'bi-speedometer2', __('Dashboard'), 'hotel'],
     ['rooms', 'rooms.php', 'rooms.view', 'bi-tv', __('Screens & TVs'), 'hotel'],
-    ['groups', 'groups.php', 'groups.manage', 'bi-collection', __('Groups'), 'hotel'],
+    ['groups', 'groups.php', 'groups.manage', 'bi-collection', __('Locations & groups'), 'hotel'],
     ['content', 'content.php', 'content.view', 'bi-images', __('Content Library'), 'hotel'],
     ['playlists', 'playlists.php', 'playlists.manage', 'bi-collection-play', __('Playlists'), 'hotel'],
     ['broadcast', 'broadcast.php', 'broadcast.send', 'bi-broadcast-pin', __('Broadcast'), 'hotel'],

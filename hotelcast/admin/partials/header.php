@@ -38,7 +38,7 @@ $hdrAccentDark = $hdrTheme['accent_dark'] ?? Branding::shade($hdrBrand['color'])
 // Sidebar from the navigation registry (admin/partials/nav.d/*.php), limited to the panel's sections.
 $navSections = $user ? Panel::navSections() : [];
 $sectionTitles = ['hotel' => $hotelName, 'reseller' => __('Reseller'), 'platform' => __('Platform'), 'chain' => __('Chain')];
-$groupTitles = ['Manage' => __('Manage'), 'Commercial' => __('Commercial'), 'System' => __('System'), 'Tools' => __('Tools')];
+$groupTitles = ['Manage' => __('Manage'), 'Commercial' => __('Commercial'), 'Plans & subscriptions' => __('Plans & subscriptions'), 'Devices & content' => __('Devices & content'), 'Insight' => __('Insight'), 'System' => __('System'), 'Tools' => __('Tools')];
 $hdrSearch = $user && in_array($hdrPanel, ['platform', 'reseller'], true) && Auth::can('platform.screens') && is_file(HC_ROOT . '/admin/platform_search.php');
 
 // Users limited to some TVs (core/Access.php): their emergencies / TVs only.

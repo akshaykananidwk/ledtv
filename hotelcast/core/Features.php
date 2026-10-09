@@ -48,7 +48,7 @@ final class Features
      * Admin pages of the platform / resellers / hotel chains (not customer modules): never gated by a plan.
      * Files matching this pattern need no registry entry (registry crawler test).
      */
-    public const PLATFORM_PAGE_PATTERN = '/^(platform_[a-z0-9_]+|chain(_[a-z0-9_]+)?|reseller)\.php$/';
+    public const PLATFORM_PAGE_PATTERN = '/^(platform_[a-z0-9_]+|chain(_[a-z0-9_]+)?|reseller(_[a-z0-9_]+)?|ajax_platform)\.php$/';
 
     /** Admin entry points that dispatch to registered actions (admin/ajax.php → ajax actions). */
     public const DISPATCHERS = ['ajax.php'];
@@ -707,7 +707,7 @@ final class Features
     {
         return [
             'code' => 'FEATURE_DISABLED',
-            'message' => __('Not included in your plan') . ': ' . self::label($key) . '. ' . __('Contact your provider to upgrade your plan.'),
+            'message' => __('This feature is not available in your current plan.') . ' (' . self::label($key) . ') ' . __('Contact your provider to upgrade your plan.'),
             'feature' => $key,
         ];
     }

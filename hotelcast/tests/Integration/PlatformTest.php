@@ -300,7 +300,7 @@ final class PlatformTest extends TestCase
         // Without a hotel the reseller is sent to its panel.
         [$s, , , $head] = $res->get('rooms.php');
         $this->assertSame(302, $s);
-        $this->assertStringContainsString('reseller.php', $head);
+        $this->assertStringContainsString('reseller_overview.php', $head); // 2.6: the reseller panel's home
         // Enter own hotel → manage it.
         [$s, , , $head] = $res->post('reseller.php', ['op' => 'enter', 'id' => self::$resHotel]);
         $this->assertSame(302, $s);

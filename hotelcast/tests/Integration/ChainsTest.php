@@ -610,7 +610,8 @@ final class ChainsTest extends TestCase
         [$st, , $html] = $s->get('chain.php?chain=' . $gid);
         $this->assertSame(200, $st);
         $this->assertStringContainsString('Solo Hotel', $html);
-        [$st, , $html] = $s->get('platform_hotels.php?action=view&id=' . self::$h[4]);
+        [$st, , $html] = $s->get('platform_customer.php?id=' . self::$h[4] . '&tab=settings'); // 2.6: Customer 360
+        $this->assertSame(200, $st);
         $this->assertStringContainsString('Gamma Group', $html);
 
         // The new chain admin can log in and sees exactly that hotel.

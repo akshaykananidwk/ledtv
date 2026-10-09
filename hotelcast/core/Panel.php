@@ -27,19 +27,30 @@ final class Panel
 
     /** Sidebar order per panel (nav keys; unknown keys follow in file order). */
     public const ORDER = [
-        'platform' => ['platform_overview', 'platform_hotels', 'platform_screens', 'platform_resellers', 'platform_chains',
+        // docs/SPEC_SAAS.md §34: Dashboard, Clients, Plans & modules, Subscriptions, Devices, Content overview, Reports,
+        // Notifications, Audit logs, System settings (+ resellers / chains / marketplace / support / update / QR).
+        'platform' => ['platform_overview', 'platform_hotels', 'platform_resellers', 'platform_chains',
             'platform_plans', 'platform_invoices', 'platform_licenses', 'platform_signups', 'platform_demo', 'platform_marketplace',
-            'platform_support', 'platform_settings', 'update', 'qr_setup', 'push'],
+            'platform_screens', 'platform_content', 'qr_setup',
+            'platform_reports', 'push', 'platform_audit', 'platform_support',
+            'platform_settings', 'update'],
         'reseller' => ['reseller_overview', 'reseller', 'platform_screens', 'reseller_plans', 'reseller_invoices', 'reseller_support',
             'platform_demo', 'platform_chains', 'qr_setup', 'push'],
+        // §34 client menu: Dashboard, My TVs, Rooms / Locations, Content, Playlists, Schedules, Users, Reports, My Settings, Subscription.
+        'customer' => ['getting_started', 'index', 'rooms', 'groups', 'content', 'playlists', 'schedule', 'calendar', 'broadcast', 'power',
+            'tickers', 'designer', 'apps', 'notices', 'offers', 'menu_board', 'queue', 'queue_issue', 'albums', 'video_walls', 'data_feeds', 'kpi',
+            'class_schedule', 'departures', 'rates', 'festivals', 'celebrations', 'holidays', 'device_schedules', 'tv_controls', 'support', 'tv_health',
+            'guests', 'orders', 'services', 'users', 'roles', 'logs', 'play_report', 'analytics', 'apk', 'settings', 'plan', 'billing', 'push'],
     ];
 
     /** Sidebar headings per panel: heading label key => nav keys. */
     public const GROUPS = [
         'platform' => [
-            'Manage' => ['platform_overview', 'platform_hotels', 'platform_screens', 'platform_resellers', 'platform_chains'],
-            'Commercial' => ['platform_plans', 'platform_invoices', 'platform_licenses', 'platform_signups', 'platform_demo', 'platform_marketplace'],
-            'System' => ['platform_support', 'platform_settings', 'update', 'qr_setup', 'push'],
+            'Manage' => ['platform_overview', 'platform_hotels', 'platform_resellers', 'platform_chains'],
+            'Plans & subscriptions' => ['platform_plans', 'platform_invoices', 'platform_licenses', 'platform_signups', 'platform_demo', 'platform_marketplace'],
+            'Devices & content' => ['platform_screens', 'platform_content', 'qr_setup'],
+            'Insight' => ['platform_reports', 'push', 'platform_audit', 'platform_support'],
+            'System' => ['platform_settings', 'update'],
         ],
         'reseller' => [
             'Manage' => ['reseller_overview', 'reseller', 'platform_screens', 'reseller_support'],
@@ -181,6 +192,33 @@ final class Panel
             }
         }
         return $out;
+    }
+
+    /** Subscription state of a customer (docs/SPEC_SAAS.md §29): TRIAL | ACTIVE | EXPIRING | EXPIRED | SUSPENDED | ARCHIVED. */
+    public static function subscriptionState(?int $hotelId = null): array
+    {
+        $h = Tenant::hotel($hotelId);
+        if (!$h) {
+            return ['key' => 'SUSPENDED', 'label' => __('Suspended'), 'tone' => 'danger', 'days' => null];
+        }
+        $days = !empty($h['expires_at']) ? (int) ceil((strtotime((string) $h['expires_at']) - time()) / 86400) : null;
+        if (!empty($h['archived_at'])) {
+            return ['key' => 'ARCHIVED', 'label' => __('Archived'), 'tone' => 'secondary', 'days' => $days];
+        }
+        $state = Tenant::state($hotelId);
+        if ($state === 'suspended') {
+            return ['key' => 'SUSPENDED', 'label' => __('Suspended'), 'tone' => 'danger', 'days' => $days];
+        }
+        if ($state === 'expired') {
+            return ['key' => 'EXPIRED', 'label' => __('Expired'), 'tone' => 'danger', 'days' => $days];
+        }
+        if (!empty($h['is_trial'])) {
+            return ['key' => 'TRIAL', 'label' => __('Trial'), 'tone' => 'info', 'days' => $days];
+        }
+        if ($days !== null && $days <= 15) {
+            return ['key' => 'EXPIRING', 'label' => __('Expiring soon'), 'tone' => 'warning', 'days' => $days];
+        }
+        return ['key' => 'ACTIVE', 'label' => __('Active'), 'tone' => 'success', 'days' => $days];
     }
 
     /** Flat list of nav keys visible in the current panel (tests, header). */

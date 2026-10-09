@@ -63,8 +63,41 @@ if ($c['pool']) {
     $alerts[] = ['tone' => 'info', 'icon' => 'bi-inboxes', 'text' => __(':n TV(s) waiting in the unassigned pool', ['n' => $c['pool']]), 'href' => admin_url('platform_screens.php', ['unassigned' => 1]), 'action' => __('Assign')];
 }
 
-$activity = panel_recent_activity(null, 15);
+$activity = panel_recent_activity(null, 12);
 $topCustomers = PlatformScreens::dashboard(null, 6)['top'];
+// §5 charts (inline bars, no JS library): customer growth (6 months), plan distribution, device status.
+$months = [];
+for ($i = 5; $i >= 0; $i--) {
+    $months[date('Y-m', strtotime("first day of -$i month"))] = 0;
+}
+foreach (DB::all("SELECT DATE_FORMAT(created_at, '%Y-%m') AS m, COUNT(*) AS n FROM hotels WHERE created_at >= :t GROUP BY m", ['t' => array_key_first($months) . '-01']) as $r) {
+    if (isset($months[$r['m']])) {
+        $months[$r['m']] = (int) $r['n'];
+    }
+}
+$byPlan = DB::all('SELECT COALESCE(p.name, :np) AS name, COUNT(*) AS n FROM hotels h LEFT JOIN plans p ON p.id = h.plan_id WHERE h.archived_at IS NULL GROUP BY p.id, p.name ORDER BY n DESC LIMIT 8', ['np' => __('No plan')]);
+$revenue = $saas ? (DB::one("SELECT COALESCE(SUM(CASE WHEN status = 'paid' AND paid_at >= :m THEN total ELSE 0 END), 0) AS month,
+        COALESCE(SUM(CASE WHEN status = 'paid' THEN total ELSE 0 END), 0) AS total FROM invoices", ['m' => date('Y-m-01 00:00:00')]) ?? ['month' => 0, 'total' => 0]) : null;
+// §41 device errors with severity: health warnings (DeviceHealth) and offline TVs, newest first.
+$severity = ['temp_high' => 'high', 'storage_low' => 'high', 'ram_low' => 'medium', 'wifi_weak' => 'low', 'uptime_long' => 'low'];
+$issues = [];
+$warnMap = PlatformScreens::warningMap(null);
+if ($warnMap) {
+    [$in, $ip] = DB::in(array_slice(array_keys($warnMap), 0, 50), 'wd');
+    foreach (DB::all("SELECT d.id, d.device_uid, d.hotel_id, d.last_heartbeat, h.name AS hotel_name, r.room_number FROM devices d JOIN hotels h ON h.id = d.hotel_id LEFT JOIN rooms r ON r.id = d.room_id WHERE d.id IN $in ORDER BY d.last_heartbeat DESC", $ip) as $d) {
+        foreach ($warnMap[(int) $d['id']] as $k => $text) {
+            $issues[] = ['severity' => $severity[$k] ?? 'medium', 'customer' => $d['hotel_name'], 'hotel_id' => (int) $d['hotel_id'], 'screen' => $d['room_number'] ?? $d['device_uid'], 'uid' => $d['device_uid'],
+                'text' => DeviceHealth::warningLabel((string) $k) . ($text !== '' ? ' · ' . $text : ''), 'when' => $d['last_heartbeat']];
+        }
+    }
+}
+foreach (DB::all("SELECT d.device_uid, d.hotel_id, d.last_ping, h.name AS hotel_name, r.room_number FROM devices d JOIN hotels h ON h.id = d.hotel_id LEFT JOIN rooms r ON r.id = d.room_id
+        WHERE d.is_revoked = 0 AND d.room_id IS NOT NULL AND d.status <> 'online' AND h.status = 'active' ORDER BY d.last_ping DESC LIMIT 8") as $d) {
+    $issues[] = ['severity' => 'high', 'customer' => $d['hotel_name'], 'hotel_id' => (int) $d['hotel_id'], 'screen' => $d['room_number'] ?? $d['device_uid'], 'uid' => $d['device_uid'], 'text' => __('Offline'), 'when' => $d['last_ping']];
+}
+$rank = ['high' => 0, 'medium' => 1, 'low' => 2];
+usort($issues, static fn ($a, $b) => [$rank[$a['severity']], $b['when'] ?? ''] <=> [$rank[$b['severity']], $a['when'] ?? '']);
+$issues = array_slice($issues, 0, 10);
 
 $pageTitle = __('Overview');
 $activeNav = 'platform_overview';
@@ -90,6 +123,8 @@ require __DIR__ . '/partials/header.php';
   <?= panel_kpi(__('Users'), $usersTotal, 'bi-people', admin_url('platform_search.php'), '', '', 'users') ?>
   <?php if ($signups): ?><?= panel_kpi(__('Open sign-ups'), $signups['pending'] + $signups['verify'], 'bi-person-plus', admin_url('platform_signups.php'), __(':n in 7 days', ['n' => $signups['last7']]), $signups['pending'] ? 'warning' : '', 'signups') ?><?php endif; ?>
   <?php if ($saas): ?><?= panel_kpi(__('Unpaid invoices'), $n('unpaid', $inv), 'bi-receipt', admin_url('platform_invoices.php', ['status' => 'unpaid']), $n('unpaid', $inv) ? money($inv['unpaid_total'] ?? 0) : '', $n('overdue', $inv) ? 'danger' : '', 'invoices') ?><?php endif; ?>
+  <?php if ($saas): ?><?= panel_kpi(__('Revenue this month'), money($revenue['month'] ?? 0), 'bi-cash-coin', admin_url('platform_reports.php'), __('total: :a', ['a' => money($revenue['total'] ?? 0)]), 'success', 'revenue') ?><?php endif; ?>
+  <?= panel_kpi(__('Expiring soon'), $n('expiring', $cust), 'bi-calendar-event', admin_url('platform_hotels.php'), __('within 14 days'), $n('expiring', $cust) ? 'warning' : '', 'expiring') ?>
   <?php if ($saas): ?><?= panel_kpi(__('Resellers'), $resellers, 'bi-person-badge', admin_url('platform_resellers.php'), '', '', 'resellers') ?><?php endif; ?>
   <?php if ($c['pool'] || DevicePool::available()): ?><?= panel_kpi(__('Unassigned pool'), $c['pool'], 'bi-inboxes', admin_url('platform_screens.php', ['unassigned' => 1]), '', $c['pool'] ? 'info' : '', 'pool') ?><?php endif; ?>
 </div>
@@ -100,9 +135,26 @@ require __DIR__ . '/partials/header.php';
       <div class="card-header d-flex align-items-center"><i class="bi bi-bell me-2"></i><?= e(__('Needs attention')) ?><span class="badge text-bg-light border ms-2"><?= count($alerts) ?></span></div>
       <?= panel_alerts($alerts, __('All good — nothing needs your attention right now.')) ?>
     </div>
+    <div class="card mb-3">
+      <div class="card-header d-flex align-items-center"><i class="bi bi-heart-pulse me-2"></i><?= e(__('Device errors & health')) ?>
+        <a class="ms-auto small" href="<?= e(admin_url('platform_support.php')) ?>"><?= e(__('Support & logs')) ?></a></div>
+      <?php if (!$issues): ?><div class="hc-empty py-4" data-device-issues-empty><i class="bi bi-check2-circle text-success"></i><p class="mb-0"><strong><?= e(__('All TVs are healthy.')) ?></strong></p></div>
+      <?php else: ?>
+      <div class="table-responsive"><table class="table table-sm table-hc mb-0" data-device-issues>
+        <thead><tr><th><?= e(__('Severity')) ?></th><th><?= e(__('Customer')) ?></th><th><?= e(__('Screen')) ?></th><th><?= e(__('Problem')) ?></th><th class="d-none d-md-table-cell"><?= e(__('Last seen')) ?></th></tr></thead>
+        <tbody>
+        <?php foreach ($issues as $i): ?>
+          <tr><td><span class="badge <?= ['high' => 'text-bg-danger', 'medium' => 'text-bg-warning', 'low' => 'text-bg-info'][$i['severity']] ?>" data-severity="<?= e($i['severity']) ?>"><?= e(['high' => __('High'), 'medium' => __('Medium'), 'low' => __('Low')][$i['severity']]) ?></span></td>
+            <td class="small"><a class="text-decoration-none" href="<?= e(admin_url('platform_customer.php', ['id' => $i['hotel_id'], 'tab' => 'screens', 'q' => $i['uid']])) ?>"><?= e($i['customer']) ?></a></td>
+            <td class="small"><strong><?= e((string) $i['screen']) ?></strong></td><td class="small"><?= e($i['text']) ?></td>
+            <td class="small text-muted d-none d-md-table-cell"><?= e($i['when'] ? time_ago((string) $i['when']) : __('never')) ?></td></tr>
+        <?php endforeach; ?>
+        </tbody></table></div>
+      <?php endif; ?>
+    </div>
     <div class="card">
       <div class="card-header d-flex align-items-center"><i class="bi bi-activity me-2"></i><?= e(__('Recent activity across customers')) ?>
-        <a class="ms-auto small" href="<?= e(admin_url('platform_support.php')) ?>"><?= e(__('Support & logs')) ?></a></div>
+        <a class="ms-auto small" href="<?= e(admin_url('platform_audit.php')) ?>"><?= e(__('Audit logs')) ?></a></div>
       <?php if (!$activity): ?><div class="hc-empty py-4"><i class="bi bi-activity"></i><p class="mb-0"><?= e(__('No activity yet.')) ?></p></div>
       <?php else: ?>
       <div class="table-responsive"><table class="table table-sm table-hc mb-0" data-recent-activity>
@@ -140,6 +192,17 @@ require __DIR__ . '/partials/header.php';
           <a class="btn btn-sm btn-light border" href="<?= e(admin_url('platform_settings.php')) ?>#features"><?= e(Chains::enabled() ? __('On') : __('Off')) ?> · <?= e(__('Settings')) ?></a>
         </li>
       </ul>
+    </div>
+    <div class="card mb-3">
+      <div class="card-header"><i class="bi bi-graph-up me-2"></i><?= e(__('Trends')) ?><a class="ms-auto small" href="<?= e(admin_url('platform_reports.php')) ?>"><?= e(__('Reports')) ?></a></div>
+      <div class="card-body">
+        <div class="small fw-semibold text-muted text-uppercase mb-1"><?= e(__('New customers per month')) ?></div>
+        <?= panel_bars(array_map(static fn ($m, $v) => [date('M y', strtotime($m . '-01')), $v], array_keys($months), $months), null, 'growth') ?>
+        <div class="small fw-semibold text-muted text-uppercase mt-3 mb-1"><?= e(__('TVs by status')) ?></div>
+        <?= panel_stacked([[__('Online'), $c['online'], 'success'], [__('Offline'), $c['offline'], 'danger'], [__('Outdated app'), $c['outdated'], 'warning']], 'devices') ?>
+        <div class="small fw-semibold text-muted text-uppercase mt-3 mb-1"><?= e(__('Customers by plan')) ?></div>
+        <?= panel_bars(array_map(static fn ($r) => [(string) $r['name'], (int) $r['n']], $byPlan), null, 'plans') ?>
+      </div>
     </div>
     <div class="card mb-3">
       <div class="card-header"><i class="bi bi-bar-chart me-2"></i><?= e(__('Top customers by screens')) ?></div>

@@ -16,6 +16,11 @@ declare(strict_types=1);
  *   pool_enabled     target = 0 (platform registration / unassigned pool)       platform.pool
  */
 
+if (!defined('HC_ADMIN_COMMON') || !function_exists('ajax_error')) {
+    // Opened directly: this file is only an include of admin/ajax.php.
+    http_response_code(404);
+    exit;
+}
 if (!isset($in) || !is_array($in) || ($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST') {
     ajax_error('POST required', 405, 'METHOD_NOT_ALLOWED');
 }

@@ -6,13 +6,16 @@
 declare(strict_types=1);
 
 return [
-    ['platform_overview', 'platform_overview.php', 'platform.manage', 'bi-speedometer2', __('Overview'), 'platform'],
+    ['platform_overview', 'platform_overview.php', 'platform.manage', 'bi-speedometer2', __('Dashboard'), 'platform'],
     ['platform_hotels', 'platform_hotels.php', 'platform.manage', 'bi-buildings', __('Customers'), 'platform', ['saas' => true]],
-    ['platform_plans', 'platform_plans.php', 'platform.manage', 'bi-box-seam', __('Plans & features'), 'platform', ['saas' => true]],
+    ['platform_plans', 'platform_plans.php', 'platform.manage', 'bi-box-seam', __('Plans & modules'), 'platform', ['saas' => true]],
     ['platform_resellers', 'platform_resellers.php', 'platform.manage', 'bi-person-badge', __('Resellers'), 'platform', ['saas' => true]],
     ['platform_invoices', 'platform_invoices.php', 'platform.manage', 'bi-receipt-cutoff', __('Invoices'), 'platform', ['saas' => true]],
     ['platform_licenses', 'platform_licenses.php', 'platform.manage', 'bi-key', __('Licenses'), 'platform', ['saas' => true]],
-    ['platform_settings', 'platform_settings.php', 'platform.manage', 'bi-sliders', __('Platform settings'), 'platform'],
+    ['platform_settings', 'platform_settings.php', 'platform.manage', 'bi-sliders', __('System settings'), 'platform'],
+    ['platform_content', 'platform_content.php', 'platform.manage', 'bi-collection-play', __('Content overview'), 'platform'],
+    ['platform_reports', 'platform_reports.php', 'platform.manage', 'bi-graph-up', __('Reports'), 'platform'],
+    ['platform_audit', 'platform_audit.php', 'platform.manage', 'bi-journal-check', __('Audit logs'), 'platform'],
     ['update', 'update.php', 'update.manage', 'bi-cloud-arrow-down', __('Auto-Update'), 'platform'],
     // Reseller panel
     ['reseller_overview', 'reseller_overview.php', 'reseller.panel', 'bi-speedometer2', __('Overview'), 'reseller'],

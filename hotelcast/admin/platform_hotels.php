@@ -144,7 +144,7 @@ require __DIR__ . '/partials/header.php';
   <input class="form-control" style="max-width:18rem" name="q" value="<?= e($q) ?>" placeholder="<?= e(__('Search customer, city, email…')) ?>">
   <select class="form-select" style="max-width:12rem" name="status">
     <option value=""><?= e(__('All statuses')) ?></option>
-    <?php foreach (['active' => __('Active'), 'suspended' => __('Suspended'), 'expired' => __('Expired')] as $s => $l): ?><option value="<?= e($s) ?>"<?= $fStatus === $s ? ' selected' : '' ?>><?= e($l) ?></option><?php endforeach; ?>
+    <?php foreach (['active' => __('Active'), 'suspended' => __('Suspended'), 'expired' => __('Expired'), 'archived' => __('Archived')] as $s => $l): ?><option value="<?= e($s) ?>"<?= $fStatus === $s ? ' selected' : '' ?>><?= e($l) ?></option><?php endforeach; ?>
   </select>
   <button class="btn btn-outline-primary"><i class="bi bi-search"></i> <?= e(__('Filter')) ?></button>
 </form>
@@ -170,7 +170,16 @@ require __DIR__ . '/partials/header.php';
           <td class="text-end text-nowrap">
             <a class="btn btn-sm btn-primary" href="<?= e(admin_url('platform_customer.php', ['id' => $h['id']])) ?>" title="<?= e(__('Customer 360')) ?>"><i class="bi bi-card-list"></i> <span class="d-none d-sm-inline"><?= e(__('Manage')) ?></span></a>
             <?= panel_open_workspace((int) $h['id'], 'platform_hotels.php', 'sm') ?>
-            <button type="button" class="btn btn-sm btn-light border text-danger" data-delete-customer="<?= (int) $h['id'] ?>" data-name="<?= e($h['name']) ?>" title="<?= e(__('Delete customer')) ?>"><i class="bi bi-trash"></i></button>
+            <?php if (empty($h['archived_at'])): ?>
+            <form method="post" action="<?= e(admin_url('platform_customer.php')) ?>" class="d-inline" data-confirm="<?= e(__('Archive this customer? Its TVs show the "service paused" screen and its users are logged out. You can restore it later.')) ?>">
+              <?= Csrf::field() ?><input type="hidden" name="op" value="archive"><input type="hidden" name="id" value="<?= (int) $h['id'] ?>">
+              <button class="btn btn-sm btn-light border" title="<?= e(__('Archive customer')) ?>" data-archive-customer="<?= (int) $h['id'] ?>"><i class="bi bi-archive"></i></button></form>
+            <?php else: ?>
+            <form method="post" action="<?= e(admin_url('platform_customer.php')) ?>" class="d-inline">
+              <?= Csrf::field() ?><input type="hidden" name="op" value="restore"><input type="hidden" name="id" value="<?= (int) $h['id'] ?>">
+              <button class="btn btn-sm btn-success" title="<?= e(__('Restore customer')) ?>" data-restore-customer="<?= (int) $h['id'] ?>"><i class="bi bi-arrow-counterclockwise"></i> <?= e(__('Restore')) ?></button></form>
+            <button type="button" class="btn btn-sm btn-light border text-danger" data-delete-customer="<?= (int) $h['id'] ?>" data-name="<?= e($h['name']) ?>" title="<?= e(__('Delete permanently')) ?>"><i class="bi bi-trash"></i></button>
+            <?php endif; ?>
             <a class="btn btn-sm btn-light border" href="<?= e(admin_url('platform_hotels.php', ['action' => 'edit', 'id' => $h['id']])) ?>" title="<?= e(__('Edit')) ?>"><i class="bi bi-pencil"></i></a>
           </td>
         </tr>

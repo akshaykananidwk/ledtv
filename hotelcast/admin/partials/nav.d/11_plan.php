@@ -5,5 +5,5 @@
 declare(strict_types=1);
 
 return [
-    ['plan', 'plan.php', 'settings.manage', 'bi-box-seam', __('Your plan'), 'hotel', ['after' => 'settings']],
+    ['plan', 'plan.php', 'settings.manage', 'bi-box-seam', __('Subscription'), 'hotel', ['after' => 'settings']],
 ];

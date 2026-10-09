@@ -211,7 +211,7 @@ final class ScreenTransferTest extends TestCase
         // Without an open customer a reseller keeps the old redirect to their panel until they pick All customers.
         [$s, , , $head] = self::as('stres1')->get('rooms.php');
         $this->assertSame(302, $s);
-        $this->assertStringContainsString('reseller.php', $head);
+        $this->assertStringContainsString('reseller_overview.php', $head); // 2.6: the reseller panel's home
         [$s, , $html] = self::as('stres1')->get('rooms.php?view=all&customer=' . self::$h['gamma']);
         $this->assertSame(200, $s);
         $this->assertFalse(TestEnv::hasPhpError($html));

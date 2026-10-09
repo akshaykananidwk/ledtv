@@ -234,3 +234,17 @@ body[data-impersonating="1"] .hc-topbar { border-left: 6px solid #7c3aed; }
   .hc-impersonation + .hc-topbar { top: 42px; }
   .hc-panel-badge { font-size: .62rem; padding: .22rem .45rem; }
 }
+
+/* 2.6 inline charts (Super Admin dashboard / reports) */
+.hc-bars { display: flex; flex-direction: column; gap: .4rem; }
+.hc-bar-row { display: grid; grid-template-columns: minmax(70px, 32%) 1fr auto; align-items: center; gap: .6rem; font-size: .82rem; }
+.hc-bar-label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #475569; }
+.hc-bar-track { background: #eef2f7; border-radius: 999px; height: 10px; overflow: hidden; }
+.hc-bar { display: block; height: 100%; background: var(--hc-accent); border-radius: 999px; min-width: 2px; transition: width .3s; }
+.hc-bar-success { background: #16a34a; } .hc-bar-danger { background: #dc2626; } .hc-bar-warning { background: #f59e0b; } .hc-bar-info { background: #0ea5e9; } .hc-bar-secondary { background: #94a3b8; }
+.hc-bar-value { font-weight: 600; white-space: nowrap; }
+.hc-stacked-bar { display: flex; height: 14px; border-radius: 999px; overflow: hidden; background: #eef2f7; }
+.hc-stacked-bar > span { display: block; height: 100%; }
+.hc-stacked-legend { display: flex; flex-wrap: wrap; gap: .4rem 1rem; font-size: .8rem; margin-top: .5rem; color: #475569; }
+.hc-dot { display: inline-block; width: .65rem; height: .65rem; border-radius: 50%; vertical-align: -1px; }
+.severity-high { color: #b91c1c; } .severity-medium { color: #b45309; } .severity-low { color: #0369a1; }

@@ -142,3 +142,45 @@ function panel_delete_customer_modal(): string
     <?php
     return (string) ob_get_clean();
 }
+
+/**
+ * Lightweight inline bar chart (no JS library): $rows = [[label, value, ?tone]], horizontal bars scaled to the max.
+ * $format: callable for the value text. Used by the Super Admin dashboard / reports (docs/SPEC_SAAS.md §5).
+ */
+function panel_bars(array $rows, ?callable $format = null, string $key = ''): string
+{
+    $max = 0;
+    foreach ($rows as $r) {
+        $max = max($max, (float) $r[1]);
+    }
+    if (!$rows) {
+        return '<div class="hc-empty py-3"><i class="bi bi-bar-chart"></i><p class="mb-0 small">' . e(__('No data yet.')) . '</p></div>';
+    }
+    $h = '<div class="hc-bars"' . ($key !== '' ? ' data-chart="' . e($key) . '"' : '') . '>';
+    foreach ($rows as $r) {
+        $pct = $max > 0 ? (int) round((float) $r[1] * 100 / $max) : 0;
+        $h .= '<div class="hc-bar-row"><span class="hc-bar-label" title="' . e((string) $r[0]) . '">' . e((string) $r[0]) . '</span>'
+            . '<span class="hc-bar-track"><span class="hc-bar' . (!empty($r[2]) ? ' hc-bar-' . e((string) $r[2]) : '') . '" style="width:' . $pct . '%"></span></span>'
+            . '<span class="hc-bar-value">' . e($format ? (string) $format($r[1]) : (string) $r[1]) . '</span></div>';
+    }
+    return $h . '</div>';
+}
+
+/** Stacked status bar: $parts = [[label, value, tone]] in one 100 % bar with a legend. */
+function panel_stacked(array $parts, string $key = ''): string
+{
+    $total = array_sum(array_map(static fn ($p) => (float) $p[1], $parts));
+    $h = '<div class="hc-stacked"' . ($key !== '' ? ' data-chart="' . e($key) . '"' : '') . '><div class="hc-stacked-bar">';
+    foreach ($parts as $p) {
+        $pct = $total > 0 ? (float) $p[1] * 100 / $total : 0;
+        if ($pct > 0) {
+            $h .= '<span class="hc-bar-' . e((string) $p[2]) . '" style="width:' . round($pct, 1) . '%" title="' . e((string) $p[0]) . ': ' . e((string) $p[1]) . '"></span>';
+        }
+    }
+    $h .= '</div><div class="hc-stacked-legend">';
+    foreach ($parts as $p) {
+        $h .= '<span><i class="hc-dot hc-bar-' . e((string) $p[2]) . '"></i> ' . e((string) $p[0]) . ' <strong>' . e((string) $p[1]) . '</strong></span>';
+    }
+    return $h . '</div></div>';
+}
+

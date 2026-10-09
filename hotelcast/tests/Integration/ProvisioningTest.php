@@ -423,7 +423,7 @@ final class ProvisioningTest extends TestCase
         // The platform admin's session was not switched into hotel 2.
         [$s, , , $head] = self::s('qplat')->get('index.php');
         $this->assertSame(302, $s);
-        $this->assertStringContainsString('platform_hotels.php', self::location($head));
+        $this->assertStringContainsString('platform_overview.php', self::location($head)); // 2.6: the Super Admin console home
     }
 
     public function testResellerOnlyOwnHotels(): void

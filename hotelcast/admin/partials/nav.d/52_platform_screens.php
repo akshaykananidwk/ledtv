@@ -6,6 +6,6 @@
 declare(strict_types=1);
 
 return [
-    ['platform_screens', 'platform_screens.php', 'platform.screens', 'bi-tv', Auth::role() === 'reseller' ? __('Screens') : __('All screens'),
+    ['platform_screens', 'platform_screens.php', 'platform.screens', 'bi-tv', Auth::role() === 'reseller' ? __('Screens') : __('Devices & screens'),
         Auth::role() === 'reseller' ? 'reseller' : 'platform', ['after' => Auth::role() === 'reseller' ? 'reseller' : 'platform_hotels']],
 ];

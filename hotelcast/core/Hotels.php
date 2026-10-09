@@ -32,9 +32,14 @@ final class Hotels
             $where[] = '(h.name LIKE :q1 OR h.slug LIKE :q2 OR h.city LIKE :q3 OR h.contact_email LIKE :q4)';
             $p += ['q1' => "%$q%", 'q2' => "%$q%", 'q3' => "%$q%", 'q4' => "%$q%"];
         }
-        if (in_array($status, Tenant::STATUSES, true)) {
-            $where[] = 'h.status = :st';
-            $p['st'] = $status;
+        if ($status === 'archived') {
+            $where[] = 'h.archived_at IS NOT NULL';
+        } else {
+            $where[] = 'h.archived_at IS NULL'; // 2.6 §50: archived customers only under the "Archived" filter
+            if (in_array($status, Tenant::STATUSES, true)) {
+                $where[] = 'h.status = :st';
+                $p['st'] = $status;
+            }
         }
         return DB::all(
             'SELECT h.*, p.name AS plan_name, p.price_per_tv_month, p.max_tvs AS plan_max_tvs, r.name AS reseller_name,
@@ -230,6 +235,23 @@ final class Hotels
         DB::update('hotels', ['status' => $status, 'suspend_reason' => $status === 'active' ? null : ($reason ?: 'manual')], 'id = :id', ['id' => $id]);
         self::changed($id);
         Logger::write('platform', 'info', 'Hotel status changed', ['hotel' => $id, 'status' => $status, 'reason' => $reason]);
+    }
+
+    /** 2.6 §50: archive (soft delete) — suspended + archived_at, hidden from the customers list, restorable. */
+    public static function archive(int $id): void
+    {
+        self::setStatus($id, 'suspended', 'archived');
+        DB::update('hotels', ['archived_at' => now()], 'id = :id', ['id' => $id]);
+        foreach (DB::column("SELECT id FROM users WHERE hotel_id = :h AND role NOT IN ('platform_admin','reseller','chain_admin')", ['h' => $id]) as $uid) {
+            Auth::revokeUserSessions((int) $uid);
+        }
+        self::changed($id);
+    }
+
+    public static function restore(int $id): void
+    {
+        DB::update('hotels', ['archived_at' => null], 'id = :id', ['id' => $id]);
+        self::setStatus($id, 'active', null);
     }
 
     /**
