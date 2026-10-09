@@ -318,7 +318,7 @@ final class PlatformTest extends TestCase
         $this->assertEqualsWithDelta(100.0, $c['commission'], 0.001);
         $this->assertSame(0.0, Billing::commission($other)['commission']);
         $res->post('reseller.php', ['op' => 'leave']);
-        [, , $html] = $res->get('reseller.php');
+        [, , $html] = $res->get('reseller_invoices.php'); // 2.6: commission report under Reseller → Invoices
         $this->assertStringContainsString('100.00', $html);
         // Invoices of other hotels are not visible to the reseller.
         $foreignInvoice = (int) DB::value('SELECT id FROM invoices WHERE hotel_id = :h', ['h' => $otherHotel]);

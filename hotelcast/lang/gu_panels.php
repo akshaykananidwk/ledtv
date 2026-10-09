@@ -222,4 +222,6 @@ return [
     'Locations & groups' => 'સ્થળો અને ગ્રુપ',
     'Dashboard' => 'ડેશબોર્ડ',
     'Reports' => 'રિપોર્ટ',
+    'customer' => 'ગ્રાહક',
+    'screen' => 'સ્ક્રીન',
 ];

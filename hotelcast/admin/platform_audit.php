@@ -102,7 +102,7 @@ require __DIR__ . '/partials/header.php';
         <td class="small"><?php if ($r['hotel_id']): ?><a class="text-decoration-none" href="<?= e(admin_url('platform_customer.php', ['id' => $r['hotel_id'], 'tab' => 'activity'])) ?>"><?= e($r['hotel_name'] ?? ('#' . $r['hotel_id'])) ?></a><?php else: ?><span class="badge text-bg-light border"><?= e(__('Platform')) ?></span><?php endif; ?></td>
         <td class="small"><?= e($r['username'] ?? '-') ?></td>
         <td class="small"><a class="mono text-decoration-none" href="<?= e(self_url(['action' => $r['action'], 'page' => null])) ?>"><?= e($r['action']) ?></a></td>
-        <td class="small text-break"><?= e((string) ($r['details'] ?? '')) ?><?php if ($r['entity_type']): ?> <span class="text-muted">(<?= e($r['entity_type']) ?> #<?= (int) $r['entity_id'] ?>)</span><?php endif; ?></td>
+        <td class="small text-break"><?= e((string) ($r['details'] ?? '')) ?><?php if ($r['entity_type']): ?> <span class="text-muted">(<?= e(match ((string) $r['entity_type']) { 'hotel' => __('customer'), 'room' => __('screen'), 'device' => __('TV'), default => (string) $r['entity_type'] }) ?> #<?= (int) $r['entity_id'] ?>)</span><?php endif; ?></td>
         <td class="small d-none d-lg-table-cell"><?= e((string) ($r['ip_address'] ?? '')) ?></td>
       </tr>
     <?php endforeach; ?>

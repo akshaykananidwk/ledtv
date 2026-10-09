@@ -32,6 +32,23 @@ screen-wise schedule karo, emergency message moklo, TV reboot/update karo.*
 | Android TV app | [`android/`](android) | Kotlin, ExoPlayer 2.19, Retrofit, OkHttp, Glide, WorkManager — min SDK 21, target 34 |
 | Documentation | [`docs/`](docs) | Install guide, TV setup, admin guide, API, developer guide (tenancy + extension points), security, test report |
 
+## What's new in 2.6 — three separate panels, Super Admin console, customer archive / delete
+
+Server only (the TV app stays 2.5.0). Design notes and research: [docs/modules/panels.md](docs/modules/panels.md); owner's specification: [docs/SPEC_SAAS.md](docs/SPEC_SAAS.md).
+
+| Feature | Where |
+|---|---|
+| **Three panels with their own look**: the **Super Admin console** (dark indigo, "Super Admin" badge, platform menu only — no customer modules), the **Reseller panel** (teal, own overview / customers / screens / plans / invoices / support) and the **Customer workspace** (the customer's branding; never a platform or reseller item). `core/Panel.php` decides the panel from the role; permissions stay server-side | every admin page |
+| **Super Admin dashboard**: KPI tiles (customers, active / suspended / expiring, TVs online / offline / outdated / health warnings, users, open sign-ups, unpaid invoices, revenue, resellers, pool), "Needs attention" alerts, **device errors with severity**, trends (customer growth, TVs by status, customers by plan), recent activity across customers, platform switches (online sign-up, platform registration) | Super Admin → Dashboard |
+| **Global search** in the header: customers, screens / TVs (name, device ID, IP), users (e-mail, username), resellers — limited to what the user may see; customer users get 403 | header search box · `platform_search.php` |
+| **Customer 360**: Summary · Plan & features (**switch every feature on / off**, limits and expiry inline) · Screens (commands, transfer, update, revoke, screen on / off) · Users (create, role, reset password, enable / disable) · Content snapshot · Billing (invoices, licenses, extend validity) · Activity · Settings (status switch, registration key, chain, branding, archive, delete). Everything routine without opening the customer | Super Admin → Customers → Manage |
+| **One-click switches** with CSRF and audit log: customer active / suspended, feature per customer, user active, screen on / off, plan active, reseller active, sign-up open, platform registration | console pages · `ajax.php?action=platform_toggle` |
+| **"Open customer workspace"** (impersonation) is explicit: a striped violet banner *"You are managing customer X as Super Admin — Exit workspace"*, the customer's own theme and sidebar, every action logged in the customer's log | Customer 360 / lists |
+| **Archive and delete customers** (spec §50): *Archive* (suspended, hidden from the list, restorable) is the default list action; *Delete permanently* needs the typed customer name and removes every row of every table with `hotel_id`, uploaded files, APKs, live-view frames and caches, logs out its users and rejects its TVs (401) — invoices are kept for accounting (`customer_name` snapshot, migration 032) | Customers list · Customer 360 → Settings |
+| **Console pages from the spec**: Content overview (what every customer has uploaded / assigned), Reports (growth, revenue, plan / status / reseller distribution, TVs per customer, CSV), Audit logs across all customers (filters, CSV); customer menu reordered (Dashboard, Screens, Locations & groups, Content, Playlists, Schedules, …, Users, Settings, **Subscription** with TRIAL / ACTIVE / EXPIRING / EXPIRED / SUSPENDED state) | Super Admin → Insight · Customer → Subscription |
+| A module that is off in the plan answers **"This feature is not available in your current plan."** on pages, ajax and API | 403 responses |
+| Every new string in ગુજરાતી and हिन्दी (`lang/gu_panels.php`, `lang/hi_panels.php`) | language menu |
+
 ## What's new in 2.5.1 — all TVs on Screens & TVs, transfer a TV with everything
 
 Server only (the TV app stays 2.5.0).

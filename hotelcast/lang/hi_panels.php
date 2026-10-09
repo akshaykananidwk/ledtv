@@ -271,4 +271,6 @@ return [
     'Locations & groups' => 'स्थान और ग्रुप',
     'Dashboard' => 'डैशबोर्ड',
     'Reports' => 'रिपोर्ट',
+    'customer' => 'ग्राहक',
+    'screen' => 'स्क्रीन',
 ];

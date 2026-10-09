@@ -252,6 +252,51 @@ later release.
 
 
 
+## 20. The three panels (2.6)
+
+Since 2.6 the admin UI is three clearly separate panels. Which one you see follows your role; the pages and
+permissions are unchanged (see [modules/panels.md](modules/panels.md)).
+
+| Panel | Who | Look | Menu |
+|---|---|---|---|
+| **Super Admin console** | Super Admin (Platform) | dark indigo sidebar and top bar, "Super Admin" badge, global search box | Dashboard · Customers · Resellers · Chains ‖ Plans & modules · Invoices · Licenses · Sign-ups & trials · Demo · Ad marketplace ‖ Devices & screens · Content overview · Add TV (QR) ‖ Reports · Notifications · Audit logs · Support & logs ‖ System settings · Auto-Update |
+| **Reseller panel** | Reseller | teal | Overview · My customers · Screens · Support ‖ Plans · Invoices · Client demos · Chains ‖ Add TV (QR) · Notifications |
+| **Customer workspace** | every customer user (Admin, Manager, Staff, Reception, custom roles) | the customer's own logo and colour | Dashboard · Screens & TVs · Locations & groups · Content · Playlists · Schedule · … · Users · Settings · **Subscription** |
+
+**Super Admin: manage a customer without opening it.** Customers → *Manage* opens the **Customer 360** page:
+
+* *Summary* — status, plan, limits usage, contacts, billing, quick actions.
+* *Plan & features* — change plan, limits and expiry; switch every feature on or off for this customer (a switch that
+  differs from the plan is stored as an override).
+* *Screens* — every TV with commands (restart, reload, power, update, revoke, transfer) and an on / off switch per screen.
+* *Users* — create users with a role, change roles, reset passwords (optionally e-mailed), enable / disable.
+* *Content* — what every screen shows, default content, recent uploads, links into the workspace.
+* *Billing* — invoices, license keys, extend the validity.
+* *Activity* — the customer's own log.
+* *Settings* — account active switch, registration key, chain, branding override, **Archive** and **Delete permanently**.
+
+The status switches in the header, the customers list and the console work with one click and are written to the
+audit log. **Global search** (header) finds customers, screens / TVs by name, device ID or IP, users by e-mail and
+resellers.
+
+**Open customer workspace** (the old "Enter customer") is for deep content editing. While inside, a striped violet
+banner at the top says *"You are managing customer X as Super Admin — Exit workspace"*; the sidebar and theme are the
+customer's, every change is logged in the customer's activity log with your username, and the user menu always offers
+*Super Admin console*. Resellers get the same banner (as Reseller) for their own customers only.
+
+**Archive vs. delete (spec §50).** *Archive* suspends the customer (TVs show "service paused", users are logged
+out), hides it from the customers list (filter *Archived* shows it) and can be undone with *Restore* — nothing is
+deleted. *Delete permanently* (Super Admin only, after archiving in the list or from Customer 360 → Settings) asks you to
+type the customer's name, then removes its users, screens, TVs, content, playlists, logs and uploaded files; its TVs
+return to the setup screen on their next poll. Invoices are kept for accounting and show the customer's name with a
+"deleted" badge. The result message lists what was removed.
+
+**Audit logs, Reports, Content overview** (Super Admin → Insight / Devices & content) work across every customer with
+filters and CSV export; a customer's own *Logs & History* page stays limited to its data.
+
+**Subscription** (customer → Subscription, formerly "Your plan") shows the state — TRIAL, ACTIVE, EXPIRING (≤ 15 days),
+EXPIRED, SUSPENDED — plan, validity, screens / users / storage usage and the included features.
+
 ## 2.0 modules
 
 Step-by-step guides for the new pages are in:

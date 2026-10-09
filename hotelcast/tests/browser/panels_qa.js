@@ -19,6 +19,7 @@ const HC = path.resolve(__dirname, '../..');
 const OUT = process.env.HC_SCREENSHOTS || path.resolve(HC, '../docs/screenshots/2.6');
 const EXE = process.env.HC_CHROMIUM || '/opt/pw-browsers/chromium';
 const results = [];
+const ERRORS = [];
 let failed = 0;
 function check(ok, what, extra) { results.push((ok ? 'PASS ' : 'FAIL ') + what + (extra ? ' — ' + extra : '')); if (!ok) failed++; }
 
@@ -39,31 +40,44 @@ async function shot(page, name, full) {
   }
   check(fs.statSync(file).size <= 200 * 1024, 'screenshot ' + name, Math.round(fs.statSync(file).size / 1024) + ' KB');
 }
-async function login(context, url, user, lang) {
+async function login(browser, url, user, lang, viewport) {
+  // One fresh context per login so the previous session never redirects the login page.
+  const context = await browser.newContext({ viewport: viewport || { width: 1440, height: 900 }, locale: lang === 'gu' ? 'gu-IN' : 'en-IN', ...(viewport && viewport.width < 500 ? { isMobile: true, hasTouch: true } : {}) });
+  context.on('page', (p) => {
+    p.on('pageerror', (e) => ERRORS.push('pageerror: ' + e.message));
+    p.on('console', (m) => { if (m.type() === 'error' && !/^Failed to load resource/.test(m.text())) ERRORS.push('console: ' + m.text()); });
+    p.on('response', (r) => { if (r.status() >= 400 && !/favicon\.ico|fonts\.g/.test(r.url())) ERRORS.push('HTTP ' + r.status() + ' ' + r.url()); });
+  });
   const page = await context.newPage();
-  await page.goto(url + 'admin/login.php' + (lang ? '?lang=' + lang : ''));
+  await page.goto(url + 'admin/login.php');
   await page.fill('input[name=username]', user);
   await page.fill('input[name=password]', 'Passw0rd!');
   await Promise.all([page.waitForNavigation(), page.click('button[type=submit]')]);
+  if (lang) {
+    // The UI language is a per-user setting: switch it through the header menu (ajax set_language + reload).
+    await page.click('.hc-topbar .dropdown button[title]');
+    await Promise.all([page.waitForNavigation(), page.click('.js-lang[data-lang="' + lang + '"]')]);
+  }
   return page;
 }
 const panelOf = (page) => page.getAttribute('body', 'data-panel');
+/** Click a switch, answer the confirm modal when one opens, wait for the toast. */
+async function flip(page, locator) {
+  await locator.click();
+  const modal = page.locator('#hcConfirmModal.show');
+  try { await modal.waitFor({ state: 'visible', timeout: 1500 }); await page.click('#hcConfirmModal [data-ok]'); } catch (e) { /* no confirmation needed */ }
+  await page.waitForSelector('#hcToasts .toast', { timeout: 10000 });
+  await page.waitForTimeout(500);
+}
 const navKeys = (page) => page.$$eval('[data-nav]', (els) => els.map((e) => e.getAttribute('data-nav')));
 
 (async () => {
   const { srv, info } = await startServer();
   const browser = await chromium.launch({ executablePath: EXE });
-  const errors = [];
+  const errors = ERRORS;
   try {
-    const context = await browser.newContext({ viewport: { width: 1440, height: 900 }, locale: 'en-IN' });
-    context.on('page', (p) => {
-      p.on('pageerror', (e) => errors.push('pageerror: ' + e.message));
-      p.on('console', (m) => { if (m.type() === 'error' && !/^Failed to load resource/.test(m.text())) errors.push('console: ' + m.text()); });
-      p.on('response', (r) => { if (r.status() >= 400 && !/favicon\.ico|fonts\.g/.test(r.url())) errors.push('HTTP ' + r.status() + ' ' + r.url()); });
-    });
-
     // ---- Super Admin console (EN)
-    let page = await login(context, info.url, 'superadmin');
+    let page = await login(browser, info.url, 'superadmin');
     check(/platform_overview\.php/.test(page.url()), 'super admin lands on the overview', page.url());
     check((await panelOf(page)) === 'platform', 'body data-panel=platform');
     let keys = await navKeys(page);
@@ -74,16 +88,13 @@ const navKeys = (page) => page.$$eval('[data-nav]', (els) => els.map((e) => e.ge
     await shot(page, 'super-admin-overview.jpg');
     // Platform switch: close and reopen the online sign-up.
     const sw = page.locator('[data-kind="signup_open"] input');
-    await sw.click();
-    await page.waitForSelector('#hcToasts .toast', { timeout: 10000 });
-    await page.waitForTimeout(400);
+    await flip(page, sw);
     check(!(await sw.isChecked()), 'sign-up switch toggled off via ajax');
-    await sw.click();
-    await page.waitForTimeout(800);
+    await flip(page, sw);
     check(await sw.isChecked(), 'sign-up switch toggled on again');
 
     await page.goto(info.url + 'admin/platform_hotels.php');
-    check((await page.$$('[data-delete-customer]')).length >= 4, 'customers list has delete buttons');
+    check((await page.$$('[data-archive-customer]')).length >= 4, 'customers list has archive buttons (delete only after archiving)');
     check((await page.$$('[data-kind="customer_status"]')).length >= 4, 'customers list has status switches');
     await shot(page, 'super-admin-customers.jpg');
 
@@ -104,12 +115,9 @@ const navKeys = (page) => page.$$eval('[data-nav]', (els) => els.map((e) => e.ge
     check(rows.length > 10, 'plan tab lists feature switches', rows.length + ' features');
     const fsw = page.locator('[data-feature="tickers"] input');
     const was = await fsw.isChecked();
-    await fsw.click();
-    await page.waitForSelector('#hcToasts .toast', { timeout: 10000 });
-    await page.waitForTimeout(500);
+    await flip(page, fsw);
     check((await fsw.isChecked()) !== was, 'feature switch toggles via ajax');
-    await fsw.click();
-    await page.waitForTimeout(800);
+    await flip(page, fsw);
     check((await fsw.isChecked()) === was, 'feature switch toggles back');
     await shot(page, 'customer-360-plan.jpg');
     await page.goto(info.url + 'admin/platform_customer.php?id=' + shree + '&tab=screens');
@@ -148,29 +156,28 @@ const navKeys = (page) => page.$$eval('[data-nav]', (els) => els.map((e) => e.ge
     check(/platform_overview\.php/.test(page.url()) && (await panelOf(page)) === 'platform', 'Exit workspace returns to the console');
 
     // Mobile width.
-    const mobile = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, locale: 'en-IN' });
-    const mp = await login(mobile, info.url, 'superadmin');
+    const mp = await login(browser, info.url, 'superadmin', null, { width: 390, height: 844 });
     check(await mp.isHidden('#hcSidebar'), 'sidebar collapsed on mobile');
     await shot(mp, 'super-admin-overview-mobile.jpg');
-    await mp.click('[data-bs-target="#hcSidebar"]');
+    await mp.click('button[data-bs-toggle="offcanvas"]');
     await mp.waitForSelector('#hcSidebar.show');
     await mp.waitForTimeout(400);
     await shot(mp, 'super-admin-sidebar-mobile.jpg');
     const docW = await mp.evaluate(() => document.documentElement.scrollWidth);
     check(docW <= 390, 'no horizontal overflow on mobile', docW + 'px');
-    await mobile.close();
+    await mp.context().close();
 
     // ---- Super Admin console (GU)
-    const gu = await browser.newContext({ viewport: { width: 1440, height: 900 }, locale: 'gu-IN' });
-    const gp = await login(gu, info.url, 'superadmin', 'gu');
+    const gp = await login(browser, info.url, 'superadmin', 'gu');
     check((await gp.textContent('body')).includes('સુપર એડમિન કન્સોલ'), 'Gujarati console name');
     await shot(gp, 'super-admin-overview-gu.jpg');
     await gp.goto(info.url + 'admin/platform_customer.php?id=' + shree + '&tab=plan');
     await shot(gp, 'customer-360-plan-gu.jpg');
-    await gu.close();
+    await gp.context().close();
 
     // ---- Reseller panel
-    page = await login(context, info.url, 'reseller');
+    await page.context().close();
+    page = await login(browser, info.url, 'reseller');
     check(/reseller_overview\.php/.test(page.url()), 'reseller lands on its overview', page.url());
     check((await panelOf(page)) === 'reseller', 'body data-panel=reseller');
     keys = await navKeys(page);
@@ -185,17 +192,17 @@ const navKeys = (page) => page.$$eval('[data-nav]', (els) => els.map((e) => e.ge
     await shot(page, 'reseller-customers.jpg');
 
     // ---- Customer workspace (EN + GU)
-    page = await login(context, info.url, 'mandiradmin');
+    await page.context().close();
+    page = await login(browser, info.url, 'mandiradmin');
     check((await panelOf(page)) === 'customer', 'customer admin: customer panel');
     keys = await navKeys(page);
     check(!keys.some((k) => k.startsWith('platform_') || k.startsWith('reseller')), 'customer sidebar has no platform / reseller items');
     check(await page.$('[data-panel-badge]') === null && await page.$('.hc-global-search') === null, 'no console badge / search for the customer');
     check((await page.textContent('.hc-brand')).includes('Shree Mandir Rajkot'), 'customer header shows the business name');
     await shot(page, 'customer-dashboard.jpg');
-    const gc = await browser.newContext({ viewport: { width: 1440, height: 900 }, locale: 'gu-IN' });
-    const gcp = await login(gc, info.url, 'mandiradmin', 'gu');
+    const gcp = await login(browser, info.url, 'mandiradmin', 'gu');
     await shot(gcp, 'customer-dashboard-gu.jpg');
-    await gc.close();
+    await gcp.context().close();
     for (const u of ['admin/platform_overview.php', 'admin/platform_search.php?q=x', 'admin/reseller_overview.php']) {
       const r = await page.goto(info.url + u);
       check(r.status() === 403, 'customer admin gets 403 on ' + u, String(r.status()));

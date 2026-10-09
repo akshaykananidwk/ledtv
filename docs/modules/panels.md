@@ -64,14 +64,40 @@ the allowance), Screens (scope-limited `platform_screens.php`), Plans they may s
 commission, Support (offline TVs / health of their customers). No platform-only item is ever listed, and
 `Auth::can()` still guards every page server-side.
 
+### Spec alignment (docs/SPEC_SAAS.md, 2.6)
+
+* §34 menus — console: Dashboard · Customers · Resellers · Chains ‖ Plans & modules · Invoices · Licenses · Sign-ups &
+  trials · Demo · Ad marketplace ‖ Devices & screens · Content overview · Add TV (QR) ‖ Reports · Notifications · Audit
+  logs · Support & logs ‖ System settings · Auto-Update (`Panel::ORDER` / `Panel::GROUPS`). Customer: Dashboard,
+  Screens & TVs, Locations & groups, Content, Playlists, Schedule, …, Users, Settings, Subscription (`plan.php`, state
+  TRIAL / ACTIVE / EXPIRING / EXPIRED / SUSPENDED / ARCHIVED from `Panel::subscriptionState()`).
+* §50 deletion policy — *Archive* (`Hotels::archive`: suspended + `hotels.archived_at`, users logged out, hidden from
+  the default customers list, filter "Archived", *Restore*) is the default list action; *Delete permanently*
+  (`Hotels::delete`, typed-name modal) is Super Admin only and shown in the list only for archived customers (always in
+  Customer 360 → Settings). Delete removes every row of every table with `hotel_id` (FK order resolved by retrying,
+  cascades clean child rows without `hotel_id`), the customer's `uploads/h{id}`, `storage/apk/h{id}`,
+  `storage/support/h{id}` and `storage/cache/*_h{id}`, rotates the TV tokens first (next poll → 401), keeps invoices with
+  `invoices.customer_name` (migration 032: `hotel_id` nullable, ON DELETE SET NULL) and reports "Deleted customer X:
+  n screens, n TVs, n content items, n users, n MB of files".
+* §5 dashboard — KPI tiles incl. suspended / expiring / health warnings / revenue, inline bar charts (customer growth,
+  TVs by status, customers by plan; `panel_bars()` / `panel_stacked()`, no JS library) and §41 device errors with
+  severity (high: offline, too hot, storage low; medium: memory low; low: weak Wi-Fi, long uptime).
+* §27 audit logs — `platform_audit.php` across customers and platform with customer / user / action / date / text
+  filters and CSV; customers keep `logs.php`.
+* §10 — a module outside the plan answers "This feature is not available in your current plan." (pages, ajax, API).
+* Reports (`platform_reports.php`) and Content overview (`platform_content.php`) complete the console menu.
+
 ## Files
 
 * `core/Panel.php` — panel detection, theme, nav sections / order / groups, labels.
 * `admin/partials/header.php` — panel-aware shell (brand block, badge, global search, impersonation banner).
 * `admin/partials/panel_ui.php` — shared pieces: KPI tile, switch, empty state, alert list.
 * `admin/platform_overview.php`, `admin/platform_search.php`, `admin/platform_customer.php` (extended),
-  `admin/ajax_platform.php`, `admin/reseller_overview.php`, `admin/reseller_plans.php`,
-  `admin/reseller_invoices.php`, `admin/reseller_support.php`.
+  `admin/platform_audit.php`, `admin/platform_reports.php`, `admin/platform_content.php`, `admin/ajax_platform.php`,
+  `admin/reseller_overview.php`, `admin/reseller_plans.php`, `admin/reseller_invoices.php`, `admin/reseller_support.php`,
+  `admin/plan.php` (subscription state).
+* `core/Hotels.php` — `archive()`, `restore()`, `delete()`, `deleteSummary()`; `migrations/032_customer_delete.sql`.
 * `assets/css/admin.css` (`[data-panel]` themes), `assets/js/admin.js` (switches).
 * `lang/gu_panels.php`, `lang/hi_panels.php`.
-* Tests: `tests/Integration/Apps/PanelsTest.php`.
+* Tests: `tests/Integration/Apps/PanelsTest.php` (13 tests); browser QA `tests/browser/panels_qa.js` +
+  `panels_server.php` (screenshots in `docs/screenshots/2.6/`).

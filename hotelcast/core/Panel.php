@@ -36,11 +36,8 @@ final class Panel
             'platform_settings', 'update'],
         'reseller' => ['reseller_overview', 'reseller', 'platform_screens', 'reseller_plans', 'reseller_invoices', 'reseller_support',
             'platform_demo', 'platform_chains', 'qr_setup', 'push'],
-        // §34 client menu: Dashboard, My TVs, Rooms / Locations, Content, Playlists, Schedules, Users, Reports, My Settings, Subscription.
-        'customer' => ['getting_started', 'index', 'rooms', 'groups', 'content', 'playlists', 'schedule', 'calendar', 'broadcast', 'power',
-            'tickers', 'designer', 'apps', 'notices', 'offers', 'menu_board', 'queue', 'queue_issue', 'albums', 'video_walls', 'data_feeds', 'kpi',
-            'class_schedule', 'departures', 'rates', 'festivals', 'celebrations', 'holidays', 'device_schedules', 'tv_controls', 'support', 'tv_health',
-            'guests', 'orders', 'services', 'users', 'roles', 'logs', 'play_report', 'analytics', 'apk', 'settings', 'plan', 'billing', 'push'],
+        // §34 client menu (Dashboard, Screens, Locations / groups, Content, Playlists, Schedule, …, Users, Settings, Subscription):
+        // already the nav.d file order, so modules keep their ['after' => …] positions — no explicit order here.
     ];
 
     /** Sidebar headings per panel: heading label key => nav keys. */

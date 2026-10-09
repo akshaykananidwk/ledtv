@@ -213,3 +213,20 @@ database enforces tenant isolation. Never hard-code plans or client limits. Secr
 | Audit log | `activity_logs` (+ platform logs) |
 | Impersonation | `Auth::enterHotel` with the impersonation banner |
 | Reseller | optional partner level between Super Admin and clients (Panel: reseller) |
+
+## Not yet implemented (2.6)
+
+Items of the specification that need infrastructure the code base does not have yet; everything else is covered
+by 2.5 / 2.6 (plans = modules + limits, custom roles, tenant isolation, all screens, Customer 360, impersonation,
+archive / delete, audit logs, reports, subscription state).
+
+* §7 / §29 online payment in the self-registration flow and automatic renewals (no payment gateway; invoices are manual).
+* §29 / §31 expiry notifications by WhatsApp / SMS (e-mail and push exist; no SMS / WhatsApp provider).
+* §31 notification centre with per-user preferences beyond the existing e-mail / push settings.
+* §33 versioned `/api/v1/...` prefix — the device and REST APIs keep their current paths (installed TVs depend on them).
+* §38 custom domains per customer (white-label domain mapping needs DNS / TLS automation; name, logo, colour exist).
+* §44 background job queue — periodic work runs through `cron.php` tasks, not a queue.
+* §47 / §51 full data export of a customer (CSV exists for screens, reports and audit logs; media export is not bundled).
+* §27 old value / new value per audit row — rows record user, action, entity and a text detail, not field-level diffs.
+* §49 data retention / purge of archived customers after N days (archive and permanent delete are manual).
+

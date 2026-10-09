@@ -17,8 +17,14 @@ declare(strict_types=1);
  */
 
 if (!defined('HC_ADMIN_COMMON') || !function_exists('ajax_error')) {
-    // Opened directly: this file is only an include of admin/ajax.php.
-    http_response_code(404);
+    // Opened directly: this file is only an include of admin/ajax.php — refuse like any other POST target.
+    require __DIR__ . '/../core/bootstrap.php';
+    require_once __DIR__ . '/partials/common.php';
+    Auth::require();
+    Csrf::check();
+    http_response_code(403);
+    header('Content-Type: application/json; charset=utf-8');
+    echo json_out(['ok' => false, 'error' => ['code' => 'FORBIDDEN', 'message' => 'Use ajax.php?action=platform_toggle']]);
     exit;
 }
 if (!isset($in) || !is_array($in) || ($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST') {
