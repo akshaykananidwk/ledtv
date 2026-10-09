@@ -484,6 +484,51 @@ final class ScreenTransferTest extends TestCase
         $this->assertFileExists(HC_ROOT . '/uploads/' . $rel, 'original untouched');
     }
 
+    /**
+     * Owner rule: users never transfer anything — only the Super Admin (platform admin) does, from the
+     * admin panel. Every other kind of user is refused on the page, on POST and in the core API, even a
+     * custom role whose stored permission list was stuffed with every key including platform.move.
+     */
+    public function testOnlySuperAdminCanTransferEveryOtherUserIsRefused(): void
+    {
+        $alpha = self::$h['alpha'];
+        foreach (['manager', 'staff', 'reception'] as $role) {
+            Hotels::createHotelUser($alpha, ['username' => 'st' . $role, 'email' => $role . '@alpha.test', 'password' => 'Passw0rd!'], $role);
+        }
+        $all = array_values(array_unique(array_merge(array_keys(Auth::PERMISSIONS), ['platform.move', 'platform.manage', 'platform.screens', 'platform.pool'])));
+        $rid = DB::insert('roles', ['hotel_id' => $alpha, 'name' => 'Everything', 'base_level' => 'manager', 'permissions' => json_encode($all), 'created_at' => now()]);
+        Hotels::createHotelUser($alpha, ['username' => 'stcustom', 'email' => 'custom@alpha.test', 'password' => 'Passw0rd!'], 'manager');
+        DB::query('UPDATE users SET role_id = :r WHERE username = :u', ['r' => $rid, 'u' => 'stcustom']);
+
+        $before = json_encode(DB::all('SELECT id, hotel_id, room_id FROM devices ORDER BY id'));
+        $betaContent = (int) DB::value('SELECT COUNT(*) FROM content_items WHERE hotel_id = :h', ['h' => self::$h['beta']]);
+        $post = ['ps_form' => 1, 'op' => 'bulk', 'bulk_action' => 'move', 'ids' => [self::$tv['tvA1']['id']],
+            'target_customer' => self::$h['beta'], 'screen_mode' => 'same', 'copy_details' => 1, 'copy_content' => 1];
+        foreach (['stalphaboss', 'stmanager', 'ststaff', 'streception', 'stcustom', 'stres1'] as $user) {
+            foreach (['rooms.php', 'rooms.php?view=all', 'platform_screens.php'] as $page) {
+                [$s, , $html] = self::as($user)->get($page);
+                $this->assertNotContains($s, [500], "$user $page");
+                $this->assertStringNotContainsString('js-ps-transfer', $html, "$user sees no Transfer button on $page");
+                $this->assertStringNotContainsString('psTransferModal', $html, "$user gets no transfer dialog on $page");
+            }
+            foreach (['rooms.php', 'platform_screens.php'] as $page) {
+                [$s] = self::as($user)->post($page, $post);
+                $this->assertContains($s, [302, 403], "$user POST $page");
+            }
+            PlatformScreens::$userOverride = (array) DB::one('SELECT * FROM users WHERE username = :u', ['u' => $user]);
+            try {
+                PlatformScreens::transfer([self::$tv['tvA1']['id']], self::$h['beta'], ['mode' => 'same', 'copy' => ['details' => 1, 'content' => 1]]);
+                $this->fail("$user transferred a TV");
+            } catch (InvalidArgumentException $e) {
+                $this->assertStringContainsString('platform admin', $e->getMessage());
+            } finally {
+                PlatformScreens::$userOverride = null;
+            }
+        }
+        $this->assertSame($before, json_encode(DB::all('SELECT id, hotel_id, room_id FROM devices ORDER BY id')), 'no TV changed owner');
+        $this->assertSame($betaContent, (int) DB::value('SELECT COUNT(*) FROM content_items WHERE hotel_id = :h', ['h' => self::$h['beta']]), 'no content copied');
+    }
+
     public function testTransferNeedsCsrf(): void
     {
         $root = self::as('stroot');
