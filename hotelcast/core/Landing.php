@@ -81,7 +81,7 @@ final class Landing
 
     /**
      * Active plans for the pricing cards: ['name', 'description', 'price', 'max_tvs', 'max_users',
-     * 'storage_mb', 'all' (every module), 'features' (labels, translated)].
+     * 'storage_mb', 'all' (every module), 'features' / 'missing' (included / left-out module labels, translated)].
      */
     public static function plans(): array
     {
@@ -100,6 +100,10 @@ final class Landing
             foreach ($keys as $k) {
                 $labels[] = Features::label($k);
             }
+            $missing = [];
+            foreach (array_diff($optional, $keys) as $k) {
+                $missing[] = Features::label($k);
+            }
             $out[] = [
                 'id' => (int) $r['id'],
                 'name' => (string) $r['name'],
@@ -111,6 +115,7 @@ final class Landing
                 'all' => $all,
                 'count' => count($keys),
                 'features' => $labels,
+                'missing' => $missing,
             ];
         }
         return $out;

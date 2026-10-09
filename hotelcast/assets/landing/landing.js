@@ -28,7 +28,7 @@
     doc.addEventListener('keydown', function (e) {
       if (e.key === 'Escape' && nav.classList.contains('open')) { closeMenu(); btn.focus(); }
     });
-    window.addEventListener('resize', function () { if (window.innerWidth > 1060) closeMenu(); });
+    window.addEventListener('resize', function () { if (window.innerWidth > 1180) closeMenu(); });
   }
 
   var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;

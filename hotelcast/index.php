@@ -370,6 +370,11 @@ $langUrl = static fn (string $code): string => '?lang=' . $code;
           </ul>
           <?php if ($p['all']): ?>
             <p class="all"><i class="bi bi-patch-check-fill" aria-hidden="true"></i> <?= e(__('All modules included')) ?></p>
+          <?php elseif (count($p['missing']) <= 8 && count($p['missing']) < count($p['features'])): ?>
+            <p class="all"><i class="bi bi-patch-check-fill" aria-hidden="true"></i> <?= e(__('All modules, except:')) ?></p>
+            <ul class="ticks small not">
+              <?php foreach ($p['missing'] as $f): ?><li><?= e($f) ?></li><?php endforeach; ?>
+            </ul>
           <?php else: ?>
             <ul class="ticks small">
               <?php foreach (array_slice($p['features'], 0, 8) as $f): ?><li><?= e($f) ?></li><?php endforeach; ?>
