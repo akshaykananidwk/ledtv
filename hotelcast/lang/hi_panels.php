@@ -208,4 +208,8 @@ return [
     'Assign' => 'असाइन करें',
     'Chains' => 'चेन',
     'Chain' => 'चेन',
+    'Deleted customer ":n": :s screens, :t TVs, :c content items, :u users, :f of files.' => 'ग्राहक ":n" हटाया गया: :s स्क्रीन, :t TV, :c कंटेंट आइटम, :u यूज़र, :f फ़ाइलें।',
+    ':n invoice(s) kept for accounting.' => ':n इनवॉइस लेखांकन के लिए रखे गए।',
+    'Type the customer name to confirm:' => 'पुष्टि के लिए ग्राहक का नाम लिखें:',
+    'deleted' => 'हटाया गया',
 ];

@@ -159,4 +159,8 @@ return [
     'Assign' => 'સોંપો',
     'Chains' => 'ચેઇન',
     'Chain' => 'ચેઇન',
+    'Deleted customer ":n": :s screens, :t TVs, :c content items, :u users, :f of files.' => 'ગ્રાહક ":n" કાઢી નાખ્યો: :s સ્ક્રીન, :t TV, :c કન્ટેન્ટ આઇટમ, :u યુઝર, :f ફાઇલો.',
+    ':n invoice(s) kept for accounting.' => ':n ઇન્વૉઇસ હિસાબ માટે રાખ્યા.',
+    'Type the customer name to confirm:' => 'પુષ્ટિ માટે ગ્રાહકનું નામ લખો:',
+    'deleted' => 'કાઢી નાખેલ',
 ];
