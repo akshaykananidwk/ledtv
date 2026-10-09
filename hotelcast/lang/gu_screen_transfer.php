@@ -61,4 +61,6 @@ return [
     ':n tickers' => ':n ટિકર',
     ':n schedule' => ':n શેડ્યૂલ',
     ':n schedules' => ':n શેડ્યૂલ',
+    'Transfer TVs: Super Admin console' => 'TV ટ્રાન્સફર: સુપર એડમીન કન્સોલ',
+    'Transfer TVs from the Super Admin console: Devices & screens.' => 'TV ટ્રાન્સફર સુપર એડમીન કન્સોલમાંથી જ થાય છે: ડિવાઇસ અને સ્ક્રીન.',
 ];

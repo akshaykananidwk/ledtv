@@ -338,9 +338,6 @@ if ($action === 'device') {
       </div>
       <div class="d-flex gap-2 flex-wrap">
         <a href="<?= e(admin_url('rooms.php')) ?>" class="btn btn-light border"><i class="bi bi-arrow-left"></i> <?= e(__('Back')) ?></a>
-        <?php if (Auth::can('platform.move') && !(int) $dev['is_revoked']): ?>
-          <button type="button" class="btn btn-outline-primary js-ps-transfer" data-ids="<?= (int) $dev['id'] ?>" data-label="<?= e(dot_trim(($dev['room_number'] ?? '') . ' · ' . $dev['device_uid'])) ?>"><i class="bi bi-arrow-left-right"></i> <?= e(__('Transfer to another customer')) ?></button>
-        <?php endif; ?>
         <?php if ($canManage && !(int) $dev['is_revoked']): ?>
         <form method="post" data-confirm="<?= e(__('Revoke this TV? It will stop showing content and go back to its setup screen until registered again.')) ?>">
           <?= Csrf::field() ?><input type="hidden" name="op" value="revoke_device"><input type="hidden" name="device_id" value="<?= (int) $dev['id'] ?>">
@@ -393,7 +390,6 @@ if ($action === 'device') {
         </div>
       </div>
     </div>
-    <?= rooms_transfer_dialog() ?>
     <?php
     require __DIR__ . '/partials/footer.php';
     exit;
@@ -629,7 +625,6 @@ if (in_array($fStatus, ['online', 'offline', 'none'], true)) {
 $totalRooms = (int) DB::value('SELECT COUNT(*) FROM rooms WHERE hotel_id = :hid' . $accR, hid() + $apR);
 $revokedCount = (int) DB::value('SELECT COUNT(*) FROM devices WHERE hotel_id = :hid AND (is_revoked = 1 OR room_id IS NULL)' . $accD, hid() + $apD);
 $canCmd = Auth::can('broadcast.device_commands');
-$canTransfer = Auth::can('platform.move');
 
 require __DIR__ . '/partials/header.php';
 ?>
@@ -755,7 +750,7 @@ require __DIR__ . '/partials/header.php';
             }
         ?>
           <tr>
-            <td><input type="checkbox" class="form-check-input room-cb" name="room_ids[]" value="<?= (int) $r['id'] ?>" aria-label="<?= e($r['room_number']) ?>"<?= $canTransfer ? ' data-devices="' . e(implode(',', array_map(static fn ($x) => (int) $x['id'], $devs))) . '"' : '' ?>></td>
+            <td><input type="checkbox" class="form-check-input room-cb" name="room_ids[]" value="<?= (int) $r['id'] ?>" aria-label="<?= e($r['room_number']) ?>"></td>
             <td>
               <strong><?= e($r['room_number']) ?></strong>
               <?php if (!(int) $r['is_enabled']): ?><span class="badge text-bg-dark ms-1"><?= e(__('Off')) ?></span><?php endif; ?>
@@ -783,7 +778,6 @@ require __DIR__ . '/partials/header.php';
             <td class="text-end text-nowrap">
               <a class="btn btn-sm btn-light border" href="<?= e(admin_url('preview.php', ['room_id' => $r['id']])) ?>" target="_blank" rel="noopener" title="<?= e(__('Preview what this TV shows')) ?>"><i class="bi bi-eye"></i></a>
               <?php if ($d): ?><a class="btn btn-sm btn-light border" href="<?= e(admin_url('rooms.php', ['action' => 'device', 'id' => $d['id']])) ?>" title="<?= e(__('TV details')) ?>"><i class="bi bi-info-circle"></i></a><?php endif; ?>
-              <?php if ($d && $canTransfer): ?><button type="button" class="btn btn-sm btn-outline-primary js-ps-transfer" data-ids="<?= e(implode(',', array_map(static fn ($x) => (int) $x['id'], $devs))) ?>" data-label="<?= e($r['room_number'] . (count($devs) > 1 ? ' (' . __(':n TVs', ['n' => count($devs)]) . ')' : '')) ?>" title="<?= e(__('Transfer to another customer')) ?>" aria-label="<?= e(__('Transfer to another customer')) ?>"><i class="bi bi-arrow-left-right"></i></button><?php endif; ?>
               <?php if ($canManage): ?><a class="btn btn-sm btn-primary" href="<?= e(admin_url('rooms.php', ['action' => 'edit', 'id' => $r['id']])) ?>" title="<?= e(__('Edit')) ?>"><i class="bi bi-pencil"></i></a><?php endif; ?>
             </td>
           </tr>
@@ -810,7 +804,6 @@ require __DIR__ . '/partials/header.php';
             <option value="PING"><?= e(__('Ping (test)')) ?></option>
           <?php endif; ?>
           <?php if ($canManage && !$limited): ?><option value="delete"><?= e(__('Delete screens')) ?></option><?php endif; ?>
-          <?php if ($canTransfer): ?><option value="transfer"><?= e(__('Transfer TVs to another customer')) ?></option><?php endif; ?>
         </select>
       </div>
       <div class="col-12 col-md-4" id="bulkSource" hidden>
@@ -836,16 +829,8 @@ document.addEventListener('DOMContentLoaded', () => {
       HC.toast(<?= json_embed(__('Select screens and an action first.')) ?>, 'warning');
       return;
     }
-    if (sel.value === 'transfer' && typeof ps_transfer_open === 'function') {
-      // 2.5.1: the TVs of the selected screens go through the "Transfer to another customer" dialog.
-      ev.preventDefault(); ev.stopImmediatePropagation();
-      const checked = [...document.querySelectorAll('.room-cb:checked')];
-      const ids = checked.flatMap((c) => String(c.dataset.devices || '').split(',').filter(Boolean));
-      ps_transfer_open(ids, checked.map((c) => c.getAttribute('aria-label')).join(', '));
-    }
   }, true);
 });
 </script>
-<?= $canTransfer ? rooms_transfer_dialog() : '' ?>
 <?php endif; ?>
 <?php require __DIR__ . '/partials/footer.php'; ?>

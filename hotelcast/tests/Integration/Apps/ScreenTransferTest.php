@@ -156,7 +156,14 @@ final class ScreenTransferTest extends TestCase
             $this->assertStringContainsString($c, $html);
         }
         $this->assertStringContainsString('platform_customer.php?id=' . self::$h['gamma'], $html, 'customer column links to the customer details');
-        $this->assertStringContainsString('js-ps-transfer', $html, 'Transfer button per TV');
+        // 2.6.1 owner rule: no transfer on the Screens page — only a link to the Super Admin console.
+        $this->assertStringNotContainsString('js-ps-transfer', $html, 'no Transfer button on the Screens page');
+        $this->assertStringNotContainsString('psTransferModal', $html);
+        $this->assertStringNotContainsString('id="psTransferSel"', $html, 'no "Transfer selected" in the bulk bar');
+        $this->assertStringNotContainsString('value="move"', $html);
+        $this->assertStringContainsString('Transfer TVs: Super Admin console', $html);
+        [, , $html] = $root->get('platform_screens.php');
+        $this->assertStringContainsString('js-ps-transfer', $html, 'Transfer stays in Devices & screens');
         $this->assertStringContainsString('psTransferModal', $html);
         $this->assertStringContainsString('name="copy_content"', $html);
         // Filters: customer, search, status, screens without TV, pagination.
@@ -194,14 +201,14 @@ final class ScreenTransferTest extends TestCase
         $this->assertStringContainsString('Screens &amp; TVs', $html);
         $this->assertStringContainsString('roomsViewSwitch', $html);
         $this->assertStringNotContainsString(self::$tv['tvB1']['uid'], $html);
-        $this->assertStringContainsString('js-ps-transfer', $html, 'Transfer button in the customer view');
-        $this->assertStringContainsString('value="transfer"', $html, 'bulk transfer through the checkboxes');
+        $this->assertStringNotContainsString('js-ps-transfer', $html, 'no Transfer button in the customer view');
+        $this->assertStringNotContainsString('value="transfer"', $html, 'no bulk transfer on the Screens page');
         [, , $html] = $owner->get('rooms.php');
         $this->assertStringContainsString('Screens &amp; TVs', $html, 'view remembered');
         [, , $html] = $owner->get('rooms.php?action=device&id=' . self::$tv['tvOwn']['id']);
         $this->assertFalse(TestEnv::hasPhpError($html));
-        $this->assertStringContainsString('js-ps-transfer', $html, 'Transfer on the TV detail page');
-        $this->assertStringContainsString('psTransferModal', $html);
+        $this->assertStringNotContainsString('js-ps-transfer', $html, 'no Transfer on the TV detail page');
+        $this->assertStringNotContainsString('psTransferModal', $html);
         [, , $html] = $owner->get('rooms.php?view=all');
         $this->assertStringContainsString('Screens — all customers', $html);
     }
@@ -313,12 +320,17 @@ final class ScreenTransferTest extends TestCase
         $this->assertSame('ST-PLAYLIST', $d['content']['playlist']['name']);
         Tenant::run($a, static fn () => DB::insert('device_commands', ['device_id' => self::$tv['tvA1']['id'], 'command' => 'SHOW_MESSAGE', 'payload' => '{"text":"alpha only"}', 'status' => 'delivered', 'created_at' => now()]));
 
-        // From the platform admin's own customer view of rooms.php (the transfer dialog posts ps_form=1).
         $owner = self::as('stowner');
-        [$s] = $owner->post('rooms.php', ['ps_form' => 1, 'op' => 'bulk', 'bulk_action' => 'move', 'ids' => [self::$tv['tvA1']['id']],
-            'target_customer' => $b, 'screen_mode' => 'same', 'copy_details' => 1, 'copy_content' => 1]);
+        $post = ['ps_form' => 1, 'op' => 'bulk', 'bulk_action' => 'move', 'ids' => [self::$tv['tvA1']['id']],
+            'target_customer' => $b, 'screen_mode' => 'same', 'copy_details' => 1, 'copy_content' => 1];
+        // 2.6.1: the Screens page refuses transfers even from the Super Admin; nothing moves.
+        [$s] = $owner->post('rooms.php', $post);
+        $this->assertSame(403, $s);
+        $this->assertSame($a, (int) DB::value('SELECT hotel_id FROM devices WHERE id = :id', ['id' => self::$tv['tvA1']['id']]));
+        // The Super Admin console (Devices & screens) transfers.
+        [$s] = $owner->post('platform_screens.php', $post);
         $this->assertSame(302, $s);
-        [, , $html] = $owner->get('rooms.php');
+        [, , $html] = $owner->get('platform_screens.php');
         $this->assertFalse(TestEnv::hasPhpError($html));
         $this->assertStringContainsString('1 TV(s) moved', $html);
         $this->assertStringContainsString('Copied: ', $html);

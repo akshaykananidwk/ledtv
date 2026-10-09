@@ -14,9 +14,20 @@ require_once __DIR__ . '/common.php';
 ActivityLog::$platformScope = true; // logs without an explicit customer are platform-level
 
 /** Handle a POST of the screens UI, flash the result and redirect back to $back. */
-function ps_handle_post(string $back): never
+function ps_handle_post(string $back, bool $allowTransfer = true): never
 {
     $op = req_str('op', $_POST, 30);
+    // Owner rule (2.6.1): TVs are transferred only from the Super Admin console (Devices & screens,
+    // Customer 360), never from a customer's Screens page — not even by the Super Admin.
+    if (!$allowTransfer && in_array($op === 'bulk' ? req_str('bulk_action', $_POST, 30) : $op, ['move', 'transfer', 'pool_assign'], true)) {
+        if (Auth::isAjax()) {
+            ajax_error(__('Transfer TVs from the Super Admin console: Devices & screens.'), 403, 'FORBIDDEN');
+        }
+        http_response_code(403);
+        $forbiddenMessage = __('Transfer TVs from the Super Admin console: Devices & screens.');
+        require __DIR__ . '/forbidden.php';
+        exit;
+    }
     try {
         switch ($op) {
             case 'row':
@@ -169,10 +180,10 @@ function ps_platform_label(array $d): string
  * Screens table inside the bulk form. $rows from PlatformScreens::decorate(). $showCustomer = false on
  * the customer page. Row buttons submit the hidden form #psRowForm (no nested forms).
  */
-function ps_table(array $rows, bool $showCustomer = true): string
+function ps_table(array $rows, bool $showCustomer = true, bool $allowTransfer = true): string
 {
     $canPool = Auth::can('platform.pool');
-    $canMove = Auth::can('platform.move');
+    $canMove = $allowTransfer && Auth::can('platform.move');
     ob_start();
     ?>
     <div class="table-responsive">
@@ -407,9 +418,10 @@ function ps_transfer_modal(array $customers, int $preselect = 0): string
 }
 
 /** Bulk form (bar) + hidden row form + move dialog script. */
-function ps_bulk_bar(array $customers, int $preselect = 0): string
+function ps_bulk_bar(array $customers, int $preselect = 0, bool $allowTransfer = true): string
 {
     $canPool = Auth::can('platform.pool');
+    $canMove = $allowTransfer && Auth::can('platform.move');
     ob_start();
     ?>
     <form method="post" id="psRowForm" class="d-none"><?= Csrf::field() ?><input type="hidden" name="op" value="row"><input type="hidden" name="ps_form" value="1"></form>
@@ -426,7 +438,7 @@ function ps_bulk_bar(array $customers, int $preselect = 0): string
               <option value="update"><?= e(__('Update app (newest APK of each customer)')) ?></option>
             </optgroup>
             <optgroup label="<?= e(__('Manage')) ?>">
-              <?php if (Auth::can('platform.move')): ?><option value="move"><?= e(__('Transfer to another customer / screen')) ?></option><?php endif; ?>
+              <?php if ($canMove): ?><option value="move"><?= e(__('Transfer to another customer / screen')) ?></option><?php endif; ?>
               <?php if ($canPool): ?><option value="unassign"><?= e(__('Move to unassigned pool')) ?></option><?php endif; ?>
               <option value="revoke"><?= e(__('Revoke')) ?></option>
             </optgroup>
@@ -435,7 +447,7 @@ function ps_bulk_bar(array $customers, int $preselect = 0): string
         <div class="col-12 col-md-auto">
           <button class="btn btn-primary w-100" data-confirm="<?= e(__('Apply this action to the selected screens?')) ?>" data-confirm-safe="1"><i class="bi bi-lightning-charge"></i> <?= e(__('Apply')) ?></button>
         </div>
-        <?php if (Auth::can('platform.move')): ?>
+        <?php if ($canMove): ?>
         <div class="col-12 col-md-auto ms-md-auto">
           <button type="button" class="btn btn-outline-primary w-100" id="psTransferSel"><i class="bi bi-arrow-left-right"></i> <?= e(__('Transfer selected to another customer')) ?></button>
         </div>
@@ -465,7 +477,7 @@ function ps_bulk_bar(array $customers, int $preselect = 0): string
     });
     </script>
     <?= ps_move_script() ?>
-    <?= ps_transfer_modal($customers) ?>
+    <?= $canMove ? ps_transfer_modal($customers) : '' ?>
     <?php
     return (string) ob_get_clean();
 }

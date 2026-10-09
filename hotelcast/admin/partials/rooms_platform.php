@@ -11,8 +11,8 @@ declare(strict_types=1);
  *    (Auth::can('platform.screens') tests the real role), ?view=all changes nothing for them.
  *  - rooms_view_switch(): the switch shown at the top of both views.
  *  - rooms_all_page(): the All customers view (shared table / filters / bulk bar of Platform → All
- *    screens, core/PlatformScreens.php) and the POST handler of that view and of the "Transfer to another
- *    customer" dialog (ps_form=1 → ps_handle_post; moving needs platform.move).
+ *    screens, core/PlatformScreens.php) and the POST handler of that view (ps_form=1 → ps_handle_post).
+ *    2.6.1: no transfers here — TVs move between customers only in the Super Admin console.
  */
 
 require_once __DIR__ . '/platform_screens.php';
@@ -72,13 +72,12 @@ function rooms_view_switch(string $active, ?int $tvs = null): string
     return (string) ob_get_clean();
 }
 
-/** POST of the All customers view / transfer dialog (exits), or the All customers page (exits). */
+/** POST of the All customers view (exits), or the All customers page (exits). */
 function rooms_all_page(): never
 {
     ActivityLog::$platformScope = true;
     if (is_post()) {
-        // After a transfer from a TV's detail page that TV no longer belongs to the open customer.
-        ps_handle_post(req_str('action', $_GET, 20) === '' ? self_url() : admin_url('rooms.php'));
+        ps_handle_post(req_str('action', $_GET, 20) === '' ? self_url() : admin_url('rooms.php'), false);
     }
     $noTv = req_str('status', $_GET, 10) === 'notv';
     $f = PlatformScreens::filters($_GET);
@@ -108,7 +107,7 @@ function rooms_all_page(): never
         <p class="lead-sm"><?= e($isRoot ? __('Every TV of every customer, including the customers of your resellers.') : __('Every TV of your customers.')) ?></p>
       </div>
       <div class="d-flex gap-2 flex-wrap">
-        <?php if (Auth::can('platform.move')): ?><span class="small text-muted align-self-center"><i class="bi bi-arrow-left-right"></i> <?= e(__('Transfer a TV with everything: row button or select TVs below.')) ?></span><?php endif; ?>
+        <?php if (Auth::can('platform.move')): ?><a class="btn btn-outline-primary" href="<?= e(admin_url('platform_screens.php')) ?>"><i class="bi bi-arrow-left-right"></i> <?= e(__('Transfer TVs: Super Admin console')) ?></a><?php endif; ?>
         <a class="btn btn-light border" href="<?= e(admin_url('platform_screens.php', $f['customer'] ? ['customer' => $f['customer']] : [])) ?>"><i class="bi bi-funnel"></i> <?= e(__('More filters & CSV')) ?></a>
       </div>
     </div>
@@ -171,24 +170,13 @@ function rooms_all_page(): never
       <?php if ($res['pages'] > 1): ?><div class="card-footer"><?= paginate($res['total'], $f['page'], $f['per_page']) ?></div><?php endif; ?>
     </div>
     <?php else: ?>
-    <div class="card"><?= ps_table($rows) ?>
+    <div class="card"><?= ps_table($rows, true, false) ?>
       <?php if ($res['pages'] > 1): ?><div class="card-footer"><?= paginate($res['total'], $f['page'], $f['per_page']) ?></div><?php endif; ?>
     </div>
-    <?= ps_bulk_bar($customers) ?>
+    <?= ps_bulk_bar($customers, 0, false) ?>
     <?php endif; ?>
     <?php
     require __DIR__ . '/footer.php';
     exit;
 }
 
-/**
- * "Transfer to another customer" for the customer view and the TV detail page of rooms.php: the dialog
- * (only with platform.move). The page renders the .js-ps-transfer buttons itself.
- */
-function rooms_transfer_dialog(): string
-{
-    if (!Auth::can('platform.move')) {
-        return '';
-    }
-    return ps_transfer_modal(PlatformScreens::customers());
-}

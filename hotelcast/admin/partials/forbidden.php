@@ -13,7 +13,7 @@ require __DIR__ . '/header.php';
 <div class="hc-empty my-5">
   <i class="bi bi-shield-lock display-3 text-danger"></i>
   <h1 class="h3 mt-3"><?= e(__('Access denied')) ?></h1>
-  <p class="text-muted"><?= e(__('Your account does not have permission to open this page. Ask your Admin if you need access.')) ?></p>
+  <p class="text-muted"><?= e(isset($forbiddenMessage) && is_string($forbiddenMessage) ? $forbiddenMessage : __('Your account does not have permission to open this page. Ask your Admin if you need access.')) ?></p>
   <a class="btn btn-primary" href="<?= e(admin_url($user ? Auth::homePage() : 'login.php')) ?>"><i class="bi bi-house"></i> <?= e(__('Back to dashboard')) ?></a>
 </div>
 <?php require __DIR__ . '/footer.php'; ?>
