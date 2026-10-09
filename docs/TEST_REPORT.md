@@ -1,3 +1,14 @@
+# 2.6.1 — public landing page, TV transfer only from the console, logs (2026-10-09)
+
+Server only (`version.json` 2.6.1; the TV app stays 2.5.0).
+
+- Full PHP suite: **602 tests, 25,154 assertions, 0 failures** (591 → +9 LandingPageTest, +2 PanelsTest: Super Admin hidden from customer logs + clear logs; console pages never render inside a customer workspace; +1 ScreenTransferTest: only the Super Admin can transfer, every other user type refused).
+
+- **Landing page** (`index.php`, `core/Landing.php`, `assets/landing/`, `lang/{gu,hi}_landing.php`): new `tests/Integration/Apps/LandingPageTest.php` (9 tests) — 200 without login and no PHP warnings, every section, SEO tags + valid SoftwareApplication JSON-LD, CSP with nonce and no inline script, no CDN asset; EN / GU / HI via `?lang=` (cookie set), cookie and Accept-Language (q-values); plans from the database (active plan with price / limits / modules shown, inactive plan hidden, "all modules, except …", no active plan → "Contact us for pricing"); trial / demo / WhatsApp / call / e-mail buttons only when the platform settings enable them, white-label name; logged-in user gets "Go to dashboard" (200, no redirect); not installed → 302 to `install/`; no customer name in the page, live numbers only from 10 upwards.
+- Browser QA (`tests/browser/landing_qa.js` + `landing_server.php`, headless Chromium): **all checks passed** — EN / GU / HI at 360, 390, 768 and 1280 px: no horizontal overflow, every link / button ≥ 44 px high, nav on one line at 1280 px, mobile menu opens / closes (aria-expanded), reveal-on-scroll leaves nothing hidden, back-to-top, no console errors / CSP violations / failed requests. Screenshots: `docs/screenshots/2.6.1/` (landing-desktop-en, landing-mobile-gu, landing-mobile-hi, landing-mobile-menu-open, landing-plans).
+- **TV transfer** only from the Super Admin console (removed from the customer's Screens page).
+- **Logs**: the Super Admin's work inside a customer workspace no longer appears in the customer's logs (still in Super Admin → Audit logs); logs can be cleared (customer Admin: own logs per tab, all or older than 30 / 90 / 365 days; Super Admin: audit log, error / update logs). New `PanelsTest` test.
+
 # 2.6.0 — three panels, Super Admin console, customer archive / delete (2026-10-09)
 
 Server only (`version.json` 2.6.0; the TV app stays 2.5.0). Separate Super Admin console / Reseller panel / Customer workspace (`core/Panel.php`), Customer 360 with one-click switches, global search, impersonation banner, archive + permanent delete, audit logs / reports / content overview, subscription state; migration 032. Design notes: `docs/modules/panels.md`; owner's specification: `docs/SPEC_SAAS.md`.

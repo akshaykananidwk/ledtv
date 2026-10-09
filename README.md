@@ -32,6 +32,19 @@ screen-wise schedule karo, emergency message moklo, TV reboot/update karo.*
 | Android TV app | [`android/`](android) | Kotlin, ExoPlayer 2.19, Retrofit, OkHttp, Glide, WorkManager — min SDK 21, target 34 |
 | Documentation | [`docs/`](docs) | Install guide, TV setup, admin guide, API, developer guide (tenancy + extension points), security, test report |
 
+## What's new in 2.6.1 — public landing page, TV transfer only from the Super Admin console, logs
+
+Server only (the TV app stays 2.5.0).
+
+| Feature | Where |
+|---|---|
+| **Public landing page at the site root** (`index.php`, no login): gradient hero with the white-label name / logo, "who is it for" cards (temples, hotels, hospitals & clinics, schools & coaching, restaurants & cafés, shops & showrooms, offices & factories, hostels & resorts), every feature group (screens & TVs, content, the display apps, scheduling, emergency & announcements, video walls & sync, analytics & proof of play, teams & roles, languages, security, plans & modules, hotel pack, devices it works on), "how it works" in 5 steps, plans, FAQ and a final call to action. English / ગુજરાતી / हिन्दी (`?lang=`, remembered in a cookie, else the browser language); fully responsive (360 px – desktop), light and dark, reduced-motion aware, local assets only (no CDN), strict CSP (no inline script), canonical / hreflang / Open Graph / SoftwareApplication JSON-LD | `/` · `core/Landing.php` · `assets/landing/` · `lang/{gu,hi}_landing.php` |
+| Everything on it is **driven by the platform**: "Start free trial" only when online sign-up is on (`Signup::enabled()`), "Watch live demo" only when the public demo is on, WhatsApp / call / e-mail from Platform settings → support phone / e-mail (WhatsApp only for a number in +country format), **plan cards read from the active rows of the plans table** (price per screen / month, screen / user / storage limits, included modules or "all modules, except …"; no active plan → "Contact us for pricing"). Live numbers (screens, businesses) are aggregate counts only, cached 10 min and shown from 10 upwards — no customer name is ever shown | Platform → Settings / Sign-ups / Demo / Plans |
+| Logged-in visitors see **"Go to dashboard"** instead of "Login" (no automatic redirect any more); a server that is not installed still goes to the installer | `/` |
+| **Transfer a TV to another customer only from the Super Admin console** — the transfer button / bulk action was removed from the customer's Screens page | Super Admin → All screens / Customer 360 |
+| **Logs**: the Super Admin's work inside a customer workspace no longer appears in the customer's logs (still in Super Admin → Audit logs); logs can be cleared (customer Admin: own logs per tab, all or older than 30 / 90 / 365 days; Super Admin: audit log, error / update logs) | Logs · Super Admin → Audit logs |
+| **Console pages stay in the console**: Auto-Update, platform settings, Support & logs and every Super Admin page opened while a customer workspace is open show the Super Admin console — never the customer's name, banner, plan notice or footer. Server-wide error / update logs moved from the customer's Logs page to Super Admin → Support & logs → Server logs (view + clear) | Super Admin console |
+
 ## What's new in 2.6 — three separate panels, Super Admin console, customer archive / delete
 
 Server only (the TV app stays 2.5.0). Design notes and research: [docs/modules/panels.md](docs/modules/panels.md); owner's specification: [docs/SPEC_SAAS.md](docs/SPEC_SAAS.md).

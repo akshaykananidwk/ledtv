@@ -11,6 +11,25 @@ require_once __DIR__ . '/partials/common.php';
 $user = Auth::require('support.platform');
 Csrf::check();
 
+// 2.6.1: server-wide logs (errors of all customers, updater) live here, not in a customer's Logs page.
+$canServerLogs = Auth::can('update.manage');
+$serverLog = in_array($_GET['log'] ?? '', ['errors', 'update'], true) ? (string) $_GET['log'] : 'errors';
+if (is_post() && req_str('op', $_POST, 20) === 'clear_server_log') {
+    require_can('update.manage');
+    $which = in_array($_POST['log'] ?? '', ['errors', 'update'], true) ? (string) $_POST['log'] : '';
+    $n = 0;
+    foreach ($which === 'errors' ? ['error', 'php_error'] : ($which === 'update' ? ['update'] : []) as $ch) {
+        $f = HC_ROOT . '/logs/' . $ch . '.log';
+        if (is_file($f) && is_writable($f)) {
+            file_put_contents($f, '');
+            $n++;
+        }
+    }
+    ActivityLog::add('logs_cleared', 'logs', null, 'Server log cleared: ' . $which . ' (' . $n . ' files)', null);
+    flash('success', __('Server log cleared.'));
+    redirect(admin_url('platform_support.php', ['log' => $which ?: 'errors']) . '#serverLogs');
+}
+
 if (is_post() && req_str('op', $_POST, 20) === 'settings') {
     $n = req_int('threshold', $_POST);
     Settings::setPlatform('platform_crash_alert_threshold', (string) max(1, min(1000, $n ?: 5)));
@@ -116,4 +135,29 @@ $tile = static function (string $label, int|string $value, string $icon, string 
     </form>
   </div>
 </div>
+<?php if ($canServerLogs): ?>
+<div class="card mt-3" id="serverLogs">
+  <div class="card-header d-flex flex-wrap align-items-center gap-2">
+    <span><i class="bi bi-hdd-stack"></i> <?= e(__('Server logs')) ?></span>
+    <ul class="nav nav-pills nav-sm ms-md-3">
+      <li class="nav-item"><a class="nav-link py-1<?= $serverLog === 'errors' ? ' active' : '' ?>" href="<?= e(admin_url('platform_support.php', ['log' => 'errors'])) ?>#serverLogs"><i class="bi bi-bug"></i> <?= e(__('System errors')) ?></a></li>
+      <li class="nav-item"><a class="nav-link py-1<?= $serverLog === 'update' ? ' active' : '' ?>" href="<?= e(admin_url('platform_support.php', ['log' => 'update'])) ?>#serverLogs"><i class="bi bi-cloud-arrow-down"></i> <?= e(__('Update log')) ?></a></li>
+    </ul>
+    <form method="post" class="ms-auto" data-confirm="<?= e(__('Clear these log entries? This cannot be undone.')) ?>">
+      <?= Csrf::field() ?><input type="hidden" name="op" value="clear_server_log"><input type="hidden" name="log" value="<?= e($serverLog) ?>">
+      <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash3"></i> <?= e(__('Clear :log', ['log' => $serverLog === 'errors' ? __('System errors') : __('Update log')])) ?></button>
+    </form>
+  </div>
+  <div class="card-body">
+  <?php if ($serverLog === 'errors'): ?>
+    <?php foreach (['error' => __('Application errors'), 'php_error' => __('PHP errors')] as $ch => $title): $lines = Logger::tail($ch, 300); ?>
+      <h2 class="h6"><?= e($title) ?> <span class="text-muted small">(logs/<?= e($ch) ?>.log)</span></h2>
+      <?php if (!$lines): ?><div class="text-success mb-3"><i class="bi bi-check-circle"></i> <?= e(__('No errors logged.')) ?></div><?php else: ?><pre class="log-pre mb-3"><?= e(implode("\n", $lines)) ?></pre><?php endif; ?>
+    <?php endforeach; ?>
+  <?php else: $lines = Logger::tail('update', 500); ?>
+    <?php if (!$lines): ?><div class="text-muted"><?= e(__('No updates have run yet.')) ?></div><?php else: ?><pre class="log-pre mb-0"><?= e(implode("\n", $lines)) ?></pre><?php endif; ?>
+  <?php endif; ?>
+  </div>
+</div>
+<?php endif; ?>
 <?php require __DIR__ . '/partials/footer.php'; ?>

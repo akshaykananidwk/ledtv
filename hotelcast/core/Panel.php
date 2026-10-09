@@ -68,7 +68,7 @@ final class Panel
         if ($role === '') {
             return 'customer';
         }
-        if (Auth::inEnteredHotel()) {
+        if (Auth::inEnteredHotel() && !self::consolePage()) {
             return 'customer';
         }
         return match ($role) {
@@ -87,7 +87,22 @@ final class Panel
     /** True when a platform admin / reseller / chain admin works inside a customer they opened. */
     public static function impersonating(): bool
     {
-        return Auth::inEnteredHotel() && Tenant::has();
+        return Auth::inEnteredHotel() && Tenant::has() && !self::consolePage();
+    }
+
+    /**
+     * 2.6.1: console-only pages (Super Admin / reseller: platform_*.php, reseller*.php, update.php) always
+     * render in the console, also while a customer workspace is open — never with the customer's name,
+     * banner, plan notice or footer. $script: file name (default: the current request).
+     */
+    public static function consolePage(?string $script = null): bool
+    {
+        $script ??= basename((string) ($_SERVER['SCRIPT_NAME'] ?? ''));
+        $role = Auth::role();
+        if (!in_array($role, Auth::PLATFORM_ROLES, true)) {
+            return false;
+        }
+        return $script === 'update.php' || str_starts_with($script, 'platform_') || str_starts_with($script, 'reseller');
     }
 
     /** Role word for badges / the impersonation banner. */

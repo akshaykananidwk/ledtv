@@ -12,13 +12,9 @@ $tabs = [
     'played' => ['bi-play-circle', __('Content played')],
     'broadcasts' => ['bi-broadcast', __('Broadcasts')],
     'activity' => ['bi-person-lines-fill', __('User activity')],
-    'errors' => ['bi-bug', __('System errors')],
-    'update' => ['bi-cloud-arrow-down', __('Update log')],
 ];
-// Server-wide logs (errors of all hotels, updater) are for the platform admin only.
-if (!Auth::can('update.manage')) {
-    unset($tabs['errors'], $tabs['update']);
-}
+// 2.6.1: server-wide logs (errors of all customers, updater) are in the Super Admin console
+// (Support & logs → Server logs), never inside a customer's Logs page.
 $tab = isset($tabs[$_GET['tab'] ?? '']) ? (string) $_GET['tab'] : 'status';
 
 /** Clearable tabs of the customer's Logs page (2.6.1). errors / update are server files (Super Admin only). */
@@ -52,17 +48,6 @@ if (is_post() && ($_POST['op'] ?? '') === 'clear') {
         case 'activity':
             // The customer's own rows only; the Super Admin's audit rows stay (Super Admin console → Audit logs).
             $n = DB::query('DELETE FROM activity_logs WHERE hotel_id = :hid' . ActivityLog::customerFilter() . $cut, $p)->rowCount();
-            break;
-        case 'errors':
-        case 'update':
-            require_can('update.manage');
-            foreach ($clearTab === 'errors' ? ['error', 'php_error'] : ['update'] as $ch) {
-                $f = HC_ROOT . '/logs/' . $ch . '.log';
-                if (is_file($f) && is_writable($f)) {
-                    file_put_contents($f, '');
-                    $n++;
-                }
-            }
             break;
     }
     $label = $tabs[$clearTab][1];
@@ -232,10 +217,9 @@ $filterForm = function (bool $room, bool $userSel) use ($tab, $fRoom, $fUser, $f
 ?>
 <div class="page-head">
   <h1><?= e(__('Logs & History')) ?></h1>
-  <?php if ($canClear && ($tab !== 'errors' && $tab !== 'update' || Auth::can('update.manage'))): ?>
+  <?php if ($canClear): ?>
   <form method="post" class="d-flex flex-wrap gap-2 align-items-center" data-confirm="<?= e(__('Clear these log entries? This cannot be undone.')) ?>">
     <?= Csrf::field() ?><input type="hidden" name="op" value="clear"><input type="hidden" name="tab" value="<?= e($tab) ?>">
-    <?php if ($tab === 'errors' || $tab === 'update'): ?><input type="hidden" name="range" value="all"><?php else: ?>
     <label class="visually-hidden" for="clearRange"><?= e(__('Clear')) ?></label>
     <select class="form-select form-select-sm w-auto" id="clearRange" name="range">
       <option value="all"><?= e(__('All entries')) ?></option>
@@ -243,7 +227,6 @@ $filterForm = function (bool $room, bool $userSel) use ($tab, $fRoom, $fUser, $f
       <option value="90"><?= e(__('Older than 90 days')) ?></option>
       <option value="365"><?= e(__('Older than 1 year')) ?></option>
     </select>
-    <?php endif; ?>
     <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash3"></i> <?= e(__('Clear :log', ['log' => $tabs[$tab][1]])) ?></button>
   </form>
   <?php endif; ?>
@@ -254,23 +237,6 @@ $filterForm = function (bool $room, bool $userSel) use ($tab, $fRoom, $fUser, $f
   <?php endforeach; ?>
 </ul>
 
-<?php if ($tab === 'errors'): ?>
-  <div class="row g-3">
-    <div class="col-xl-6"><div class="card"><div class="card-header"><?= e(__('Application errors')) ?> (logs/error.log)</div><div class="card-body">
-      <?php $lines = Logger::tail('error', 300); ?>
-      <?php if (!$lines): ?><div class="text-success"><i class="bi bi-check-circle"></i> <?= e(__('No errors logged.')) ?></div><?php else: ?><pre class="log-pre mb-0"><?= e(implode("\n", $lines)) ?></pre><?php endif; ?>
-    </div></div></div>
-    <div class="col-xl-6"><div class="card"><div class="card-header"><?= e(__('PHP errors')) ?> (logs/php_error.log)</div><div class="card-body">
-      <?php $lines = Logger::tail('php_error', 300); ?>
-      <?php if (!$lines): ?><div class="text-success"><i class="bi bi-check-circle"></i> <?= e(__('No errors logged.')) ?></div><?php else: ?><pre class="log-pre mb-0"><?= e(implode("\n", $lines)) ?></pre><?php endif; ?>
-    </div></div></div>
-  </div>
-<?php elseif ($tab === 'update'): ?>
-  <div class="card"><div class="card-header"><?= e(__('Update log')) ?> (logs/update.log)</div><div class="card-body">
-    <?php $lines = Logger::tail('update', 500); ?>
-    <?php if (!$lines): ?><div class="text-muted"><?= e(__('No updates have run yet.')) ?></div><?php else: ?><pre class="log-pre mb-0"><?= e(implode("\n", $lines)) ?></pre><?php endif; ?>
-  </div></div>
-<?php else: ?>
   <div class="card"><div class="card-body pb-0">
     <?php if ($tab === 'broadcasts' && !empty($bc)): ?>
       <div class="mb-3">
@@ -334,5 +300,4 @@ $filterForm = function (bool $room, bool $userSel) use ($tab, $fRoom, $fUser, $f
     <?= paginate($total, $page, PER_PAGE) ?>
   </div>
   </div>
-<?php endif; ?>
 <?php require __DIR__ . '/partials/footer.php'; ?>

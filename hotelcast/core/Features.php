@@ -135,7 +135,7 @@ final class Features
         'settings' => ['label' => 'Settings & billing', 'group' => 'core', 'core' => true, 'description' => 'Customer settings, your plan, invoices.',
             'permissions' => ['settings.manage', 'billing.view'], 'pages' => ['settings.php', 'plan.php', 'billing.php', 'invoice.php']],
         'logs' => ['label' => 'Logs & history', 'group' => 'core', 'core' => true, 'description' => 'Activity and broadcast history.',
-            'permissions' => ['logs.view'], 'pages' => ['logs.php']],
+            'permissions' => ['logs.view', 'logs.clear'], 'pages' => ['logs.php']],
         'update' => ['label' => 'Auto-update', 'group' => 'core', 'core' => true, 'description' => 'Server updates (platform only).',
             'permissions' => ['update.manage'], 'pages' => ['update.php', 'ajax_update.php'], 'ajax' => ['update_*', 'rollback']],
         'platform' => ['label' => 'Platform', 'group' => 'core', 'core' => true, 'description' => 'Platform, reseller and chain administration.',

@@ -14,4 +14,6 @@ return [
     'Clear audit log' => 'ઓડિટ લોગ ક્લિયર કરો',
     'Clear for this filter' => 'આ ફિલ્ટરની એન્ટ્રી ક્લિયર કરો',
     'Done by the Super Admin inside this workspace — hidden from the customer' => 'સુપર એડમીને આ વર્કસ્પેસમાં કર્યું — ગ્રાહકને દેખાતું નથી',
+    'Server logs' => 'સર્વર લોગ',
+    'Server log cleared.' => 'સર્વર લોગ ક્લિયર થયો.',
 ];

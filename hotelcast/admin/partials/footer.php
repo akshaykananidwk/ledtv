@@ -7,7 +7,7 @@ $user = $user ?? Auth::user();
     </main>
     <footer class="hc-footer text-muted small">
       <?php $fb = Branding::get(); ?>
-      &copy; <?= date('Y') ?> <?= Tenant::has() ? e((string) Settings::get('hotel_name', $fb['product'])) . ' · ' : '' ?><?= e($fb['product']) ?>
+      &copy; <?= date('Y') ?> <?= Tenant::has() && (!class_exists('Panel') || !Panel::consolePage()) ? e((string) Settings::get('hotel_name', $fb['product'])) . ' · ' : '' ?><?= e($fb['product']) ?>
       <?php if ($fb['footer'] !== ''): ?> · <?= e($fb['footer']) ?><?php endif; ?>
       <?php if ($fb['support_phone'] !== '' || $fb['support_email'] !== ''): ?> · <?= e(__('Support')) ?>: <?= e(trim($fb['support_phone'] . ' ' . $fb['support_email'])) ?><?php endif; ?>
     </footer>

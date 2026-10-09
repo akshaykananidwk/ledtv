@@ -22,8 +22,10 @@ $hdrPanel = $user ? Panel::current() : 'customer';
 $hdrTheme = Panel::theme($hdrPanel);
 $hdrConsole = $user ? Panel::consoleOf($user) : null;
 $hdrImpersonating = $user && Panel::impersonating();
-$hotelName = $inHotel ? (string) Settings::get('hotel_name', $hdrBrand['product']) : $hdrBrand['product'];
-$hotelLogo = $inHotel ? media_url((string) Settings::get('hotel_logo', '')) : null;
+// 2.6.1: console pages never show the open customer's name / logo (Panel::consolePage()).
+$hdrCustomerShell = $inHotel && $hdrPanel === 'customer';
+$hotelName = $hdrCustomerShell ? (string) Settings::get('hotel_name', $hdrBrand['product']) : $hdrBrand['product'];
+$hotelLogo = $hdrCustomerShell ? media_url((string) Settings::get('hotel_logo', '')) : null;
 $hotelLogo = $hotelLogo ?: $hdrBrand['logo_url'];
 $lang = I18n::lang();
 // Name shown in the brand block / title: the customer's business in the workspace, the console name otherwise.
@@ -42,7 +44,7 @@ $groupTitles = ['Manage' => __('Manage'), 'Commercial' => __('Commercial'), 'Pla
 $hdrSearch = $user && in_array($hdrPanel, ['platform', 'reseller'], true) && Auth::can('platform.screens') && is_file(HC_ROOT . '/admin/platform_search.php');
 
 // Users limited to some TVs (core/Access.php): their emergencies / TVs only.
-$hdrEmergencies = $user && $inHotel ? hc_visible_emergencies() : [];
+$hdrEmergencies = $user && $hdrCustomerShell ? hc_visible_emergencies() : [];
 $hdrStats = ['online' => 0, 'devices' => 0];
 if ($user && $inHotel && $hdrPanel === 'customer') {
     [$hdrAcc, $hdrAp] = Access::roomSql('room_id');
@@ -53,7 +55,7 @@ if ($user && $inHotel && $hdrPanel === 'customer') {
         }
     }
 }
-$hdrHotelState = $inHotel ? Tenant::state() : 'active';
+$hdrHotelState = $hdrCustomerShell ? Tenant::state() : 'active';
 $hdrLicense = $user ? License::banner() : null;
 ?><!DOCTYPE html>
 <html lang="<?= e($lang) ?>">
@@ -198,7 +200,7 @@ foreach (glob(__DIR__ . '/head.d/*.php') ?: [] as $__hd) { include $__hd; } unse
       </div>
     </header>
 
-    <?php if ($inHotel && Features::bypass() && ($hdrOff = Features::disabledKeys())): // 2.5 plans: platform admin sees the customer's view ?>
+    <?php if ($hdrCustomerShell && Features::bypass() && ($hdrOff = Features::disabledKeys())): // 2.5 plans: platform admin sees the customer's view ?>
     <div class="alert alert-secondary rounded-0 mb-0 small" role="status" data-plan-banner>
       <i class="bi bi-box-seam"></i> <?= e(__('Not in this customer\'s plan (hidden from the customer, open for you):')) ?> <?= e(implode(', ', array_map([Features::class, 'label'], $hdrOff))) ?>
     </div>

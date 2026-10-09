@@ -876,4 +876,53 @@ final class PanelsTest extends TestCase
         }
         $this->assertGreaterThan(0, (int) DB::value('SELECT COUNT(*) FROM activity_logs'));
     }
+
+    /**
+     * 2.6.1 owner rule: console pages (Auto-Update, platform settings, Support & logs, all platform_*) opened
+     * while a customer workspace is open show the Super Admin console — never the customer's name, the
+     * impersonation banner, the "not in this customer's plan" notice or the customer's footer. Server-wide
+     * logs are in the console, not in the customer's Logs page.
+     */
+    public function testConsolePagesNeverRenderInsideTheCustomerWorkspace(): void
+    {
+        $a = self::$h['alpha'];
+        $root = new AdminSession(self::$url, 'pnroot');
+        [$s] = $root->post('platform_customer.php', ['op' => 'enter', 'id' => $a, 'next' => 'index.php']);
+        $this->assertSame(302, $s);
+        $name = (string) DB::value('SELECT name FROM hotels WHERE id = :id', ['id' => $a]);
+        [, , $html] = $root->get('index.php');
+        $this->assertStringContainsString('data-impersonation-banner', $html, 'workspace page: banner');
+        foreach (['update.php', 'platform_settings.php', 'platform_support.php', 'platform_overview.php', 'platform_audit.php', 'platform_hotels.php'] as $page) {
+            [$s, , $html] = $root->get($page);
+            $this->assertSame(200, $s, $page);
+            $this->assertFalse(TestEnv::hasPhpError($html), $page);
+            $this->assertStringContainsString('data-panel="platform"', $html, "$page renders in the console");
+            $this->assertStringNotContainsString('data-impersonation-banner', $html, "$page: no customer banner");
+            $this->assertStringNotContainsString("Not in this customer's plan", $html, "$page: no plan notice");
+            $this->assertStringNotContainsString('data-impersonating', $html, $page);
+            $this->assertDoesNotMatchRegularExpression('/&copy; \d{4} ' . preg_quote(e($name), '/') . ' /', $html, "$page: no customer footer");
+        }
+        // Still inside the workspace afterwards.
+        [, , $html] = $root->get('rooms.php?view=customer');
+        $this->assertStringContainsString('data-impersonation-banner', $html);
+        // Server logs: in the console, not in the customer's Logs page.
+        [, , $html] = $root->get('logs.php?tab=errors');
+        $this->assertStringNotContainsString('<i class="bi bi-bug"></i> System errors</a>', $html, 'no System errors tab');
+        $this->assertStringNotContainsString('<i class="bi bi-cloud-arrow-down"></i> Update log</a>', $html, 'no Update log tab');
+        $this->assertStringNotContainsString('logs/error.log', $html);
+        [, , $html] = $root->get('platform_support.php?log=errors');
+        $this->assertStringContainsString('id="serverLogs"', $html);
+        $this->assertStringContainsString('logs/error.log', $html);
+        file_put_contents(HC_ROOT . '/logs/update.log', "test line\n", FILE_APPEND);
+        [$s] = $root->post('platform_support.php', ['op' => 'clear_server_log', 'log' => 'update']);
+        $this->assertSame(302, $s);
+        $this->assertSame('', (string) @file_get_contents(HC_ROOT . '/logs/update.log'));
+        // Customers never reach console pages.
+        foreach (['update.php', 'platform_support.php', 'platform_settings.php'] as $page) {
+            [$s] = self::as('alphaboss')->get($page);
+            $this->assertContains($s, [302, 403], "customer on $page");
+        }
+        [$s] = self::as('alphaboss')->post('platform_support.php', ['op' => 'clear_server_log', 'log' => 'errors']);
+        $this->assertContains($s, [302, 403]);
+    }
 }
