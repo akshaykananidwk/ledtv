@@ -451,7 +451,7 @@ if ($action === 'view') {
         redirect(admin_url('users.php'));
     }
     $sessions = DB::all('SELECT * FROM user_sessions WHERE user_id = :u AND revoked = 0 AND expires_at > :n ORDER BY last_activity DESC', ['u' => $u['id'], 'n' => now()]);
-    $acts = DB::all('SELECT * FROM activity_logs WHERE hotel_id = :hid AND user_id = :u ORDER BY id DESC LIMIT 50', ['u' => $u['id']] + hid());
+    $acts = DB::all('SELECT * FROM activity_logs WHERE hotel_id = :hid AND user_id = :u' . ActivityLog::customerFilter() . ' ORDER BY id DESC LIMIT 50', ['u' => $u['id']] + hid());
     $currentHash = !empty($_SESSION['hc_token']) ? hash('sha256', (string) $_SESSION['hc_token']) : '';
     $pageTitle = $u['username'];
     require __DIR__ . '/partials/header.php';

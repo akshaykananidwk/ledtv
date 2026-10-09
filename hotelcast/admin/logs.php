@@ -20,6 +20,56 @@ if (!Auth::can('update.manage')) {
     unset($tabs['errors'], $tabs['update']);
 }
 $tab = isset($tabs[$_GET['tab'] ?? '']) ? (string) $_GET['tab'] : 'status';
+
+/** Clearable tabs of the customer's Logs page (2.6.1). errors / update are server files (Super Admin only). */
+const LOG_CLEAR_RANGES = ['all' => 0, '30' => 30, '90' => 90, '365' => 365];
+$canClear = Auth::can('logs.clear') && !Access::restricted();
+if (is_post() && ($_POST['op'] ?? '') === 'clear') {
+    if (!$canClear) {
+        require_can('logs.clear');
+    }
+    $clearTab = isset($tabs[$_POST['tab'] ?? '']) ? (string) $_POST['tab'] : '';
+    $range = (string) ($_POST['range'] ?? '');
+    if ($clearTab === '' || !isset(LOG_CLEAR_RANGES[$range])) {
+        flash('danger', __('Choose what to clear.'));
+        redirect(admin_url('logs.php', ['tab' => $tab]));
+    }
+    $days = LOG_CLEAR_RANGES[$range];
+    $cut = $days ? ' AND created_at < :cut' : '';
+    $p = hid() + ($days ? ['cut' => date('Y-m-d H:i:s', time() - $days * 86400)] : []);
+    $n = 0;
+    switch ($clearTab) {
+        case 'status':
+            $n = DB::query('DELETE FROM device_status_logs WHERE hotel_id = :hid' . $cut, $p)->rowCount();
+            break;
+        case 'played':
+            $n = DB::query("DELETE FROM broadcast_logs WHERE hotel_id = :hid AND event = 'played'" . $cut, $p)->rowCount();
+            break;
+        case 'broadcasts':
+            // Only finished broadcasts: active / scheduled ones (emergencies too) keep working.
+            $n = DB::query("DELETE FROM broadcast_commands WHERE hotel_id = :hid AND status IN ('completed','cancelled')" . $cut, $p)->rowCount();
+            break;
+        case 'activity':
+            // The customer's own rows only; the Super Admin's audit rows stay (Super Admin console → Audit logs).
+            $n = DB::query('DELETE FROM activity_logs WHERE hotel_id = :hid' . ActivityLog::customerFilter() . $cut, $p)->rowCount();
+            break;
+        case 'errors':
+        case 'update':
+            require_can('update.manage');
+            foreach ($clearTab === 'errors' ? ['error', 'php_error'] : ['update'] as $ch) {
+                $f = HC_ROOT . '/logs/' . $ch . '.log';
+                if (is_file($f) && is_writable($f)) {
+                    file_put_contents($f, '');
+                    $n++;
+                }
+            }
+            break;
+    }
+    $label = $tabs[$clearTab][1];
+    ActivityLog::add('logs_cleared', 'logs', null, $label . ': ' . ($days ? 'older than ' . $days . ' days' : 'all') . ', ' . $n . ' rows');
+    flash('success', __('Cleared :n entries from ":log".', ['n' => $n, 'log' => $label]));
+    redirect(admin_url('logs.php', ['tab' => $clearTab]));
+}
 $page = max(1, req_int('page', $_GET));
 $export = ($_GET['export'] ?? '') === 'csv';
 $fRoom = req_int('room', $_GET);
@@ -92,7 +142,7 @@ switch ($tab) {
             if ($bcRow) {
                 Access::requireBroadcast($bcRow); // 403: not only the user's TVs
             }
-            $bc = DB::one('SELECT b.*, u.username FROM broadcast_commands b LEFT JOIN users u ON u.id = b.created_by WHERE b.id = :id AND b.hotel_id = :hid', ['id' => $detail] + hid());
+            $bc = DB::one("SELECT b.*, IF(u.role IN ('platform_admin','reseller'), 'Support', u.username) AS username FROM broadcast_commands b LEFT JOIN users u ON u.id = b.created_by WHERE b.id = :id AND b.hotel_id = :hid", ['id' => $detail] + hid());
             $total = (int) DB::value('SELECT COUNT(*) FROM broadcast_logs WHERE hotel_id = :hid AND broadcast_id = :b', ['b' => $detail] + hid());
             $rows = DB::all('SELECT l.*, r.room_number FROM broadcast_logs l LEFT JOIN rooms r ON r.id = l.room_id WHERE l.hotel_id = :hid AND l.broadcast_id = :b ORDER BY l.id DESC' . $limitSql, ['b' => $detail] + hid());
             if ($export) {
@@ -104,11 +154,11 @@ switch ($tab) {
         $total = (int) DB::value("SELECT COUNT(*) FROM broadcast_commands b $where", $p);
         if (Access::restricted()) {
             // Limited users: only broadcasts to their TVs (filtered in PHP, newest 2000).
-            $rows = array_values(array_filter(DB::all("SELECT b.*, u.username FROM broadcast_commands b LEFT JOIN users u ON u.id = b.created_by $where ORDER BY b.id DESC LIMIT 2000", $p), [Access::class, 'canBroadcast']));
+            $rows = array_values(array_filter(DB::all("SELECT b.*, IF(u.role IN ('platform_admin','reseller'), 'Support', u.username) AS username FROM broadcast_commands b LEFT JOIN users u ON u.id = b.created_by $where ORDER BY b.id DESC LIMIT 2000", $p), [Access::class, 'canBroadcast']));
             $total = count($rows);
             $rows = $export ? $rows : array_slice($rows, $offset, PER_PAGE);
         } else {
-            $rows = DB::all("SELECT b.*, u.username FROM broadcast_commands b LEFT JOIN users u ON u.id = b.created_by $where ORDER BY b.id DESC" . $limitSql, $p);
+            $rows = DB::all("SELECT b.*, IF(u.role IN ('platform_admin','reseller'), 'Support', u.username) AS username FROM broadcast_commands b LEFT JOIN users u ON u.id = b.created_by $where ORDER BY b.id DESC" . $limitSql, $p);
         }
         $stats = [];
         if ($rows) {
@@ -132,6 +182,8 @@ switch ($tab) {
             $where = ($where ? $where . ' AND' : 'WHERE') . ' a.user_id = :uid';
             $p['uid'] = $fUser;
         }
+        // 2.6.1: the Super Admin working inside this workspace leaves no rows here (Audit logs in the console).
+        $where .= ActivityLog::customerFilter('a.');
         $total = (int) DB::value("SELECT COUNT(*) FROM activity_logs a $where", $p);
         $rows = DB::all("SELECT a.* FROM activity_logs a $where ORDER BY a.id DESC" . $limitSql, $p);
         if ($export) {
@@ -178,7 +230,24 @@ $filterForm = function (bool $room, bool $userSel) use ($tab, $fRoom, $fUser, $f
     <?php
 };
 ?>
-<div class="page-head"><h1><?= e(__('Logs & History')) ?></h1></div>
+<div class="page-head">
+  <h1><?= e(__('Logs & History')) ?></h1>
+  <?php if ($canClear && ($tab !== 'errors' && $tab !== 'update' || Auth::can('update.manage'))): ?>
+  <form method="post" class="d-flex flex-wrap gap-2 align-items-center" data-confirm="<?= e(__('Clear these log entries? This cannot be undone.')) ?>">
+    <?= Csrf::field() ?><input type="hidden" name="op" value="clear"><input type="hidden" name="tab" value="<?= e($tab) ?>">
+    <?php if ($tab === 'errors' || $tab === 'update'): ?><input type="hidden" name="range" value="all"><?php else: ?>
+    <label class="visually-hidden" for="clearRange"><?= e(__('Clear')) ?></label>
+    <select class="form-select form-select-sm w-auto" id="clearRange" name="range">
+      <option value="all"><?= e(__('All entries')) ?></option>
+      <option value="30"><?= e(__('Older than 30 days')) ?></option>
+      <option value="90"><?= e(__('Older than 90 days')) ?></option>
+      <option value="365"><?= e(__('Older than 1 year')) ?></option>
+    </select>
+    <?php endif; ?>
+    <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash3"></i> <?= e(__('Clear :log', ['log' => $tabs[$tab][1]])) ?></button>
+  </form>
+  <?php endif; ?>
+</div>
 <ul class="nav nav-tabs nav-tabs-scroll mb-3">
   <?php foreach ($tabs as $k => [$icon, $label]): ?>
     <li class="nav-item"><a class="nav-link<?= $tab === $k ? ' active' : '' ?>" href="<?= e(admin_url('logs.php', ['tab' => $k])) ?>"><i class="bi <?= e($icon) ?>"></i> <?= e($label) ?></a></li>

@@ -790,4 +790,90 @@ final class PanelsTest extends TestCase
         }
         DB::update('users', ['language' => 'en'], 'username = :u', ['u' => 'pnroot']);
     }
+
+    /**
+     * 2.6.1 owner rule: when the Super Admin logs in and works inside a customer's workspace, nothing of it
+     * shows in that customer's logs (Logs page, dashboard, user page); the console's Audit logs keeps it.
+     * Logs can be cleared: the customer Admin its own logs (never the Super Admin's rows), the Super Admin
+     * the audit log. Staff cannot clear.
+     */
+    public function testSuperAdminLeavesNoTraceInCustomerLogsAndLogsCanBeCleared(): void
+    {
+        ActivityLog::forget();
+        $this->assertTrue(ActivityLog::hasActorColumn(), 'migration 033');
+        $a = self::$h['alpha'];
+        // The customer's own action (visible to the customer).
+        [$s] = self::as('alphaboss')->get('index.php');
+        $this->assertSame(200, $s);
+        Tenant::run($a, static fn () => DB::insert('activity_logs', ['hotel_id' => $a, 'user_id' => null, 'username' => 'alphaboss', 'action' => 'content_upload', 'details' => 'OWN-ACTION', 'created_at' => date('Y-m-d H:i:s', time() - 40 * 86400)]));
+
+        // The Super Admin logs in, opens the workspace and changes something there.
+        $root = new AdminSession(self::$url, 'pnroot');
+        [$s] = $root->post('platform_customer.php', ['op' => 'enter', 'id' => $a, 'next' => 'rooms.php']);
+        $this->assertSame(302, $s);
+        [$s] = $root->post('rooms.php', ['action' => 'save', 'room_number' => 'SA-ROOM', 'name' => 'SA-ROOM']);
+        $this->assertContains($s, [200, 302]);
+        $saRows = (int) DB::value("SELECT COUNT(*) FROM activity_logs WHERE username = 'pnroot' AND actor_platform = 1");
+        $this->assertGreaterThanOrEqual(2, $saRows, 'login + enter (+ change) are recorded for the audit');
+        $this->assertSame(0, (int) DB::value("SELECT COUNT(*) FROM activity_logs WHERE username = 'pnroot' AND action = 'login' AND hotel_id IS NOT NULL"), 'Super Admin logins are platform-level');
+
+        // Customer views: nothing of the Super Admin.
+        $boss = self::as('alphaboss');
+        foreach (['logs.php?tab=activity', 'index.php'] as $page) {
+            [$s, , $html] = $boss->get($page);
+            $this->assertSame(200, $s, $page);
+            $this->assertFalse(TestEnv::hasPhpError($html));
+            $this->assertStringNotContainsString('pnroot', $html, "Super Admin hidden on $page");
+            $this->assertStringNotContainsString('hotel_enter', $html);
+        }
+        [, , $html] = $boss->get('logs.php?tab=activity');
+        $this->assertStringContainsString('OWN-ACTION', $html);
+        [, , $csv] = $boss->get('logs.php?tab=activity&export=csv');
+        $this->assertStringNotContainsString('pnroot', $csv);
+        // Console: the Super Admin sees everything, marked.
+        [, , $html] = self::as('pnroot')->get('platform_audit.php?customer=' . $a);
+        $this->assertStringContainsString('pnroot', $html);
+        $this->assertStringContainsString('hotel_enter', $html);
+        $this->assertStringContainsString('Super Admin</span>', $html);
+
+        // Staff cannot clear; no button.
+        [, , $html] = self::as('alphastaff')->get('logs.php?tab=activity');
+        $this->assertStringNotContainsString('name="op" value="clear"', $html);
+        [$s] = self::as('alphastaff')->post('logs.php?tab=activity', ['op' => 'clear', 'tab' => 'activity', 'range' => 'all']);
+        $this->assertContains($s, [302, 403]);
+        $this->assertStringContainsString('OWN-ACTION', (string) json_encode(DB::column("SELECT details FROM activity_logs WHERE hotel_id = $a")));
+
+        // Customer Admin clears "older than 30 days", then everything: own rows go, the Super Admin's stay.
+        [, , $html] = $boss->get('logs.php?tab=activity');
+        $this->assertStringContainsString('name="op" value="clear"', $html);
+        [$s] = $boss->post('logs.php', ['op' => 'clear', 'tab' => 'activity', 'range' => '30']);
+        $this->assertSame(302, $s);
+        $this->assertSame(0, (int) DB::value("SELECT COUNT(*) FROM activity_logs WHERE hotel_id = :h AND details = 'OWN-ACTION'", ['h' => $a]));
+        [$s] = $boss->post('logs.php', ['op' => 'clear', 'tab' => 'activity', 'range' => 'all']);
+        $this->assertSame(302, $s);
+        $this->assertSame(1, (int) DB::value('SELECT COUNT(*) FROM activity_logs WHERE hotel_id = :h AND actor_platform = 0', ['h' => $a]), 'only the "logs cleared" note remains');
+        $this->assertSame('logs_cleared', DB::value('SELECT action FROM activity_logs WHERE hotel_id = :h AND actor_platform = 0', ['h' => $a]));
+        $this->assertGreaterThan(0, (int) DB::value('SELECT COUNT(*) FROM activity_logs WHERE hotel_id = :h AND actor_platform = 1', ['h' => $a]), 'Super Admin audit rows survive a customer clear');
+        [$s] = $boss->post('logs.php', ['op' => 'clear', 'tab' => 'status', 'range' => 'all']);
+        $this->assertSame(302, $s);
+        $this->assertSame(0, (int) DB::value('SELECT COUNT(*) FROM device_status_logs WHERE hotel_id = :h', ['h' => $a]));
+        // CSRF.
+        [$s] = $boss->post('logs.php', ['_csrf' => 'bad', 'op' => 'clear', 'tab' => 'activity', 'range' => 'all']);
+        $this->assertSame(419, $s);
+        // Other customers untouched by a customer clear.
+        $gammaBefore = (int) DB::value('SELECT COUNT(*) FROM activity_logs WHERE hotel_id = :h', ['h' => self::$h['gamma']]);
+
+        // Super Admin clears the audit log of this customer only.
+        [$s] = self::as('pnroot')->post('platform_audit.php', ['op' => 'clear', 'customer' => (string) $a, 'range' => 'all']);
+        $this->assertSame(302, $s);
+        $this->assertSame(0, (int) DB::value('SELECT COUNT(*) FROM activity_logs WHERE hotel_id = :h', ['h' => $a]));
+        $this->assertSame($gammaBefore, (int) DB::value('SELECT COUNT(*) FROM activity_logs WHERE hotel_id = :h', ['h' => self::$h['gamma']]));
+        $this->assertSame(1, (int) DB::value("SELECT COUNT(*) FROM activity_logs WHERE action = 'audit_cleared' AND hotel_id IS NULL"));
+        // Customers / resellers cannot clear the audit log.
+        foreach (['alphaboss', 'pnres1'] as $u) {
+            [$s] = self::as($u)->post('platform_audit.php', ['op' => 'clear', 'customer' => '', 'range' => 'all']);
+            $this->assertContains($s, [302, 403], $u);
+        }
+        $this->assertGreaterThan(0, (int) DB::value('SELECT COUNT(*) FROM activity_logs'));
+    }
 }

@@ -11,6 +11,33 @@ require_once __DIR__ . '/partials/panel_ui.php';
 $user = Auth::require('platform.manage');
 Csrf::check();
 
+// 2.6.1: clear audit entries — everything, one customer or the platform only, optionally only old ones.
+if (is_post() && ($_POST['op'] ?? '') === 'clear') {
+    $cust = req_str('customer', $_POST, 10);
+    $days = ['all' => 0, '30' => 30, '90' => 90, '365' => 365][(string) ($_POST['range'] ?? '')] ?? null;
+    if ($days === null) {
+        flash('danger', __('Choose what to clear.'));
+        redirect(admin_url('platform_audit.php'));
+    }
+    $cw = [];
+    $cp = [];
+    if ($cust === 'platform') {
+        $cw[] = 'hotel_id IS NULL';
+    } elseif (ctype_digit($cust) && (int) $cust > 0) {
+        $cw[] = 'hotel_id = :c';
+        $cp['c'] = (int) $cust;
+    }
+    if ($days) {
+        $cw[] = 'created_at < :cut';
+        $cp['cut'] = date('Y-m-d H:i:s', time() - $days * 86400);
+    }
+    $n = DB::query('DELETE FROM activity_logs' . ($cw ? ' WHERE ' . implode(' AND ', $cw) : ''), $cp)->rowCount();
+    $scope = $cust === 'platform' ? 'platform' : (ctype_digit($cust) && (int) $cust > 0 ? 'customer #' . (int) $cust : 'all customers + platform');
+    ActivityLog::add('audit_cleared', 'logs', null, 'Audit log cleared: ' . $scope . ', ' . ($days ? 'older than ' . $days . ' days' : 'all') . ', ' . $n . ' rows', null);
+    flash('success', __('Cleared :n audit entries.', ['n' => $n]));
+    redirect(admin_url('platform_audit.php', $cust !== '' ? ['customer' => $cust] : []));
+}
+
 $f = [
     'customer' => req_str('customer', $_GET, 10),   // id, or 'platform'
     'user' => req_str('user', $_GET, 60),
@@ -73,7 +100,20 @@ require __DIR__ . '/partials/header.php';
 ?>
 <div class="page-head">
   <div><h1><i class="bi bi-journal-check"></i> <?= e(__('Audit logs')) ?></h1><p class="lead-sm"><?= e(__('Who did what, where and when — across every customer and the platform itself.')) ?></p></div>
-  <a class="btn btn-light border" href="<?= e(self_url(['export' => 'csv'])) ?>"><i class="bi bi-filetype-csv"></i> <?= e(__('Export CSV')) ?></a>
+  <div class="d-flex flex-wrap gap-2 align-items-center">
+    <a class="btn btn-light border" href="<?= e(self_url(['export' => 'csv'])) ?>"><i class="bi bi-filetype-csv"></i> <?= e(__('Export CSV')) ?></a>
+    <form method="post" class="d-flex flex-wrap gap-2 align-items-center" data-confirm="<?= e(__('Clear these audit entries? This cannot be undone.')) ?>">
+      <?= Csrf::field() ?><input type="hidden" name="op" value="clear"><input type="hidden" name="customer" value="<?= e($f['customer']) ?>">
+      <label class="visually-hidden" for="auditClearRange"><?= e(__('Clear')) ?></label>
+      <select class="form-select form-select-sm w-auto" id="auditClearRange" name="range">
+        <option value="all"><?= e(__('All entries')) ?></option>
+        <option value="30"><?= e(__('Older than 30 days')) ?></option>
+        <option value="90"><?= e(__('Older than 90 days')) ?></option>
+        <option value="365"><?= e(__('Older than 1 year')) ?></option>
+      </select>
+      <button class="btn btn-outline-danger"><i class="bi bi-trash3"></i> <?= e($f['customer'] === '' ? __('Clear audit log') : __('Clear for this filter')) ?></button>
+    </form>
+  </div>
 </div>
 <form method="get" class="card card-body mb-3" data-audit-filters>
   <div class="row g-2 align-items-end">
@@ -100,7 +140,7 @@ require __DIR__ . '/partials/header.php';
       <tr>
         <td class="small text-nowrap"><?= e(substr((string) $r['created_at'], 0, 16)) ?></td>
         <td class="small"><?php if ($r['hotel_id']): ?><a class="text-decoration-none" href="<?= e(admin_url('platform_customer.php', ['id' => $r['hotel_id'], 'tab' => 'activity'])) ?>"><?= e($r['hotel_name'] ?? ('#' . $r['hotel_id'])) ?></a><?php else: ?><span class="badge text-bg-light border"><?= e(__('Platform')) ?></span><?php endif; ?></td>
-        <td class="small"><?= e($r['username'] ?? '-') ?></td>
+        <td class="small"><?= e($r['username'] ?? '-') ?><?php if (!empty($r['actor_platform']) && $r['hotel_id']): ?> <span class="badge text-bg-primary" title="<?= e(__('Done by the Super Admin inside this workspace — hidden from the customer')) ?>"><?= e(__('Super Admin')) ?></span><?php endif; ?></td>
         <td class="small"><a class="mono text-decoration-none" href="<?= e(self_url(['action' => $r['action'], 'page' => null])) ?>"><?= e($r['action']) ?></a></td>
         <td class="small text-break"><?= e((string) ($r['details'] ?? '')) ?><?php if ($r['entity_type']): ?> <span class="text-muted">(<?= e(match ((string) $r['entity_type']) { 'hotel' => __('customer'), 'room' => __('screen'), 'device' => __('TV'), default => (string) $r['entity_type'] }) ?> #<?= (int) $r['entity_id'] ?>)</span><?php endif; ?></td>
         <td class="small d-none d-lg-table-cell"><?= e((string) ($r['ip_address'] ?? '')) ?></td>

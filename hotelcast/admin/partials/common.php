@@ -422,7 +422,7 @@ function hc_recent_activity(int $limit = 10): array
 {
     $mine = Access::restricted() ? ' AND user_id = :me' : '';
     $p = hid() + ($mine ? ['me' => (int) Auth::id()] : []);
-    return DB::all('SELECT * FROM activity_logs WHERE hotel_id = :hid' . $mine . ' ORDER BY id DESC LIMIT ' . max(1, $limit), $p);
+    return DB::all('SELECT * FROM activity_logs WHERE hotel_id = :hid' . ActivityLog::customerFilter() . $mine . ' ORDER BY id DESC LIMIT ' . max(1, $limit), $p);
 }
 
 function mode_label(string $mode): string
