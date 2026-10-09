@@ -22,7 +22,7 @@ foreach (DB::all("SELECT DATE_FORMAT(created_at, '%Y-%m') AS m, COUNT(*) AS n FR
     }
 }
 $tvGrowth = $months;
-foreach (DB::all("SELECT DATE_FORMAT(created_at, '%Y-%m') AS m, COUNT(*) AS n FROM devices WHERE is_revoked = 0 AND created_at >= :t GROUP BY m", ['t' => array_key_first($months) . '-01']) as $r) {
+foreach (DB::all("SELECT DATE_FORMAT(registered_at, '%Y-%m') AS m, COUNT(*) AS n FROM devices WHERE is_revoked = 0 AND registered_at >= :t GROUP BY m", ['t' => array_key_first($months) . '-01']) as $r) {
     if (isset($tvGrowth[$r['m']])) {
         $tvGrowth[$r['m']] = (int) $r['n'];
     }

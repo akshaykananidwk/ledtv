@@ -66,7 +66,7 @@ foreach (['shree' => [1 => 6, 2 => 2], 'hospital' => [1 => 4], 'cafe' => [1 => 2
             $online = $i % 4 !== 0;
             DB::insert('devices', ['device_uid' => 'tv-' . $k . '-' . sprintf('%04d', $i), 'room_id' => $r['id'], 'token_hash' => hash('sha256', 'tok' . $n),
                 'status' => $online ? 'online' : 'offline', 'last_ping' => $online ? now() : date('Y-m-d H:i:s', time() - 7200), 'last_heartbeat' => now(),
-                'app_version' => $i % 3 === 0 ? '2.4.0' : '2.5.0', 'app_version_code' => $i % 3 === 0 ? 11 : 13, 'model' => 'Mi TV 4A', 'ip_address' => '192.168.1.' . (10 + $n), 'is_revoked' => 0, 'created_at' => now()]);
+                'app_version' => $i % 3 === 0 ? '2.4.0' : '2.5.0', 'app_version_code' => $i % 3 === 0 ? 11 : 13, 'model' => 'Mi TV 4A', 'ip_address' => '192.168.1.' . (10 + $n), 'is_revoked' => 0, 'registered_at' => now()]);
         }
         Hotels::createHotelUser(Tenant::id(), ['username' => $k . 'staff', 'email' => $k . 'staff@demo.test', 'password' => 'Passw0rd!', 'full_name' => ucfirst($k) . ' Staff'], 'staff');
     });

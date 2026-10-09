@@ -538,8 +538,10 @@ final class PanelsTest extends TestCase
         $this->assertNotNull(DB::value('SELECT id FROM hotels WHERE id = :id', ['id' => $id]));
         // The real thing, from the customers list modal (same handler as Customer 360 → Settings).
         [, , $html] = $root->get('platform_hotels.php');
-        $this->assertStringContainsString('data-delete-customer="' . $id . '"', $html);
+        $this->assertStringContainsString('data-archive-customer="' . $id . '"', $html, 'archive is the default list action');
         $this->assertStringContainsString('hcDeleteCustomer', $html);
+        [, , $html] = $root->get('platform_customer.php?id=' . $id . '&tab=settings');
+        $this->assertStringContainsString('data-delete-customer="' . $id . '"', $html);
         [$s, , , $head] = $root->post('platform_customer.php', ['op' => 'delete', 'id' => $id, 'confirm_name' => 'Doomed Traders']);
         $this->assertSame(302, $s);
         $this->assertStringContainsString('platform_hotels.php', $head);
@@ -594,6 +596,175 @@ final class PanelsTest extends TestCase
         [$s] = $root->get('platform_customer.php?id=' . $id);
         $this->assertSame(404, $s);
         // The last customer can never be deleted.
+        $this->assertSame('', TestEnv::phpErrors(), 'PHP warnings in logs/php_error.log');
+    }
+
+    // ------------------------------------------------------------------ docs/SPEC_SAAS.md alignment (2.6)
+
+    public function testSidebarFollowsTheSpecMenusPerPanel(): void
+    {
+        $root = self::as('pnroot');
+        [, , $html] = $root->get('platform_overview.php');
+        $keys = self::navKeys($html);
+        // §34: Dashboard, Clients, Plans & modules, Subscriptions, Devices, Content overview, Reports, Notifications, Audit logs, System settings.
+        $pos = static fn (string $k) => array_search($k, $keys, true);
+        foreach (['platform_overview', 'platform_hotels', 'platform_plans', 'platform_invoices', 'platform_licenses', 'platform_screens', 'platform_content', 'platform_reports', 'push', 'platform_audit', 'platform_settings'] as $k) {
+            $this->assertContains($k, $keys, "console sidebar has $k");
+        }
+        $this->assertLessThan($pos('platform_hotels'), $pos('platform_overview'));
+        $this->assertLessThan($pos('platform_plans'), $pos('platform_hotels'));
+        $this->assertLessThan($pos('platform_screens'), $pos('platform_plans'));
+        $this->assertLessThan($pos('platform_content'), $pos('platform_screens'));
+        $this->assertLessThan($pos('platform_audit'), $pos('platform_reports'));
+        $this->assertLessThan($pos('platform_settings'), $pos('platform_audit'));
+        foreach (['Dashboard', 'Plans &amp; modules', 'Content overview', 'Reports', 'Audit logs', 'System settings', 'Devices &amp; screens'] as $label) {
+            $this->assertStringContainsString($label, $html, "label $label");
+        }
+        foreach (['platform_content.php', 'platform_reports.php', 'platform_audit.php'] as $p) {
+            [$s, , $html] = $root->get($p);
+            $this->assertSame(200, $s, $p . ' ' . substr(TestEnv::phpErrors(), -600));
+            $this->assertFalse(TestEnv::hasPhpError($html), $p);
+            $this->assertSame('platform', self::panelOf($html));
+        }
+        [, , $html] = $root->get('platform_overview.php');
+        foreach (['data-kpi="suspended"', 'data-kpi="warnings"', 'data-kpi="expiring"', 'data-kpi="revenue"', 'data-chart="growth"', 'data-chart="devices"', 'data-chart="plans"', 'Device errors'] as $x) {
+            $this->assertStringContainsString($x, $html, $x);
+        }
+        // Customer: Dashboard, Screens, Locations / groups, Content, Playlists, Schedules, Users, Logs, Settings, Subscription.
+        [, , $html] = self::as('alphaboss')->get('index.php');
+        $keys = self::navKeys($html);
+        $pos = static fn (string $k) => array_search($k, $keys, true);
+        $this->assertLessThan($pos('rooms'), $pos('index'));
+        $this->assertLessThan($pos('groups'), $pos('rooms'));
+        $this->assertLessThan($pos('content'), $pos('groups'));
+        $this->assertLessThan($pos('playlists'), $pos('content'));
+        $this->assertLessThan($pos('users'), $pos('playlists'));
+        $this->assertLessThan($pos('settings'), $pos('users'));
+        $this->assertLessThan($pos('plan'), $pos('settings'));
+        $this->assertStringContainsString('Locations &amp; groups', $html);
+        $this->assertStringContainsString('>Subscription<', $html);
+    }
+
+    public function testSubscriptionPageShowsOwnStateOnly(): void
+    {
+        $boss = self::as('alphaboss');
+        [$s, , $html] = $boss->get('plan.php');
+        $this->assertSame(200, $s);
+        $this->assertStringContainsString('data-subscription-state="ACTIVE"', $html);
+        $this->assertStringNotContainsString('Gamma Lodge', $html);
+        $this->assertStringNotContainsString('Doomed', $html);
+        DB::update('hotels', ['expires_at' => date('Y-m-d 23:59:59', time() + 5 * 86400)], 'id = :id', ['id' => self::$h['alpha']]);
+        Tenant::forget(self::$h['alpha']);
+        [, , $html] = $boss->get('plan.php');
+        $this->assertStringContainsString('data-subscription-state="EXPIRING"', $html);
+        $this->assertStringContainsString('day(s) left', $html);
+        DB::update('hotels', ['expires_at' => null], 'id = :id', ['id' => self::$h['alpha']]);
+        Tenant::forget(self::$h['alpha']);
+        $this->assertSame('ACTIVE', Panel::subscriptionState(self::$h['alpha'])['key']);
+        // Staff without settings.manage cannot open it; it is never a platform page.
+        [$s] = self::as('alphastaff')->get('plan.php');
+        $this->assertSame(403, $s);
+    }
+
+    public function testDisabledModuleAnswersWithThePlanMessageOnPagesAjaxAndApi(): void
+    {
+        $root = self::as('pnroot');
+        $alpha = self::$h['alpha'];
+        [$s] = $root->ajax('platform_toggle', ['kind' => 'feature', 'target' => $alpha, 'feature' => 'templates', 'on' => false]);
+        $this->assertSame(200, $s);
+        $boss = new AdminSession(self::$url, 'alphaboss');
+        [$s, , $html] = $boss->get('templates.php');
+        $this->assertSame(403, $s);
+        $this->assertStringContainsString('This feature is not available in your current plan.', $html);
+        [$s, $j] = $boss->ajax('tpl_apply', ['id' => 1]);
+        $this->assertSame(403, $s);
+        $this->assertSame('FEATURE_DISABLED', $j['error']['code']);
+        $this->assertStringContainsString('This feature is not available in your current plan.', $j['error']['message']);
+        $this->assertSame('This feature is not available in your current plan.', substr(Features::denial('templates')['message'], 0, 51));
+        $root->ajax('platform_toggle', ['kind' => 'feature', 'target' => $alpha, 'feature' => 'templates', 'on' => true]);
+        foreach (['gu', 'hi'] as $lang) {
+            $this->assertNotSame('This feature is not available in your current plan.', I18n::table($lang)['This feature is not available in your current plan.'] ?? 'This feature is not available in your current plan.', $lang);
+        }
+    }
+
+    public function testAuditLogsPageIsPlatformOnlyAndFilters(): void
+    {
+        $root = self::as('pnroot');
+        $alpha = self::$h['alpha'];
+        [$s, , $html] = $root->get('platform_audit.php');
+        $this->assertSame(200, $s);
+        $this->assertStringContainsString('data-audit-table', $html);
+        $this->assertStringContainsString('Alpha Stores', $html);
+        [$s, , $html] = $root->get('platform_audit.php?customer=' . self::$h['gamma'] . '&action=user_');
+        $this->assertSame(200, $s);
+        $this->assertStringNotContainsString('Alpha Stores</a>', $html);
+        [$s, , $html] = $root->get('platform_audit.php?customer=' . $alpha . '&action=hotel_feature&from=' . date('Y-m-d') . '&to=' . date('Y-m-d'));
+        $this->assertSame(200, $s);
+        $this->assertStringContainsString('hotel_feature', $html);
+        [$s, , $html] = $root->get('platform_audit.php?customer=platform');
+        $this->assertSame(200, $s);
+        [$s, , $csv] = $root->get('platform_audit.php?export=csv&customer=' . $alpha);
+        $this->assertSame(200, $s);
+        $this->assertStringContainsString('time,customer,user,action', $csv);
+        foreach (['pnres1', 'alphaboss'] as $u) {
+            [$s] = self::as($u)->get('platform_audit.php');
+            $this->assertSame(403, $s, $u);
+            [$s] = self::as($u)->get('platform_reports.php');
+            $this->assertSame(403, $s, $u);
+            [$s] = self::as($u)->get('platform_content.php');
+            $this->assertSame(403, $s, $u);
+        }
+        // The customer's own log stays limited to its data.
+        [$s, , $html] = self::as('alphaboss')->get('logs.php');
+        $this->assertSame(200, $s);
+        $this->assertStringNotContainsString('Gamma Lodge', $html);
+    }
+
+    public function testArchiveRestoreAndPermanentDeletePolicy(): void
+    {
+        $root = new AdminSession(self::$url, 'pnroot');
+        $gamma = self::$h['gamma'];
+        $gboss = new AdminSession(self::$url, 'gammaboss');
+        [$s] = $gboss->get('index.php');
+        $this->assertSame(200, $s);
+        // Resellers and customers cannot archive.
+        [$s] = self::as('pnres1')->post('platform_customer.php', ['op' => 'archive', 'id' => self::$h['alpha']]);
+        $this->assertSame(403, $s);
+        [$s] = $gboss->post('platform_customer.php', ['op' => 'archive', 'id' => $gamma]);
+        $this->assertSame(403, $s);
+        // Archive from the list (same handler): suspended + archived, hidden from the default list, users logged out, TV paused.
+        [, , $html] = $root->get('platform_hotels.php');
+        $this->assertStringContainsString('data-archive-customer="' . $gamma . '"', $html);
+        $this->assertStringNotContainsString('data-delete-customer="' . $gamma . '"', $html, 'permanent delete only after archiving (list)');
+        [$s, , , $head] = $root->post('platform_customer.php', ['op' => 'archive', 'id' => $gamma]);
+        $this->assertSame(302, $s);
+        $row = DB::one('SELECT * FROM hotels WHERE id = :id', ['id' => $gamma]);
+        $this->assertNotNull($row['archived_at']);
+        $this->assertSame('suspended', $row['status']);
+        $this->assertSame('ARCHIVED', Panel::subscriptionState($gamma)['key']);
+        [, , $html] = $root->get('platform_hotels.php');
+        $this->assertStringNotContainsString('data-status-badge="' . $gamma . '"', $html, 'archived customers are hidden by default');
+        [, , $html] = $root->get('platform_hotels.php?status=archived');
+        $this->assertStringContainsString('Gamma Lodge', $html);
+        $this->assertStringContainsString('data-restore-customer="' . $gamma . '"', $html);
+        $this->assertStringContainsString('data-delete-customer="' . $gamma . '"', $html);
+        [$s] = $gboss->get('index.php');
+        $this->assertSame(302, $s, 'archived customer\'s users are logged out');
+        $this->assertSame(1, (int) DB::value("SELECT COUNT(*) FROM activity_logs WHERE hotel_id = :h AND action = 'hotel_archive'", ['h' => $gamma]));
+        [, , $html] = $root->get('platform_customer.php?id=' . $gamma);
+        $this->assertStringContainsString('data-archived', $html);
+        // Restore: active again, data intact.
+        [$s] = $root->post('platform_customer.php', ['op' => 'restore', 'id' => $gamma]);
+        $this->assertSame(302, $s);
+        $row = DB::one('SELECT * FROM hotels WHERE id = :id', ['id' => $gamma]);
+        $this->assertNull($row['archived_at']);
+        $this->assertSame('active', $row['status']);
+        $this->assertSame(1, (int) DB::value("SELECT COUNT(*) FROM rooms WHERE hotel_id = :h AND room_number = 'G1'", ['h' => $gamma]));
+        [, , $html] = $root->get('platform_hotels.php');
+        $this->assertStringContainsString('data-status-badge="' . $gamma . '"', $html);
+        $gboss2 = new AdminSession(self::$url, 'gammaboss');
+        [$s] = $gboss2->get('index.php');
+        $this->assertSame(200, $s, 'restored customer can log in again');
         $this->assertSame('', TestEnv::phpErrors(), 'PHP warnings in logs/php_error.log');
     }
 
