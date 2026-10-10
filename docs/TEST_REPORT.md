@@ -1,3 +1,31 @@
+# 2.8.0 — email that really works: SMTP, forgot password, invites, welcome mail (2026-10-10)
+
+Server `version.json` 2.8.0 (migration 035: `password_resets`, `mail_log`); the TV app stays 2.6.0. Guide: `docs/modules/email.md`.
+
+- Full PHP suite: **623 tests, 25,824 assertions, 0 failures** (607 → +16 in the new `tests/Integration/Apps/EmailFlowsTest.php`). No existing test had to change. `php -l` on every changed PHP file (29): 0 errors.
+- No real e-mail was sent at any point: tests capture mail with `Mailer::$testHook` / `Notifier::$mailer`, the sandbox writes to `storage/mail_outbox.jsonl`, SMTP only to a fake server on 127.0.0.1.
+
+| `EmailFlowsTest` | covers |
+|---|---|
+| MIME | multipart/alternative (text + HTML, quoted-printable, CRLF), RFC 2047 Gujarati subject (round trip, encoded words ≤ 75 chars, folding), Message-ID / Date / MIME-Version / Reply-To, quoted / encoded display names; CR/LF injection in subject, From and From name stripped (no extra header line), injected recipient refused; dot-stuffing |
+| hooks / template | `Mailer::$testHook` gets the whole message, old `Notifier::$mailer` still gets every mail; `Notifier::email` keeps the plain text and adds the branded HTML (customer white-label name / colour, linked URLs, support contact); template escapes, button URL also in the text part |
+| SMTP client (fake server `tests/fixtures/fake_smtp.php`) | no-auth delivery: EHLO → MAIL FROM → RCPT TO → DATA → QUIT, message received byte-exact after un-stuffing; AUTH LOGIN ok / wrong password (exact `535 …` + App-Password hint, password never in the transcript); AUTH PLAIN; RCPT 550; STARTTLS required but not offered → refused before any credentials; closed port → "SMTP connect … failed"; TLS peer verification on by default, off only with "allow self-signed" |
+| Mailer + log | SMTP settings from the platform (encrypted password) → sent as the mailbox address, caller address as Reply-To; `mail_log` row (recipient, subject with the code masked, transport, status), never a body; failure row with the server error; only the newest 200 rows kept; non-loopback SMTP host in a sandbox → outbox |
+| settings page | Email (SMTP) card + presets + log render; save → password stored `enc:…`, never echoed, empty = keep, "remove saved password"; **Send test email** ok through the fake server, wrong password → `535 5.7.8 …` + SMTP conversation shown (test does not save), unreachable server → connect error; CSRF 419; customer admin 403 |
+| forgot / reset | login shows "Forgot password?" + "Email or username"; unknown address and known address (mixed case + spaces) → identical page, ≥ 1 s, timing difference small; one mail with an absolute 64-hex link, 60 min; only SHA-256 stored; the token in no log file / table; reset page sends `Referrer-Policy: no-referrer` and moves the token out of the URL; weak / mismatching password refused; success → new hash, failed attempts + lock cleared, every session revoked (old session redirected to login), token used, platform-level activity row, "password changed" mail; second use refused; login with the new password by email |
+| tokens | new request invalidates the older token; expired token refused (page + `complete()`); malformed tokens; disabled account → token dead; password = email refused |
+| rate limits | per account: 3 mails / hour, 4th request silent; per IP: 5 / 15 min, then "Too many requests" (429) |
+| CSRF | forgot and reset forms without / with a forged token → 419, nothing sent / changed |
+| roles | reseller, chain admin, customer super admin, staff: link mailed and works; Hindi customer owner → Hindi mail with the customer's brand and `&b=<slug>` link; Gujarati reseller → Gujarati mail; inactive user, archived customer, suspended reseller, unknown → no mail, same neutral page |
+| login by email | `  BoSs@Alpha.TEST ` and `EMBOSS` log in; duplicate email (other case) refused in Users and `validateAdmin`; `bin/make_super_admin.php` still creates a working admin |
+| sign-up | OTP mail (code in text + big code in HTML, Gujarati), verify → **welcome mail** (subject "your free trial is ready", login URL, username, email, trial days, registration key / TV steps) + platform notice; failed send → `Signup::$mailFailed`, `mail_log` failed, send not counted, immediate retry works; over HTTP with an unreachable SMTP server the verify page shows "could not send … contact support" with the support address |
+| invites | Customer 360 → Users with "Email an invite link" and no password → Gujarati invite mail, `invite` token 72 h, no usable password before, branded reset page (customer brand), password set → login by email, `password_set_invite` row in the customer's log; direct password still works (no token); customer admin Users → invite; Super Admin → Platform admins invite; empty password without the checkbox still refused |
+
+- Browser (headless Chromium, `tests/browser/email_qa.js` + `email_server.php` sandbox): **31 checks passed** — login EN / GU with "Forgot password?" (390 px), forgot form EN / GU, neutral answer, reset form EN / GU (token removed from the address bar), Super Admin logs in with the email address, Email (SMTP) card EN / GU (password not echoed, log), test email to an unreachable server shows the exact error, rendered reset e-mail EN / GU; no JavaScript / HTTP errors. Screenshots: `docs/screenshots/2.8/` (login-forgot-en, login-forgot-gu, forgot-form-en, forgot-form-gu, forgot-sent-en, reset-form-en, reset-form-gu, smtp-settings-en, smtp-settings-gu, smtp-test-error-en, email-reset-en, email-reset-gu).
+- Not tested here (needs the live mailbox): a real STARTTLS / SSL handshake with Gmail / Hostinger / Zoho and delivery into a real inbox (use **Send test email** on the live site), SPF / DKIM of the live domain.
+
+---
+
 # 2.7.0 — Super Admin APK Manager, forced TV app update on start; TV app 2.6.0 (2026-10-10)
 
 Server `version.json` 2.7.0 (migration 034); TV app **2.6.0 (versionCode 14)**. Design: `docs/modules/apk_manager.md`.
