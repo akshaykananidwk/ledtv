@@ -1,3 +1,30 @@
+# 2.7.0 — Super Admin APK Manager, forced TV app update on start; TV app 2.6.0 (2026-10-10)
+
+Server `version.json` 2.7.0 (migration 034); TV app **2.6.0 (versionCode 14)**. Design: `docs/modules/apk_manager.md`.
+
+- Full PHP suite: **607 tests, 25,326 assertions, 0 failures** (602 → +5 in the new `tests/Integration/Apps/PlatformApkTest.php`). `php -l` on every changed file: 0 errors.
+- One existing expectation kept by design: `TenancyTest` (another customer's APK id in `apk.php` push → 404) — the customer push still uses `Tenant::find` first and only then accepts a platform release rolled out to that customer.
+
+| `PlatformApkTest` | covers |
+|---|---|
+| APK parsing | fixture APKs built with aapt2 + signed with a throwaway test key (`tests/fixtures/apk/`): package / versionCode / versionName / signer SHA-256 equal `apksigner`'s value; unsigned → no signer; the real `android/release` build (UTF-16 manifest, v1+v2) → `com.hotelcast.tv`, release signer `b0f2c899…1a156c`; a non-ZIP → "not a valid Android APK" |
+| access | Super Admin 200 without PHP errors; customer admin and reseller 403 on the page, the upload and "Update all TVs now"; wrong CSRF token refused; nothing stored / queued |
+| nav | "APK Manager" link only in the Super Admin console (not in the reseller panel nor a customer workspace), group "Devices & content" |
+| upload validation | broken ZIP, wrong package (`com.example.other`), unsigned, wrong signer, same version again → 422 with the reason, no row, no file |
+| device API | `GET api/device/app-version`: no release → `update: null`; after the upload latest 90 + `required` + `required_version_code` + sha256 + URL (`source: platform`); 401 without / with a wrong token; poll carries `app_update`; web player: `update: null`, no `app_update`, APK 404; download: full (sha256 + `X-Content-SHA256`, counted) and resumed (`Range` → 206, same bytes, not counted), 401 unauthenticated |
+| precedence | customer's own higher release (95, optional) offered to that customer only (required stays 90), other customers can't download it (404); a lower customer release never beats the platform release; roll-out "selected" (91 for one customer: others stay on 90 and get 404 for 91); selected without customers refused; options change (optional + all customers) → latest 91, required 90 |
+| counters | Devices & screens counters / APK Manager tiles use each customer's effective latest (4 outdated, 1 on latest, web player excluded); page and Overview tile show "Latest: v9.1.0" |
+| Update all TVs now | `UPDATE_APP` only for online Android TVs with an older app (offline TV, current TV and web player skipped), payload = each customer's effective release (95 for the customer with its own higher build), delivered on the next poll, a second press replaces (no duplicate); Devices & screens "Update app" uses the same release |
+| delete | latest platform release refused (stays), older one deleted with its file; a customer admin can't delete a platform release through `apk.php`; audit rows at platform level |
+| translations | every string of the page / core classes in gu and hi; Gujarati page renders |
+
+- **Android** (`./gradlew testReleaseUnitTest lintRelease assembleRelease`): ✅ **233 unit tests, 0 failures** (+7 in `UpdateGateTest`: block only for a required newer version (never equal / lower / optional / without URL), server answer wins and an empty answer clears the cache, offline → cache, no info → start normally, no loop after updating, retry policy (download always every 30 s, install max 3, signature / wrong APK manual), PackageInstaller status → reason (signature mismatch, cancelled, blocked, storage, invalid), free space + progress, the JSON contract of `app-version` / poll). Lint: **0 errors** (36 warnings, none new from the 2.6.0 files).
+- APK: `android/release/KrishnaCloud-TV-2.6.0.apk` (7.4 MB, SHA-256 `35eae00e21d65524d920ff7a141e222e72c147785ee4a739be0770b972e21ef5`), `apksigner verify`: v1 + v2 OK, signer certificate SHA-256 **`b0f2c89990dcc8376790e2d6add7f9830f3990f1e8e44abb29ef7eb1dc1a156c`** (same key → OTA from 2.5.0 works); the server's own parser reads it as `com.hotelcast.tv` 14 / 2.6.0 with the same signer. The 2.5.0 APK was removed from `android/release/`.
+- Browser (headless Chromium, `tests/browser/panels_server.php` sandbox + 3 seeded platform releases): APK Manager EN / GU and options row / "Update all TVs now" confirmation / 390 px (no horizontal overflow), no JavaScript errors. Screenshots: `docs/screenshots/2.7/` (apk_manager_en, apk_manager_gu, apk_manager_options_en, apk_manager_update_all_confirm_en, apk_manager_mobile_en).
+- Not tested here (needs a real TV): the "Update required" screen on a device (silent install as device owner, system installer confirmation, "Install unknown apps" flow, signature-mismatch message from Android), resume after a cut connection on a TV.
+
+---
+
 # 2.6.1 — public landing page, TV transfer only from the console, logs (2026-10-09)
 
 Server only (`version.json` 2.6.1; the TV app stays 2.5.0).
