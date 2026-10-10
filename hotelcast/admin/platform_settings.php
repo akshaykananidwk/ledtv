@@ -109,6 +109,9 @@ if (is_post()) {
                 'from_name' => mb_substr(Mailer::cleanHeader($P('mail_from_name', 100)), 0, 100),
             ];
             $newPass = is_string($_POST['smtp_password'] ?? null) ? trim((string) $_POST['smtp_password']) : '';
+            if (preg_match('/^[a-z]{4}( [a-z]{4}){3}$/i', $newPass)) {
+                $newPass = str_replace(' ', '', $newPass); // Google App Password shown as "abcd efgh ijkl mnop"
+            }
             if ($mailCfg['transport'] === 'smtp') {
                 if ($mailCfg['host'] === '' || !preg_match('/^[A-Za-z0-9.\-]{1,190}$/', $mailCfg['host'])) {
                     $errors[] = __('Enter the SMTP server (host name), e.g. smtp.gmail.com.');

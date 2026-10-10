@@ -32,6 +32,22 @@ screen-wise schedule karo, emergency message moklo, TV reboot/update karo.*
 | Android TV app | [`android/`](android) | Kotlin, ExoPlayer 2.19, Retrofit, OkHttp, Glide, WorkManager — min SDK 21, target 34 |
 | Documentation | [`docs/`](docs) | Install guide, TV setup, admin guide, API, developer guide (tenancy + extension points), security, test report |
 
+## What's new in 2.8 — email that really works: SMTP, forgot password, invites, welcome mail
+
+Server only (`version.json` 2.8.0, migration 035; the TV app stays 2.6.0). Guide: [docs/modules/email.md](docs/modules/email.md).
+
+| Feature | Where |
+|---|---|
+| **Reliable e-mail**: own SMTP client (STARTTLS 587 / SSL 465, AUTH PLAIN / LOGIN, certificate checked) with PHP `mail()` as fallback; proper MIME (text + HTML, UTF-8 Gujarati / Hindi subjects, Message-ID), header-injection safe. **Every** mail of the platform goes through it, in a branded layout (white-label: customer mails carry the customer's brand) | `core/Mailer.php` · `core/MailTemplate.php` |
+| **Super Admin → Platform settings → Email (SMTP)**: server, port, encryption, username, password (stored encrypted, never shown), From email / name, presets for Gmail / Hostinger / Zoho / cPanel, **Send test email** with the exact SMTP error, **Email log** (last 200 sends, no contents) | `admin/platform_settings.php?tab=email` |
+| **Forgot password?** on every login page: by email or username, same neutral answer for every request, 60-minute single-use link (only a hash stored), rate limits per IP / account, new password logs out every device, "password changed" mail. All roles | `admin/forgot_password.php` · `admin/reset_password.php` · `core/PasswordReset.php` |
+| **Login with email or username** (case-insensitive, spaces trimmed); email addresses stay unique | `admin/login.php` · `core/Auth.php` |
+| **Invite links**: new users get "set your password" (72 h) instead of a shared password — Users, Customer 360, new customer, platform admins, resellers, chain admins (setting a password directly still possible) | user forms |
+| **Sign-up**: verification code and a **welcome mail** (login link, username / email, trial days, how to connect the first TV) in the chosen language; a failed send is shown to the visitor ("could not send — try again / contact support") and logged instead of failing silently; resend with a 60-s countdown | `signup.php` · `core/Signup.php` |
+
+**After updating:** Super Admin → Platform settings → **Email (SMTP)** → fill in your mailbox (Gmail: App Password)
+→ **Send test email** → **Save settings**. Until then mails still use PHP `mail()` as before.
+
 ## What's new in 2.7 — Super Admin APK Manager, forced TV app update on start (TV app 2.6.0)
 
 | Feature | Where |
