@@ -170,7 +170,7 @@ class UpdateActivity : AppCompatActivity() {
                     runOnUiThread { showProgress(done, total) }
                 }
                 progress.isIndeterminate = true
-                status.text = getString(R.string.update_installing)
+                status.text = getString(R.string.update_installing_now)
                 waitingForInstall = true
                 withContext(Dispatchers.IO) { updater.installForGate(apk) }
                 if (!KioskHelper.isDeviceOwner(this@UpdateActivity)) status.text = getString(R.string.update_confirm_hint)

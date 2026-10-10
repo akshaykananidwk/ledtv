@@ -148,4 +148,28 @@
     <string name="qr_detail_https_ok">अब सर्वर से कनेक्शन हो रहा है – फिर कोशिश।</string>
     <string name="qr_detail_http_ok">सर्वर HTTP पर चलता है – “HTTPS के बिना जोड़ें” दबाएँ।</string>
     <string name="qr_detail_error">विवरण: %1$s</string>
+
+    <!-- 2.6.0 forced update on app start (UpdateActivity, docs/modules/apk_manager.md) -->
+    <string name="update_checking">ऐप अपडेट जाँचे जा रहे हैं…</string>
+    <string name="update_required_title">अपडेट ज़रूरी है</string>
+    <string name="update_required_message">इस स्क्रीन को इस्तेमाल करने से पहले ऐप का नया वर्ज़न इंस्टॉल करना ज़रूरी है। कृपया प्रतीक्षा करें।</string>
+    <string name="update_versions">वर्ज़न %1$s  →  %2$s</string>
+    <string name="update_downloading">अपडेट डाउनलोड हो रहा है… %1$d%%</string>
+    <string name="update_downloading_unknown">अपडेट डाउनलोड हो रहा है…</string>
+    <string name="update_installing_now">इंस्टॉल हो रहा है… ऐप अपने आप फिर से शुरू होगा।</string>
+    <string name="update_confirm_hint">स्क्रीन पर इंस्टॉलेशन कन्फ़र्म करें (“Install” / “Update” पर OK दबाएँ)।</string>
+    <string name="update_retry">फिर से कोशिश करें</string>
+    <string name="update_allow_installs">इंस्टॉल की अनुमति दें</string>
+    <string name="update_retry_in">अगली अपने आप कोशिश %1$d से. में।</string>
+    <string name="update_retry_manual">फिर से कोशिश के लिए “फिर से कोशिश करें” दबाएँ।</string>
+    <string name="update_no_result">इंस्टॉलर ने जवाब नहीं दिया</string>
+    <string name="update_attempts">असफल इंस्टॉल: %2$d में से %1$d</string>
+    <string name="update_err_download">डाउनलोड असफल। TV का इंटरनेट कनेक्शन जाँचें।</string>
+    <string name="update_err_space">TV में पर्याप्त खाली जगह नहीं है। बेकार ऐप या फ़ाइलें हटाएँ, फिर से कोशिश करें।</string>
+    <string name="update_err_checksum">डाउनलोड की गई फ़ाइल खराब है (checksum मेल नहीं खाता)। फिर से डाउनलोड होगा।</string>
+    <string name="update_err_wrong_apk">सर्वर ने गलत ऐप फ़ाइल दी। कृपया अपने प्रदाता से संपर्क करें।</string>
+    <string name="update_err_blocked">इस TV पर ऐप इंस्टॉल करना ब्लॉक है। Settings → Apps → Krishna Cloud TV → “Install unknown apps” खोलकर अनुमति दें (या “इंस्टॉल की अनुमति दें” दबाएँ)।</string>
+    <string name="update_err_signature">नया ऐप इंस्टॉल ऐप से अलग की से साइन है (signature mismatch)। कृपया अपने प्रदाता से संपर्क करें।</string>
+    <string name="update_err_cancelled">इंस्टॉलेशन रद्द हुआ। अपडेट के बिना ऐप इस्तेमाल नहीं हो सकता।</string>
+    <string name="update_err_failed">इंस्टॉलेशन असफल।</string>
 </resources>

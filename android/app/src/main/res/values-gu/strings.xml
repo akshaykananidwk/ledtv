@@ -147,4 +147,28 @@
     <string name="qr_detail_https_ok">હવે server સાથે connection થાય છે – ફરી પ્રયાસ.</string>
     <string name="qr_detail_http_ok">Server HTTP પર ચાલે છે – “HTTPS વગર જોડો” દબાવો.</string>
     <string name="qr_detail_error">વિગત: %1$s</string>
+
+    <!-- 2.6.0 forced update on app start (UpdateActivity, docs/modules/apk_manager.md) -->
+    <string name="update_checking">એપ અપડેટ તપાસી રહ્યા છીએ…</string>
+    <string name="update_required_title">અપડેટ ફરજિયાત છે</string>
+    <string name="update_required_message">આ સ્ક્રીન વાપરતા પહેલા એપનું નવું વર્ઝન ઇન્સ્ટોલ કરવું જરૂરી છે. કૃપા કરી રાહ જુઓ.</string>
+    <string name="update_versions">વર્ઝન %1$s  →  %2$s</string>
+    <string name="update_downloading">અપડેટ ડાઉનલોડ થઈ રહ્યું છે… %1$d%%</string>
+    <string name="update_downloading_unknown">અપડેટ ડાઉનલોડ થઈ રહ્યું છે…</string>
+    <string name="update_installing_now">ઇન્સ્ટોલ થઈ રહ્યું છે… એપ જાતે ફરી શરૂ થશે.</string>
+    <string name="update_confirm_hint">સ્ક્રીન પર ઇન્સ્ટોલેશન કન્ફર્મ કરો (“Install” / “Update” પર OK દબાવો).</string>
+    <string name="update_retry">ફરી પ્રયાસ કરો</string>
+    <string name="update_allow_installs">ઇન્સ્ટોલની મંજૂરી આપો</string>
+    <string name="update_retry_in">આગળનો આપમેળે પ્રયાસ %1$d સે. માં.</string>
+    <string name="update_retry_manual">ફરી પ્રયાસ માટે “ફરી પ્રયાસ કરો” દબાવો.</string>
+    <string name="update_no_result">ઇન્સ્ટોલરે જવાબ આપ્યો નથી</string>
+    <string name="update_attempts">નિષ્ફળ ઇન્સ્ટોલ: %2$d માંથી %1$d</string>
+    <string name="update_err_download">ડાઉનલોડ નિષ્ફળ. TV નું ઇન્ટરનેટ કનેક્શન તપાસો.</string>
+    <string name="update_err_space">TV માં પૂરતી ખાલી જગ્યા નથી. ન વપરાતી એપ અથવા ફાઇલો દૂર કરો, પછી ફરી પ્રયાસ કરો.</string>
+    <string name="update_err_checksum">ડાઉનલોડ થયેલી ફાઇલ ખરાબ છે (checksum મેળ ખાતો નથી). ફરી ડાઉનલોડ થશે.</string>
+    <string name="update_err_wrong_apk">સર્વરે ખોટી એપ ફાઇલ આપી. કૃપા કરી તમારા પ્રદાતાનો સંપર્ક કરો.</string>
+    <string name="update_err_blocked">આ TV પર એપ ઇન્સ્ટોલ કરવાનું બ્લૉક છે. Settings → Apps → Krishna Cloud TV → “Install unknown apps” ખોલી મંજૂરી આપો (અથવા “ઇન્સ્ટોલની મંજૂરી આપો” દબાવો).</string>
+    <string name="update_err_signature">નવી એપ ઇન્સ્ટોલ થયેલી એપ કરતા અલગ કી થી સાઇન થયેલી છે (signature mismatch). કૃપા કરી તમારા પ્રદાતાનો સંપર્ક કરો.</string>
+    <string name="update_err_cancelled">ઇન્સ્ટોલેશન રદ થયું. અપડેટ વગર એપ વાપરી શકાશે નહીં.</string>
+    <string name="update_err_failed">ઇન્સ્ટોલેશન નિષ્ફળ.</string>
 </resources>

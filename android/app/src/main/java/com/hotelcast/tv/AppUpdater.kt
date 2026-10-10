@@ -1,5 +1,6 @@
 package com.hotelcast.tv
 
+import android.annotation.SuppressLint
 import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -192,6 +193,7 @@ class AppUpdater(private val context: Context) {
      * Downloads [url] to hotelcast-<code>.apk, continuing hotelcast-<code>.apk.part with a Range request.
      * Older update files are removed. [expectedSize] (0 = unknown) is used for the free-space check.
      */
+    @SuppressLint("UsableSpace") // the APK must fit next to the installer copy; clearable cache is not counted on purpose
     private fun download(url: String, versionCode: Int, expectedSize: Long, onProgress: (Long, Long) -> Unit): File {
         val dir = updatesDir()
         val base = "hotelcast-$versionCode.apk"

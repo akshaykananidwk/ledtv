@@ -126,6 +126,19 @@
             android:theme="@style/Theme.HotelCast.Fullscreen"
             tools:ignore="DiscouragedApi,LockedOrientationActivity" />
 
+        <!-- 2.6.0: "Update required" screen (not exported; opened by MainActivity when a required app version
+             is not installed — UpdateGate / docs/modules/apk_manager.md). -->
+        <activity
+            android:name=".UpdateActivity"
+            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboard|keyboardHidden|navigation|uiMode|locale|layoutDirection"
+            android:excludeFromRecents="true"
+            android:exported="false"
+            android:launchMode="singleTop"
+            android:lockTaskMode="if_whitelisted"
+            android:screenOrientation="sensorLandscape"
+            android:theme="@style/Theme.HotelCast.Fullscreen"
+            tools:ignore="DiscouragedApi,LockedOrientationActivity" />
+
         <service
             android:name=".PollService"
             android:exported="false"

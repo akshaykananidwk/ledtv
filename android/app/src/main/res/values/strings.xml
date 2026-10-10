@@ -156,4 +156,28 @@
     <string name="qr_detail_https_ok">The connection to the server works now – retrying.</string>
     <string name="qr_detail_http_ok">The server works over HTTP – select “Connect without HTTPS”.</string>
     <string name="qr_detail_error">Details: %1$s</string>
+
+    <!-- 2.6.0 forced update on app start (UpdateActivity, docs/modules/apk_manager.md) -->
+    <string name="update_checking">Checking for app updates…</string>
+    <string name="update_required_title">Update required</string>
+    <string name="update_required_message">A new version of the app must be installed before this screen can be used. Please wait.</string>
+    <string name="update_versions">Version %1$s  →  %2$s</string>
+    <string name="update_downloading">Downloading the update… %1$d%%</string>
+    <string name="update_downloading_unknown">Downloading the update…</string>
+    <string name="update_installing_now">Installing… The app restarts by itself.</string>
+    <string name="update_confirm_hint">Confirm the installation on the screen (press OK on “Install” / “Update”).</string>
+    <string name="update_retry">Try again</string>
+    <string name="update_allow_installs">Allow installs</string>
+    <string name="update_retry_in">Next automatic try in %1$d s.</string>
+    <string name="update_retry_manual">Press “Try again” to retry.</string>
+    <string name="update_no_result">The installer did not answer</string>
+    <string name="update_attempts">failed installs: %1$d of %2$d</string>
+    <string name="update_err_download">Download failed. Check the internet connection of the TV.</string>
+    <string name="update_err_space">Not enough free space on the TV. Remove unused apps or files, then try again.</string>
+    <string name="update_err_checksum">The downloaded file was damaged (checksum mismatch). Downloading again.</string>
+    <string name="update_err_wrong_apk">The server offered a wrong app file. Please contact your provider.</string>
+    <string name="update_err_blocked">Installing apps is blocked on this TV. Open Settings → Apps → Krishna Cloud TV → “Install unknown apps” and allow it (or press “Allow installs”).</string>
+    <string name="update_err_signature">The new app is signed with a different key than the installed app (signature mismatch). Please contact your provider.</string>
+    <string name="update_err_cancelled">The installation was cancelled. The app cannot be used until it is updated.</string>
+    <string name="update_err_failed">Installation failed.</string>
 </resources>
