@@ -10,10 +10,21 @@ in [`../docs/API.md`](../docs/API.md).
 | | |
 |---|---|
 | Package / applicationId | `com.hotelcast.tv` |
-| Version | 2.5.0 (versionCode 13) |
+| Version | 2.6.0 (versionCode 14) |
 | Android | 5.0 (API 21) and newer, targetSdk 34 |
 | App name | "Krishna Cloud TV Management" (`app_name`); launcher label "Krishna Cloud TV" (`app_label`, TV launchers truncate long names) |
-| Signed release APK | `release/KrishnaCloud-TV-2.5.0.apk` (same signing key as 1.x / 2.x, signer SHA-256 `b0f2c899…1a156c`, so OTA `UPDATE_APP` from older versions works) |
+| Signed release APK | `release/KrishnaCloud-TV-2.6.0.apk` (same signing key as 1.x / 2.x, signer SHA-256 `b0f2c899…1a156c`, so OTA `UPDATE_APP` from older versions works) |
+
+What is new in 2.6.0: **forced update on app start** (server 2.7, Super Admin → APK Manager, see
+[`../docs/modules/apk_manager.md`](../docs/modules/apk_manager.md)). Every start of the player asks
+`GET api/device/app-version` (≤ 6 s, else the cached answer from the last poll) before anything plays; while a
+*required* newer version exists the full-screen **"Update required"** screen (EN / GU / HI, product name and brand
+colour, installed → new version, progress) downloads it (resume, sha256, free-space check) and installs it —
+silently when device owner, else via the system installer. BACK cannot dismiss it; failures show a clear reason
+(no space, download failed, install blocked → allow "Install unknown apps", signature mismatch) with "Try again" and
+an automatic retry every 30 s (install: max 3 automatic tries per version). A running TV keeps playing and
+updates at its next start; the APK is downloaded in the background meanwhile. Offline start without any cached
+info → plays normally. Logic in `UpdateGate.kt` (unit tested), screen in `UpdateActivity.kt`.
 
 What is new in 2.5: the product is renamed **Krishna Cloud TV Management**; on the TV a *room* is now a
 **screen** (setup field "Screen name / ID", "Screen 101" on the welcome screen, QR setup "Choose the screen"),
@@ -94,7 +105,7 @@ If that file does not exist, it falls back to environment variables (useful on C
 Check a signature with:
 
 ```bash
-$ANDROID_HOME/build-tools/34.0.0/apksigner verify --print-certs release/KrishnaCloud-TV-2.5.0.apk
+$ANDROID_HOME/build-tools/34.0.0/apksigner verify --print-certs release/KrishnaCloud-TV-2.6.0.apk
 ```
 
 ---
@@ -110,12 +121,12 @@ $ANDROID_HOME/build-tools/34.0.0/apksigner verify --print-certs release/KrishnaC
 3. From a PC on the same network:
    ```bash
    adb connect 192.168.1.45:5555          # the TV's IP address
-   adb install -r KrishnaCloud-TV-2.5.0.apk
+   adb install -r KrishnaCloud-TV-2.6.0.apk
    ```
 
 ### b) With a USB pen drive and a file manager
 
-1. Copy `KrishnaCloud-TV-2.5.0.apk` to a FAT32/exFAT pen drive and plug it into the TV.
+1. Copy `KrishnaCloud-TV-2.6.0.apk` to a FAT32/exFAT pen drive and plug it into the TV.
 2. Install a file manager on the TV, such as *File Commander*, *X-plore* or *FX File Explorer*.
 3. Allow unknown sources:
    * Android 8 and newer: *Settings → Apps → Security & restrictions → Unknown sources* (or *Install
@@ -245,7 +256,7 @@ Device-owner mode enables these features:
 Setup: the TV must have **no Google or other accounts** (factory reset it if needed). Then run:
 
 ```bash
-adb install -r KrishnaCloud-TV-2.5.0.apk
+adb install -r KrishnaCloud-TV-2.6.0.apk
 adb shell dpm set-device-owner com.hotelcast.tv/.AdminReceiver
 adb shell am start -n com.hotelcast.tv/.MainActivity
 ```

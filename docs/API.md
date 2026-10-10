@@ -113,6 +113,7 @@ Response `data`:
   "content_hash": "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b",
   "content_changed": true,
   "content": { ...Content object, only when content_changed... },
+  "app_update": { ...as GET /api/device/app-version "update" (2.7), null when none; not sent to web players... },
   "commands": [
     { "id": 551, "command": "REBOOT", "payload": {} },
     { "id": 552, "command": "UPDATE_APP", "payload": { "url": "https://.../api/device/apk/7", "version_code": 7, "version_name": "1.2.0", "sha256": "..." } }
@@ -337,7 +338,29 @@ and keep the last Content object on disk to show while offline.
 
 ### GET /api/device/apk/{apk_id}
 
-Downloads an APK (device auth required). Response is `application/vnd.android.package-archive`.
+Downloads an APK (device auth required). Response is `application/vnd.android.package-archive` with
+`X-Content-SHA256` and `Accept-Ranges: bytes`. 2.7: the release may be the customer's own or a platform
+release (Super Admin → APK Manager) rolled out to the TV's customer; anything else (another customer's release,
+any request of a web player) → `404`. `Range: bytes=N-` continues an interrupted download (`206`, not counted as
+a new download); `416` when N is past the end.
+
+### GET /api/device/app-version (2.7)
+
+Device auth. The newest TV app offered to this TV and the highest **required** version
+(docs/modules/apk_manager.md). The app calls it on every start and does not play content while
+`installed < required_version_code`; the same object is also in every poll response as `app_update`.
+
+```json
+{ "installed_version_code": 13,
+  "update": { "version_code": 14, "version_name": "2.6.0", "sha256": "…64 hex…", "size": 7415985,
+              "url": "https://…/api/device/apk/5", "required": true, "required_version_code": 14,
+              "notes": "", "source": "platform" } }
+```
+
+`update` is `null` when no release is offered (and always for web players). Precedence: the highest
+`version_code` among {platform releases rolled out to the customer, the customer's own releases}; a tie goes to
+the platform release. `required_version_code` = highest `version_code` with "Required update" among the same set
+(0 = none).
 
 ### POST /api/license/check (license server)
 

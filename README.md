@@ -32,6 +32,18 @@ screen-wise schedule karo, emergency message moklo, TV reboot/update karo.*
 | Android TV app | [`android/`](android) | Kotlin, ExoPlayer 2.19, Retrofit, OkHttp, Glide, WorkManager — min SDK 21, target 34 |
 | Documentation | [`docs/`](docs) | Install guide, TV setup, admin guide, API, developer guide (tenancy + extension points), security, test report |
 
+## What's new in 2.7 — Super Admin APK Manager, forced TV app update on start (TV app 2.6.0)
+
+| Feature | Where |
+|---|---|
+| **Super Admin → APK Manager**: upload the TV app **once for the whole platform**. Version name / code, package (`com.hotelcast.tv`) and signing certificate are read from the APK itself (no aapt); wrong package, unsigned or wrongly signed builds and versions that are not newer are refused. Per release: **Required update (force)** (default on), release notes, roll-out to **all customers** or **selected customers**; list with Latest / Required badges, downloads, how many TVs run each version, delete (never the latest). **"Update all TVs now"** sends the update to every online Android TV with an older app (web players never) and reports how many got it | Super Admin console → Devices & content → APK Manager · `admin/platform_apk.php` · `core/AppReleases.php` · `core/ApkInfo.php` · migration 034 |
+| Precedence: a TV gets the **highest versionCode** of {platform releases rolled out to its customer, its customer's own APK Manager releases}; the customer APK Manager keeps working for plans that include it. Overview "Outdated app", Devices & screens "Needs update" and "Update app" use the same rule | [docs/modules/apk_manager.md](docs/modules/apk_manager.md) |
+| **TV app 2.6.0 — forced update on start**: every start of the app asks the server (`GET api/device/app-version`, also `app_update` in each poll) before playing; while a required newer version exists the TV shows a full-screen **"Update required"** screen (EN / ગુજરાતી / हिन्दी, progress bar) and installs it (silently on device-owner TVs, else via the system installer). It can't be dismissed and never plays the old version; clear errors (no space, download failed, installs blocked → how to allow, signature mismatch) with "Try again" + automatic retry every 30 s. A TV that is already running keeps playing and updates at its next start (the APK is pre-downloaded in the background). Offline start without any known update → plays its cached content | `android/` · `release/KrishnaCloud-TV-2.6.0.apk` |
+
+**How existing 2.5.0 TVs get it:** upload `KrishnaCloud-TV-2.6.0.apk` in Super Admin → APK Manager (Required on)
+and press **"Update all TVs now"** once — 2.5.0 TVs install it through the normal update push (`UPDATE_APP`).
+From then on every app start is gated: a TV can't be used with an old version again.
+
 ## What's new in 2.6.1 — public landing page, TV transfer only from the Super Admin console, logs
 
 Server only (the TV app stays 2.5.0).
@@ -173,7 +185,7 @@ Developer extension points: `docs/DEVELOPER.md`. Full 2.0 contract: `docs/V2_SPE
 
 1. **Server** — upload `dist/hotelcast-2.5.0.zip` (built by `tools/build-release.sh`) to your hosting, extract, open
    `https://your-domain/hotelcast/install/` and follow the 7-step wizard → [docs/INSTALL.md](docs/INSTALL.md)
-2. **TVs** — install `android/release/KrishnaCloud-TV-2.5.0.apk` on each TV (USB pen-drive or `adb`), open it,
+2. **TVs** — install `android/release/KrishnaCloud-TV-2.6.0.apk` on each TV (USB pen-drive or `adb`), open it,
    scan the QR code with your phone (or enter server address + screen name / ID + registration key) → [android/README.md](android/README.md)
 3. **Use it** — Admin → Content → add content → Broadcast → choose screens → *Push now* → [docs/ADMIN_GUIDE.md](docs/ADMIN_GUIDE.md)
 
@@ -208,7 +220,7 @@ hotelcast/            Server application (this is what you upload)
   uploads/ backups/ logs/ storage/   runtime data (protected, never overwritten)
   tests/              PHPUnit unit + integration tests, load test
   version.json        {"version":"1.0.0","commit":"…","date":"…"}
-android/              Android Studio project (Kotlin) + release/KrishnaCloud-TV-2.5.0.apk
+android/              Android Studio project (Kotlin) + release/KrishnaCloud-TV-2.6.0.apk
 docs/                 INSTALL, ADMIN_GUIDE, API, SECURITY, TEST_REPORT
 tools/build-release.sh  builds dist/hotelcast-<version>.zip
 ```
@@ -239,3 +251,7 @@ Krishna Cloud TV Management થી મંદિર, દુકાન, શોર�
 દરેક સ્ક્રીન (Android TV) ને એક જ બ્રાઉઝર પરથી કંટ્રોલ કરો: લાઇવ દર્શન, દર્શન સમય, મેનુ, જાહેરાતો, ઓફર
 અને વિડિયો — તરત જ બધી સ્ક્રીન પર. એક સર્વર પર ઘણા ગ્રાહકો (customers) — દરેકની પોતાની સ્ક્રીન. સર્વર પર
 ફાઇલો અપલોડ કરો, `/install` ખોલો અને સ્ટેપ ફોલો કરો. એડમિન પેનલ અંગ્રેજી, ગુજરાતી અને હિન્દીમાં ઉપલબ્ધ છે.
+
+**2.7 — APK મેનેજર:** સુપર એડમિન કન્સોલ → APK મેનેજરમાં નવી એપ એક જ વાર અપલોડ કરો ("ફરજિયાત અપડેટ" ચાલુ) અને
+"બધા TV હમણાં અપડેટ કરો" દબાવો. ચાલુ TV ચાલતું રહે છે, પણ એપ ફરી ખુલે ત્યારે પહેલા અપડેટ થાય છે — જૂનું વર્ઝન
+વાપરી શકાતું નથી ("અપડેટ ફરજિયાત છે" સ્ક્રીન). જૂના 2.5.0 TV ને 2.6.0 એક વાર "બધા TV હમણાં અપડેટ કરો" થી મળે છે.
