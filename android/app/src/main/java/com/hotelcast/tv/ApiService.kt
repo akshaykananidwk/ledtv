@@ -27,6 +27,10 @@ interface ApiService {
         @Query("wait") wait: Int? = null,
     ): Response<ApiEnvelope<PollResponse>>
 
+    /** 2.6.0: newest / required app version for this TV (start gate, UpdateGate). */
+    @GET("device/app-version")
+    suspend fun appVersion(): Response<ApiEnvelope<AppVersionResponse>>
+
     @POST("device/ack")
     suspend fun ack(@Body body: AckRequest): Response<ApiEnvelope<AckResponse>>
 

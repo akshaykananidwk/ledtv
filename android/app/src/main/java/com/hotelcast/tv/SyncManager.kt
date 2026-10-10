@@ -290,6 +290,7 @@ object SyncManager : CommandActions {
             applyContent(newContent, data.contentHash)
         }
         commandHandler.handleAll(data.commands)
+        UpdateCheck.onServerInfo(app, data.appUpdate)
     }
 
     suspend fun heartbeatOnce() {

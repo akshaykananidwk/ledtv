@@ -92,6 +92,13 @@ class MainActivity : AppCompatActivity(), ContentPlayer.Listener, PlayerUi, Gues
     private var pinDialogShowing = false
     private var setupLaunched = false
 
+    /**
+     * 2.6.0 forced update (UpdateGate): CHECKING while the cold start asks the server, BLOCKED while a required
+     * app version is not installed (UpdateActivity on top, nothing is played), ALLOWED otherwise.
+     */
+    private enum class Gate { CHECKING, ALLOWED, BLOCKED }
+    private var gate = Gate.ALLOWED
+
     // gesture state
     private val backPresses = ArrayDeque<Long>()
     private val dpadSequence = ArrayDeque<Int>()
@@ -162,6 +169,35 @@ class MainActivity : AppCompatActivity(), ContentPlayer.Listener, PlayerUi, Gues
             }
         }
         handleIntent(intent)
+        // 2.6.0: every start of the player asks for the latest required app version before playing anything.
+        if (Prefs.isRegistered) {
+            gate = Gate.CHECKING
+            showWelcome(null, getString(R.string.update_checking))
+            lifecycleScope.launch { applyGate(UpdateCheck.checkOnStart(this@MainActivity)) }
+        }
+    }
+
+    /** Block (open the "Update required" screen, play nothing) or allow playback. */
+    private fun applyGate(d: UpdateGate.Decision) {
+        if (isFinishing) return
+        if (d.block) {
+            gate = Gate.BLOCKED
+            player?.stop()
+            tickerBar.stop()
+            EmergencyAlarm.onHostPaused(false)
+            try {
+                startActivity(UpdateActivity.intent(this, d.info))
+            } catch (e: Exception) {
+                Log.e(TAG, "Cannot open the update screen", e)
+            }
+        } else {
+            val wasBlocked = gate != Gate.ALLOWED
+            gate = Gate.ALLOWED
+            if (wasBlocked) {
+                welcomeLayer.visibility = View.GONE
+                render()
+            }
+        }
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -246,13 +282,16 @@ class MainActivity : AppCompatActivity(), ContentPlayer.Listener, PlayerUi, Gues
         if (PowerController.wasSleptBySchedule()) PowerController.guestOverride()
         PollService.start(this)
         SyncManager.pollNow()
-        render()
+        // 2.6.0: the player was opened again (back from standby / another app): a required update known from the
+        // poll (cache) must be installed first. The cold start (onCreate) asks the server itself.
+        if (gate != Gate.CHECKING) applyGate(UpdateCheck.decideFromCache())
+        if (gate == Gate.ALLOWED) render()
     }
 
     override fun onResume() {
         super.onResume()
         hideSystemUi()
-        if (Prefs.isRegistered) EmergencyAlarm.onHostResumed(SyncManager.content.value)
+        if (Prefs.isRegistered && gate == Gate.ALLOWED) EmergencyAlarm.onHostResumed(SyncManager.content.value)
         // Back from Live TV / HDMI: only HotelCast may run in lock task again.
         if (KioskHelper.externalAppActive) KioskHelper.restoreKioskPackages(this)
         if (Prefs.isRegistered) {
@@ -318,6 +357,11 @@ class MainActivity : AppCompatActivity(), ContentPlayer.Listener, PlayerUi, Gues
 
     private fun render() {
         if (!lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED) || !Prefs.isRegistered) return
+        // 2.6.0: nothing plays while the update check runs or a required update is missing (UpdateGate).
+        if (gate != Gate.ALLOWED) {
+            player?.stop()
+            return
+        }
         if (rendering) return // re-entrant call from a guest-layer callback
         rendering = true
         val c = SyncManager.content.value

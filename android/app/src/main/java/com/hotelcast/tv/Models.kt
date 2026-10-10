@@ -86,6 +86,8 @@ data class PollResponse(
     @SerializedName("commands") val commands: List<Command>? = null,
     /** 2.4 synchronized playback: server clock in ms for the NTP-like offset estimate (ServerClock). */
     @SerializedName("server_time_ms") val serverTimeMs: Long? = null,
+    /** 2.6.0: newest / required app for this TV; cached, applied at the next app start (UpdateGate). */
+    @SerializedName("app_update") val appUpdate: AppUpdateInfo? = null,
 )
 
 data class AckRequest(

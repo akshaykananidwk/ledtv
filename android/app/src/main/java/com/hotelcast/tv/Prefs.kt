@@ -164,6 +164,36 @@ object Prefs {
         get() = sp.getInt(K_MAX_DECODERS, DecoderPlanner.DEFAULT_MAX_DECODERS)
         set(v) = sp.edit().putInt(K_MAX_DECODERS, v).apply()
 
+    /**
+     * 2.6.0 forced update (UpdateGate): last update info from the server (JSON of [AppUpdateInfo], "" = none),
+     * cached from every poll / start check so an offline start still knows about a required version.
+     */
+    var appUpdateJson: String
+        get() = sp.getString(K_APP_UPDATE, "") ?: ""
+        @SuppressLint("ApplySharedPref")
+        set(v) {
+            sp.edit().putString(K_APP_UPDATE, v).commit()
+        }
+
+    var appUpdate: AppUpdateInfo?
+        get() = try {
+            appUpdateJson.takeIf { it.isNotBlank() }?.let { ApiClient.gson.fromJson(it, AppUpdateInfo::class.java) }
+        } catch (_: Exception) {
+            null
+        }
+        set(v) {
+            appUpdateJson = if (v == null) "" else ApiClient.gson.toJson(v)
+        }
+
+    /** Failed install attempts of [updateFailVersion] (UpdateGate.MAX_AUTO_INSTALL_ATTEMPTS). */
+    var updateFailVersion: Int
+        get() = sp.getInt(K_UPDATE_FAIL_VERSION, 0)
+        set(v) = sp.edit().putInt(K_UPDATE_FAIL_VERSION, v).apply()
+
+    var updateFailCount: Int
+        get() = sp.getInt(K_UPDATE_FAIL_COUNT, 0)
+        set(v) = sp.edit().putInt(K_UPDATE_FAIL_COUNT, v).apply()
+
     /** Snapshot for UPLOAD_LOGS. Secrets (token, registration key) are never included. */
     fun debugSnapshot(): Map<String, Any?> = linkedMapOf(
         "device_id" to deviceId,
@@ -191,6 +221,8 @@ object Prefs {
         "handled_commands" to handledCommands.split(',').size,
         "volume_stay_applied" to volumeStayApplied,
         "max_video_decoders" to maxVideoDecoders,
+        "app_update" to appUpdateJson,
+        "update_failures" to "$updateFailCount (code $updateFailVersion)",
         "welcome_shown" to shownWelcomeIds.lines().filter { it.isNotBlank() },
         "reminders_dismissed" to dismissedReminderIds.lines().filter { it.isNotBlank() },
     )
@@ -235,4 +267,7 @@ object Prefs {
     private const val K_BRAND_PRODUCT = "brand_product"
     private const val K_HOTEL_NAME = "hotel_name"
     private const val K_BRAND_COLOR = "brand_color"
+    private const val K_APP_UPDATE = "app_update"
+    private const val K_UPDATE_FAIL_VERSION = "update_fail_version"
+    private const val K_UPDATE_FAIL_COUNT = "update_fail_count"
 }
