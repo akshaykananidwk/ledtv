@@ -437,7 +437,7 @@ final class Chains
     /** Create a chain admin login (hotel_id NULL). $admin from Hotels::validateAdmin(). */
     public static function createAdmin(int $chainId, array $admin): int
     {
-        return DB::insert('users', [
+        $id = DB::insert('users', [
             'hotel_id' => null,
             'chain_id' => $chainId,
             'username' => $admin['username'],
@@ -449,6 +449,10 @@ final class Chains
             'is_active' => 1,
             'created_at' => now(),
         ]);
+        if (!empty($admin['invite'])) {
+            PasswordReset::invite($id); // 2.8: "set your password" link (72 h)
+        }
+        return $id;
     }
 
     /** Super admins of the chain's hotels (candidates for / holders of chain access). */

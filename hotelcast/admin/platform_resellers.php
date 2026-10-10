@@ -60,6 +60,9 @@ if (is_post()) {
                     'password_hash' => Auth::hash($acc['password']), 'language' => 'en', 'is_active' => 1, 'created_at' => now(),
                 ]);
                 ActivityLog::add('user_create', 'user', $uid, $acc['username'] . ' (reseller #' . $id . ')');
+                if ($acc['invite'] && !PasswordReset::invite($uid)) {
+                    flash('warning', __('The invite email could not be sent: :err', ['err' => Mailer::$lastError]));
+                }
                 flash('success', __('Reseller login :u created.', ['u' => $acc['username']]));
             }
             redirect(admin_url('platform_resellers.php', ['action' => 'view', 'id' => $id]));
@@ -164,7 +167,8 @@ if ($action === 'view') {
             <div class="col-sm-6"><input class="form-control" name="admin_username" placeholder="<?= e(__('Username')) ?>" required></div>
             <div class="col-sm-6"><input class="form-control" name="admin_name" placeholder="<?= e(__('Full name')) ?>"></div>
             <div class="col-sm-6"><input class="form-control" type="email" name="admin_email" placeholder="<?= e(__('Email')) ?>" required></div>
-            <div class="col-sm-6"><input class="form-control" type="password" name="admin_password" placeholder="<?= e(__('Password')) ?>" required autocomplete="new-password"></div>
+            <div class="col-sm-6"><input class="form-control" type="password" id="rs_p" name="admin_password" placeholder="<?= e(__('Password')) ?>" autocomplete="new-password"></div>
+            <div class="col-12"><?= invite_checkbox('rs_i', 'rs_p') ?></div>
             <div class="col-12"><button class="btn btn-outline-primary"><i class="bi bi-person-plus"></i> <?= e(__('Create login')) ?></button></div>
           </form></div></div>
       </div>

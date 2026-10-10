@@ -101,6 +101,9 @@ if (is_post()) {
                         flash_errors($errors);
                         redirect($url('users'));
                     }
+                    if (!empty($_POST['language']) && isset(I18n::LANGUAGES[$_POST['language']])) {
+                        $acc['language'] = $_POST['language']; // the invite e-mail is written in it
+                    }
                     $uid = Hotels::createHotelUser($id, $acc, $role[0]);
                     if ($role[1] !== null) {
                         DB::query('UPDATE users SET role_id = :r WHERE id = :id AND hotel_id = :h', ['r' => $role[1], 'id' => $uid, 'h' => $id]);
@@ -111,6 +114,12 @@ if (is_post()) {
                     ActivityLog::add('user_create', 'user', $uid, $acc['username'] . ' (' . req_str('role', $_POST, 20) . ' of customer #' . $id . ')');
                     ActivityLog::add('user_create', 'user', $uid, $acc['username'] . ' created by the platform', $id);
                     $mailed = false;
+                    if ($acc['invite']) {
+                        $ok = PasswordReset::$lastInviteSent === true;
+                        flash($ok ? 'success' : 'warning', __('User :u created.', ['u' => $acc['username']]) . ' '
+                            . ($ok ? __('Invite link sent to :e.', ['e' => $acc['email']]) : __('The invite email could not be sent: :err', ['err' => Mailer::$lastError])));
+                        redirect($url('users'));
+                    }
                     if (!empty($_POST['send_email'])) {
                         $product = Branding::get($id)['product'];
                         $mailed = Notifier::email($acc['email'], __(':p — your login', ['p' => $product]),
@@ -582,10 +591,11 @@ elseif ($tab === 'users'):
             <div class="col-12"><label class="form-label" for="nu_u"><?= e(__('Username')) ?></label><input class="form-control" id="nu_u" name="admin_username" required pattern="[A-Za-z0-9_.\-]{3,50}"></div>
             <div class="col-12"><label class="form-label" for="nu_n"><?= e(__('Full name')) ?></label><input class="form-control" id="nu_n" name="admin_name"></div>
             <div class="col-12"><label class="form-label" for="nu_e"><?= e(__('Email')) ?></label><input class="form-control" type="email" id="nu_e" name="admin_email" required></div>
-            <div class="col-12"><label class="form-label" for="nu_p"><?= e(__('Password')) ?></label><input class="form-control" type="password" id="nu_p" name="admin_password" required autocomplete="new-password" data-strength="#nuBar"><div class="strength-bar" id="nuBar"><span></span></div></div>
+            <div class="col-12"><label class="form-label" for="nu_p"><?= e(__('Password')) ?></label><input class="form-control" type="password" id="nu_p" name="admin_password" autocomplete="new-password" data-strength="#nuBar"><div class="strength-bar" id="nuBar"><span></span></div></div>
             <div class="col-7"><label class="form-label" for="nu_r"><?= e(__('Role')) ?></label><select class="form-select" id="nu_r" name="role"><?= $roleOptions('manager') ?></select></div>
             <div class="col-5"><label class="form-label" for="nu_l"><?= e(__('Language')) ?></label><select class="form-select" id="nu_l" name="language"><?php foreach (I18n::LANGUAGES as $code => $name): ?><option value="<?= e($code) ?>"><?= e($name) ?></option><?php endforeach; ?></select></div>
-            <div class="col-12 form-check ms-1"><input class="form-check-input" type="checkbox" id="nu_m" name="send_email" value="1" checked><label class="form-check-label small" for="nu_m"><?= e(__('Email the login details to the user')) ?></label></div>
+            <div class="col-12"><?= invite_checkbox('nu_i', 'nu_p') ?></div>
+            <div class="col-12 form-check ms-1"><input class="form-check-input" type="checkbox" id="nu_m" name="send_email" value="1"><label class="form-check-label small" for="nu_m"><?= e(__('Email the login details to the user')) ?> (<?= e(__('when you set a password')) ?>)</label></div>
             <div class="col-12"><button class="btn btn-primary w-100"<?= $limitErr ? ' disabled' : '' ?>><i class="bi bi-person-plus"></i> <?= e(__('Create user')) ?></button></div>
           </form>
         </div></div>

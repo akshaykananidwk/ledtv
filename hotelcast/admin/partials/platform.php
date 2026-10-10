@@ -164,6 +164,7 @@ function hotel_form_fields(array $h, bool $byReseller, bool $isNew): string
           <div class="col-sm-6"><label class="form-label" for="a_n"><?= e(__('Full name')) ?></label><input class="form-control" id="a_n" name="admin_name" maxlength="120"></div>
           <div class="col-12"><label class="form-label" for="a_e"><?= e(__('Email')) ?></label><input class="form-control" type="email" id="a_e" name="admin_email" maxlength="190" autocomplete="off"></div>
           <div class="col-12"><label class="form-label" for="a_p"><?= e(__('Password')) ?></label><input class="form-control" type="password" id="a_p" name="admin_password" autocomplete="new-password" data-strength="#apBar"><div class="strength-bar" id="apBar"><span></span></div></div>
+          <div class="col-12"><?= invite_checkbox('a_i', 'a_p') ?></div>
         </div></div>
         <?php endif; ?>
       </div>

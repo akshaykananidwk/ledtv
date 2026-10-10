@@ -108,7 +108,11 @@ final class Auth
             return [false, __('Too many failed attempts from your network. Try again in 15 minutes.')];
         }
 
-        $user = DB::one('SELECT * FROM users WHERE username = :u OR email = :e LIMIT 1', ['u' => $username, 'e' => $username]);
+        // "Email or username": an address (with "@") is looked up by email, anything else by username.
+        // Trimmed above; the utf8mb4_unicode_ci collation makes both case-insensitive.
+        $user = str_contains($username, '@')
+            ? DB::one('SELECT * FROM users WHERE email = :e LIMIT 1', ['e' => $username])
+            : DB::one('SELECT * FROM users WHERE username = :u LIMIT 1', ['u' => $username]);
 
         if ($user && $user['locked_until'] && strtotime($user['locked_until']) > time()) {
             $mins = (int) ceil((strtotime($user['locked_until']) - time()) / 60);
@@ -614,7 +618,7 @@ final class Auth
     }
 
     /** Admin pages / actions still allowed while the hotel is suspended (read-only mode). */
-    public const SUSPENDED_ALLOWED_SCRIPTS = ['billing.php', 'invoice.php', 'logout.php', 'profile.php', 'login.php'];
+    public const SUSPENDED_ALLOWED_SCRIPTS = ['billing.php', 'invoice.php', 'logout.php', 'profile.php', 'login.php', 'forgot_password.php', 'reset_password.php'];
 
     /** Read-only mode: hotel users of a suspended / expired hotel may not change anything. */
     public static function readOnly(): bool

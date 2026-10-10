@@ -219,7 +219,8 @@ if ($action === 'view') {
               <div class="col-sm-6"><input class="form-control" name="admin_username" placeholder="<?= e(__('Username')) ?>" aria-label="<?= e(__('Username')) ?>" required pattern="[A-Za-z0-9_.\-]{3,50}"></div>
               <div class="col-sm-6"><input class="form-control" name="admin_name" placeholder="<?= e(__('Full name')) ?>" aria-label="<?= e(__('Full name')) ?>"></div>
               <div class="col-sm-6"><input class="form-control" type="email" name="admin_email" placeholder="<?= e(__('Email')) ?>" aria-label="<?= e(__('Email')) ?>" required></div>
-              <div class="col-sm-6"><input class="form-control" type="password" name="admin_password" placeholder="<?= e(__('Password')) ?>" aria-label="<?= e(__('Password')) ?>" required autocomplete="new-password"></div>
+              <div class="col-sm-6"><input class="form-control" type="password" id="ch_p<?= $cid ?>" name="admin_password" placeholder="<?= e(__('Password')) ?>" aria-label="<?= e(__('Password')) ?>" autocomplete="new-password"></div>
+              <div class="col-12"><?= invite_checkbox('ch_i' . $cid, 'ch_p' . $cid) ?></div>
               <div class="col-12"><button class="btn btn-outline-primary"><i class="bi bi-person-plus"></i> <?= e(__('Create chain admin')) ?></button></div>
             </form>
           </div>

@@ -40,6 +40,7 @@ if (is_post()) {
             DB::update('users', ['password_hash' => Auth::hash($new)], 'id = :id', ['id' => $me]);
             Auth::revokeUserSessions($me, true);
             ActivityLog::add('password_change', 'user', $me, 'Changed own password');
+            PasswordReset::sendChangedEmail((array) DB::one('SELECT * FROM users WHERE id = :id', ['id' => $me])); // 2.8 security notice
             flash('success', __('Password changed. You were logged out on your other devices.'));
         }
     }

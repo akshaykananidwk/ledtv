@@ -155,8 +155,14 @@ final class Hotels
         $username = trim((string) ($in['admin_username'] ?? ''));
         $email = trim((string) ($in['admin_email'] ?? ''));
         $pass = (string) ($in['admin_password'] ?? '');
+        // 2.8: "email an invite link" — the user chooses the password (PasswordReset::invite()); an empty
+        // password field then gets a random password nobody knows.
+        $invite = !empty($in['send_invite']);
         if ($username === '' && $email === '' && $pass === '' && !$required) {
             return [null, []];
+        }
+        if ($invite && $pass === '') {
+            $pass = PasswordReset::randomPassword();
         }
         $errors = [];
         if (!preg_match('/^[A-Za-z0-9_.-]{3,50}$/', $username)) {
@@ -172,7 +178,7 @@ final class Hotels
         if ($pe = Auth::passwordError($pass)) {
             $errors[] = $pe;
         }
-        return [['username' => $username, 'email' => $email, 'password' => $pass, 'full_name' => trim((string) ($in['admin_name'] ?? '')) ?: $username], $errors];
+        return [['username' => $username, 'email' => $email, 'password' => $pass, 'full_name' => trim((string) ($in['admin_name'] ?? '')) ?: $username, 'invite' => $invite], $errors];
     }
 
     /** Create a hotel (+ default settings, registration key, optional first super admin). Returns id. */
@@ -201,17 +207,21 @@ final class Hotels
 
     public static function createHotelUser(int $hotelId, array $admin, string $role = 'super_admin'): int
     {
-        return DB::insert('users', [
+        $id = DB::insert('users', [
             'hotel_id' => $hotelId,
             'username' => $admin['username'],
             'email' => $admin['email'],
             'full_name' => $admin['full_name'] ?? $admin['username'],
             'password_hash' => Auth::hash($admin['password']),
             'role' => in_array($role, Auth::HOTEL_ROLES, true) ? $role : 'staff',
-            'language' => 'en',
+            'language' => isset(I18n::LANGUAGES[(string) ($admin['language'] ?? '')]) ? (string) $admin['language'] : 'en',
             'is_active' => 1,
             'created_at' => now(),
         ]);
+        if (!empty($admin['invite'])) {
+            PasswordReset::invite($id); // 2.8: "set your password" link (72 h)
+        }
+        return $id;
     }
 
     public static function update(int $id, array $data): void

@@ -275,12 +275,17 @@ final class Signup
         return DB::one('SELECT * FROM signups WHERE id = :id', ['id' => $id]);
     }
 
+    /** Set when the last sendOtp() / welcome mail could not be delivered (SMTP / mail() error). */
+    public static bool $mailFailed = false;
+
     /**
      * (Re)send the e-mail code. Duplicates get an "account exists" mail instead (same screen for the
-     * visitor). Returns false when the send limit / cool-down applies.
+     * visitor). Returns false when the send limit / cool-down applies or the e-mail could not be sent
+     * (then Signup::$mailFailed is true, the send does not count and "Send a new code" works at once).
      */
     public static function sendOtp(int $id, bool $resend = false): bool
     {
+        self::$mailFailed = false;
         $s = self::find($id);
         if (!$s || $s['status'] !== 'verify') {
             return false;
@@ -291,25 +296,84 @@ final class Signup
         if ($resend && $s['otp_expires_at'] && strtotime((string) $s['otp_expires_at']) - self::OTP_TTL > time() - 60) {
             return false; // at most one code per minute
         }
-        $brand = Branding::get(0)['product'];
-        $from = (string) Settings::platform('platform_from_email', '');
+        $brand = Branding::get(0);
+        $product = $brand['product'];
+        $lang = (string) $s['language'];
+        $t = static fn (string $k, array $r = []): string => I18n::translate($k, $lang, $r);
+        $expires = date('Y-m-d H:i:s', time() + self::OTP_TTL);
         if ((int) $s['duplicate']) {
-            DB::query('UPDATE signups SET otp_sends = otp_sends + 1, otp_expires_at = :x WHERE id = :id', ['x' => date('Y-m-d H:i:s', time() + self::OTP_TTL), 'id' => $id]);
-            Notifier::email($s['email'], $brand . ': ' . I18n::translate('sign-up request', $s['language']),
-                I18n::translate('Someone (hopefully you) tried to start a free trial with this email address, but an account already exists. Please log in or reset your password: :url', $s['language'], ['url' => admin_url('login.php')])
-                . "\n\n" . I18n::translate('If this was not you, you can ignore this email.', $s['language']) . "\n\n" . $brand, $from, $brand);
-            return true;
+            DB::query('UPDATE signups SET otp_sends = otp_sends + 1, otp_expires_at = :x WHERE id = :id', ['x' => $expires, 'id' => $id]);
+            [$text, $html] = MailTemplate::render(['brand' => $brand, 'lang' => $lang, 'title' => $t('sign-up request'),
+                'paragraphs' => [$t('Someone (hopefully you) tried to start a free trial with this email address, but an account already exists. Please log in or reset your password: :url', ['url' => admin_url('login.php')])],
+                'button' => ['label' => $t('Forgot password?'), 'url' => admin_url('forgot_password.php')],
+                'small' => [$t('If this was not you, you can ignore this email.')]]);
+            $ok = Mailer::send($s['email'], $product . ': ' . $t('sign-up request'), $text, $html, ['from_name' => $product]);
+        } else {
+            $code = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+            DB::query('UPDATE signups SET otp_hash = :h, otp_expires_at = :x, otp_attempts = 0, otp_sends = otp_sends + 1 WHERE id = :id', [
+                'h' => password_hash($code, PASSWORD_BCRYPT, ['cost' => 10]), 'x' => $expires, 'id' => $id,
+            ]);
+            [$text, $html] = MailTemplate::render(['brand' => $brand, 'lang' => $lang, 'title' => $t('Your verification code'),
+                'paragraphs' => [$t('Hello :name,', ['name' => $s['owner_name']]),
+                    $t('Your code to start the free trial for :hotel is: :code', ['hotel' => $s['hotel_name'], 'code' => $code])],
+                'code' => $code,
+                'after' => [$t('The code is valid for 15 minutes.')],
+                'small' => [$t('If this was not you, you can ignore this email.')]]);
+            $ok = Mailer::send($s['email'], $product . ': ' . $t('your verification code :code', ['code' => $code]), $text, $html, ['from_name' => $product]);
         }
-        $code = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
-        DB::query('UPDATE signups SET otp_hash = :h, otp_expires_at = :x, otp_attempts = 0, otp_sends = otp_sends + 1 WHERE id = :id', [
-            'h' => password_hash($code, PASSWORD_BCRYPT, ['cost' => 10]), 'x' => date('Y-m-d H:i:s', time() + self::OTP_TTL), 'id' => $id,
-        ]);
-        Notifier::email($s['email'], $brand . ': ' . I18n::translate('your verification code :code', $s['language'], ['code' => $code]),
-            I18n::translate('Hello :name,', $s['language'], ['name' => $s['owner_name']]) . "\n\n"
-            . I18n::translate('Your code to start the free trial for :hotel is: :code', $s['language'], ['hotel' => $s['hotel_name'], 'code' => $code]) . "\n"
-            . I18n::translate('The code is valid for 15 minutes.', $s['language']) . "\n\n"
-            . I18n::translate('If this was not you, you can ignore this email.', $s['language']) . "\n\n" . $brand, $from, $brand);
+        if (!$ok) {
+            // Not delivered: does not count as a send, no cool-down, nothing valid stays behind.
+            DB::query('UPDATE signups SET otp_sends = GREATEST(otp_sends - 1, 0), otp_hash = NULL, otp_expires_at = NULL WHERE id = :id', ['id' => $id]);
+            self::$mailFailed = true;
+            Logger::write('signup', 'error', 'Verification email not sent: ' . Mailer::$lastError, ['id' => $id]);
+            return false;
+        }
         return true;
+    }
+
+    /**
+     * Welcome e-mail after the trial account was created: login link, username / email, trial days,
+     * TV app install + pairing steps. Returns true when sent.
+     */
+    public static function sendWelcome(int $id): bool
+    {
+        $s = self::find($id);
+        if (!$s || !$s['user_id']) {
+            return false;
+        }
+        $u = DB::one('SELECT username, email FROM users WHERE id = :id', ['id' => $s['user_id']]);
+        if (!$u) {
+            return false;
+        }
+        $brand = Branding::get(0);
+        $product = $brand['product'];
+        $lang = (string) $s['language'];
+        $t = static fn (string $k, array $r = []): string => I18n::translate($k, $lang, $r);
+        $key = (string) Settings::getFor((int) $s['hotel_id'], 'registration_key', '');
+        $days = self::trialDays();
+        [$text, $html] = MailTemplate::render(['brand' => $brand, 'lang' => $lang, 'title' => $t('your free trial is ready'),
+            'paragraphs' => [
+                $t('Hello :name,', ['name' => $s['owner_name']]),
+                $t('Welcome to :product! Your :n-day free trial for :hotel is ready.', ['product' => $product, 'n' => $days, 'hotel' => $s['hotel_name']]),
+                $t('Log in with your email address (or username) and the password you chose:') . "\n" . $t('Email') . ': ' . $u['email'] . "\n" . $t('Username') . ': ' . $u['username'],
+            ],
+            'button' => ['label' => $t('Log in'), 'url' => admin_url('login.php')],
+            'after' => [
+                $t('Connect your first TV:'),
+                "1. " . $t('Install the TV app on your Android TV / TV box (contact support if you do not have the app yet).') . "\n"
+                    . "2. " . $t('Open the app: the TV shows a QR code and a 6-character code.') . "\n"
+                    . "3. " . $t('Scan the QR code with your phone, or in the admin panel open Getting started → "Add your first TV" and type the code, then choose the screen.') . "\n"
+                    . "4. " . $t('Alternative: enter the registration key :key in the TV app settings.', ['key' => $key]),
+                $t('Your trial ends after :n days. You can choose a paid plan any time under Billing.', ['n' => $days]),
+            ],
+            'small' => [$t('Forgot your password? Use "Forgot password?" on the login page.')],
+        ]);
+        $ok = Mailer::send((string) $u['email'], $product . ': ' . $t('your free trial is ready'), $text, $html, ['from_name' => $product]);
+        if (!$ok) {
+            self::$mailFailed = true;
+            Logger::write('signup', 'error', 'Welcome email not sent: ' . Mailer::$lastError, ['id' => $id]);
+        }
+        return $ok;
     }
 
     /**
@@ -358,14 +422,8 @@ final class Signup
             throw new InvalidArgumentException(__('Email :e is already used by another account.', ['e' => $s['email']]));
         }
         DB::query('UPDATE signups SET decided_by = :b, decided_at = :n WHERE id = :id', ['b' => $by, 'n' => now(), 'id' => $id]);
-        $r = self::provision($id);
-        $s = self::find($id);
-        $brand = Branding::get(0)['product'];
-        Notifier::sendToContact($s['email'], $s['mobile'], $brand . ': ' . I18n::translate('your free trial is ready', $s['language']),
-            I18n::translate('Hello :name,', $s['language'], ['name' => $s['owner_name']]) . "\n\n"
-            . I18n::translate('Your free trial for :hotel is ready. Log in with your email address and the password you chose: :url', $s['language'], ['hotel' => $s['hotel_name'], 'url' => admin_url('login.php')])
-            . "\n\n" . $brand, ['email']);
-        return $r;
+        // provision() sends the welcome e-mail ("your free trial is ready").
+        return self::provision($id);
     }
 
     public static function reject(int $id, ?int $by, string $reason = ''): void
@@ -420,6 +478,7 @@ final class Signup
             ['h' => $hid, 'u' => $uid, 't' => $ends, 'id' => $id]);
         ActivityLog::add('signup_trial', 'hotel', $hid, 'Free trial started by online sign-up #' . $id, $hid);
         self::notifyPlatform($id, 'created');
+        self::sendWelcome($id);
         Logger::write('signup', 'info', 'Trial hotel created', ['signup' => $id, 'hotel' => $hid]);
         return [$hid, $uid];
     }

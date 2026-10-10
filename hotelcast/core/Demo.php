@@ -430,7 +430,7 @@ final class Demo
             return;
         }
         $action = is_string($_GET['action'] ?? null) ? $_GET['action'] : '';
-        if (in_array($script, ['login.php', 'logout.php'], true) || ($script === 'ajax.php' && $action === 'set_language')) {
+        if (in_array($script, ['login.php', 'logout.php', 'forgot_password.php'], true) || ($script === 'ajax.php' && $action === 'set_language')) {
             return;
         }
         self::block($script);

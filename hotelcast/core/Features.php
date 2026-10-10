@@ -131,7 +131,7 @@ final class Features
         'users' => ['label' => 'Users', 'group' => 'core', 'core' => true, 'description' => 'Users of the customer with the built-in roles.',
             'permissions' => ['users.manage'], 'pages' => ['users.php']],
         'profile' => ['label' => 'Profile & login', 'group' => 'core', 'core' => true, 'description' => 'Own profile, password, language and sign-in.',
-            'pages' => ['profile.php', 'login.php', 'logout.php', 'manifest.php', 'pwa_icon.php'], 'ajax' => ['set_language']],
+            'pages' => ['profile.php', 'login.php', 'logout.php', 'forgot_password.php', 'reset_password.php', 'manifest.php', 'pwa_icon.php'], 'ajax' => ['set_language']],
         'settings' => ['label' => 'Settings & billing', 'group' => 'core', 'core' => true, 'description' => 'Customer settings, your plan, invoices.',
             'permissions' => ['settings.manage', 'billing.view'], 'pages' => ['settings.php', 'plan.php', 'billing.php', 'invoice.php']],
         'logs' => ['label' => 'Logs & history', 'group' => 'core', 'core' => true, 'description' => 'Activity and broadcast history.',

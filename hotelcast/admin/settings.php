@@ -169,7 +169,7 @@ if (is_post()) {
                             $res = Notifier::send(Branding::get()['product'] . ': ' . __('Test notification'), sprintf('[%s] %s (%s)', Settings::get('hotel_name', Branding::DEFAULT_PRODUCT), __('This is a test message from :product.', ['product' => Branding::get()['product']]), date('d M H:i')));
                             $parts = [];
                             foreach ($res as $ch => $ok) {
-                                $parts[] = ($ch === 'email' ? __('Email') : 'WhatsApp') . ': ' . ($ok ? __('sent') : __('failed'));
+                                $parts[] = ($ch === 'email' ? __('Email') : 'WhatsApp') . ': ' . ($ok ? __('sent') : __('failed') . ($ch === 'email' && Notifier::$lastError !== '' ? ' (' . Notifier::$lastError . ')' : ''));
                             }
                             flash(in_array(false, $res, true) ? 'warning' : 'success', __('Test notification') . ' — ' . implode(', ', $parts));
                         }
@@ -382,7 +382,7 @@ $saveBtn = '<div class="sticky-actions"><button class="btn btn-primary btn-lg"><
     <div class="col-12">
       <label class="form-label" for="ne"><?= e(__('Send email to')) ?></label>
       <input class="form-control" id="ne" name="notify_email" value="<?= e($S['notify_email']) ?>" placeholder="owner@example.com, manager@example.com" maxlength="1000">
-      <div class="form-text"><?= e(__('Separate several addresses with commas. Uses your hosting\'s PHP mail().')) ?></div>
+      <div class="form-text"><?= e(__('Separate several addresses with commas. Sent with the email service of the platform.')) ?></div>
     </div>
     <div class="col-12">
       <label class="form-label" for="nf"><?= e(__('Sender email (optional)')) ?></label>

@@ -44,7 +44,7 @@ if (is_post()) {
     $username = req_str('username', $_POST, 190);
     $password = is_string($_POST['password'] ?? null) ? (string) $_POST['password'] : '';
     if ($username === '' || $password === '') {
-        $error = __('Enter your username and password.');
+        $error = __('Enter your email or username and your password.');
     } else {
         [$ok, $msg] = Auth::attempt($username, $password);
         if ($ok) {
@@ -56,7 +56,7 @@ if (is_post()) {
 
 // White-label: platform branding, or a hotel's / reseller's branding with ?b=<hotel-slug>.
 $brandHotel = is_string($_GET['b'] ?? null) && preg_match('/^[a-z0-9-]{1,80}$/', $_GET['b'])
-    ? DB::one('SELECT id, name, brand_logo FROM hotels WHERE slug = :s', ['s' => $_GET['b']]) : null;
+    ? DB::one('SELECT id, name, slug, brand_logo FROM hotels WHERE slug = :s', ['s' => $_GET['b']]) : null;
 $brand = Branding::get($brandHotel ? (int) $brandHotel['id'] : 0);
 $hotelName = $brandHotel ? (string) $brandHotel['name'] : $brand['product'];
 $logo = $brand['logo_url'];
@@ -98,14 +98,17 @@ $user = null;
         <?= Csrf::field() ?>
         <input type="hidden" name="next" value="<?= e(is_string($next) ? $next : '') ?>">
         <div class="mb-3">
-          <label class="form-label" for="username"><?= e(__('Username or email')) ?></label>
+          <label class="form-label" for="username"><?= e(__('Email or username')) ?></label>
           <div class="input-group">
             <span class="input-group-text"><i class="bi bi-person"></i></span>
             <input type="text" class="form-control form-control-lg" id="username" name="username" value="<?= e($username) ?>" required autofocus autocomplete="username" autocapitalize="none" spellcheck="false" maxlength="190">
           </div>
         </div>
         <div class="mb-4">
-          <label class="form-label" for="password"><?= e(__('Password')) ?></label>
+          <div class="d-flex justify-content-between align-items-baseline">
+            <label class="form-label" for="password"><?= e(__('Password')) ?></label>
+            <a class="small" href="<?= e(admin_url('forgot_password.php', $brandHotel ? ['b' => $brandHotel['slug']] : [])) ?>" data-forgot-link><?= e(__('Forgot password?')) ?></a>
+          </div>
           <div class="input-group">
             <span class="input-group-text"><i class="bi bi-key"></i></span>
             <input type="password" class="form-control form-control-lg" id="password" name="password" required autocomplete="current-password">

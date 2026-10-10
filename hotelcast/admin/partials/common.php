@@ -726,3 +726,14 @@ function upload_limit(): int
 // 2.5 plans (core/Features.php): an admin page / ajax action of a feature outside the customer's plan
 // answers 403 "Not included in your plan" before the page runs (platform admins pass).
 Features::guardAdminRequest();
+
+/**
+ * 2.8 "Email an invite link" checkbox for user-creation forms (PasswordReset::invite()): ticked, the
+ * password field may stay empty and the new user chooses the password from a 72 h link.
+ */
+function invite_checkbox(string $id, string $passwordFieldId, bool $checked = true): string
+{
+    return '<div class="form-check"><input class="form-check-input" type="checkbox" id="' . e($id) . '" name="send_invite" value="1"' . ($checked ? ' checked' : '')
+        . ' data-invite-toggle="' . e($passwordFieldId) . '" onchange="var p=document.getElementById(this.getAttribute(\'data-invite-toggle\'));if(p){p.required=!this.checked;}">'
+        . '<label class="form-check-label small" for="' . e($id) . '">' . e(__('Email an invite link — the user chooses the password (leave the password empty)')) . '</label></div>';
+}

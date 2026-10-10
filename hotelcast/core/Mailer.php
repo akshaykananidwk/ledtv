@@ -63,7 +63,9 @@ final class Mailer
         }
         $cfg = array_replace($cfg, $override);
         if ($cfg['from_email'] === '' || !filter_var($cfg['from_email'], FILTER_VALIDATE_EMAIL)) {
-            $cfg['from_email'] = self::defaultFrom();
+            // SMTP mailboxes (Gmail, Zoho …) only send as themselves: the login address is the best default.
+            $cfg['from_email'] = $cfg['transport'] === 'smtp' && filter_var($cfg['username'], FILTER_VALIDATE_EMAIL)
+                ? (string) $cfg['username'] : self::defaultFrom();
         }
         if (trim((string) $cfg['from_name']) === '') {
             $cfg['from_name'] = Branding::get(0)['product'];

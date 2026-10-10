@@ -15,6 +15,7 @@ $tabs = ['branding' => [__('Branding'), 'bi-palette']];
 if ($saas) {
     $tabs['billing'] = [__('Billing'), 'bi-receipt'];
 }
+$tabs['email'] = [__('Email (SMTP)'), 'bi-envelope-at'];
 $tabs['notify'] = [__('Notifications'), 'bi-bell'];
 $tabs['features'] = [__('Features'), 'bi-toggles'];
 $tabs['data_feeds'] = [__('Data feeds'), 'bi-broadcast'];
@@ -93,6 +94,71 @@ if (is_post()) {
             }
             break;
 
+        case 'email':
+        case 'email_test':
+            // 2.8 Email transport (core/Mailer.php). The password is stored encrypted and never shown;
+            // empty = keep. "Send test email" uses the values in the form without saving them.
+            $mailCfg = [
+                'transport' => in_array($P('mail_transport', 10), Mailer::TRANSPORTS, true) ? $P('mail_transport', 10) : 'mail',
+                'host' => $P('smtp_host', 190),
+                'port' => req_int('smtp_port', $_POST),
+                'encryption' => in_array($P('smtp_encryption', 10), Mailer::ENCRYPTIONS, true) ? $P('smtp_encryption', 10) : 'tls',
+                'username' => $P('smtp_username', 190),
+                'allow_self_signed' => !empty($_POST['smtp_allow_self_signed']),
+                'from_email' => $P('mail_from_email', 190),
+                'from_name' => mb_substr(Mailer::cleanHeader($P('mail_from_name', 100)), 0, 100),
+            ];
+            $newPass = is_string($_POST['smtp_password'] ?? null) ? trim((string) $_POST['smtp_password']) : '';
+            if ($mailCfg['transport'] === 'smtp') {
+                if ($mailCfg['host'] === '' || !preg_match('/^[A-Za-z0-9.\-]{1,190}$/', $mailCfg['host'])) {
+                    $errors[] = __('Enter the SMTP server (host name), e.g. smtp.gmail.com.');
+                }
+                if ($mailCfg['port'] < 1 || $mailCfg['port'] > 65535) {
+                    $errors[] = __('Enter the SMTP port (587 for STARTTLS, 465 for SSL).');
+                }
+            }
+            if ($mailCfg['from_email'] !== '' && !filter_var($mailCfg['from_email'], FILTER_VALIDATE_EMAIL)) {
+                $errors[] = __('Enter a valid email address.') . ' (' . __('From email') . ')';
+            }
+            if ($op === 'email_test') {
+                $to = $P('test_to', 190);
+                if (!filter_var($to, FILTER_VALIDATE_EMAIL)) {
+                    $errors[] = __('Enter the address that should receive the test email.');
+                }
+                if ($errors) {
+                    break;
+                }
+                $override = $mailCfg + ['password' => !empty($_POST['clear_smtp_password']) ? '' : ($newPass !== '' ? $newPass : Settings::secret('smtp_password'))];
+                if ($override['from_email'] === '') {
+                    unset($override['from_email']);
+                }
+                if ($override['from_name'] === '') {
+                    unset($override['from_name']);
+                }
+                $brand = Branding::get(0);
+                [$text, $html] = MailTemplate::render(['brand' => $brand, 'lang' => I18n::lang(), 'title' => __('Test email'),
+                    'paragraphs' => [__('This is a test message from :product.', ['product' => $brand['product']]),
+                        __('Your email settings work: messages such as password resets, sign-up codes and alerts will be delivered.'),
+                        __('Transport') . ': ' . ($override['transport'] === 'smtp' ? 'SMTP ' . $override['host'] . ':' . $override['port'] . ' (' . $override['encryption'] . ')' : 'PHP mail()')]]);
+                $ok = Mailer::send($to, $brand['product'] . ': ' . __('Test email'), $text, $html, ['config' => $override]);
+                $_SESSION['hc_mail_test'] = ['ok' => $ok, 'to' => $to, 'error' => Mailer::$lastError, 'transcript' => array_slice(Mailer::$lastTranscript, -14)];
+                ActivityLog::add('mail_test', 'settings', null, 'Test email to ' . Mailer::maskAddress($to) . ': ' . ($ok ? 'sent' : 'failed'));
+                redirect(admin_url('platform_settings.php', ['tab' => 'email']));
+            }
+            if (!$errors) {
+                foreach (['mail_transport' => $mailCfg['transport'], 'smtp_host' => $mailCfg['host'], 'smtp_port' => (string) ($mailCfg['port'] ?: 587),
+                    'smtp_encryption' => $mailCfg['encryption'], 'smtp_username' => $mailCfg['username'], 'smtp_allow_self_signed' => $mailCfg['allow_self_signed'] ? '1' : '0',
+                    'mail_from_email' => $mailCfg['from_email'], 'mail_from_name' => $mailCfg['from_name']] as $k => $v) {
+                    Settings::setPlatform($k, $v);
+                }
+                if (!empty($_POST['clear_smtp_password'])) {
+                    Settings::setSecret('smtp_password', '');
+                } elseif ($newPass !== '') {
+                    Settings::setSecret('smtp_password', $newPass);
+                }
+            }
+            break;
+
         case 'notify':
             $to = $P('platform_notify_email', 500);
             $from = $P('platform_from_email', 190);
@@ -119,6 +185,9 @@ if (is_post()) {
                     'full_name' => $acc['full_name'], 'password_hash' => Auth::hash($acc['password']), 'language' => 'en', 'is_active' => 1, 'created_at' => now(),
                 ]);
                 ActivityLog::add('user_create', 'user', $uid, $acc['username'] . ' (platform_admin)');
+                if ($acc['invite'] && !PasswordReset::invite($uid)) {
+                    $errors[] = __('The invite email could not be sent: :err', ['err' => Mailer::$lastError]);
+                }
             }
             break;
 
@@ -214,6 +283,73 @@ require __DIR__ . '/partials/header.php';
   <div class="col-12"><button class="btn btn-primary"><i class="bi bi-check-lg"></i> <?= e(__('Save settings')) ?></button></div>
 </div></form>
 
+<?php elseif ($tab === 'email'):
+    $mt = $_SESSION['hc_mail_test'] ?? null;
+    unset($_SESSION['hc_mail_test']);
+    $hasPass = Settings::secret('smtp_password') !== '';
+    $mlog = Mailer::recentLog();
+    $sel = fn (string $k, string $v) => ((string) ($S[$k] ?? '')) === $v ? ' selected' : '';
+    $outbox = Mailer::outboxPath();
+?>
+<?php if ($mt): ?>
+  <?php if ($mt['ok']): ?>
+    <div class="alert alert-success d-flex gap-2" role="status" data-mail-test="ok"><i class="bi bi-check-circle-fill"></i><div><?= e(__('Test email sent to :e. Check the inbox (and the spam folder).', ['e' => $mt['to']])) ?></div></div>
+  <?php else: ?>
+    <div class="alert alert-danger" role="alert" data-mail-test="failed"><div class="d-flex gap-2"><i class="bi bi-exclamation-octagon-fill"></i><div><strong><?= e(__('The test email could not be sent.')) ?></strong><br><span class="mono small" data-mail-error><?= e((string) $mt['error']) ?></span></div></div>
+      <?php if (!empty($mt['transcript'])): ?><details class="mt-2"><summary class="small"><?= e(__('SMTP conversation')) ?></summary><pre class="small mb-0 mt-2" style="white-space:pre-wrap"><?= e(implode("\n", $mt['transcript'])) ?></pre></details><?php endif; ?></div>
+  <?php endif; ?>
+<?php endif; ?>
+<?php if ($outbox !== null): ?><div class="alert alert-info small"><?= e(__('Test installation: emails are written to an outbox file instead of being sent.')) ?></div><?php endif; ?>
+<div class="row g-3">
+<div class="col-xl-7">
+<form method="post" class="card" data-smtp-card autocomplete="off"><div class="card-header"><i class="bi bi-envelope-at"></i> <?= e(__('Email (SMTP)')) ?></div><div class="card-body row g-3">
+  <?= Csrf::field() ?><input type="hidden" name="tab" value="email">
+  <div class="col-12 small text-muted"><?= e(__('Used for password resets, sign-up codes, welcome emails, invites, alerts and invoices. SMTP through a real mailbox is much more reliable than PHP mail(), which often fails or lands in spam on shared hosting.')) ?></div>
+  <div class="col-sm-6"><label class="form-label" for="m_t"><?= e(__('Send emails with')) ?></label>
+    <select class="form-select" id="m_t" name="mail_transport"><option value="smtp"<?= $sel('mail_transport', 'smtp') ?>><?= e(__('SMTP server (recommended)')) ?></option><option value="mail"<?= $sel('mail_transport', 'mail') ?>><?= e(__('PHP mail() of the hosting')) ?></option></select></div>
+  <div class="col-sm-6"><label class="form-label" for="m_enc"><?= e(__('Encryption')) ?></label>
+    <select class="form-select" id="m_enc" name="smtp_encryption"><option value="tls"<?= $sel('smtp_encryption', 'tls') ?>>STARTTLS (587)</option><option value="ssl"<?= $sel('smtp_encryption', 'ssl') ?>>SSL / TLS (465)</option><option value="none"<?= $sel('smtp_encryption', 'none') ?>><?= e(__('None (not recommended)')) ?></option></select></div>
+  <div class="col-sm-8"><label class="form-label" for="m_h"><?= e(__('SMTP server')) ?></label><input class="form-control" id="m_h" name="smtp_host" value="<?= $val('smtp_host') ?>" placeholder="smtp.gmail.com" maxlength="190" autocapitalize="none" spellcheck="false"></div>
+  <div class="col-sm-4"><label class="form-label" for="m_p"><?= e(__('Port')) ?></label><input class="form-control" type="number" id="m_p" name="smtp_port" value="<?= $val('smtp_port') ?>" min="1" max="65535" placeholder="587"></div>
+  <div class="col-sm-6"><label class="form-label" for="m_u"><?= e(__('Username')) ?></label><input class="form-control" id="m_u" name="smtp_username" value="<?= $val('smtp_username') ?>" placeholder="you@gmail.com" maxlength="190" autocomplete="off" autocapitalize="none" spellcheck="false"></div>
+  <div class="col-sm-6"><label class="form-label" for="m_pw"><?= e(__('Password')) ?></label><input class="form-control" type="password" id="m_pw" name="smtp_password" autocomplete="new-password" placeholder="<?= e($hasPass ? __('Saved (leave empty to keep)') : __('App password')) ?>">
+    <div class="form-text"><?= e(__('Stored encrypted. Never shown again.')) ?></div>
+    <?php if ($hasPass): ?><div class="form-check mt-1"><input class="form-check-input" type="checkbox" name="clear_smtp_password" value="1" id="m_clr"><label class="form-check-label small" for="m_clr"><?= e(__('Remove saved password')) ?></label></div><?php endif; ?></div>
+  <div class="col-sm-6"><label class="form-label" for="m_fe"><?= e(__('From email')) ?></label><input class="form-control" type="email" id="m_fe" name="mail_from_email" value="<?= $val('mail_from_email') ?>" placeholder="<?= e(Mailer::defaultFrom()) ?>" maxlength="190">
+    <div class="form-text"><?= e(__('Gmail / Zoho: use the same address as the username.')) ?></div></div>
+  <div class="col-sm-6"><label class="form-label" for="m_fn"><?= e(__('From name')) ?></label><input class="form-control" id="m_fn" name="mail_from_name" value="<?= $val('mail_from_name') ?>" placeholder="<?= e(Branding::get(0)['product']) ?>" maxlength="100"></div>
+  <div class="col-12"><div class="form-check"><input class="form-check-input" type="checkbox" id="m_ss" name="smtp_allow_self_signed" value="1"<?= $chk('smtp_allow_self_signed') ?>><label class="form-check-label" for="m_ss"><?= e(__('Allow self-signed certificate (only for your own mail server)')) ?></label></div></div>
+  <div class="col-12 d-flex flex-wrap gap-2"><button class="btn btn-primary" name="op" value="email"><i class="bi bi-check-lg"></i> <?= e(__('Save settings')) ?></button></div>
+  <div class="col-12"><hr class="my-1"></div>
+  <div class="col-sm-8"><label class="form-label" for="m_to"><?= e(__('Send a test email to')) ?></label><input class="form-control" type="email" id="m_to" name="test_to" value="<?= e((string) ($user['email'] ?? '')) ?>" maxlength="190"></div>
+  <div class="col-sm-4 d-flex align-items-end"><button class="btn btn-outline-primary w-100" name="op" value="email_test" data-mail-test-btn><i class="bi bi-send"></i> <?= e(__('Send test email')) ?></button></div>
+  <div class="col-12 form-text mt-0"><?= e(__('The test uses the values in this form (also before saving) and shows the exact error if it fails.')) ?></div>
+</div></form>
+</div>
+<div class="col-xl-5">
+  <div class="card"><div class="card-header"><i class="bi bi-lightbulb"></i> <?= e(__('Settings for common providers')) ?></div><div class="card-body small">
+    <p class="mb-2"><strong>Gmail / Google Workspace</strong>: smtp.gmail.com · 587 · STARTTLS. <?= e(__('Username = your Gmail address. Password = an App Password (Google Account → Security → 2-Step Verification → App passwords), not your normal password.')) ?></p>
+    <p class="mb-2"><strong>Hostinger</strong>: smtp.hostinger.com · 465 · SSL. <?= e(__('Username = the full mailbox address created in hPanel → Emails, with its password.')) ?></p>
+    <p class="mb-2"><strong>Zoho Mail</strong>: smtp.zoho.in (India) / smtp.zoho.com · 465 SSL <?= e(__('or')) ?> 587 STARTTLS. <?= e(__('Username = your Zoho address; with 2FA use an application-specific password.')) ?></p>
+    <p class="mb-2"><strong>cPanel</strong>: mail.<?= e(__('your-domain')) ?> · 465 · SSL. <?= e(__('Username = the full email address created in cPanel → Email Accounts.')) ?></p>
+    <p class="mb-0 text-muted"><?= e(__('Tip: add the SPF / DKIM records your mail provider shows you to your domain\'s DNS, so emails do not land in spam.')) ?></p>
+  </div></div>
+</div>
+<div class="col-12">
+  <div class="card" data-mail-log><div class="card-header d-flex justify-content-between"><span><i class="bi bi-journal-text"></i> <?= e(__('Email log')) ?></span><span class="small text-muted"><?= e(__('Last :n emails (no contents are stored)', ['n' => Mailer::LOG_KEEP])) ?></span></div>
+    <div class="table-responsive" style="max-height:480px"><table class="table table-sm mb-0 align-middle small">
+      <thead class="table-light"><tr><th><?= e(__('Time')) ?></th><th><?= e(__('To')) ?></th><th><?= e(__('Subject')) ?></th><th><?= e(__('Status')) ?></th></tr></thead>
+      <tbody>
+      <?php if (!$mlog): ?><tr><td colspan="4" class="text-muted text-center py-3"><?= e(__('No emails sent yet.')) ?></td></tr><?php endif; ?>
+      <?php foreach ($mlog as $l): ?>
+        <tr><td class="text-nowrap"><?= e(date('d M H:i:s', (int) strtotime((string) $l['created_at']))) ?></td><td class="text-break"><?= e((string) $l['recipient']) ?></td><td class="text-break"><?= e((string) $l['subject']) ?></td>
+          <td><?php if ($l['status'] === 'sent'): ?><span class="badge text-bg-success"><?= e(__('sent')) ?></span><?php else: ?><span class="badge text-bg-danger"><?= e(__('failed')) ?></span><?php endif; ?> <span class="text-muted"><?= e((string) $l['transport']) ?></span>
+            <?php if (!empty($l['error'])): ?><div class="text-danger mono" style="font-size:.75rem"><?= e((string) $l['error']) ?></div><?php endif; ?></td></tr>
+      <?php endforeach; ?>
+      </tbody></table></div></div>
+</div>
+</div>
+
 <?php elseif ($tab === 'notify'): ?>
 <form method="post" class="card" style="max-width:760px"><div class="card-body row g-3">
   <?= Csrf::field() ?><input type="hidden" name="op" value="notify"><input type="hidden" name="tab" value="notify">
@@ -260,7 +396,8 @@ require __DIR__ . '/partials/header.php';
       <div class="col-sm-6"><input class="form-control" name="admin_username" placeholder="<?= e(__('Username')) ?>" required></div>
       <div class="col-sm-6"><input class="form-control" name="admin_name" placeholder="<?= e(__('Full name')) ?>"></div>
       <div class="col-12"><input class="form-control" type="email" name="admin_email" placeholder="<?= e(__('Email')) ?>" required></div>
-      <div class="col-12"><input class="form-control" type="password" name="admin_password" placeholder="<?= e(__('Password')) ?>" required autocomplete="new-password"></div>
+      <div class="col-12"><input class="form-control" type="password" id="pa_p" name="admin_password" placeholder="<?= e(__('Password')) ?>" autocomplete="new-password"></div>
+      <div class="col-12"><?= invite_checkbox('pa_i', 'pa_p') ?></div>
       <div class="col-12"><button class="btn btn-primary"><i class="bi bi-person-plus"></i> <?= e(__('Create')) ?></button></div>
     </form></div></div></div>
 </div>

@@ -119,6 +119,7 @@ if (is_post()) {
                 if ($r['next'] === 'verify') {
                     $_SESSION['hc_signup_id'] = $r['id'];
                     $_SESSION['hc_signup_email'] = $data['email'];
+                    $_SESSION['hc_signup_mailfail'] = Signup::$mailFailed;
                     redirect(base_url('signup.php?step=verify'));
                 }
                 redirect(base_url('signup.php?step=pending'));
@@ -131,7 +132,9 @@ if (is_post()) {
             redirect(base_url('signup.php'));
         }
         if ($op === 'resend') {
-            $notice = Signup::sendOtp($sid, true) ? __('We sent a new code.') : __('Please wait a minute before asking for a new code (max. 3 codes).');
+            $sentOk = Signup::sendOtp($sid, true);
+            $_SESSION['hc_signup_mailfail'] = Signup::$mailFailed;
+            $notice = $sentOk ? __('We sent a new code.') : (Signup::$mailFailed ? null : __('Please wait a minute before asking for a new code (max. 3 codes).'));
         } elseif (RateLimiter::hit('signup_otp:' . $ip, 20, 3600) > 0) {
             http_response_code(429);
             $errors['_'] = __('Too many attempts. Please try again later.');
@@ -165,7 +168,12 @@ if ($step === 'pending') {
 if ($step === 'verify') {
     $email = (string) ($_SESSION['hc_signup_email'] ?? '');
     $active = !empty($_SESSION['hc_signup_id']);
-    signup_page(__('Check your email'), static function () use ($email, $errors, $notice, $active): void {
+    $mailFail = !empty($_SESSION['hc_signup_mailfail']);
+    // Seconds until "Send a new code" is allowed again (1 code per minute, Signup::sendOtp()).
+    $exp = $active ? (string) DB::value('SELECT otp_expires_at FROM signups WHERE id = :id', ['id' => (int) $_SESSION['hc_signup_id']]) : '';
+    $wait = $exp !== '' ? max(0, (int) strtotime($exp) - Signup::OTP_TTL + 60 - time()) : 0;
+    $support = trim($brand['support_phone'] . ' ' . $brand['support_email']);
+    signup_page(__('Check your email'), static function () use ($email, $errors, $notice, $active, $mailFail, $wait, $support): void {
         if (!$active) {
             echo '<div class="alert alert-warning">' . e($errors['_'] ?? __('This sign-up has expired. Please start again.')) . '</div>';
             echo '<a class="btn btn-primary w-100" href="' . e(base_url('signup.php')) . '">' . e(__('Start free trial')) . '</a>';
@@ -173,7 +181,11 @@ if ($step === 'verify') {
         }
         $masked = preg_replace('/(?<=.).(?=[^@]*@)/u', '•', $email) ?? '';
         ?>
+        <?php if ($mailFail): ?>
+          <div class="alert alert-danger" role="alert" data-signup-mail-failed><i class="bi bi-envelope-exclamation"></i> <?= e(__('We could not send the email to :email right now. Please press "Send a new code" to try again, or contact support.', ['email' => $masked])) ?><?= $support !== '' ? ' ' . e(__('Support')) . ': ' . e($support) : '' ?></div>
+        <?php else: ?>
         <p><?= e(__('We sent a 6-digit code to :email. Enter it below to start your free trial.', ['email' => $masked])) ?></p>
+        <?php endif; ?>
         <?php if ($notice): ?><div class="alert alert-info small"><?= e($notice) ?></div><?php endif; ?>
         <?php if (!empty($errors['_'])): ?><div class="alert alert-danger" role="alert"><?= e($errors['_']) ?></div><?php endif; ?>
         <form method="post" action="<?= e(base_url('signup.php?step=verify')) ?>" novalidate>
@@ -183,7 +195,14 @@ if ($step === 'verify') {
           <button class="btn btn-primary btn-lg w-100"><i class="bi bi-shield-check"></i> <?= e(__('Verify and start trial')) ?></button>
         </form>
         <form method="post" action="<?= e(base_url('signup.php?step=verify')) ?>" class="text-center mt-3"><?= Csrf::field() ?><input type="hidden" name="op" value="resend">
-          <button class="btn btn-link btn-sm"><?= e(__('Send a new code')) ?></button></form>
+          <button class="btn btn-link btn-sm" id="resendBtn" data-wait="<?= (int) $wait ?>"<?= $wait > 0 ? ' disabled' : '' ?>><?= e(__('Send a new code')) ?><span id="resendWait"><?= $wait > 0 ? ' (' . (int) $wait . ' s)' : '' ?></span></button></form>
+        <script>
+        (function () {
+          var b = document.getElementById('resendBtn'), w = document.getElementById('resendWait'), n = parseInt(b.getAttribute('data-wait'), 10) || 0;
+          if (n <= 0) { return; }
+          var t = setInterval(function () { n--; if (n <= 0) { clearInterval(t); b.disabled = false; w.textContent = ''; } else { w.textContent = ' (' + n + ' s)'; } }, 1000);
+        })();
+        </script>
         <p class="small text-muted mb-0"><?= e(__('No email? Check your spam folder. The code is valid for 15 minutes.')) ?></p>
         <?php
     }, $brand, $lang);

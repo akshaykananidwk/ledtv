@@ -164,6 +164,11 @@ if (is_post()) {
             } elseif (DB::value('SELECT id FROM users WHERE email = :e AND id <> :id', ['e' => $email, 'id' => $id])) {
                 $errors[] = __('This email is already used by another user.');
             }
+            // 2.8: new user + "email an invite link" with an empty password: the user chooses it (72 h link).
+            $invite = !$target && !empty($_POST['send_invite']) && $password === '';
+            if ($invite) {
+                $password = $confirm = PasswordReset::randomPassword();
+            }
             if (!$target || $password !== '') {
                 if ($err = Auth::passwordError($password)) {
                     $errors[] = $err;
@@ -213,6 +218,15 @@ if (is_post()) {
             } else {
                 $id = DB::insert('users', $data + ['hotel_id' => Tenant::id(), 'created_at' => now()]);
                 ActivityLog::add('user_create', 'user', $id, $username . ' (' . ($roleId ? Roles::specLabel($spec) : $role) . ')');
+                if ($invite) {
+                    if (!$active) {
+                        flash('warning', __('The invite email is sent only to active accounts.'));
+                    } elseif (PasswordReset::invite($id)) {
+                        flash('info', __('Invite link sent to :e.', ['e' => $email]));
+                    } else {
+                        flash('warning', __('The invite email could not be sent: :err', ['err' => Mailer::$lastError]));
+                    }
+                }
             }
             Auth::forgetPermissions();
             // TV access (manager / staff / reception): all TVs or only some groups / rooms.
@@ -404,7 +418,7 @@ if ($action === 'new' || $action === 'edit') {
         </div>
         <div class="col-md-6">
           <label class="form-label" for="pw"><?= e($u['id'] ? __('New password (leave empty to keep)') : __('Password')) ?><?= $u['id'] ? '' : ' *' ?></label>
-          <input class="form-control" type="password" id="pw" name="password" autocomplete="new-password" data-strength="#pwBar"<?= $u['id'] ? '' : ' required' ?>>
+          <input class="form-control" type="password" id="pw" name="password" autocomplete="new-password" data-strength="#pwBar">
           <div class="strength-bar" id="pwBar"><span></span></div>
           <div class="form-text"><span data-strength-label></span> · <?= e(__('At least 8 characters with letters and numbers.')) ?></div>
         </div>
@@ -412,6 +426,7 @@ if ($action === 'new' || $action === 'edit') {
           <label class="form-label" for="pw2"><?= e(__('Repeat password')) ?></label>
           <input class="form-control" type="password" id="pw2" name="password_confirm" autocomplete="new-password">
         </div>
+        <?php if (!$u['id']): ?><div class="col-12"><?= invite_checkbox('inv', 'pw') ?></div><?php endif; ?>
         <div class="col-12">
           <div class="form-check form-switch">
             <input class="form-check-input" type="checkbox" role="switch" id="act" name="is_active" value="1"<?= (int) $u['is_active'] ? ' checked' : '' ?><?= $isSelf ? ' disabled' : '' ?>>
