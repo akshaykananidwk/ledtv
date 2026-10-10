@@ -31,7 +31,7 @@ final class Panel
         // Notifications, Audit logs, System settings (+ resellers / chains / marketplace / support / update / QR).
         'platform' => ['platform_overview', 'platform_hotels', 'platform_resellers', 'platform_chains',
             'platform_plans', 'platform_invoices', 'platform_licenses', 'platform_signups', 'platform_demo', 'platform_marketplace',
-            'platform_screens', 'platform_content', 'qr_setup',
+            'platform_screens', 'platform_apk', 'platform_content', 'qr_setup',
             'platform_reports', 'push', 'platform_audit', 'platform_support',
             'platform_settings', 'update'],
         'reseller' => ['reseller_overview', 'reseller', 'platform_screens', 'reseller_plans', 'reseller_invoices', 'reseller_support',
@@ -45,7 +45,7 @@ final class Panel
         'platform' => [
             'Manage' => ['platform_overview', 'platform_hotels', 'platform_resellers', 'platform_chains'],
             'Plans & subscriptions' => ['platform_plans', 'platform_invoices', 'platform_licenses', 'platform_signups', 'platform_demo', 'platform_marketplace'],
-            'Devices & content' => ['platform_screens', 'platform_content', 'qr_setup'],
+            'Devices & content' => ['platform_screens', 'platform_apk', 'platform_content', 'qr_setup'],
             'Insight' => ['platform_reports', 'push', 'platform_audit', 'platform_support'],
             'System' => ['platform_settings', 'update'],
         ],

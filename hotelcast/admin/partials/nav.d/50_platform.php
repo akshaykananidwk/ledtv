@@ -13,6 +13,8 @@ return [
     ['platform_invoices', 'platform_invoices.php', 'platform.manage', 'bi-receipt-cutoff', __('Invoices'), 'platform', ['saas' => true]],
     ['platform_licenses', 'platform_licenses.php', 'platform.manage', 'bi-key', __('Licenses'), 'platform', ['saas' => true]],
     ['platform_settings', 'platform_settings.php', 'platform.manage', 'bi-sliders', __('System settings'), 'platform'],
+    // 2.7 Super Admin → APK Manager (docs/modules/apk_manager.md): platform-wide TV app releases, forced update.
+    ['platform_apk', 'platform_apk.php', 'platform.manage', 'bi-android2', __('APK Manager'), 'platform'],
     ['platform_content', 'platform_content.php', 'platform.manage', 'bi-collection-play', __('Content overview'), 'platform'],
     ['platform_reports', 'platform_reports.php', 'platform.manage', 'bi-graph-up', __('Reports'), 'platform'],
     ['platform_audit', 'platform_audit.php', 'platform.manage', 'bi-journal-check', __('Audit logs'), 'platform'],

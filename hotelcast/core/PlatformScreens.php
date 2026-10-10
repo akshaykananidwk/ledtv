@@ -130,32 +130,48 @@ final class PlatformScreens
         ];
     }
 
-    /** Newest APK version code per customer (+ platform-wide newest under key 0). */
+    /**
+     * Newest APK version code per customer's own releases (+ fallback under key 0, + platform releases
+     * rolled out to all customers under key 'all'). 2.7: a customer's effective latest is the highest of its
+     * own releases and the platform releases offered to it (core/AppReleases.php); a customer without any
+     * is compared with the newest release anywhere (legacy fallback, key 0).
+     */
     public static function newestCodes(): array
     {
         if (self::$newest !== null) {
             return self::$newest;
         }
-        $out = [0 => (int) (DB::value('SELECT MAX(version_code) FROM apk_releases') ?? 0)];
-        foreach (DB::all('SELECT hotel_id, MAX(version_code) AS mx FROM apk_releases GROUP BY hotel_id') as $r) {
+        $out = [0 => (int) (DB::value('SELECT MAX(version_code) FROM apk_releases') ?? 0), 'all' => 0];
+        if (AppReleases::available()) {
+            $out['all'] = (int) (DB::value("SELECT MAX(version_code) FROM apk_releases WHERE hotel_id IS NULL AND rollout = 'all'") ?? 0);
+        }
+        foreach (DB::all('SELECT hotel_id, MAX(version_code) AS mx FROM apk_releases WHERE hotel_id IS NOT NULL GROUP BY hotel_id') as $r) {
             $out[(int) $r['hotel_id']] = (int) $r['mx'];
         }
         return self::$newest = $out;
     }
 
-    /** SQL expression "this TV runs an older app than the newest APK" (customer's newest, else platform's). */
+    /** SQL expression "this TV runs an older app than its customer's effective newest APK". */
     private static function outdatedSql(): string
     {
         $notWeb = DeviceManager::notWebSql('d.platform');
-        $global = (int) self::newestCodes()[0]; // integer from the database, inlined (no reused placeholders)
-        return "(d.app_version_code IS NOT NULL AND d.app_version_code < COALESCE(apk.mx, $global)$notWeb)";
+        $codes = self::newestCodes(); // integers from the database, inlined (no reused placeholders)
+        $fallback = (int) $codes[0];
+        $all = (int) $codes['all'];
+        $sel = AppReleases::available() ? 'COALESCE(gsel.mx, 0)' : '0';
+        return "(d.app_version_code IS NOT NULL AND d.app_version_code < COALESCE(NULLIF(GREATEST(COALESCE(apk.mx, 0), $sel, $all), 0), $fallback)$notWeb)";
     }
 
     private static function fromSql(): string
     {
-        return ' FROM devices d JOIN hotels h ON h.id = d.hotel_id
+        $sql = ' FROM devices d JOIN hotels h ON h.id = d.hotel_id
                  LEFT JOIN rooms r ON r.id = d.room_id AND r.hotel_id = d.hotel_id
-                 LEFT JOIN (SELECT hotel_id, MAX(version_code) AS mx FROM apk_releases GROUP BY hotel_id) apk ON apk.hotel_id = d.hotel_id';
+                 LEFT JOIN (SELECT hotel_id, MAX(version_code) AS mx FROM apk_releases WHERE hotel_id IS NOT NULL GROUP BY hotel_id) apk ON apk.hotel_id = d.hotel_id';
+        if (AppReleases::available()) {
+            $sql .= " LEFT JOIN (SELECT x.hotel_id, MAX(a.version_code) AS mx FROM apk_release_hotels x
+                        JOIN apk_releases a ON a.id = x.release_id AND a.hotel_id IS NULL AND a.rollout = 'selected' GROUP BY x.hotel_id) gsel ON gsel.hotel_id = d.hotel_id";
+        }
+        return $sql;
     }
 
     /** [whereSql, params] for the filters within the scope. */
@@ -502,8 +518,8 @@ final class PlatformScreens
     }
 
     /**
-     * Push the newest APK of each customer (APK Manager of that customer) to the selected Android TVs.
-     * Customers without an APK are skipped. Returns ['customers' => n, 'tvs' => n, 'skipped' => [names]].
+     * Push the newest APK of each customer to the selected Android TVs: the highest of its own releases and the
+     * platform releases offered to it (2.7, core/AppReleases.php). Customers without an APK are skipped. Returns ['customers' => n, 'tvs' => n, 'skipped' => [names]].
      */
     public static function pushUpdate(array $deviceIds): array
     {
@@ -513,7 +529,7 @@ final class PlatformScreens
             if (!$roomIds) {
                 continue;
             }
-            $apkId = (int) DB::value('SELECT id FROM apk_releases WHERE hotel_id = :h ORDER BY version_code DESC, id DESC LIMIT 1', ['h' => $hid]);
+            $apkId = (int) (AppReleases::forHotel($hid)['latest']['id'] ?? 0);
             if (!$apkId) {
                 $out['skipped'][] = self::hotelName($hid);
                 continue;

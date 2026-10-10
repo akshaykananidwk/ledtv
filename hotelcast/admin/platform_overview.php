@@ -118,7 +118,8 @@ require __DIR__ . '/partials/header.php';
   <?= panel_kpi(__('Suspended / expired'), $n('suspended', $cust) + $n('expired', $cust), 'bi-pause-circle', admin_url('platform_hotels.php', ['status' => 'suspended']), $n('expiring', $cust) ? __(':n expiring soon', ['n' => $n('expiring', $cust)]) : '', $n('suspended', $cust) + $n('expired', $cust) ? 'danger' : '', 'suspended') ?>
   <?= panel_kpi(__('TVs online'), $c['online'], 'bi-wifi', admin_url('platform_screens.php', ['status' => 'online']), __('of :n', ['n' => $c['total']]), 'success', 'online') ?>
   <?= panel_kpi(__('TVs offline'), $c['offline'], 'bi-wifi-off', admin_url('platform_screens.php', ['status' => 'offline']), '', $c['offline'] ? 'danger' : '', 'offline') ?>
-  <?= panel_kpi(__('Outdated app'), $c['outdated'], 'bi-android2', admin_url('platform_screens.php', ['update' => 1]), '', $c['outdated'] ? 'warning' : '', 'outdated') ?>
+  <?php $apkLatest = AppReleases::platformLatest(); /* 2.7: outdated = older than the customer's effective latest (platform APK Manager) */ ?>
+  <?= panel_kpi(__('Outdated app'), $c['outdated'], 'bi-android2', admin_url('platform_apk.php'), $apkLatest ? __('Latest: v:v', ['v' => $apkLatest['version_name']]) : '', $c['outdated'] ? 'warning' : '', 'outdated') ?>
   <?= panel_kpi(__('Health warnings'), $c['warnings'], 'bi-heart-pulse', admin_url('platform_screens.php', ['warn' => 1]), '', $c['warnings'] ? 'warning' : '', 'warnings') ?>
   <?= panel_kpi(__('Users'), $usersTotal, 'bi-people', admin_url('platform_search.php'), '', '', 'users') ?>
   <?php if ($signups): ?><?= panel_kpi(__('Open sign-ups'), $signups['pending'] + $signups['verify'], 'bi-person-plus', admin_url('platform_signups.php'), __(':n in 7 days', ['n' => $signups['last7']]), $signups['pending'] ? 'warning' : '', 'signups') ?><?php endif; ?>

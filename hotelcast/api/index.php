@@ -82,6 +82,11 @@ switch (true) {
             'content_changed' => $changed,
             'commands' => $commands,
         ];
+        // 2.7: a running TV learns about a new (required) app version here and caches it; it keeps playing
+        // and updates on its next start (docs/modules/apk_manager.md). Not sent to web players.
+        if (!DeviceManager::isWeb($device)) {
+            $data['app_update'] = AppReleases::forDevice($device);
+        }
         if ($changed) {
             $data['content'] = $content;
             DB::update('devices', ['current_hash' => $content['hash']], 'id = :id', ['id' => $device['id']]);
@@ -104,22 +109,54 @@ switch (true) {
         $device = DeviceManager::authenticate();
         Api::ok(DeviceManager::played($device, request_json()));
 
+    // 2.7: latest TV app for this device (docs/modules/apk_manager.md). The app asks on every start and blocks
+    // until it is updated when installed < required_version_code. update = null: nothing to install (web players).
+    case $route === 'device/app-version':
+        Api::method('GET');
+        $device = DeviceManager::authenticate();
+        Api::ok(['installed_version_code' => $device['app_version_code'] !== null ? (int) $device['app_version_code'] : null,
+            'update' => AppReleases::forDevice($device)]);
+
     case ($parts[0] ?? '') === 'device' && ($parts[1] ?? '') === 'apk' && isset($parts[2]):
         Api::method('GET');
         $device = DeviceManager::authenticate();
-        $apk = DB::one('SELECT * FROM apk_releases WHERE id = :id AND hotel_id = :h', ['id' => (int) $parts[2], 'h' => (int) $device['hotel_id']]);
+        // Own customer's release, or a platform release rolled out to this customer (AppReleases precedence).
+        $apk = DeviceManager::isWeb($device) ? null : AppReleases::findForDevice((int) $parts[2], $device);
         $file = $apk ? HC_ROOT . '/storage/' . $apk['file_path'] : null;
-        if (!$apk || !is_file($file) || str_contains($apk['file_path'], '..')) {
+        if (!$apk || str_contains($apk['file_path'], '..') || !is_file($file)) {
             Api::error('NOT_FOUND', 'APK not found', 404);
+        }
+        $size = (int) filesize($file);
+        // Resume support: "Range: bytes=N-" (the TV continues an interrupted download).
+        $from = 0;
+        if (preg_match('/^bytes=(\d+)-$/', (string) ($_SERVER['HTTP_RANGE'] ?? ''), $m)) {
+            $from = (int) $m[1];
+            if ($from >= $size) {
+                header('Content-Range: bytes */' . $size);
+                Api::error('RANGE_NOT_SATISFIABLE', 'Range not satisfiable', 416);
+            }
+        }
+        if ($from === 0) {
+            AppReleases::countDownload((int) $apk['id']);
         }
         while (ob_get_level()) {
             ob_end_clean();
         }
         header('Content-Type: application/vnd.android.package-archive');
-        header('Content-Length: ' . filesize($file));
+        header('Accept-Ranges: bytes');
         header('Content-Disposition: attachment; filename="KrishnaCloud-TV-' . preg_replace('/[^A-Za-z0-9._-]/', '', $apk['version_name']) . '.apk"');
         header('X-Content-SHA256: ' . $apk['sha256']);
-        readfile($file);
+        if ($from > 0) {
+            http_response_code(206);
+            header('Content-Range: bytes ' . $from . '-' . ($size - 1) . '/' . $size);
+        }
+        header('Content-Length: ' . ($size - $from));
+        $fh = fopen($file, 'rb');
+        if ($fh) {
+            fseek($fh, $from);
+            fpassthru($fh);
+            fclose($fh);
+        }
         exit;
 
     case ($parts[0] ?? '') === 'content' && isset($parts[1]):

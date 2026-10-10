@@ -220,7 +220,8 @@ $rows = DB::all(
      ORDER BY crashes DESC, LENGTH(r.room_number), r.room_number",
     ['week' => date('Y-m-d H:i:s', time() - 7 * 86400)] + hid() + Access::roomSql('d.room_id')[1]
 );
-$newest = DB::one('SELECT version_code, version_name FROM apk_releases WHERE hotel_id = :hid ORDER BY version_code DESC LIMIT 1', hid());
+// 2.7: newest app offered to this customer (its own APK or the Super Admin's platform release, core/AppReleases.php).
+$newest = AppReleases::forHotel(Tenant::id())['latest'];
 $pageTitle = __('TV support');
 $activeNav = 'support';
 require __DIR__ . '/partials/header.php';

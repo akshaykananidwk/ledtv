@@ -266,7 +266,8 @@ final class DeviceSupport
         $now ??= time();
         $d1 = date('Y-m-d H:i:s', $now - 86400);
         $d7 = date('Y-m-d H:i:s', $now - 7 * 86400);
-        $newest = DB::one('SELECT version_code, version_name FROM apk_releases ORDER BY version_code DESC, id DESC LIMIT 1');
+        // 2.7: the Super Admin's platform release is the reference when one exists (AppReleases), else the newest anywhere.
+        $newest = AppReleases::platformLatest() ?? DB::one('SELECT version_code, version_name FROM apk_releases ORDER BY version_code DESC, id DESC LIMIT 1');
         $newestCode = $newest ? (int) $newest['version_code'] : null;
         $hotels = [];
         foreach (DB::all('SELECT id, name, status FROM hotels ORDER BY name') as $h) {

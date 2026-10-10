@@ -598,10 +598,10 @@ final class Broadcaster
         return [$bid, $count];
     }
 
-    /** Push an APK update to TVs. */
+    /** Push an APK update to TVs (the customer's own release or a platform release offered to it, 2.7). */
     public static function pushApk(int $apkId, string $targetType, array $ids, ?int $userId = null): array
     {
-        $apk = Tenant::find('apk_releases', $apkId);
+        $apk = AppReleases::findForHotel($apkId, Tenant::id());
         if (!$apk) {
             throw new InvalidArgumentException('APK not found');
         }

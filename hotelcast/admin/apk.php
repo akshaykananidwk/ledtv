@@ -93,6 +93,11 @@ if (is_post()) {
 
 $releases = DB::all('SELECT a.*, u.username FROM apk_releases a LEFT JOIN users u ON u.id = a.uploaded_by WHERE a.hotel_id = :hid ORDER BY a.version_code DESC, a.id DESC', hid());
 $latestCode = $releases ? (int) $releases[0]['version_code'] : 0;
+// 2.7: the platform release of the Super Admin (APK Manager in the console) also reaches this customer's TVs;
+// the highest versionCode of {own releases, platform release} is installed (docs/modules/apk_manager.md).
+$offered = AppReleases::forHotel(Tenant::id());
+$platformRel = $offered['latest'] !== null && $offered['latest']['hotel_id'] === null ? $offered['latest'] : null;
+$effectiveCode = max($latestCode, (int) ($offered['latest']['version_code'] ?? 0));
 $devices = DB::all(
     "SELECT d.*, r.room_number,
             (SELECT c.status FROM device_commands c WHERE c.device_id = d.id AND c.command = 'UPDATE_APP' ORDER BY c.id DESC LIMIT 1) AS upd_status,
@@ -109,6 +114,11 @@ require __DIR__ . '/partials/header.php';
 <div class="page-head">
   <div><h1><?= e(__('APK Manager')) ?></h1><p class="lead-sm"><?= e(__('Upload new versions of the TV app and install them on all TVs remotely.')) ?></p></div>
 </div>
+<?php if ($platformRel): ?>
+<div class="alert alert-info d-flex gap-2 align-items-start"><i class="bi bi-cloud-check"></i><div>
+  <?= e(__('Your TVs get the platform app v:v (:c) from your provider:required. Your own uploads are used only when their version code is higher.', ['v' => $platformRel['version_name'], 'c' => (int) $platformRel['version_code'], 'required' => $offered['required_code'] >= (int) $platformRel['version_code'] ? ' — ' . __('required update') : ''])) ?>
+</div></div>
+<?php endif; ?>
 <div class="row g-3">
   <div class="col-lg-5">
     <div class="card mb-3">
@@ -187,7 +197,7 @@ require __DIR__ . '/partials/header.php';
           <thead><tr><th><?= e(__('Screen')) ?></th><th><?= e(__('App version')) ?></th><th><?= e(__('Status')) ?></th><th><?= e(__('Last update command')) ?></th></tr></thead>
           <tbody>
           <?php if (!$devices): ?><tr><td colspan="4" class="text-center text-muted py-4"><?= e(__('No TVs registered yet.')) ?></td></tr><?php endif; ?>
-          <?php foreach ($devices as $d): $web = DeviceManager::isWeb($d); $old = !$web && $latestCode && (int) $d['app_version_code'] < $latestCode; ?>
+          <?php foreach ($devices as $d): $web = DeviceManager::isWeb($d); $old = !$web && $effectiveCode && (int) $d['app_version_code'] < $effectiveCode; ?>
             <tr>
               <td><a href="<?= e(admin_url('rooms.php', ['action' => 'device', 'id' => $d['id']])) ?>"><?= e($d['room_number'] ?? '-') ?></a></td>
               <td class="<?= $old ? 'text-warning fw-semibold' : '' ?>">v<?= e($d['app_version'] ?? '?') ?> <span class="text-muted">(<?= e($d['app_version_code'] ?? '?') ?>)</span><?php if ($old): ?> <i class="bi bi-arrow-up-circle" title="<?= e(__('Update available')) ?>"></i><?php endif; ?><?php if ($web): ?> <span class="badge text-bg-info" title="<?= e(__('Web players update themselves on the next reload.')) ?>"><i class="bi bi-browser-chrome"></i> <?= e(__('Web player')) ?></span><?php endif; ?></td>

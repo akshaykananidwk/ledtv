@@ -74,7 +74,13 @@ final class AppReleases
     /** Release row a TV may download (own customer's or a platform release rolled out to it), else null. */
     public static function findForDevice(int $releaseId, array $device): ?array
     {
-        $row = DB::one('SELECT a.* FROM apk_releases a WHERE a.id = :id AND ' . self::eligibleSql(), ['id' => $releaseId] + self::eligibleParams((int) $device['hotel_id']));
+        return self::findForHotel($releaseId, (int) $device['hotel_id']);
+    }
+
+    /** Release offered to a customer (its own, or a platform release rolled out to it), else null. */
+    public static function findForHotel(int $releaseId, int $hotelId): ?array
+    {
+        $row = DB::one('SELECT a.* FROM apk_releases a WHERE a.id = :id AND ' . self::eligibleSql(), ['id' => $releaseId] + self::eligibleParams($hotelId));
         return $row ?: null;
     }
 
