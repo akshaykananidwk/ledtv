@@ -243,7 +243,7 @@ final class Mailer
     /** Strip CR, LF and NUL (header injection) and trim. */
     public static function cleanHeader(string $value): string
     {
-        return trim(str_replace(["\r", "\n", "\0"], ' ', $value));
+        return trim((string) preg_replace('/[\r\n\0]+/', ' ', $value));
     }
 
     /** RFC 2047 encoded-words (UTF-8, base64) for non-ASCII text, folded at 75 characters. */
@@ -313,7 +313,7 @@ final class Mailer
         if ($html === null) {
             $headers['Content-Type'] = 'text/plain; charset=UTF-8';
             $headers['Content-Transfer-Encoding'] = 'quoted-printable';
-            $body = self::qp($text);
+            $body = self::qp($text) . "\r\n";
         } else {
             $boundary = '=_hc_' . bin2hex(random_bytes(12));
             $headers['Content-Type'] = 'multipart/alternative; boundary="' . $boundary . '"';

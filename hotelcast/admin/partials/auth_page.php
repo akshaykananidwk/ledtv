@@ -47,7 +47,7 @@ function auth_page(string $title, callable $body, ?array $brandHotel): never
           <div class="hc-brand-icon text-white mx-auto mb-2" style="width:56px;height:56px;font-size:1.7rem"><i class="bi bi-tv"></i></div>
         <?php endif; ?>
         <h1 class="h4 mb-0"><?= e($title) ?></h1>
-        <div class="text-muted small"><?= e($name) ?></div>
+        <div class="text-muted small"><?= e($name) ?><?= $name !== $brand['product'] ? ' · ' . e($brand['product']) : '' ?></div>
       </div>
       <?php $body(); ?>
       <?php if ($brand['support_phone'] !== '' || $brand['support_email'] !== ''): ?>
