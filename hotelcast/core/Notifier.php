@@ -72,24 +72,36 @@ final class Notifier
         return $results;
     }
 
-    public static function email(string $toList, string $subject, string $message, string $from = '', string $fromName = ''): bool
+    /**
+     * E-mail through Mailer (SMTP or PHP mail(), Platform settings → Email) in the branded layout
+     * (MailTemplate). $toList: comma separated. $opts: html (own HTML part), title, lang, brand_hotel
+     * (whose branding; default the current customer, 0 = platform). Returns true when every message
+     * was accepted; Notifier::$lastError / Mailer::$lastError tell why not.
+     */
+    public static function email(string $toList, string $subject, string $message, string $from = '', string $fromName = '', array $opts = []): bool
     {
-        $from = $from !== '' ? $from : (trim((string) Settings::get('notify_from_email', '')) ?: 'no-reply@' . (parse_url(base_url(), PHP_URL_HOST) ?: 'localhost'));
-        $fromName = preg_replace('/[^\p{L}\p{N} ._-]/u', '', $fromName !== '' ? $fromName : Branding::get()['product']) ?: 'Krishna Cloud';
+        $brandHotel = array_key_exists('brand_hotel', $opts) ? (int) $opts['brand_hotel'] : (Tenant::current() ?? 0);
+        $brand = Branding::get($brandHotel);
+        $lang = (string) ($opts['lang'] ?? 'en');
+        $from = $from !== '' ? $from : trim((string) Settings::get('notify_from_email', ''));
+        $fromName = trim((string) preg_replace('/[^\p{L}\p{N} ._&()\'-]/u', '', $fromName !== '' ? $fromName : $brand['product'])) ?: Branding::DEFAULT_PRODUCT;
+        $html = $opts['html'] ?? MailTemplate::fromText($message, $brand, $lang, (string) ($opts['title'] ?? ''))[1];
         $ok = true;
+        self::$lastError = '';
         foreach (array_filter(array_map('trim', explode(',', $toList))) as $to) {
             if (!filter_var($to, FILTER_VALIDATE_EMAIL)) {
                 continue;
             }
-            if (self::$mailer) {
-                $ok = (bool) (self::$mailer)($to, $subject, $message) && $ok;
-                continue;
+            if (!Mailer::send($to, $subject, $message, $html, ['from' => $from, 'from_name' => $fromName])) {
+                $ok = false;
+                self::$lastError = Mailer::$lastError;
             }
-            $headers = "From: {$fromName} <{$from}>\r\nContent-Type: text/plain; charset=UTF-8\r\nMIME-Version: 1.0\r\n";
-            $ok = @mail($to, '=?UTF-8?B?' . base64_encode($subject) . '?=', $message, $headers) && $ok;
         }
         return $ok;
     }
+
+    /** Error of the last failed email() ('' when it worked). */
+    public static string $lastError = '';
 
     /**
      * WhatsApp via any HTTP gateway. The URL may contain {message} (URL-encoded in place),
@@ -130,6 +142,10 @@ final class Notifier
         return $results;
     }
 
-    /** Test hook: when set, email() calls this instead of mail(): fn(string $to, string $subject, string $message): bool */
+    /**
+     * Test hook (kept from 2.x): when set, every e-mail (Notifier::email and Mailer::send) is handed to it
+     * instead of being sent: fn(string $to, string $subject, string $textMessage): bool. Newer tests use
+     * Mailer::$testHook, which gets the whole MIME message.
+     */
     public static $mailer = null;
 }

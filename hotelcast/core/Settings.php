@@ -84,6 +84,16 @@ final class Settings
         'billing_whatsapp_url' => '',
         'platform_notify_email' => '',
         'platform_from_email' => '',
+        // Email transport (2.8, core/Mailer.php, docs/modules/email.md); smtp_password is stored encrypted
+        'mail_transport' => 'mail',
+        'smtp_host' => '',
+        'smtp_port' => '587',
+        'smtp_encryption' => 'tls',
+        'smtp_username' => '',
+        'smtp_password' => '',
+        'smtp_allow_self_signed' => '0',
+        'mail_from_email' => '',
+        'mail_from_name' => '',
         // License server (#19)
         'license_rate_per_min' => '30',
         // Self-hosted license client state (standalone mode)
@@ -97,6 +107,8 @@ final class Settings
         'invoice_seller_details', 'auto_suspend_days', 'reminder_email', 'reminder_whatsapp', 'reminder_every_days',
         'billing_whatsapp_url', 'platform_notify_email', 'platform_from_email', 'license_rate_per_min', 'license_state',
         'feature_chains',
+        'mail_transport', 'smtp_host', 'smtp_port', 'smtp_encryption', 'smtp_username', 'smtp_password', 'smtp_allow_self_signed',
+        'mail_from_email', 'mail_from_name',
     ];
 
     public static function isPlatformKey(string $key): bool
