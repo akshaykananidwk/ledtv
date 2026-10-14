@@ -44,6 +44,9 @@ class ServerContractTest {
 
         assertEquals(30, c.volume?.defaultLevel)
         assertEquals(25, c.volume?.nightMax)
+        // 2.6.1 live video sync (server defaults)
+        assertEquals(LiveSyncConfig(5 * 60_000L, 60_000L), LiveSyncConfig.from(c.liveSync))
+        assertEquals(LiveSyncData(5, 60), c.liveSync)
 
         val items = c.playableItems()
         assertTrue("server items are all playable", items.size == c.items.orEmpty().size)

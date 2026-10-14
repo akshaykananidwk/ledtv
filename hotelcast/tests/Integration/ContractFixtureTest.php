@@ -71,6 +71,7 @@ final class ContractFixtureTest extends TestCase
         $this->assertLessThan(array_search('live_tv', $ids, true), array_search('guide', $ids, true));
         $this->assertSame(30, $c['volume']['default'] ?? null);
         $this->assertSame(25, $c['volume']['night_max'] ?? null);
+        $this->assertSame(['refresh_min' => 5, 'max_lag_s' => 60], $c['live_sync'] ?? null, '2.6.1 live video sync defaults');
         $this->assertNotEmpty(array_filter($c['items'], fn ($i) => isset($i['ad_campaign_id'])), 'Sponsor ad inserted');
         $this->assertArrayHasKey('branding', $c);
         $this->assertSame(['text', 'messages', 'speed', 'bg_color', 'text_color', 'font_size', 'height', 'position', 'reserve_space', 'video_scale'], array_keys($c['overlay']['ticker']));

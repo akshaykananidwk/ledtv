@@ -119,6 +119,10 @@
         "support": null
     },
     "tz_offset_min": 330,
+    "live_sync": {
+        "refresh_min": 5,
+        "max_lag_s": 60
+    },
     "guest": {
         "name": "શ્રી Shah",
         "first_name": "Rajesh",
