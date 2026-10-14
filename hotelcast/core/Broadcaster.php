@@ -571,6 +571,10 @@ final class Broadcaster
         if (!in_array($command, self::DEVICE_COMMANDS, true)) {
             throw new InvalidArgumentException('Unknown command');
         }
+        // 2.9.1: app updates are pushed only by the Super Admin (or the system: CLI / cron).
+        if ($command === 'UPDATE_APP' && PHP_SAPI !== 'cli' && !Auth::can('apk.manage')) {
+            throw new InvalidArgumentException(__('Only the Super Admin can update the TV app.'));
+        }
         Access::requireTargetList($targetType, $ids);
         $rooms = self::targetRooms($targetType, $ids);
         $bid = DB::insert('broadcast_commands', [
@@ -598,12 +602,10 @@ final class Broadcaster
         return [$bid, $count];
     }
 
-    /** Push an APK update to TVs (the customer's own release or a platform release offered to it, 2.7). */
+    /** Push an APK update to TVs: a Super Admin (platform) release offered to this customer (2.9.1: platform only). */
     public static function pushApk(int $apkId, string $targetType, array $ids, ?int $userId = null): array
     {
-        // Tenant::find denies another customer's release (404, logged); a platform release (hotel_id NULL) is
-        // accepted when it is rolled out to this customer.
-        $apk = Tenant::find('apk_releases', $apkId) ?? AppReleases::findForHotel($apkId, Tenant::id());
+        $apk = AppReleases::findForHotel($apkId, Tenant::id());
         if (!$apk) {
             throw new InvalidArgumentException('APK not found');
         }

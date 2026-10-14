@@ -191,12 +191,12 @@ final class PlatformScreensTest extends TestCase
 
     public function testFiltersPaginationAndCsv(): void
     {
-        // Offline TV, outdated app (APK v12 in Alpha), health warning, a TV without screen, a web player.
+        // Offline TV, outdated app (platform APK v12), health warning, a TV without screen, a web player.
         DB::query("UPDATE devices SET status = 'offline' WHERE id = :id", ['id' => self::$tv['tv102']['id']]);
-        // Alpha's newest APK is v12, My Hotel's own newest is v11 (its TVs are current); Beta / Gamma have
-        // no APK → compared with the platform's newest (v12).
-        Tenant::run(self::$h['alpha'], static fn () => DB::insert('apk_releases', ['version_name' => '2.5.0', 'version_code' => 12, 'file_path' => 'apk/x.apk', 'file_size' => 1, 'sha256' => str_repeat('a', 64), 'created_at' => now()]));
-        Tenant::run(1, static fn () => DB::insert('apk_releases', ['version_name' => '2.4.0', 'version_code' => 11, 'file_path' => 'apk/w.apk', 'file_size' => 1, 'sha256' => str_repeat('c', 64), 'created_at' => now()]));
+        // 2.9.1: only the Super Admin's platform release counts (v12, all customers); an old customer upload
+        // (My Hotel's own v13) is ignored, so My Hotel's v11 TVs are outdated too.
+        DB::insert('apk_releases', ['hotel_id' => null, 'version_name' => '2.5.0', 'version_code' => 12, 'file_path' => 'apk/x.apk', 'file_size' => 1, 'sha256' => str_repeat('a', 64), 'created_at' => now()]);
+        Tenant::run(1, static fn () => DB::insert('apk_releases', ['version_name' => '2.6.0', 'version_code' => 13, 'file_path' => 'apk/w.apk', 'file_size' => 1, 'sha256' => str_repeat('c', 64), 'created_at' => now()]));
         DB::query('UPDATE devices SET health = :j, health_at = NOW() WHERE id = :id', ['j' => json_encode(['storage_free_mb' => 120]), 'id' => self::$tv['tvB1']['id']]);
         self::register('tvW1', '101', 'my', ['platform' => 'web', 'app_version' => 'web-2.4', 'app_version_code' => 1]);
         PlatformScreens::forget();
@@ -208,7 +208,7 @@ final class PlatformScreensTest extends TestCase
         $uid = static fn (string $n) => self::$tv[$n]['uid'];
         $this->assertSame([$uid('tv102')], $ids(['status' => 'offline']));
         $this->assertSame([$uid('tvW1')], $ids(['platform' => 'web']));
-        $this->assertEqualsCanonicalizing([$uid('tvA1'), $uid('tvA2'), $uid('tvB1'), $uid('tvG1')], $ids(['update' => '1']), 'v11 < customer\'s / platform\'s newest; web players never "need update"');
+        $this->assertEqualsCanonicalizing([$uid('tv101'), $uid('tv102'), $uid('tvA1'), $uid('tvA2'), $uid('tvB1'), $uid('tvG1')], $ids(['update' => '1']), 'v11 < the Super Admin\'s v12 (customer uploads ignored); web players never "need update"');
         $this->assertSame([$uid('tvB1')], $ids(['warn' => '1']));
         $this->assertEqualsCanonicalizing([$uid('tvA1'), $uid('tvA2')], $ids(['customer' => (string) self::$h['alpha']]));
         $this->assertSame([$uid('tvW1')], $ids(['version' => 'web-2.4']));
@@ -216,7 +216,7 @@ final class PlatformScreensTest extends TestCase
         $c = PlatformScreens::counters(null);
         $this->assertSame(7, $c['total']);
         $this->assertSame(1, $c['offline']);
-        $this->assertSame(4, $c['outdated']);
+        $this->assertSame(6, $c['outdated']);
         $this->assertSame(1, $c['warnings']);
 
         // Unassigned (registered, no screen).
@@ -303,14 +303,20 @@ final class PlatformScreensTest extends TestCase
         self::as('psres1')->post('platform_screens.php', ['op' => 'bulk', 'bulk_action' => 'cmd:SCREEN_ON', 'ids' => [self::$tv['tvA1']['id']]]);
         $this->assertSame($n + 1, (int) DB::value("SELECT COUNT(*) FROM device_commands WHERE command = 'SCREEN_ON'"));
 
-        // App update: only customers with an APK; Alpha gets its newest APK.
-        $apk = Tenant::run(self::$h['alpha'], static fn () => DB::insert('apk_releases', ['version_name' => '2.5.1', 'version_code' => 13, 'file_path' => 'apk/y.apk', 'file_size' => 1, 'sha256' => str_repeat('b', 64), 'created_at' => now()]));
+        // App update (2.9.1): only the Super Admin's release is pushed; an old customer upload is ignored, so
+        // with no platform release nothing is sent and the customers are named in the warning.
+        DB::query('DELETE FROM apk_releases');
+        Tenant::run(self::$h['alpha'], static fn () => DB::insert('apk_releases', ['version_name' => '2.9.9', 'version_code' => 99, 'file_path' => 'apk/own.apk', 'file_size' => 1, 'sha256' => str_repeat('d', 64), 'created_at' => now()]));
+        self::as('psroot')->post('platform_screens.php', ['op' => 'bulk', 'bulk_action' => 'update', 'ids' => [self::$tv['tvA1']['id']]]);
+        $this->assertSame(0, (int) DB::value("SELECT COUNT(*) FROM device_commands WHERE device_id = :d AND command = 'UPDATE_APP'", ['d' => self::$tv['tvA1']['id']]));
+        $this->assertStringContainsString('Alpha', self::flashOf(self::as('psroot'), 'platform_screens.php'), 'customer upload is not used');
+        $apk = DB::insert('apk_releases', ['hotel_id' => null, 'version_name' => '2.5.1', 'version_code' => 13, 'file_path' => 'apk/y.apk', 'file_size' => 1, 'sha256' => str_repeat('b', 64), 'created_at' => now()]);
         self::as('psroot')->post('platform_screens.php', ['op' => 'bulk', 'bulk_action' => 'update', 'ids' => [self::$tv['tvA1']['id'], self::$tv['tvB1']['id']]]);
-        $p = json_decode((string) DB::value("SELECT payload FROM device_commands WHERE device_id = :d AND command = 'UPDATE_APP' ORDER BY id DESC LIMIT 1", ['d' => self::$tv['tvA1']['id']]), true);
-        $this->assertSame(13, $p['version_code']);
-        $this->assertStringEndsWith('api/device/apk/' . $apk, $p['url']);
-        $this->assertSame(0, (int) DB::value("SELECT COUNT(*) FROM device_commands WHERE device_id = :d AND command = 'UPDATE_APP'", ['d' => self::$tv['tvB1']['id']]));
-        $this->assertStringContainsString('Beta Suites', self::flashOf(self::as('psroot'), 'platform_screens.php'), 'warning names the customer without APK');
+        foreach (['tvA1', 'tvB1'] as $n) {
+            $p = json_decode((string) DB::value("SELECT payload FROM device_commands WHERE device_id = :d AND command = 'UPDATE_APP' ORDER BY id DESC LIMIT 1", ['d' => self::$tv[$n]['id']]), true);
+            $this->assertSame(13, $p['version_code'], "$n gets the Super Admin's release");
+            $this->assertStringEndsWith('api/device/apk/' . $apk, $p['url']);
+        }
         DB::query('DELETE FROM apk_releases');
     }
 

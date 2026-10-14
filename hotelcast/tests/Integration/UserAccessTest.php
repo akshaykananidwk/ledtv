@@ -218,7 +218,7 @@ final class UserAccessTest extends TestCase
         $this->assertStringNotContainsString('name="power_off_mode"', $html, 'hotel-wide power mode hidden');
 
         // Other pages listing TVs.
-        foreach (['support.php', 'setup_file.php', 'apk.php', 'analytics.php', 'logs.php?tab=status', 'tv_controls.php', 'power.php', 'broadcast.php'] as $p) {
+        foreach (['support.php', 'setup_file.php', 'analytics.php', 'logs.php?tab=status', 'tv_controls.php', 'power.php', 'broadcast.php'] as $p) {
             [$s, , $html] = self::as('mgrG')->get($p);
             $this->assertSame(200, $s, $p);
             $this->assertStringNotContainsString('A301', $html, "$p must not list A301");

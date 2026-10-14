@@ -180,7 +180,7 @@ final class DeviceApiTest extends TestCase
         @mkdir(HC_ROOT . '/storage/apk', 0755, true);
         $bytes = 'PK' . random_bytes(2000);
         file_put_contents(HC_ROOT . '/storage/apk/test.apk', $bytes);
-        $apk = DB::insert('apk_releases', ['version_name' => '1.1.0', 'version_code' => 2, 'file_path' => 'apk/test.apk', 'file_size' => strlen($bytes), 'sha256' => hash('sha256', $bytes)]);
+        $apk = DB::insert('apk_releases', ['hotel_id' => null, 'version_name' => '1.1.0', 'version_code' => 2, 'file_path' => 'apk/test.apk', 'file_size' => strlen($bytes), 'sha256' => hash('sha256', $bytes)]);
         Broadcaster::pushApk($apk, 'all', []);
         Broadcaster::sendCommand('REBOOT', 'floors', ['3']);
         [, $j] = TestEnv::http('GET', self::$url . 'api/device/command/' . self::$uid . '?hash=x', null, $this->auth());

@@ -58,4 +58,5 @@ return [
     'of :n Android TVs' => ':n Android TV માંથી',
     'required' => 'ફરજિયાત',
     'required update' => 'ફરજિયાત અપડેટ',
+    'Only the Super Admin can update the TV app.' => 'TV એપ ફક્ત સુપર એડમીન જ અપડેટ કરી શકે છે.',
 ];

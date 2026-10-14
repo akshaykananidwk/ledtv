@@ -15,7 +15,7 @@ final class AdminPanelTest extends TestCase
 
     public const PAGES = [
         'index.php' => 'reception', 'rooms.php' => 'reception', 'content.php' => 'staff', 'broadcast.php' => 'staff',
-        'groups.php' => 'manager', 'playlists.php' => 'manager', 'schedule.php' => 'manager', 'apk.php' => 'manager',
+        'groups.php' => 'manager', 'playlists.php' => 'manager', 'schedule.php' => 'manager', 'platform_apk.php' => 'platform_admin',
         'logs.php' => 'manager', 'power.php' => 'manager', 'users.php' => 'super_admin', 'settings.php' => 'super_admin', 'update.php' => 'platform_admin',
         'profile.php' => 'reception', 'billing.php' => 'super_admin',
         'platform_hotels.php' => 'platform_admin', 'platform_plans.php' => 'platform_admin', 'platform_resellers.php' => 'platform_admin',
@@ -107,6 +107,23 @@ final class AdminPanelTest extends TestCase
             }
         }
         return $rows;
+    }
+
+    /** 2.9.1: the customers' APK page is gone — the Super Admin is sent to Super Admin → APK Manager, everyone else gets 403. */
+    public function testCustomerApkPageIsSuperAdminOnly(): void
+    {
+        foreach (self::USERS as $u => $lvl) {
+            if (!isset(self::$jars[$u])) {
+                self::login($u);
+            }
+            [$s, , , $head] = TestEnv::http('GET', self::$url . 'admin/apk.php', null, [], self::jar($u));
+            if ($lvl >= self::LEVEL['platform_admin']) {
+                $this->assertSame(302, $s, "apk.php as $u");
+                $this->assertStringContainsString('platform_apk.php', $head);
+            } else {
+                $this->assertSame(403, $s, "apk.php as $u");
+            }
+        }
     }
 
     #[DataProvider('pageMatrix')]

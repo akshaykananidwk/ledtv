@@ -284,22 +284,24 @@ final class PlatformApkTest extends TestCase
         $this->assertSame(401, $s);
         $this->assertSame(1, (int) DB::value('SELECT downloads FROM apk_releases WHERE id = :id', ['id' => $rel['id']]));
 
-        // Precedence: Alpha's own customer release v95 (optional) is higher → offered to Alpha; required stays 90.
+        // 2.9.1: only Super Admin releases count. An old customer upload (even a higher v95) is ignored:
+        // never offered, never downloadable — not even by that customer's own TVs.
         Tenant::run(self::$h['alpha'], static fn () => DB::insert('apk_releases', ['version_name' => '9.5.0', 'version_code' => 95, 'file_path' => 'apk/h' . self::$h['alpha'] . '/own.apk', 'file_size' => 1, 'sha256' => str_repeat('b', 64), 'created_at' => now()]));
         $st = AppReleases::forHotel(self::$h['alpha']);
-        $this->assertSame(95, (int) $st['latest']['version_code']);
+        $this->assertSame(90, (int) $st['latest']['version_code']);
         $this->assertSame(90, $st['required_code']);
         [, $d] = self::appVersion('tvA1');
-        $this->assertSame(95, $d['update']['version_code']);
-        $this->assertSame('customer', $d['update']['source']);
+        $this->assertSame(90, $d['update']['version_code']);
+        $this->assertSame('platform', $d['update']['source']);
         $this->assertSame(90, $d['update']['required_version_code']);
-        // Another customer never sees Alpha's own release.
         [, $d] = self::appVersion('tvB1');
         $this->assertSame(90, $d['update']['version_code']);
         $alphaOwn = (int) DB::value('SELECT id FROM apk_releases WHERE version_code = 95');
-        [$s] = TestEnv::http('GET', self::$url . 'api/device/apk/' . $alphaOwn, null, self::dev('tvB1'));
-        $this->assertSame(404, $s);
-        // A lower customer release does not win over the platform release.
+        foreach (['tvB1', 'tvA1'] as $tv) {
+            [$s] = TestEnv::http('GET', self::$url . 'api/device/apk/' . $alphaOwn, null, self::dev($tv));
+            $this->assertSame(404, $s, "customer upload not downloadable ($tv)");
+        }
+        // A customer release never wins over the platform release.
         Tenant::run(self::$h['beta'], static fn () => DB::insert('apk_releases', ['version_name' => '8.0.0', 'version_code' => 80, 'file_path' => 'apk/x.apk', 'file_size' => 1, 'sha256' => str_repeat('c', 64), 'created_at' => now()]));
         $this->assertSame(90, (int) AppReleases::forHotel(self::$h['beta'])['latest']['version_code']);
 
@@ -352,7 +354,7 @@ final class PlatformApkTest extends TestCase
         $ids = array_map(static fn ($r) => (int) $r['device_id'], $cmds);
         $this->assertEqualsCanonicalizing([self::$tv['tv101']['id'], self::$tv['tvA1']['id'], self::$tv['tvB1']['id']], $ids);
         $byDev = array_column(array_map(static fn ($r) => ['d' => (int) $r['device_id'], 'p' => json_decode($r['payload'], true)], $cmds), 'p', 'd');
-        $this->assertSame(95, $byDev[self::$tv['tvA1']['id']]['version_code'], 'Alpha gets its own higher release');
+        $this->assertSame(91, $byDev[self::$tv['tvA1']['id']]['version_code'], 'Alpha gets the Super Admin release, never its old own upload (2.9.1)');
         $this->assertSame(91, $byDev[self::$tv['tvB1']['id']]['version_code']);
         $this->assertSame(91, $byDev[self::$tv['tv101']['id']]['version_code']);
         // The TV receives it on its next poll.
@@ -380,8 +382,9 @@ final class PlatformApkTest extends TestCase
         $this->assertSame(302, $s);
         $this->assertSame(0, (int) DB::value('SELECT COUNT(*) FROM apk_releases WHERE id = :id', ['id' => $rel['id']]));
         $this->assertFileDoesNotExist($file90);
-        // A customer admin cannot delete platform releases through the customer APK Manager either.
-        self::as('alphaboss')->post('apk.php', ['op' => 'delete', 'id' => $v91]);
+        // Customers have no APK page at all (2.9.1): 403, nothing deleted.
+        [$s] = self::as('alphaboss')->post('apk.php', ['op' => 'delete', 'id' => $v91]);
+        $this->assertSame(403, $s);
         $this->assertSame(1, (int) DB::value('SELECT COUNT(*) FROM apk_releases WHERE id = :id', ['id' => $v91]));
         // Required is now nowhere (v90 gone, v91 optional) → no block.
         $this->assertSame(0, AppReleases::forHotel(1)['required_code']);

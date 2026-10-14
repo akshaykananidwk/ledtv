@@ -129,20 +129,20 @@ final class MenuSettingsTest extends TestCase
         $this->assertNull(self::business());
 
         // Broadcast to the top, three items hidden.
-        [$s] = self::save('msboss', 'business', $order, ['logs', 'apk', 'power']);
+        [$s] = self::save('msboss', 'business', $order, ['logs', 'users', 'power']);
         $this->assertSame(302, $s);
         $cfg = self::business();
         $this->assertSame($order, $cfg['order']);
-        $this->assertEqualsCanonicalizing(['logs', 'apk', 'power'], $cfg['hidden']);
+        $this->assertEqualsCanonicalizing(['logs', 'users', 'power'], $cfg['hidden']);
         $this->assertTrue($cfg['more']);
 
         $html = self::sidebar('msboss');
         $keys = self::navKeys($html);
         $this->assertSame('broadcast', $keys[0], 'Broadcast is first');
-        foreach (['logs', 'apk', 'power'] as $k) {
+        foreach (['logs', 'users', 'power'] as $k) {
             $this->assertNotContains($k, $keys);
         }
-        $this->assertSame(['power', 'apk', 'logs'], self::hiddenKeys($html), 'hidden items in the More group, in menu order');
+        $this->assertSame(['power', 'logs', 'users'], self::hiddenKeys($html), 'hidden items in the More group, in menu order');
         $this->assertStringContainsString('Hidden items (3)', $html);
         $this->assertStringContainsString('data-nav-more-group', $html);
 

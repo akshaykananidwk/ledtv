@@ -167,7 +167,7 @@ final class TenancyTest extends TestCase
     {
         $secrets = ['B101', 'B102', 'B-SECRET-CONTENT', 'B-PLAYLIST', 'GB-GROUP', 'B-SCHEDULE', 'B-EMERGENCY', 'B9.9.9', 'bossB', self::$keyB, self::$tvBUid, 'B-TICKER'];
         $pages = ['index.php', 'rooms.php', 'rooms.php?action=devices', 'content.php', 'playlists.php', 'groups.php', 'broadcast.php', 'schedule.php', 'power.php',
-            'apk.php', 'users.php', 'settings.php', 'settings.php?tab=devices', 'settings.php?tab=display', 'logs.php?tab=status', 'logs.php?tab=broadcasts', 'logs.php?tab=activity',
+            'users.php', 'settings.php', 'settings.php?tab=devices', 'settings.php?tab=display', 'logs.php?tab=status', 'logs.php?tab=broadcasts', 'logs.php?tab=activity',
             'logs.php?tab=played', 'billing.php', 'rooms.php?action=new', 'content.php?action=new&type=announcement', 'broadcast.php'];
         foreach ($pages as $p) {
             [$s, , $html] = self::get('bossA', $p);

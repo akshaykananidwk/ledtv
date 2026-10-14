@@ -16,7 +16,6 @@ return [
     ['broadcast', 'broadcast.php', 'broadcast.send', 'bi-broadcast-pin', __('Broadcast'), 'hotel'],
     ['schedule', 'schedule.php', 'schedule.manage', 'bi-calendar-week', __('Schedule'), 'hotel'],
     ['power', 'power.php', 'schedule.manage', 'bi-power', __('TV Power'), 'hotel'],
-    ['apk', 'apk.php', 'apk.manage', 'bi-android2', __('APK Manager'), 'hotel'],
     ['logs', 'logs.php', 'logs.view', 'bi-journal-text', __('Logs & History'), 'hotel'],
     ['users', 'users.php', 'users.manage', 'bi-people', __('Users'), 'hotel'],
     ['settings', 'settings.php', 'settings.manage', 'bi-gear', __('Settings'), 'hotel'],

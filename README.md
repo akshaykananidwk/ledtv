@@ -32,6 +32,12 @@ screen-wise schedule karo, emergency message moklo, TV reboot/update karo.*
 | Android TV app | [`android/`](android) | Kotlin, ExoPlayer 2.19, Retrofit, OkHttp, Glide, WorkManager — min SDK 21, target 34 |
 | Documentation | [`docs/`](docs) | Install guide, TV setup, admin guide, API, developer guide (tenancy + extension points), security, test report |
 
+## What's new in 2.9.1 — TV app updates only from the Super Admin
+
+| Change | Where |
+|---|---|
+| **APK updates are Super Admin only**: the customers' APK Manager is gone (menu item removed, `admin/apk.php` → Super Admin → APK Manager, 403 for everyone else), the `apk.manage` permission belongs to the Super Admin only (custom roles can't get it), the plan feature "TV app updates" is removed, `UPDATE_APP` can only be sent by the Super Admin, and customers never see "Update available" hints. Old customer uploads are ignored — every TV gets the Super Admin's release (all customers or the selected ones) | Super Admin → APK Manager |
+
 ## What's new in 2.9 — live video stays in sync, customizable side menu
 
 Server 2.9.0 (migration 036: `users.menu_prefs`) + TV app **2.6.1** (versionCode 15).

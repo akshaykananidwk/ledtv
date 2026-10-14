@@ -793,7 +793,7 @@ final class PwaSupportDevicesTest extends TestCase
                 'status' => $status, 'app_version' => '9.' . $code, 'app_version_code' => $code, 'last_ping' => date('Y-m-d H:i:s', $now - 30)]);
             $a = $mk('h3-tv-0001', 'online', 9000);
             $b = $mk('h3-tv-0002', 'offline', 8000);
-            DB::insert('apk_releases', ['version_name' => '9.9000', 'version_code' => 9000, 'file_path' => 'apk/h3/x.apk', 'file_size' => 1, 'sha256' => str_repeat('b', 64)]);
+            DB::insert('apk_releases', ['hotel_id' => null, 'version_name' => '9.9000', 'version_code' => 9000, 'file_path' => 'apk/h3/x.apk', 'file_size' => 1, 'sha256' => str_repeat('b', 64)]);
             foreach ([600, 1200, 3 * 86400, 10 * 86400] as $i => $ago) {
                 DB::insert('device_support_files', ['device_id' => $i % 2 ? $a : $b, 'room_id' => $r, 'kind' => 'crash', 'file_path' => 'h3/d1/crash-' . $i . '.txt',
                     'app_version' => '9.8000', 'meta' => json_out(['summary' => 'java.lang.RuntimeException: test ' . $i]), 'created_at' => date('Y-m-d H:i:s', $now - $ago)]);

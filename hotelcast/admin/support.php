@@ -221,7 +221,8 @@ $rows = DB::all(
     ['week' => date('Y-m-d H:i:s', time() - 7 * 86400)] + hid() + Access::roomSql('d.room_id')[1]
 );
 // 2.7: newest app offered to this customer (its own APK or the Super Admin's platform release, core/AppReleases.php).
-$newest = AppReleases::forHotel(Tenant::id())['latest'];
+// 2.9.1: app updates are the Super Admin's business — customers never see "Update available".
+$newest = Auth::can('apk.manage') ? AppReleases::forHotel(Tenant::id())['latest'] : null;
 $pageTitle = __('TV support');
 $activeNav = 'support';
 require __DIR__ . '/partials/header.php';

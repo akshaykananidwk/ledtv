@@ -137,7 +137,7 @@ final class Features
         'logs' => ['label' => 'Logs & history', 'group' => 'core', 'core' => true, 'description' => 'Activity and broadcast history.',
             'permissions' => ['logs.view', 'logs.clear'], 'pages' => ['logs.php']],
         'update' => ['label' => 'Auto-update', 'group' => 'core', 'core' => true, 'description' => 'Server updates (platform only).',
-            'permissions' => ['update.manage'], 'pages' => ['update.php', 'ajax_update.php'], 'ajax' => ['update_*', 'rollback']],
+            'permissions' => ['update.manage', 'apk.manage'], 'pages' => ['update.php', 'ajax_update.php', 'apk.php'], 'ajax' => ['update_*', 'rollback']],
         'platform' => ['label' => 'Platform', 'group' => 'core', 'core' => true, 'description' => 'Platform, reseller and chain administration.',
             'permissions' => ['platform.manage', 'platform.hotels', 'reseller.panel', 'support.platform', 'signup.manage', 'demo.client', 'chains.manage', 'chain.view', 'platform.screens', 'platform.pool', 'platform.move'],
             'ajax' => ['platform_*', 'chain_*', 'signup_stats']],
@@ -214,8 +214,6 @@ final class Features
             'permissions' => ['devices.controls'], 'pages' => ['tv_controls.php'], 'extensions' => ['DeviceControlsExtension']],
         'support' => ['label' => 'TV support tools', 'group' => 'devices', 'description' => 'Screenshots and log upload from screens.',
             'permissions' => ['support.view'], 'pages' => ['support.php'], 'ajax' => ['support_*']],
-        'apk_updates' => ['label' => 'TV app updates', 'group' => 'devices', 'description' => 'Upload and roll out TV app (APK) versions.',
-            'permissions' => ['apk.manage'], 'pages' => ['apk.php']],
 
         // ------------------------------------------------------------------ reports & marketing
         'play_report' => ['label' => 'Proof of play', 'group' => 'reports', 'description' => 'What played where and how often (CSV, print).',

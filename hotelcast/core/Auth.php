@@ -30,6 +30,8 @@ final class Auth
         'platform.hotels' => ['platform_admin', 'reseller'], // hotel list / create / enter
         'reseller.panel' => ['reseller'],
         'update.manage' => ['platform_admin'],
+        // 2.9.1: TV app (APK) updates are managed only by the Super Admin (Super Admin → APK Manager).
+        'apk.manage' => ['platform_admin'],
     ];
 
     /** Minimum hotel role per permission (platform admins / resellers inside a hotel act as super_admin). */
@@ -47,7 +49,6 @@ final class Auth
         'broadcast.emergency' => 'staff',
         'broadcast.device_commands' => 'manager',
         'schedule.manage' => 'manager',
-        'apk.manage' => 'manager',
         'logs.view' => 'manager',
         'users.manage' => 'super_admin',
         'settings.manage' => 'super_admin',

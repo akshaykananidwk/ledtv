@@ -141,12 +141,10 @@ final class PlatformScreens
         if (self::$newest !== null) {
             return self::$newest;
         }
-        $out = [0 => (int) (DB::value('SELECT MAX(version_code) FROM apk_releases') ?? 0), 'all' => 0];
+        // 2.9.1: only Super Admin (platform) releases count; old customer uploads are ignored.
+        $out = [0 => (int) (DB::value('SELECT MAX(version_code) FROM apk_releases WHERE hotel_id IS NULL') ?? 0), 'all' => 0];
         if (AppReleases::available()) {
             $out['all'] = (int) (DB::value("SELECT MAX(version_code) FROM apk_releases WHERE hotel_id IS NULL AND rollout = 'all'") ?? 0);
-        }
-        foreach (DB::all('SELECT hotel_id, MAX(version_code) AS mx FROM apk_releases WHERE hotel_id IS NOT NULL GROUP BY hotel_id') as $r) {
-            $out[(int) $r['hotel_id']] = (int) $r['mx'];
         }
         return self::$newest = $out;
     }
@@ -159,14 +157,13 @@ final class PlatformScreens
         $fallback = (int) $codes[0];
         $all = (int) $codes['all'];
         $sel = AppReleases::available() ? 'COALESCE(gsel.mx, 0)' : '0';
-        return "(d.app_version_code IS NOT NULL AND d.app_version_code < COALESCE(NULLIF(GREATEST(COALESCE(apk.mx, 0), $sel, $all), 0), $fallback)$notWeb)";
+        return "(d.app_version_code IS NOT NULL AND d.app_version_code < COALESCE(NULLIF(GREATEST($sel, $all), 0), $fallback)$notWeb)";
     }
 
     private static function fromSql(): string
     {
         $sql = ' FROM devices d JOIN hotels h ON h.id = d.hotel_id
-                 LEFT JOIN rooms r ON r.id = d.room_id AND r.hotel_id = d.hotel_id
-                 LEFT JOIN (SELECT hotel_id, MAX(version_code) AS mx FROM apk_releases WHERE hotel_id IS NOT NULL GROUP BY hotel_id) apk ON apk.hotel_id = d.hotel_id';
+                 LEFT JOIN rooms r ON r.id = d.room_id AND r.hotel_id = d.hotel_id';
         if (AppReleases::available()) {
             $sql .= " LEFT JOIN (SELECT x.hotel_id, MAX(a.version_code) AS mx FROM apk_release_hotels x
                         JOIN apk_releases a ON a.id = x.release_id AND a.hotel_id IS NULL AND a.rollout = 'selected' GROUP BY x.hotel_id) gsel ON gsel.hotel_id = d.hotel_id";

@@ -42,19 +42,22 @@ final class AppReleases
 
     // ------------------------------------------------------------------ queries
 
-    /** SQL condition "release a is offered to customer :hid" (a = apk_releases alias). */
+    /**
+     * SQL condition "release a is offered to customer :hid" (a = apk_releases alias).
+     * 2.9.1: only Super Admin (platform) releases count — customers can no longer upload APKs, and old
+     * customer uploads are ignored.
+     */
     private static function eligibleSql(string $p = 'eh'): string
     {
-        $own = "a.hotel_id = :{$p}1";
         if (!self::available()) {
-            return "($own)";
+            return '(a.hotel_id IS NULL)';
         }
-        return "($own OR (a.hotel_id IS NULL AND (a.rollout = 'all' OR EXISTS (SELECT 1 FROM apk_release_hotels x WHERE x.release_id = a.id AND x.hotel_id = :{$p}2))))";
+        return "(a.hotel_id IS NULL AND (a.rollout = 'all' OR EXISTS (SELECT 1 FROM apk_release_hotels x WHERE x.release_id = a.id AND x.hotel_id = :{$p}2)))";
     }
 
     private static function eligibleParams(int $hotelId, string $p = 'eh'): array
     {
-        return self::available() ? [$p . '1' => $hotelId, $p . '2' => $hotelId] : [$p . '1' => $hotelId];
+        return self::available() ? [$p . '2' => $hotelId] : [];
     }
 
     /**

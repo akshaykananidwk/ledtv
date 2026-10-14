@@ -1,3 +1,9 @@
+# 2.9.1 — TV app updates only from the Super Admin (2026-10-14)
+
+- Full PHP suite: **639 tests, 26,157 assertions, 0 failures**.
+- Customer APK page removed (`apk.php` → console for the Super Admin, 403 otherwise), `apk.manage` Super Admin only, `UPDATE_APP` refused for anyone else, customer releases ignored (offer, download, outdated counts, pushes), no update hints for customers.
+- Tests updated where the design changed: AdminPanelTest (new `testCustomerApkPageIsSuperAdminOnly`, page matrix uses `platform_apk.php`), PlatformApkTest (customer upload ignored and not downloadable, push-all), PlatformScreensTest (outdated = below the platform release), WebPlayerTest, TenancyTest, UserAccessTest.
+
 # 2.9.0 — live video sync, customizable side menu (2026-10-14)
 
 Server `version.json` 2.9.0 (migration 036); TV app 2.6.1 (versionCode 15).

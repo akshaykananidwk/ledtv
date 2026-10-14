@@ -306,7 +306,8 @@ final class WebPlayerTest extends TestCase
      */
     public function testWebPlayersAreLeftOutOfApkUpdates(): void
     {
-        $apk = DB::insert('apk_releases', ['version_name' => '2.5.0', 'version_code' => 12, 'file_path' => 'apk/test.apk', 'file_size' => 10,
+        // 2.9.1: APKs come only from the Super Admin (platform release, hotel_id NULL).
+        $apk = DB::insert('apk_releases', ['hotel_id' => null, 'version_name' => '2.5.0', 'version_code' => 12, 'file_path' => 'apk/test.apk', 'file_size' => 10,
             'sha256' => str_repeat('a', 64), 'created_at' => now()]);
         $webId = (int) DB::value('SELECT id FROM devices WHERE device_uid = :u', ['u' => self::$uid]);
         $tvId = (int) DB::value('SELECT id FROM devices WHERE device_uid = :u', ['u' => 'android-tv-0001']);
@@ -318,14 +319,11 @@ final class WebPlayerTest extends TestCase
         $this->assertSame([$tvId], array_map('intval', array_column($cmds, 'device_id')));
 
         $s = new AdminSession(self::$url, 'wpMgr');
-        [$code, , $html] = $s->get('apk.php');
-        $this->assertSame(200, $code);
-        $this->assertFalse(TestEnv::hasPhpError($html));
-        $this->assertSame(1, substr_count($html, 'bi-arrow-up-circle'), 'only the Android TV is "Update available"');
-        $this->assertStringContainsString('Web players update themselves on the next reload.', $html);
+        [$code] = $s->get('apk.php');
+        $this->assertSame(403, $code, '2.9.1: customers have no APK page (Super Admin → APK Manager only)');
         [$code, , $html] = $s->get('support.php');
         $this->assertSame(200, $code);
-        $this->assertSame(1, substr_count($html, '>Update available</span>'), 'TV support: only the Android TV');
+        $this->assertSame(0, substr_count($html, '>Update available</span>'), '2.9.1: customers never see app-update hints');
         $stats = DeviceSupport::platformStats();
         $this->assertSame(1, $stats['totals']['outdated']);
         $web = array_values(array_filter($stats['versions'], static fn ($v) => $v['version'] === 'web-2.4.0'));
