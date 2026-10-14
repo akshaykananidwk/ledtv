@@ -34,6 +34,7 @@ final class DeviceHealth
         'ram_avail_mb' => [0, 10000000], 'ram_total_mb' => [0, 10000000], 'app_mem_mb' => [0, 10000000],
         'wifi_rssi' => [-127, 0], 'wifi_link_mbps' => [0, 100000], 'uptime_sec' => [0, 315360000],
         'sdk' => [1, 99], 'refresh_hz' => [0, 1000],
+        'live_resyncs' => [0, 100000000], // 2.6.1: live stream re-syncs since the app started
     ];
     private const BOOLS = ['ram_low', 'device_owner', 'live_view'];
 

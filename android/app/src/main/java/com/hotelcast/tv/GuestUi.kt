@@ -670,7 +670,7 @@ class GuestUi(
             })
             detailPlayer = player
             touch()
-            player.setContent(Content(hash = "guest-menu-${item.id}", mode = "assigned", items = listOf(ci), playlist = Playlist(loop = true, transition = "none"), overlay = c.overlay), force = true)
+            player.setContent(Content(hash = "guest-menu-${item.id}", mode = "assigned", items = listOf(ci), playlist = Playlist(loop = true, transition = "none"), overlay = c.overlay, liveSync = c.liveSync), force = true)
         } catch (e: Throwable) {
             Log.e(TAG, "content detail failed", e)
             closeDetail()

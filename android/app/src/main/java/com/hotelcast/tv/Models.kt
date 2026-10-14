@@ -198,6 +198,8 @@ data class Content(
     // ---- 2.4 synchronized playback (#37) and video wall (#36): SyncPlan.kt, WallGeometry.kt ----
     @SerializedName("sync") val sync: SyncData? = null,
     @SerializedName("wall") val wall: WallData? = null,
+    /** 2.6.1: live video sync settings (LiveSync.kt); null = defaults. */
+    @SerializedName("live_sync") val liveSync: LiveSyncData? = null,
 ) {
     val isOff: Boolean get() = mode == MODE_OFF || screenOn == false
     val isEmergency: Boolean get() = emergency != null || mode == MODE_EMERGENCY

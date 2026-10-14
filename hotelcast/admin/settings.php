@@ -108,6 +108,16 @@ if (is_post()) {
                 }
                 break;
 
+            case 'save_live_sync': // 2.6.1 live video sync (core/LiveSync.php)
+                $tab = 'display';
+                [$ls, $lsErrors] = LiveSync::validate($_POST);
+                array_push($errors, ...$lsErrors);
+                if (!$errors) {
+                    Settings::setMany($ls);
+                    $tvAffecting = true;
+                }
+                break;
+
             case 'save_devices':
                 $pin = req_str('tv_settings_pin', $_POST, 10);
                 if (!preg_match('/^\d{4}$/', $pin)) {
@@ -229,7 +239,7 @@ $formStart = fn (string $op, bool $multipart = false) => '<form method="post"' .
     . '<input type="hidden" name="op" value="' . e($op) . '"><input type="hidden" name="tab" value="' . e($tab) . '">';
 $saveBtn = '<div class="sticky-actions"><button class="btn btn-primary btn-lg"><i class="bi bi-check-lg"></i> ' . e(__('Save settings')) . '</button></div>';
 ?>
-<div class="page-head"><h1><?= e(__('Settings')) ?></h1><a class="btn btn-light border" href="<?= e(admin_url('plan.php')) ?>"><i class="bi bi-box-seam"></i> <?= e(__('Your plan')) ?></a></div>
+<div class="page-head"><h1><?= e(__('Settings')) ?></h1><div class="d-flex flex-wrap gap-2"><a class="btn btn-light border" href="<?= e(admin_url('menu_settings.php', ['scope' => 'business'])) ?>" data-menu-settings-link><i class="bi bi-list-ol"></i> <?= e(__('Menu')) ?></a><a class="btn btn-light border" href="<?= e(admin_url('plan.php')) ?>"><i class="bi bi-box-seam"></i> <?= e(__('Your plan')) ?></a></div></div>
 <ul class="nav nav-tabs nav-tabs-scroll mb-3">
   <?php foreach ($tabs as $k => [$icon, $label]): ?>
     <li class="nav-item"><a class="nav-link<?= $tab === $k ? ' active' : '' ?>" href="<?= e(admin_url('settings.php', ['tab' => $k])) ?>"><i class="bi <?= e($icon) ?>"></i> <?= e($label) ?></a></li>
@@ -312,6 +322,21 @@ $saveBtn = '<div class="sticky-actions"><button class="btn btn-primary btn-lg"><
     </div>
   </div>
   <?= $saveBtn ?></form>
+  <?php $ls = LiveSync::config(); /* 2.6.1 live video sync: own form, see core/LiveSync.php */ ?>
+  <?= $formStart('save_live_sync') ?>
+  <div class="card mt-3" id="live-video" style="max-width:760px"><div class="card-header"><i class="bi bi-broadcast"></i> <?= e(__('Live video')) ?></div><div class="card-body row g-3">
+    <div class="col-sm-6"><label class="form-label" for="lsr"><?= e(__('Keep live videos in sync — refresh every')) ?></label>
+      <select class="form-select" id="lsr" name="live_sync_refresh_min">
+        <?php foreach (LiveSync::REFRESH_OPTIONS as $o): ?><option value="<?= $o ?>"<?= $o === $ls['refresh_min'] ? ' selected' : '' ?>><?= e($o === 0 ? __('Off') : __(':n minutes', ['n' => $o])) ?></option><?php endforeach; ?>
+      </select></div>
+    <div class="col-sm-6"><label class="form-label" for="lsl"><?= e(__('Maximum delay behind live')) ?></label>
+      <select class="form-select" id="lsl" name="live_sync_max_lag_s">
+        <?php foreach (LiveSync::MAX_LAG_OPTIONS as $o): ?><option value="<?= $o ?>"<?= $o === $ls['max_lag_s'] ? ' selected' : '' ?>><?= e(__(':n seconds', ['n' => $o])) ?></option><?php endforeach; ?>
+      </select></div>
+    <div class="col-12 form-text mt-1"><?= e(__('For live streams and YouTube live (e.g. temple darshan). TVs jump back to the live moment when they fall behind, and re-sync at this interval. A TV can never be earlier than the stream itself. Needs TV app 2.6.1 or newer.')) ?></div>
+    <div class="col-12"><button class="btn btn-primary"><i class="bi bi-check-lg"></i> <?= e(__('Save settings')) ?></button></div>
+  </div></div>
+  </form>
 
 <?php elseif ($tab === 'devices'): $key = (string) $S['registration_key']; ?>
   <div class="row g-3" style="max-width:1000px">

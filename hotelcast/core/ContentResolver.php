@@ -300,6 +300,8 @@ final class ContentResolver
         // Hotel UTC offset (minutes) so players on devices with another clock zone (web player on a UTC
         // Raspberry Pi, a PC abroad) show the hotel's local time. Android TVs use their own zone.
         $content['tz_offset_min'] = intdiv((new DateTime())->getOffset(), 60);
+        // 2.6.1 live video sync: re-sync interval and maximum delay behind live (core/LiveSync.php).
+        $content['live_sync'] = LiveSync::forTv();
         foreach (self::extensions() as $ext) {
             if (!Features::extensionEnabled($ext)) {
                 continue; // 2.5 plans: modules outside the customer's plan never reach the TV

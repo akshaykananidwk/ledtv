@@ -154,9 +154,28 @@ final class Panel
 
     /**
      * Sidebar of the current panel: [section => [key => [key, file, perm, icon, label]]] from hc_nav_sections(),
-     * limited to the panel's sections and ordered by self::ORDER.
+     * limited to the panel's sections and ordered by self::ORDER. With $custom (default) the menu settings
+     * (core/NavMenu.php: personal menu → business default) reorder the items and remove hidden ones; see navMenu().
      */
-    public static function navSections(?array $all = null): array
+    public static function navSections(?array $all = null, bool $custom = true): array
+    {
+        return $custom ? self::navMenu($all)['sections'] : self::defaultSections($all);
+    }
+
+    /**
+     * 2.9 menu settings: ['sections' => visible items, 'hidden' => [key => item] the user may open but hid,
+     * 'more' => show the hidden items in the "Hidden items" group, 'source' => user|business|default].
+     * Only items hc_nav_sections() already allows (permission, plan, mode) are ever returned.
+     */
+    public static function navMenu(?array $all = null): array
+    {
+        $panel = self::current();
+        [$cfg, $source] = NavMenu::effective($panel);
+        return NavMenu::apply(self::defaultSections($all), $cfg, $panel) + ['source' => $source];
+    }
+
+    /** Built-in sidebar of the current panel (no menu settings applied). */
+    public static function defaultSections(?array $all = null): array
     {
         $all ??= function_exists('hc_nav_sections') ? hc_nav_sections() : [];
         $panel = self::current();
@@ -181,29 +200,30 @@ final class Panel
         return $out;
     }
 
-    /** Sidebar groups for the current panel: [heading => [key => item]] (items without a group under ''). */
+    /**
+     * Sidebar groups for the current panel: [heading => [key => item]] (items without a group under '').
+     * Headings keep their built-in order; inside a heading the items keep the order of $items (so a custom
+     * menu order reorders items within their group — docs/modules/menu_settings.md).
+     */
     public static function navGroups(array $items): array
     {
         $groups = self::GROUPS[self::current()] ?? [];
         if (!$groups) {
             return ['' => $items];
         }
+        $groupOf = [];
         $out = [];
-        $seen = [];
         foreach ($groups as $heading => $keys) {
+            $out[$heading] = [];
             foreach ($keys as $k) {
-                if (isset($items[$k])) {
-                    $out[$heading][$k] = $items[$k];
-                    $seen[$k] = true;
-                }
+                $groupOf[$k] ??= $heading;
             }
         }
+        $out[''] = [];
         foreach ($items as $k => $item) {
-            if (!isset($seen[$k])) {
-                $out[''][$k] = $item;
-            }
+            $out[$groupOf[$k] ?? ''][$k] = $item;
         }
-        return $out;
+        return array_filter($out);
     }
 
     /** Subscription state of a customer (docs/SPEC_SAAS.md §29): TRIAL | ACTIVE | EXPIRING | EXPIRED | SUSPENDED | ARCHIVED. */

@@ -38,7 +38,11 @@ $hdrAccent = $hdrTheme['accent'] ?? $hdrBrand['color'];
 $hdrAccentDark = $hdrTheme['accent_dark'] ?? Branding::shade($hdrBrand['color']);
 
 // Sidebar from the navigation registry (admin/partials/nav.d/*.php), limited to the panel's sections.
-$navSections = $user ? Panel::navSections() : [];
+// 2.9 menu settings (core/NavMenu.php): personal menu → business default → built-in order; hidden items
+// (still allowed, reachable by URL) go to the collapsible "Hidden items" group when 'more' is on.
+$hdrMenu = $user ? Panel::navMenu() : ['sections' => [], 'hidden' => [], 'more' => true];
+$navSections = $hdrMenu['sections'];
+$hdrHiddenNav = $hdrMenu['more'] ? $hdrMenu['hidden'] : [];
 $sectionTitles = ['hotel' => $hotelName, 'reseller' => __('Reseller'), 'platform' => __('Platform'), 'chain' => __('Chain')];
 $groupTitles = ['Manage' => __('Manage'), 'Commercial' => __('Commercial'), 'Plans & subscriptions' => __('Plans & subscriptions'), 'Devices & content' => __('Devices & content'), 'Insight' => __('Insight'), 'System' => __('System'), 'Tools' => __('Tools')];
 $hdrSearch = $user && in_array($hdrPanel, ['platform', 'reseller'], true) && Auth::can('platform.screens') && is_file(HC_ROOT . '/admin/platform_search.php');
@@ -121,6 +125,16 @@ foreach (glob(__DIR__ . '/head.d/*.php') ?: [] as $__hd) { include $__hd; } unse
             <?php endforeach; ?>
           <?php endforeach; ?>
         <?php endforeach; ?>
+        <?php if ($hdrHiddenNav): ?>
+        <details class="hc-nav-more" data-nav-more-group<?= isset($hdrHiddenNav[$activeNav]) ? ' open' : '' ?>>
+          <summary class="hc-nav-section"><i class="bi bi-three-dots"></i> <?= e(__('Hidden items (:n)', ['n' => count($hdrHiddenNav)])) ?></summary>
+          <?php foreach ($hdrHiddenNav as [$key, $href, $perm, $icon, $label]): ?>
+          <a class="nav-link<?= $activeNav === $key ? ' active' : '' ?>" href="<?= e(admin_url($href)) ?>" data-nav-hidden="<?= e($key) ?>"<?= $activeNav === $key ? ' aria-current="page"' : '' ?>>
+            <i class="bi <?= e($icon) ?>"></i><span><?= e($label) ?></span>
+          </a>
+          <?php endforeach; ?>
+        </details>
+        <?php endif; ?>
       </nav>
       <div class="hc-sidebar-foot small">
         <?php if ($hdrImpersonating && $hdrConsole): ?>
@@ -186,6 +200,7 @@ foreach (glob(__DIR__ . '/head.d/*.php') ?: [] as $__hd) { include $__hd; } unse
           <ul class="dropdown-menu dropdown-menu-end">
             <li><h6 class="dropdown-header"><?= e($user['username']) ?> · <?= e(Auth::roleName($user)) ?></h6></li>
             <li><a class="dropdown-item" href="<?= e(admin_url('profile.php')) ?>"><i class="bi bi-person-gear me-2"></i><?= e(__('My profile')) ?></a></li>
+            <li><a class="dropdown-item" href="<?= e(admin_url('menu_settings.php', ['scope' => 'me'])) ?>" data-my-menu><i class="bi bi-list-ol me-2"></i><?= e(__('My menu')) ?></a></li>
             <?php if ($hdrConsole === 'platform' && $hdrPanel !== 'platform'): ?><li><a class="dropdown-item" href="<?= e(admin_url(Panel::home('platform'))) ?>"><i class="bi bi-shield-lock me-2"></i><?= e(__('Super Admin console')) ?></a></li><?php endif; ?>
             <?php if ($hdrConsole === 'reseller' && $hdrPanel !== 'reseller'): ?><li><a class="dropdown-item" href="<?= e(admin_url(Panel::home('reseller'))) ?>"><i class="bi bi-briefcase me-2"></i><?= e(__('Reseller panel')) ?></a></li><?php endif; ?>
             <li><hr class="dropdown-divider"></li>

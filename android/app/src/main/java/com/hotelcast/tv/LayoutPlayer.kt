@@ -28,6 +28,8 @@ class LayoutPlayer(
     private val cache: ContentCache,
     private val overlay: Overlay?,
     private val spec: LayoutSpec,
+    /** 2.6.1 live video sync settings of the stage's content (zones play streams too). */
+    private var liveSync: LiveSyncData? = null,
 ) {
     val view: ZoneLayout = ZoneLayout(context).apply {
         setBackgroundColor(Utils.parseColor(spec.bgColor, Color.BLACK))
@@ -98,6 +100,7 @@ class LayoutPlayer(
                     items = items,
                     playlist = Playlist(transition = zone.transition, loop = zone.loop),
                     overlay = overlay,
+                    liveSync = liveSync,
                 ),
                 force = true,
             )
@@ -133,6 +136,12 @@ class LayoutPlayer(
             startZone(i)
         }
         return true
+    }
+
+    /** New live sync settings (content changed while this layout stays on screen). */
+    fun updateLiveSync(data: LiveSyncData?) {
+        liveSync = data
+        players.forEach { it?.liveSyncOverride = data }
     }
 
     fun release() {

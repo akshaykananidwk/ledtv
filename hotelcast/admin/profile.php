@@ -83,5 +83,15 @@ require __DIR__ . '/partials/header.php';
       </div>
     </form>
   </div>
+  <div class="col-12">
+    <div class="card" data-profile-my-menu>
+      <div class="card-body d-flex flex-wrap align-items-center gap-3">
+        <i class="bi bi-list-ol fs-3 text-primary"></i>
+        <div class="flex-grow-1"><strong><?= e(__('My menu')) ?></strong>
+          <div class="small text-muted"><?= e(__('Choose the order of your menu and hide items you do not need. Only your own menu changes.')) ?></div></div>
+        <a class="btn btn-outline-primary" href="<?= e(admin_url('menu_settings.php', ['scope' => 'me'])) ?>"><i class="bi bi-arrow-down-up"></i> <?= e(__('Arrange my menu')) ?></a>
+      </div>
+    </div>
+  </div>
 </div>
 <?php require __DIR__ . '/partials/footer.php'; ?>
