@@ -917,6 +917,11 @@
         if (item.type === 'url' && num(item.refresh_sec, 0) > 0) {
           timers.push(setInterval(function () { f.src = src; }, Math.max(10, num(item.refresh_sec, 0)) * 1000));
         }
+        // 2.6.1 live sync: a YouTube live link is reloaded every N minutes (starts again at the live moment).
+        if (isYouTubeLive(item.embed_url) || isYouTubeLive(item.url)) {
+          var lsMs = liveCfg().refreshMs;
+          if (lsMs > 0) timers.push(setInterval(function () { log('Live sync: reloading YouTube live'); f.src = src; }, lsMs));
+        }
         break;
       }
       case 'html':
@@ -1016,8 +1021,18 @@
           if (!v.parentNode && !layer.parentNode) return;
           if (ok && window.Hls.isSupported && window.Hls.isSupported()) {
             if (layer._hls) { try { layer._hls.destroy(); } catch (e) { /* ignore */ } }
-            var h = new window.Hls({ enableWorker: true, lowLatencyMode: false });
+            var hc = { enableWorker: true, lowLatencyMode: false };
+            if (item.type === 'stream') {
+              // 2.6.1 live sync: stay near the live edge, catch up gently, jump back beyond the max delay.
+              var lc = liveCfg();
+              hc.liveSyncDuration = Math.min(30, lc.maxLag / 2);
+              hc.liveMaxLatencyDuration = lc.maxLag;
+              hc.maxLiveSyncPlaybackRate = 1.04;
+            }
+            var h = new window.Hls(hc);
             layer._hls = h;
+            layer._hlsLive = false;
+            h.on(window.Hls.Events.LEVEL_LOADED, function (ev, data) { layer._hlsLive = !!(data && data.details && data.details.live); });
             h.on(window.Hls.Events.ERROR, function (ev, data) {
               if (!data || !data.fatal) return;
               if (data.type === window.Hls.ErrorTypes.NETWORK_ERROR) { timers.push(setTimeout(function () { try { h.startLoad(); } catch (e) { /* ignore */ } }, 5000)); }
@@ -1037,7 +1052,65 @@
       }
     }
     attach();
+    if (item.type === 'stream') liveWatch(v, layer, timers, attach);
     return v;
+  }
+
+  // ------------------------------------------------------------------- 2.6.1 live video sync
+  /** content.live_sync {refresh_min, max_lag_s}; defaults 5 min / 60 s, delay never above 120 s. */
+  function liveCfg() {
+    var ls = (S.content && S.content.live_sync) || {};
+    return {
+      refreshMs: clamp(Math.round(num(ls.refresh_min, 5)), 0, 1440) * 60000,
+      maxLag: clamp(num(ls.max_lag_s, 60), 15, 120)
+    };
+  }
+  function isYouTubeLive(u) {
+    u = String(u || '');
+    return /^https?:\/\/([a-z0-9-]+\.)*(youtube\.com|youtube-nocookie\.com)\//i.test(u) &&
+      /(\/live(\/|\?|#|$)|live_stream)/i.test(u.replace(/^https?:\/\/[^\/]+/i, ''));
+  }
+  /**
+   * Watchdog of a playing stream (every 15 s): frozen for 30 s → reload; more than the max delay behind
+   * live → jump to live (hls.js liveSyncPosition, or the end of the seekable range on native HLS);
+   * every N minutes → jump to live when hls.js can (no reload), otherwise reload the stream.
+   */
+  function liveWatch(v, layer, timers, reload) {
+    var lastT = -1, lastMove = now(), lastSync = now();
+    timers.push(setInterval(function () {
+      if (!v.parentNode) return;
+      var cfg = liveCfg(), t = now(), h = layer._hls, ct = v.currentTime || 0;
+      if (v.paused || Math.abs(ct - lastT) > 0.5) lastMove = t;
+      lastT = ct;
+      if (t - lastMove >= 30000) {
+        log('Live sync: stream frozen, reloading');
+        lastMove = t; lastSync = t; lastT = -1;
+        reload();
+        return;
+      }
+      var live = h ? !!layer._hlsLive : v.duration === Infinity;
+      if (!live) return;
+      var edge = null;
+      if (h) edge = h.liveSyncPosition;
+      else if (v.seekable && v.seekable.length) edge = v.seekable.end(v.seekable.length - 1) - Math.min(10, cfg.maxLag / 3);
+      var lag = edge !== null && edge !== undefined && isFinite(edge) ? edge - ct : -1;
+      if (lag > cfg.maxLag) {
+        log('Live sync: ' + Math.round(lag) + ' s behind live, jumping to live');
+        try { v.currentTime = edge; } catch (e) { reload(); }
+        lastSync = t;
+        return;
+      }
+      if (cfg.refreshMs > 0 && t - lastSync >= cfg.refreshMs) {
+        lastSync = t;
+        if (h && lag >= 0) {
+          if (lag > 10) { log('Live sync: periodic jump to live'); try { v.currentTime = edge; } catch (e2) { /* ignore */ } }
+          return;
+        }
+        log('Live sync: periodic reload');
+        lastT = -1;
+        reload();
+      }
+    }, 15000));
   }
   function tryPlay(m) {
     try {

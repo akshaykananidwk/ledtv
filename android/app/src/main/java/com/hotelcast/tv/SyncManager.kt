@@ -317,6 +317,7 @@ object SyncManager : CommandActions {
                     "usb" to UsbMedia.state(UsbPlaylist.decide(c, UsbMedia.items.value)),
                     "cec" to CecControl.state(app, c),
                     "live_view" to (liveJob?.isActive == true),
+                    "live_resyncs" to LiveSync.resyncs.get(),
                 ))
             } catch (e: Exception) {
                 null

@@ -12,6 +12,7 @@ import android.net.Uri
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
+import android.os.SystemClock
 import android.util.Log
 import android.util.TypedValue
 import android.view.Gravity
@@ -33,10 +34,12 @@ import com.bumptech.glide.load.DataSource
 import com.bumptech.glide.load.engine.GlideException
 import com.bumptech.glide.request.RequestListener
 import com.bumptech.glide.request.target.Target
+import com.google.android.exoplayer2.C
 import com.google.android.exoplayer2.ExoPlayer
 import com.google.android.exoplayer2.MediaItem
 import com.google.android.exoplayer2.PlaybackException
 import com.google.android.exoplayer2.Player
+import com.google.android.exoplayer2.Timeline
 import com.google.android.exoplayer2.source.DefaultMediaSourceFactory
 import com.google.android.exoplayer2.source.rtsp.RtspMediaSource
 import com.google.android.exoplayer2.ui.AspectRatioFrameLayout
@@ -96,6 +99,23 @@ class ContentPlayer(
     private var syncStrictChecks = 0
     private val syncCheckRunnable = Runnable { syncVideoCheck(strict = false) }
     private val muted: Boolean get() = forceMute || wall?.audio == false
+
+    // 2.6.1 live video sync (LiveSync.kt): watchdog state of the playing stream / YouTube live page.
+    private var liveMediaItem: MediaItem? = null
+    private var liveLastMarker: Long? = null
+    private var liveLastProgressAt = 0L
+    private var liveBufferingSince = 0L
+    private var liveLastRefreshAt = 0L
+    private var webLiveDetected = false
+    private val liveWindow = Timeline.Window()
+    private val liveCheckRunnable = Runnable { liveCheck() }
+    private val webLiveCheckRunnable = Runnable { webLiveCheck() }
+    private val webLiveRefreshRunnable = Runnable { webLiveRefresh() }
+
+    /** Live sync settings from a parent (layout zones); null = this player's content.live_sync. */
+    var liveSyncOverride: LiveSyncData? = null
+
+    private fun liveConfig(): LiveSyncConfig = LiveSyncConfig.from(liveSyncOverride ?: content?.liveSync)
 
     init {
         // A wall view is laid out for the stage size: follow it (ticker bar, first layout).
@@ -217,6 +237,7 @@ class ContentPlayer(
         transition = newContent.playlist?.transition?.lowercase() ?: "fade"
         loopPlaylist = newContent.playlist?.loop != false
         consecutiveFailures = 0
+        (currentView?.getTag(TAG_LAYOUT_PLAYER) as? LayoutPlayer)?.updateLiveSync(newContent.liveSync)
         handler.removeCallbacks(advanceRunnable)
         if (items.size > 1) {
             val total = itemSeconds(cur) * 1000L
@@ -236,6 +257,11 @@ class ContentPlayer(
         handler.removeCallbacks(webRetryRunnable)
         handler.removeCallbacks(clockTicker)
         handler.removeCallbacks(syncCheckRunnable)
+        handler.removeCallbacks(liveCheckRunnable)
+        handler.removeCallbacks(webLiveCheckRunnable)
+        handler.removeCallbacks(webLiveRefreshRunnable)
+        liveMediaItem = null
+        webLiveDetected = false
         syncSeekPending = false
         syncStrictChecks = 0
         finishCurrentItem()
@@ -502,6 +528,16 @@ class ContentPlayer(
                 lower.contains(".mpd") -> setMimeType(MimeTypes.APPLICATION_MPD)
                 lower.startsWith("rtsp://") || lower.startsWith("rtsps://") -> setMimeType(MimeTypes.APPLICATION_RTSP)
             }
+            if (isStream) {
+                // 2.6.1: the stream's own target offset, gentle speed catch-up, never aim beyond the max lag.
+                setLiveConfiguration(
+                    MediaItem.LiveConfiguration.Builder()
+                        .setMaxOffsetMs(liveConfig().maxLagMs)
+                        .setMinPlaybackSpeed(LiveSync.MIN_PLAYBACK_SPEED)
+                        .setMaxPlaybackSpeed(LiveSync.MAX_PLAYBACK_SPEED)
+                        .build(),
+                )
+            }
         }.build()
         if (lower.startsWith("rtsp://") || lower.startsWith("rtsps://")) {
             exo.setMediaSource(RtspMediaSource.Factory().setTimeoutMs(10_000).createMediaSource(mediaItem))
@@ -516,6 +552,7 @@ class ContentPlayer(
         exo.addListener(object : Player.Listener {
             override fun onPlaybackStateChanged(state: Int) {
                 if (currentItem !== item || player !== exo) return
+                if (isStream) liveBufferingSince = if (state == Player.STATE_BUFFERING) liveBufferingSince.takeIf { it > 0 } ?: SystemClock.elapsedRealtime() else 0L
                 when (state) {
                     Player.STATE_READY -> {
                         playerRetries = 0
@@ -538,6 +575,15 @@ class ContentPlayer(
 
             override fun onPlayerError(error: PlaybackException) {
                 if (currentItem !== item || player !== exo) return
+                if (isStream && error.errorCode == PlaybackException.ERROR_CODE_BEHIND_LIVE_WINDOW) {
+                    // Fell out of the live window: jump back to live, no error / retry loop.
+                    Log.i(TAG, "live: behind live window, re-syncing to live")
+                    LiveSync.resyncs.incrementAndGet()
+                    exo.seekToDefaultPosition()
+                    exo.prepare()
+                    exo.playWhenReady = true
+                    return
+                }
                 Log.w(TAG, "Playback error (${item.type}) $url: ${error.errorCodeName}")
                 if (DecoderPlanner.isDecoderError(error.errorCode) && decoderErrorHandler?.invoke(item) == true) return
                 when {
@@ -558,6 +604,7 @@ class ContentPlayer(
         }
         exo.prepare()
         exo.playWhenReady = true
+        if (isStream) startLiveWatchdog(mediaItem)
 
         if (wall != null) {
             return WallLayout.playerView(context).apply {
@@ -573,6 +620,170 @@ class ContentPlayer(
             isFocusable = false
             this.player = exo
         }.also { applyScale(it) }
+    }
+
+    // ------------------------------------------------------------------ 2.6.1 live sync
+
+    private fun startLiveWatchdog(mediaItem: MediaItem) {
+        val now = SystemClock.elapsedRealtime()
+        liveMediaItem = mediaItem
+        liveLastMarker = null
+        liveLastProgressAt = now
+        liveBufferingSince = 0L
+        liveLastRefreshAt = now
+        handler.removeCallbacks(liveCheckRunnable)
+        handler.postDelayed(liveCheckRunnable, LiveSync.CHECK_MS)
+    }
+
+    /** Position on the stream's own timeline (window start + position): advances while playing. */
+    private fun progressMarker(exo: ExoPlayer): Long? {
+        val tl = exo.currentTimeline
+        if (tl.isEmpty) return null
+        val idx = exo.currentMediaItemIndex
+        if (idx < 0 || idx >= tl.windowCount) return null
+        tl.getWindow(idx, liveWindow)
+        val start = liveWindow.windowStartTimeMs
+        return (if (start != C.TIME_UNSET) start else 0L) + exo.currentPosition
+    }
+
+    private fun liveCheck() {
+        handler.removeCallbacks(liveCheckRunnable)
+        val exo = player ?: return
+        val item = currentItem ?: return
+        val mediaItem = liveMediaItem ?: return
+        if (item.type != ContentItem.TYPE_STREAM) return
+        val now = SystemClock.elapsedRealtime()
+        val state = exo.playbackState
+        // IDLE / ENDED: the error retry (scheduleStreamRetry) is in charge.
+        if (state == Player.STATE_READY || state == Player.STATE_BUFFERING) {
+            val marker = progressMarker(exo)
+            val last = liveLastMarker
+            if (!exo.playWhenReady || marker == null || last == null || kotlin.math.abs(marker - last) > PROGRESS_EPSILON_MS) {
+                liveLastProgressAt = now
+            }
+            liveLastMarker = marker
+            val cfg = liveConfig()
+            val live = exo.isCurrentMediaItemLive || exo.isCurrentMediaItemDynamic || exo.duration == C.TIME_UNSET
+            val offset = exo.currentLiveOffset.takeIf { it != C.TIME_UNSET && exo.isCurrentMediaItemLive }
+            val target = if (exo.isCurrentMediaItemLive) {
+                liveWindow.liveConfiguration?.targetOffsetMs?.takeIf { it != C.TIME_UNSET }
+            } else {
+                null
+            }
+            val d = LiveSync.decide(
+                offsetMs = offset,
+                maxLagMs = cfg.maxLagMs,
+                bufferingMs = if (state == Player.STATE_BUFFERING && liveBufferingSince > 0) now - liveBufferingSince else 0L,
+                stalledMs = now - liveLastProgressAt,
+                sinceLastRefreshMs = now - liveLastRefreshAt,
+                refreshEveryMs = cfg.refreshEveryMs,
+                seekable = exo.isCurrentMediaItemLive && exo.isCurrentMediaItemSeekable,
+                live = live,
+                targetOffsetMs = target,
+            )
+            if (d.restartsPeriodic) liveLastRefreshAt = now
+            when (d.action) {
+                LiveAction.SEEK_TO_LIVE -> {
+                    Log.i(TAG, "live: ${d.reason} (offset ${offset?.div(1000)} s, max ${cfg.maxLagMs / 1000} s) -> jump to live")
+                    LiveSync.resyncs.incrementAndGet()
+                    exo.seekToDefaultPosition()
+                    exo.playWhenReady = true
+                }
+                LiveAction.RELOAD -> {
+                    Log.i(TAG, "live: ${d.reason} (offset ${offset?.div(1000)} s) -> reloading stream")
+                    LiveSync.resyncs.incrementAndGet()
+                    reloadStream(exo, mediaItem)
+                    liveLastMarker = null
+                    liveLastProgressAt = now
+                    liveBufferingSince = 0L
+                }
+                LiveAction.NONE -> Unit
+            }
+        } else {
+            liveLastProgressAt = now
+        }
+        handler.postDelayed(liveCheckRunnable, LiveSync.CHECK_MS)
+    }
+
+    /** Re-prepares the stream from its URL at the live position; the last frame stays on screen. */
+    private fun reloadStream(exo: ExoPlayer, mediaItem: MediaItem, forceTcp: Boolean = false) {
+        try {
+            if (mediaItem.localConfiguration?.mimeType == MimeTypes.APPLICATION_RTSP) {
+                exo.setMediaSource(RtspMediaSource.Factory().setTimeoutMs(10_000).setForceUseRtpTcp(forceTcp).createMediaSource(mediaItem))
+            } else {
+                exo.setMediaItem(mediaItem)
+            }
+            exo.seekToDefaultPosition()
+            exo.prepare()
+            exo.playWhenReady = true
+        } catch (e: Exception) {
+            Log.w(TAG, "Stream reload failed", e)
+        }
+    }
+
+    /** YouTube page items: live by link, or reported live by the page itself (webLiveCheck). */
+    private fun isYouTubeItem(item: ContentItem): Boolean =
+        item.type == ContentItem.TYPE_YOUTUBE || (item.type == ContentItem.TYPE_URL && YouTubeUrls.isYouTube(item.url))
+
+    private fun isWebLive(item: ContentItem): Boolean =
+        webLiveDetected || LiveSync.isYouTubeLiveUrl(item.embedUrl) || LiveSync.isYouTubeLiveUrl(item.url)
+
+    private fun startWebLiveSync(item: ContentItem) {
+        if (!isYouTubeItem(item)) return
+        handler.removeCallbacks(webLiveCheckRunnable)
+        handler.postDelayed(webLiveCheckRunnable, LiveSync.WEB_CHECK_MS)
+        scheduleWebLiveRefresh(item)
+    }
+
+    private fun scheduleWebLiveRefresh(item: ContentItem) {
+        handler.removeCallbacks(webLiveRefreshRunnable)
+        val every = liveConfig().refreshEveryMs
+        if (every > 0 && isWebLive(item)) handler.postDelayed(webLiveRefreshRunnable, every)
+    }
+
+    /** Every 30 s: a live YouTube video more than the max lag behind its live edge jumps to it. */
+    private fun webLiveCheck() {
+        handler.removeCallbacks(webLiveCheckRunnable)
+        val web = currentView as? WebView ?: return
+        val item = currentItem ?: return
+        if (!isYouTubeItem(item) || webLoadFailed) {
+            handler.postDelayed(webLiveCheckRunnable, LiveSync.WEB_CHECK_MS)
+            return
+        }
+        try {
+            val maxLagS = (liveConfig().maxLagMs / 1000).toInt()
+            web.evaluateJavascript(LiveSync.youTubeLiveEdgeJs(maxLagS)) { raw ->
+                if (currentView !== web || currentItem !== item) return@evaluateJavascript
+                val r = LiveSync.parseWebResult(raw)
+                if (r.startsWith("seek:") || r.startsWith("live:")) {
+                    val wasLive = isWebLive(item)
+                    webLiveDetected = true
+                    if (!wasLive) scheduleWebLiveRefresh(item) // live video under a normal link: periodic reload too
+                }
+                if (r.startsWith("seek:")) {
+                    LiveSync.resyncs.incrementAndGet()
+                    Log.i(TAG, "live: YouTube ${r.removePrefix("seek:")} s behind -> jump to live")
+                }
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "YouTube live check failed", e)
+        }
+        handler.postDelayed(webLiveCheckRunnable, LiveSync.WEB_CHECK_MS)
+    }
+
+    /** Every N minutes (setting): reload a live YouTube page so it starts again at the live moment. */
+    private fun webLiveRefresh() {
+        val web = currentView as? WebView ?: return
+        val item = currentItem ?: return
+        Log.i(TAG, "live: periodic re-sync, reloading YouTube live page")
+        LiveSync.resyncs.incrementAndGet()
+        webLoadFailed = false
+        try {
+            loadWeb(web)
+        } catch (e: Exception) {
+            Log.w(TAG, "web live refresh failed", e)
+        }
+        scheduleWebLiveRefresh(item)
     }
 
     private fun scheduleStreamRetry(exo: ExoPlayer, mediaItem: MediaItem) {
@@ -680,6 +891,7 @@ class ContentPlayer(
         loadWeb(web)
         val refresh = item.refreshSec ?: 0
         if (refresh > 0) handler.postDelayed(refreshRunnable, refresh * 1000L)
+        startWebLiveSync(item)
         return web
     }
 
@@ -923,6 +1135,8 @@ class ContentPlayer(
         private const val SYNC_SEEK_SETTLE_MS = 1500L
         /** Strict re-alignments in a row after a start / seek (then the 1 s mid-item rule applies). */
         private const val MAX_STRICT_SYNC_CHECKS = 4
+        /** Live watchdog: the stream position moved (ms) = still playing. */
+        private const val PROGRESS_EPSILON_MS = 500L
         private val TAG_CLOCK_UPDATER = R.id.tag_clock_updater
         private val TAG_WEB_HTML = R.id.tag_web_html
         private val TAG_WEB_URL = R.id.tag_web_url
