@@ -107,6 +107,7 @@ const editorKeys = (page) => page.$$eval('[data-menu-list] .hc-menu-item', (els)
     const more = page.locator('[data-nav-more-group]');
     check(await more.count() === 1, 'Hidden items group present');
     await page.goto(url + 'admin/index.php');
+    await shot(page, 'sidebar_custom_menu_top.jpg', { clip: { x: 0, y: 0, width: 520, height: 900 } });
     await page.click('[data-nav-more-group] > summary');
     check(await page.locator('[data-nav-hidden="logs"]').isVisible(), 'hidden item reachable from the More group');
     await page.evaluate(() => { const s = document.querySelector('.hc-sidebar'); if (s) s.scrollTop = s.scrollHeight; });
