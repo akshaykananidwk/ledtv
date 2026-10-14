@@ -1,3 +1,13 @@
+# 2.9.0 — live video sync, customizable side menu (2026-10-14)
+
+Server `version.json` 2.9.0 (migration 036); TV app 2.6.1 (versionCode 15).
+
+- Full PHP suite: **638 tests, 26,195 assertions, 0 failures**.
+- New PHP tests: `LiveSyncTest` (6: defaults, strict validation, save → poll JSON → hash change, permissions, CSRF, translations), `MenuSettingsTest` (9: business default, personal override, reset, required items, hidden-but-permitted pages, plan/permission never widened, merge of new modules, console menus), contract assertion for `live_sync`.
+- Android: `LiveSyncTest.kt` (12) + `ServerContractTest` live_sync; 245 unit tests, lint 0 errors; APK signed with the release key (SHA-256 b0f2c899…1a156c).
+- Browser QA: menu settings (drag & drop, ↑↓, hidden group, mobile 390 px) — screenshots in `docs/screenshots/2.9/`.
+- Not tested on real TVs / real live streams (documented in `docs/modules/live_sync.md`).
+
 # 2.8.0 — email that really works: SMTP, forgot password, invites, welcome mail (2026-10-10)
 
 Server `version.json` 2.8.0 (migration 035: `password_resets`, `mail_log`); the TV app stays 2.6.0. Guide: `docs/modules/email.md`.

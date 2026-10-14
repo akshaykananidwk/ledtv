@@ -32,6 +32,15 @@ screen-wise schedule karo, emergency message moklo, TV reboot/update karo.*
 | Android TV app | [`android/`](android) | Kotlin, ExoPlayer 2.19, Retrofit, OkHttp, Glide, WorkManager — min SDK 21, target 34 |
 | Documentation | [`docs/`](docs) | Install guide, TV setup, admin guide, API, developer guide (tenancy + extension points), security, test report |
 
+## What's new in 2.9 — live video stays in sync, customizable side menu
+
+Server 2.9.0 (migration 036: `users.menu_prefs`) + TV app **2.6.1** (versionCode 15).
+
+| Feature | Where |
+|---|---|
+| **Live video never falls behind**: the TV checks every 15 s how far a live stream is behind live and jumps back when it is more than the maximum delay (default 60 s, max 120 s); stalled/frozen streams reload; a periodic re-sync runs every N minutes (Off / 2 / 5 / 10 / 15 / 30, default 5) without a black screen. YouTube live pages are re-synced and reloaded too. The web player does the same with hls.js / native HLS. A source that is itself delayed cannot be beaten | Settings → TV & Display → Live video · TV app 2.6.1 · `docs/modules/live_sync.md` |
+| **Customizable side menu**: hide/show and reorder sidebar items (drag & drop or ↑↓). Business default in Settings → Menu; personal **My menu** in Profile (also for the Super Admin / reseller consoles). Hidden items stay reachable in a "Hidden items" group; Dashboard and Settings can't be hidden; permissions and plans are never widened | Settings → Menu · Profile → My menu · `docs/modules/menu_settings.md` |
+
 ## What's new in 2.8 — email that really works: SMTP, forgot password, invites, welcome mail
 
 Server only (`version.json` 2.8.0, migration 035; the TV app stays 2.6.0). Guide: [docs/modules/email.md](docs/modules/email.md).
