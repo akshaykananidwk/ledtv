@@ -1,3 +1,10 @@
+# TV app 2.6.2 — direct live links, player fixes (2026-11-04)
+
+TV app 2.6.2 (versionCode 16); server unchanged (2.9.1).
+
+- Android: **259 unit tests, 0 failures** (new `MediaUrlsTest` 11: format detection, Web page / Video → stream, YouTube and pages unchanged, streams never cached, layout zones, HLS/DASH fallback order, aspect guard, log redaction; `LiveSyncTest` +3: first-start limit, reload backoff, futile seeks). Lint 0 errors. Release APK signed with the release key (SHA-256 b0f2c899…1a156c); RTMP extension classes and `librtmp-jni.so` (4 ABIs) present after shrinking.
+- Not tested on a real TV with the customer's stream link (no device in the build environment): to be confirmed on site.
+
 # 2.9.1 — TV app updates only from the Super Admin (2026-10-14)
 
 - Full PHP suite: **639 tests, 26,157 assertions, 0 failures**.

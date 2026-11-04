@@ -11,6 +11,15 @@ import java.util.TimeZone
 import kotlin.math.abs
 
 object Utils {
+    /** Link for logs: scheme, host and path only (query strings often carry stream keys / tokens). */
+    fun redactUrl(url: String?): String {
+        if (url.isNullOrBlank()) return ""
+        val noQuery = url.substringBefore('?').substringBefore('#')
+        val creds = noQuery.substringAfter("://", "").substringBefore('/')
+        val clean = if (creds.contains('@')) noQuery.replace(creds.substringBefore('@') + "@", "") else noQuery
+        return clean.take(120)
+    }
+
 
     fun sha256Hex(text: String): String = sha256Hex(text.toByteArray(Charsets.UTF_8))
 

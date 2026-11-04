@@ -222,7 +222,7 @@ data class Content(
     }
 
     /** Items with a known type and the fields needed to render them. */
-    fun playableItems(): List<ContentItem> = items.orEmpty().filter { it.isPlayable() }
+    fun playableItems(): List<ContentItem> = items.orEmpty().map { MediaUrls.normalize(it) }.filter { it.isPlayable() }
 
     companion object {
         const val MODE_EMERGENCY = "emergency"
@@ -434,7 +434,8 @@ data class ContentItem(
     }
 
     /** URLs worth caching on disk for offline playback. */
-    fun cacheableUrl(): String? = if ((type == TYPE_IMAGE || type == TYPE_VIDEO) && !url.isNullOrBlank()) url else null
+    fun cacheableUrl(): String? =
+        if ((type == TYPE_IMAGE || type == TYPE_VIDEO) && !url.isNullOrBlank() && !MediaUrls.isStreamUrl(url)) url else null
 
     /** [cacheableUrl], plus the media of every zone of a layout. */
     fun cacheableUrls(): List<String> =

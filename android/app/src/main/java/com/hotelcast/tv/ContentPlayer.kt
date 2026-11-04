@@ -35,11 +35,13 @@ import com.bumptech.glide.load.engine.GlideException
 import com.bumptech.glide.request.RequestListener
 import com.bumptech.glide.request.target.Target
 import com.google.android.exoplayer2.C
+import com.google.android.exoplayer2.DefaultRenderersFactory
 import com.google.android.exoplayer2.ExoPlayer
 import com.google.android.exoplayer2.MediaItem
 import com.google.android.exoplayer2.PlaybackException
 import com.google.android.exoplayer2.Player
 import com.google.android.exoplayer2.Timeline
+import com.google.android.exoplayer2.video.VideoSize
 import com.google.android.exoplayer2.source.DefaultMediaSourceFactory
 import com.google.android.exoplayer2.source.rtsp.RtspMediaSource
 import com.google.android.exoplayer2.ui.AspectRatioFrameLayout
@@ -107,6 +109,11 @@ class ContentPlayer(
     private var liveBufferingSince = 0L
     private var liveLastRefreshAt = 0L
     private var webLiveDetected = false
+    // 2.6.2: reload backoff and futile jump-to-live guard (LiveSync.reloadLimitMs / seekWasFutile).
+    private var liveEverReady = false
+    private var liveReloadsInRow = 0
+    private var liveFutileSeeks = 0
+    private var liveSeekFrom: Long? = null
     private val liveWindow = Timeline.Window()
     private val liveCheckRunnable = Runnable { liveCheck() }
     private val webLiveCheckRunnable = Runnable { webLiveCheck() }
@@ -516,34 +523,26 @@ class ContentPlayer(
             .setReadTimeoutMs(20_000)
             .setUserAgent("HotelCastTV/${BuildConfig.VERSION_NAME}")
         val dataSourceFactory = DefaultDataSource.Factory(context, http)
-        val exo = ExoPlayer.Builder(context)
+        // 2.6.2: a TV whose first-choice decoder fails (common with 1080p50 / HEVC camera streams on cheap boxes)
+        // falls back to the next decoder instead of showing nothing.
+        val renderers = DefaultRenderersFactory(context).setEnableDecoderFallback(true)
+        val exo = ExoPlayer.Builder(context, renderers)
             .setMediaSourceFactory(DefaultMediaSourceFactory(dataSourceFactory))
             .build()
         player = exo
 
-        val lower = url.lowercase(Locale.US)
-        val mediaItem = MediaItem.Builder().setUri(uri).apply {
-            when {
-                lower.contains(".m3u8") -> setMimeType(MimeTypes.APPLICATION_M3U8)
-                lower.contains(".mpd") -> setMimeType(MimeTypes.APPLICATION_MPD)
-                lower.startsWith("rtsp://") || lower.startsWith("rtsps://") -> setMimeType(MimeTypes.APPLICATION_RTSP)
-            }
-            if (isStream) {
-                // 2.6.1: the stream's own target offset, gentle speed catch-up, never aim beyond the max lag.
-                setLiveConfiguration(
-                    MediaItem.LiveConfiguration.Builder()
-                        .setMaxOffsetMs(liveConfig().maxLagMs)
-                        .setMinPlaybackSpeed(LiveSync.MIN_PLAYBACK_SPEED)
-                        .setMaxPlaybackSpeed(LiveSync.MAX_PLAYBACK_SPEED)
-                        .build(),
-                )
-            }
-        }.build()
-        if (lower.startsWith("rtsp://") || lower.startsWith("rtsps://")) {
-            exo.setMediaSource(RtspMediaSource.Factory().setTimeoutMs(10_000).createMediaSource(mediaItem))
-        } else {
-            exo.setMediaItem(mediaItem)
+        // 2.6.2: format from the link (MediaUrls), also for links without .m3u8; RTMP through the rtmp extension.
+        val format = if (local != null) MediaUrls.Format.PROGRESSIVE else MediaUrls.formatOf(url)
+        val fallbacks = ArrayDeque(if (local != null) emptyList() else MediaUrls.fallbackMimes(url))
+        var mediaItem = mediaItemFor(uri, format, isStream)
+        setSource(exo, mediaItem)
+        if (isStream) {
+            liveEverReady = false
+            liveReloadsInRow = 0
+            liveFutileSeeks = 0
+            liveSeekFrom = null
         }
+        var view: StyledPlayerView? = null
 
         exo.volume = if (item.mute == true || muted) 0f else 1f
         AudioDuck.track(exo) // 2.4: lowered while a SPEAK / PLAY_SOUND announcement plays
@@ -556,6 +555,10 @@ class ContentPlayer(
                 when (state) {
                     Player.STATE_READY -> {
                         playerRetries = 0
+                        if (isStream) {
+                            liveEverReady = true
+                            liveReloadsInRow = 0
+                        }
                         onItemOk()
                         if (syncPlan != null && !isStream) syncVideoCheck(strict = true)
                     }
@@ -585,6 +588,18 @@ class ContentPlayer(
                     return
                 }
                 Log.w(TAG, "Playback error (${item.type}) $url: ${error.errorCodeName}")
+                ErrorLog.add("player", "${item.type} ${error.errorCodeName}: ${error.cause?.message ?: error.message} · ${Utils.redactUrl(url)}")
+                if (isUnrecognised(error) && fallbacks.isNotEmpty()) {
+                    // A link without .m3u8 / .mpd that is HLS / DASH after all: try that format right away.
+                    val next = fallbacks.removeFirst()
+                    Log.i(TAG, "Format not recognised, retrying $url as $next")
+                    mediaItem = mediaItemFor(uri, next, isStream)
+                    if (isStream) liveMediaItem = mediaItem
+                    setSource(exo, mediaItem)
+                    exo.prepare()
+                    exo.playWhenReady = true
+                    return
+                }
                 if (DecoderPlanner.isDecoderError(error.errorCode) && decoderErrorHandler?.invoke(item) == true) return
                 when {
                     isStream -> scheduleStreamRetry(exo, mediaItem)
@@ -595,6 +610,19 @@ class ContentPlayer(
                     }
                     items.size > 1 -> onItemError(item)
                     else -> scheduleStreamRetry(exo, MediaItem.fromUri(url))
+                }
+            }
+
+            override fun onVideoSizeChanged(videoSize: VideoSize) {
+                if (player !== exo) return
+                // 2.6.2: a broken picture size (camera SPS / aspect ratio) would be "fitted" into a thin line.
+                val v = view ?: return
+                if (MediaUrls.isImplausibleAspect(videoSize.width, videoSize.height, videoSize.pixelWidthHeightRatio)) {
+                    Log.w(TAG, "Implausible video size ${videoSize.width}x${videoSize.height} (par ${videoSize.pixelWidthHeightRatio}); filling the screen")
+                    ErrorLog.add("player", "video size ${videoSize.width}x${videoSize.height} par ${videoSize.pixelWidthHeightRatio}: fill")
+                    v.resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FILL
+                } else {
+                    applyScale(v)
                 }
             }
         })
@@ -619,8 +647,46 @@ class ContentPlayer(
             resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIT
             isFocusable = false
             this.player = exo
-        }.also { applyScale(it) }
+        }.also {
+            applyScale(it)
+            view = it
+        }
     }
+
+    /** 2.6.2: media item for a link in a known [format] (null mime = ExoPlayer detects it). */
+    private fun mediaItemFor(uri: Uri, format: MediaUrls.Format, isStream: Boolean): MediaItem =
+        MediaItem.Builder().setUri(uri).apply {
+            when (format) {
+                MediaUrls.Format.HLS -> setMimeType(MimeTypes.APPLICATION_M3U8)
+                MediaUrls.Format.DASH -> setMimeType(MimeTypes.APPLICATION_MPD)
+                MediaUrls.Format.RTSP -> setMimeType(MimeTypes.APPLICATION_RTSP)
+                else -> Unit
+            }
+            if (isStream) {
+                // 2.6.1: the stream's own target offset, gentle speed catch-up, never aim beyond the max lag.
+                setLiveConfiguration(
+                    MediaItem.LiveConfiguration.Builder()
+                        .setMaxOffsetMs(liveConfig().maxLagMs)
+                        .setMinPlaybackSpeed(LiveSync.MIN_PLAYBACK_SPEED)
+                        .setMaxPlaybackSpeed(LiveSync.MAX_PLAYBACK_SPEED)
+                        .build(),
+                )
+            }
+        }.build()
+
+    /** RTSP needs its own source (TCP on request: many camera routers drop RTP over UDP). */
+    private fun setSource(exo: ExoPlayer, mediaItem: MediaItem, forceTcp: Boolean = false) {
+        if (mediaItem.localConfiguration?.mimeType == MimeTypes.APPLICATION_RTSP) {
+            exo.setMediaSource(RtspMediaSource.Factory().setTimeoutMs(10_000).setForceUseRtpTcp(forceTcp).createMediaSource(mediaItem))
+        } else {
+            exo.setMediaItem(mediaItem)
+        }
+    }
+
+    private fun isUnrecognised(error: PlaybackException): Boolean =
+        error.errorCode == PlaybackException.ERROR_CODE_PARSING_CONTAINER_UNSUPPORTED ||
+            error.errorCode == PlaybackException.ERROR_CODE_PARSING_CONTAINER_MALFORMED ||
+            error.errorCode == PlaybackException.ERROR_CODE_PARSING_MANIFEST_UNSUPPORTED
 
     // ------------------------------------------------------------------ 2.6.1 live sync
 
@@ -664,7 +730,16 @@ class ContentPlayer(
             liveLastMarker = marker
             val cfg = liveConfig()
             val live = exo.isCurrentMediaItemLive || exo.isCurrentMediaItemDynamic || exo.duration == C.TIME_UNSET
-            val offset = exo.currentLiveOffset.takeIf { it != C.TIME_UNSET && exo.isCurrentMediaItemLive }
+            val rawOffset = exo.currentLiveOffset.takeIf { it != C.TIME_UNSET && exo.isCurrentMediaItemLive }
+            // 2.6.2: a jump to live that did not bring the delay down means the stream / TV clock is wrong.
+            liveSeekFrom?.let { before ->
+                if (state == Player.STATE_READY) {
+                    liveFutileSeeks = if (LiveSync.seekWasFutile(before, rawOffset)) liveFutileSeeks + 1 else 0
+                    liveSeekFrom = null
+                    if (liveFutileSeeks >= LiveSync.MAX_FUTILE_SEEKS) Log.w(TAG, "live: delay figure ${rawOffset?.div(1000)} s not trusted (clock mismatch)")
+                }
+            }
+            val offset = rawOffset.takeIf { liveFutileSeeks < LiveSync.MAX_FUTILE_SEEKS }
             val target = if (exo.isCurrentMediaItemLive) {
                 liveWindow.liveConfiguration?.targetOffsetMs?.takeIf { it != C.TIME_UNSET }
             } else {
@@ -680,19 +755,26 @@ class ContentPlayer(
                 seekable = exo.isCurrentMediaItemLive && exo.isCurrentMediaItemSeekable,
                 live = live,
                 targetOffsetMs = target,
+                bufferingLimitMs = LiveSync.reloadLimitMs(LiveSync.BUFFERING_RELOAD_MS, liveReloadsInRow, liveEverReady),
+                stalledLimitMs = LiveSync.reloadLimitMs(LiveSync.STALLED_RELOAD_MS, liveReloadsInRow, liveEverReady),
             )
             if (d.restartsPeriodic) liveLastRefreshAt = now
             when (d.action) {
                 LiveAction.SEEK_TO_LIVE -> {
                     Log.i(TAG, "live: ${d.reason} (offset ${offset?.div(1000)} s, max ${cfg.maxLagMs / 1000} s) -> jump to live")
                     LiveSync.resyncs.incrementAndGet()
+                    if (d.reason == LiveReason.BEHIND) liveSeekFrom = offset
                     exo.seekToDefaultPosition()
                     exo.playWhenReady = true
                 }
                 LiveAction.RELOAD -> {
                     Log.i(TAG, "live: ${d.reason} (offset ${offset?.div(1000)} s) -> reloading stream")
                     LiveSync.resyncs.incrementAndGet()
-                    reloadStream(exo, mediaItem)
+                    if (d.reason == LiveReason.BUFFERING || d.reason == LiveReason.STALLED) {
+                        liveReloadsInRow++
+                        ErrorLog.add("player", "live ${d.reason.name.lowercase()}: reload #$liveReloadsInRow")
+                    }
+                    reloadStream(exo, mediaItem, forceTcp = liveReloadsInRow % 2 == 1)
                     liveLastMarker = null
                     liveLastProgressAt = now
                     liveBufferingSince = 0L
@@ -708,11 +790,7 @@ class ContentPlayer(
     /** Re-prepares the stream from its URL at the live position; the last frame stays on screen. */
     private fun reloadStream(exo: ExoPlayer, mediaItem: MediaItem, forceTcp: Boolean = false) {
         try {
-            if (mediaItem.localConfiguration?.mimeType == MimeTypes.APPLICATION_RTSP) {
-                exo.setMediaSource(RtspMediaSource.Factory().setTimeoutMs(10_000).setForceUseRtpTcp(forceTcp).createMediaSource(mediaItem))
-            } else {
-                exo.setMediaItem(mediaItem)
-            }
+            setSource(exo, mediaItem, forceTcp)
             exo.seekToDefaultPosition()
             exo.prepare()
             exo.playWhenReady = true
@@ -794,12 +872,10 @@ class ContentPlayer(
             if (player !== exo) return@postDelayed
             try {
                 Log.i(TAG, "Reconnecting stream (attempt $playerRetries)")
-                if (exo.mediaItemCount == 0 || exo.currentMediaItem?.localConfiguration?.uri != mediaItem.localConfiguration?.uri) {
-                    if (mediaItem.localConfiguration?.mimeType == MimeTypes.APPLICATION_RTSP) {
-                        exo.setMediaSource(RtspMediaSource.Factory().setForceUseRtpTcp(playerRetries % 2 == 0).createMediaSource(mediaItem))
-                    } else {
-                        exo.setMediaItem(mediaItem)
-                    }
+                val rtsp = mediaItem.localConfiguration?.mimeType == MimeTypes.APPLICATION_RTSP
+                // RTSP: every retry rebuilds the source, alternating UDP / TCP transport.
+                if (rtsp || exo.mediaItemCount == 0 || exo.currentMediaItem?.localConfiguration?.uri != mediaItem.localConfiguration?.uri) {
+                    setSource(exo, mediaItem, forceTcp = rtsp && playerRetries % 2 == 0)
                 }
                 exo.seekToDefaultPosition()
                 exo.prepare()

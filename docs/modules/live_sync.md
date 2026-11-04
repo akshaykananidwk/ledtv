@@ -88,6 +88,12 @@ reported live by the page — are also reloaded every N minutes.
 - The YouTube live edge check relies on YouTube's embed page; if YouTube changes it, the periodic reload
   still keeps the TV in sync.
 
+## 2.6.2 (TV app)
+
+* Media links in *Web page* / *Video* items are played as streams (`MediaUrls.normalize`).
+* Reload limits: 60 s before the first picture, then 20 s / 30 s doubling per reload in a row (max 120 s) — `LiveSync.reloadLimitMs`.
+* A jump to live that leaves the delay above ¾ of its previous value is futile; after 2 the delay is ignored for that item (wrong clocks) — `LiveSync.seekWasFutile`.
+
 ## Files
 
 | file | purpose |

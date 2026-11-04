@@ -32,6 +32,21 @@ screen-wise schedule karo, emergency message moklo, TV reboot/update karo.*
 | Android TV app | [`android/`](android) | Kotlin, ExoPlayer 2.19, Retrofit, OkHttp, Glide, WorkManager — min SDK 21, target 34 |
 | Documentation | [`docs/`](docs) | Install guide, TV setup, admin guide, API, developer guide (tenancy + extension points), security, test report |
 
+## TV app 2.6.2 — direct live links play on the TV (no more "thin line")
+
+TV app **2.6.2** (versionCode 16); the server stays 2.9.1. Upload the APK in Super Admin → APK Manager.
+
+| Fix | Detail |
+|---|---|
+| **Direct links play in the native player** | A live link (`.m3u8`, `.mpd`, `rtsp://`, `rtmp://`, `.mp4`/`.ts` file) saved as *Web page* or *Video* used to open in the browser view (black screen with one thin bar) or be downloaded as a video file. It now plays in the video player like a *Live stream* item (`MediaUrls.kt`) |
+| **Links without .m3u8** | `https://host/live/darshan` style links are tried as HLS, then DASH, when the player does not recognise them |
+| **RTMP** | `rtmp://` links play (ExoPlayer RTMP extension) |
+| **Thin-line picture** | A stream that reports a broken picture size (camera aspect ratio) fills the screen instead of being drawn as a line |
+| **Slow lines** | A stream gets 60 s to start (2.6.1 reloaded it after 20 s for ever on a slow line); repeated reloads back off up to 2 min |
+| **Wrong TV / stream clock** | Jumps to live that do not reduce the delay are stopped after 2 tries (2.6.1 could seek every 15 s) |
+| **Decoders / RTSP** | Decoder fallback for cameras the first decoder cannot play; RTSP retries alternate UDP / TCP |
+| **Diagnostics** | Player errors are written to the TV's error log (Support → TV logs), links without query strings / passwords |
+
 ## What's new in 2.9.1 — TV app updates only from the Super Admin
 
 | Change | Where |

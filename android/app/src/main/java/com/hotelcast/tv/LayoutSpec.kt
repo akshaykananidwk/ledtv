@@ -30,7 +30,7 @@ data class LayoutSpec(
                 val w = pct(z.w, 100f).coerceAtMost(100f - x)
                 val h = pct(z.h, 100f).coerceAtMost(100f - y)
                 if (w <= 0f || h <= 0f) continue
-                val items = z.items.orEmpty().filterNotNull()
+                val items = z.items.orEmpty().filterNotNull().map { MediaUrls.normalize(it) }
                     .filter { it.type != ContentItem.TYPE_LAYOUT && it.isPlayable() }
                 if (items.isEmpty()) continue
                 var id = z.id?.trim()?.takeIf { it.isNotEmpty() } ?: "z${zones.size + 1}"

@@ -130,4 +130,33 @@ class LiveSyncTest {
         assertEquals("live:4", LiveSync.parseWebResult("\"live:4\""))
         assertEquals("", LiveSync.parseWebResult(null))
     }
+
+    // ---------------------------------------------------------------- 2.6.2
+
+    @Test fun slowFirstStartIsNotReloadedForEver() {
+        // 2.6.1 reloaded after 20 s of buffering, also before the first picture: a slow line never played.
+        val first = LiveSync.reloadLimitMs(LiveSync.BUFFERING_RELOAD_MS, 0, everReady = false)
+        assertEquals(60_000L, first)
+        assertEquals(LiveAction.NONE, LiveSync.decide(20_000, cfg.maxLagMs, 45_000, 0, 0, cfg.refreshEveryMs, true, true, 18_000, first, first).action)
+        assertEquals(120_000L, LiveSync.reloadLimitMs(LiveSync.BUFFERING_RELOAD_MS, 3, everReady = false))
+    }
+
+    @Test fun reloadBackoffAfterPlayback() {
+        assertEquals(20_000L, LiveSync.reloadLimitMs(LiveSync.BUFFERING_RELOAD_MS, 0, everReady = true))
+        assertEquals(40_000L, LiveSync.reloadLimitMs(LiveSync.BUFFERING_RELOAD_MS, 1, everReady = true))
+        assertEquals(80_000L, LiveSync.reloadLimitMs(LiveSync.BUFFERING_RELOAD_MS, 2, everReady = true))
+        assertEquals(120_000L, LiveSync.reloadLimitMs(LiveSync.BUFFERING_RELOAD_MS, 9, everReady = true))
+        assertEquals(60_000L, LiveSync.reloadLimitMs(LiveSync.STALLED_RELOAD_MS, 1, everReady = true))
+        // The default limits are unchanged (existing behaviour of decide()).
+        assertEquals(LiveAction.RELOAD, decide(buffering = 20_000).action)
+        assertEquals(LiveAction.NONE, LiveSync.decide(20_000, cfg.maxLagMs, 20_000, 0, 0, cfg.refreshEveryMs, true, true, 18_000, 40_000, 60_000).action)
+    }
+
+    @Test fun futileSeeks() {
+        assertTrue(LiveSync.seekWasFutile(600_000, 590_000)) // wrong clock: still 10 min "behind"
+        assertFalse(LiveSync.seekWasFutile(90_000, 20_000)) // the jump worked
+        assertFalse(LiveSync.seekWasFutile(null, 20_000))
+        assertFalse(LiveSync.seekWasFutile(90_000, null))
+        assertEquals(2, LiveSync.MAX_FUTILE_SEEKS)
+    }
 }

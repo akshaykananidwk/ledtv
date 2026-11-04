@@ -30,8 +30,8 @@ android {
         applicationId = "com.hotelcast.tv"
         minSdk = 21
         targetSdk = 34
-        versionCode = 15
-        versionName = "2.6.1"
+        versionCode = 16
+        versionName = "2.6.2"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
         buildConfigField(
@@ -92,6 +92,8 @@ dependencies {
     implementation("com.google.android.exoplayer:exoplayer-hls:$exoVersion")
     implementation("com.google.android.exoplayer:exoplayer-rtsp:$exoVersion")
     implementation("com.google.android.exoplayer:exoplayer-dash:$exoVersion")
+    // 2.6.2: rtmp:// live links (temple encoders / OBS); loaded by DefaultDataSource when present.
+    implementation("com.google.android.exoplayer:extension-rtmp:$exoVersion")
 
     implementation("com.squareup.retrofit2:retrofit:2.11.0")
     implementation("com.squareup.retrofit2:converter-gson:2.11.0")

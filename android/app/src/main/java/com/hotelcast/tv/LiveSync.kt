@@ -82,9 +82,11 @@ object LiveSync {
         seekable: Boolean,
         live: Boolean = true,
         targetOffsetMs: Long? = null,
+        bufferingLimitMs: Long = BUFFERING_RELOAD_MS,
+        stalledLimitMs: Long = STALLED_RELOAD_MS,
     ): LiveDecision {
-        if (bufferingMs >= BUFFERING_RELOAD_MS) return LiveDecision(LiveAction.RELOAD, LiveReason.BUFFERING)
-        if (stalledMs >= STALLED_RELOAD_MS) return LiveDecision(LiveAction.RELOAD, LiveReason.STALLED)
+        if (bufferingMs >= bufferingLimitMs) return LiveDecision(LiveAction.RELOAD, LiveReason.BUFFERING)
+        if (stalledMs >= stalledLimitMs) return LiveDecision(LiveAction.RELOAD, LiveReason.STALLED)
         if (!live) return LiveDecision(LiveAction.NONE, LiveReason.OK)
         val nearLive = (targetOffsetMs ?: 0L).coerceAtLeast(0L) + NEAR_LIVE_SLACK_MS
         // A stream whose own default position is beyond the limit would otherwise seek in a loop.
@@ -99,6 +101,33 @@ object LiveSync {
         }
         return LiveDecision(LiveAction.NONE, LiveReason.OK)
     }
+
+    /** 2.6.2: first start of a stream on a slow line may buffer this long before a reload. */
+    const val FIRST_START_LIMIT_MS = 60_000L
+    /** Longest wait between reloads of a stream that keeps buffering (slow internet). */
+    const val MAX_RELOAD_LIMIT_MS = 120_000L
+    /** After this many jumps to live that did not reduce the delay, the delay figure is not trusted. */
+    const val MAX_FUTILE_SEEKS = 2
+
+    /**
+     * 2.6.2: how long a stream may buffer / freeze before it is reloaded. 2.6.1 reloaded after a fixed 20 s, so a
+     * stream that needs longer to start on a slow temple line was reloaded for ever and never showed a picture.
+     * Before the first picture: [FIRST_START_LIMIT_MS]; then 20 s, doubling with every reload in a row that
+     * did not get the stream playing again, capped at [MAX_RELOAD_LIMIT_MS].
+     */
+    fun reloadLimitMs(base: Long, reloadsInRow: Int, everReady: Boolean): Long {
+        if (!everReady) return maxOf(base, FIRST_START_LIMIT_MS) shl reloadsInRow.coerceIn(0, 1)
+        return (base shl reloadsInRow.coerceIn(0, 3)).coerceAtMost(MAX_RELOAD_LIMIT_MS)
+    }
+
+    /**
+     * 2.6.2: the delay ExoPlayer reports comes from the stream's own clock (PROGRAM-DATE-TIME) and the TV clock.
+     * When either is wrong (TV date after a power cut, camera clock), the stream looks minutes behind for ever
+     * and 2.6.1 jumped to live every 15 s — the picture never settled. A jump that does not bring the delay
+     * down by at least a quarter counts as futile; after [MAX_FUTILE_SEEKS] of them the delay is ignored.
+     */
+    fun seekWasFutile(offsetBeforeMs: Long?, offsetAfterMs: Long?): Boolean =
+        offsetBeforeMs != null && offsetAfterMs != null && offsetAfterMs > offsetBeforeMs * 3 / 4
 
     /** YouTube live links: `/live/ID`, `/@channel/live`, `/channel/UC…/live`, `embed/live_stream?channel=`. */
     fun isYouTubeLiveUrl(url: String?): Boolean {
