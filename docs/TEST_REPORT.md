@@ -1,3 +1,8 @@
+# 2.9.3 — Live darshan library for every customer (2026-11-12)
+
+- Full PHP suite: **649 tests, 26,304 assertions, 0 failures** (new `LiveChannelsTest` 5: Dwarkadhish channel seeded without a link, Super Admin only (403 for customers, CSRF), copy link from a customer item, one copy per customer incl. new customers, archived skipped, link change reaches the TV poll JSON with the customer's own title kept, on-request add from Templates without duplicates, validation, delete unlinks, gu/hi strings).
+- Browser QA (headless Chromium): Super Admin → Live darshan before / after save (1280 px), Templates → Live darshan card at 390 px without horizontal overflow.
+
 # 2.9.2 — download the TV app from the website (2026-11-12)
 
 - Full PHP suite: **644 tests, 26,191 assertions, 0 failures** (new `AppDownloadTest` 5: no release → no section + 404, newest all-customer platform release only, resume 206 / 416, download counter, /app → /app/ redirect, landing section in en/gu/hi, selected-only release and missing / unsafe file path never served).
