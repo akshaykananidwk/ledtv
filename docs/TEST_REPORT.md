@@ -1,3 +1,8 @@
+# 2.9.2 — download the TV app from the website (2026-11-12)
+
+- Full PHP suite: **644 tests, 26,191 assertions, 0 failures** (new `AppDownloadTest` 5: no release → no section + 404, newest all-customer platform release only, resume 206 / 416, download counter, /app → /app/ redirect, landing section in en/gu/hi, selected-only release and missing / unsafe file path never served).
+- Browser QA (headless Chromium): download section at 360 / 390 / 1280 px in hi / gu / en, no horizontal overflow, no console errors; the *Download APK* button saved KrishnaCloud-TV-2.6.2.apk with the full 7,600,304 bytes.
+
 # TV app 2.6.2 — direct live links, player fixes (2026-11-04)
 
 TV app 2.6.2 (versionCode 16); server unchanged (2.9.1).
