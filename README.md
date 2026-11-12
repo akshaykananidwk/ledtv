@@ -32,6 +32,12 @@ screen-wise schedule karo, emergency message moklo, TV reboot/update karo.*
 | Android TV app | [`android/`](android) | Kotlin, ExoPlayer 2.19, Retrofit, OkHttp, Glide, WorkManager — min SDK 21, target 34 |
 | Documentation | [`docs/`](docs) | Install guide, TV setup, admin guide, API, developer guide (tenancy + extension points), security, test report |
 
+## What's new in 2.9.4 — your credit line on every TV
+
+| Change | Where |
+|---|---|
+| **Platform credit line**: a Gujarati + English line with your mobile number ("This digital TV system is made by … — call …") at the end of the ticker bar of every screen of every customer, also on screens without a ticker. Only the Super Admin can edit or switch it off; customers, resellers and TVs cannot change, hide or remove it. No TV app update needed | Super Admin → Platform settings → TV credit line · `docs/modules/platform_credit.md` |
+
 ## What's new in 2.9.3 — Live darshan for every customer
 
 | Change | Where |

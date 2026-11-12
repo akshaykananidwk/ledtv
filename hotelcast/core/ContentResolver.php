@@ -313,6 +313,8 @@ final class ContentResolver
             }
         }
         Features::filterContent($content);
+        // 2.9.4: the platform owner's credit line, last so no customer setting, plan or extension can remove it.
+        PlatformCredit::apply($content, $room);
         self::sortGuestMenu($content);
         $content['hash'] = sha1(json_out($content));
         $content['generated_at'] = date('c');

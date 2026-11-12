@@ -15,6 +15,7 @@ $tabs = ['branding' => [__('Branding'), 'bi-palette']];
 if ($saas) {
     $tabs['billing'] = [__('Billing'), 'bi-receipt'];
 }
+$tabs['credit'] = [__('TV credit line'), 'bi-megaphone'];
 $tabs['email'] = [__('Email (SMTP)'), 'bi-envelope-at'];
 $tabs['notify'] = [__('Notifications'), 'bi-bell'];
 $tabs['features'] = [__('Features'), 'bi-toggles'];
@@ -61,6 +62,11 @@ if (is_post()) {
             }
             break;
 
+        case 'credit':
+            // 2.9.4 platform credit line on every TV (core/PlatformCredit.php).
+            $errors = PlatformCredit::save(['enabled' => !empty($_POST['credit_enabled']), 'gu' => $P('credit_gu', PlatformCredit::MAX),
+                'en' => $P('credit_en', PlatformCredit::MAX), 'phone' => $P('credit_phone', 40)]);
+            break;
         case 'billing':
             $tax = (float) $P('billing_tax_percent', 10);
             if ($tax < 0 || $tax > 100) {
@@ -262,6 +268,21 @@ require __DIR__ . '/partials/header.php';
   <div class="col-sm-6"><label class="form-label" for="b_se"><?= e(__('Support email')) ?></label><input class="form-control" type="email" id="b_se" name="platform_support_email" value="<?= $val('platform_support_email') ?>"></div>
   <div class="col-12"><label class="form-label" for="b_f"><?= e(__('Footer text')) ?></label><input class="form-control" id="b_f" name="platform_footer" value="<?= $val('platform_footer') ?>" maxlength="200"></div>
   <div class="col-12"><button class="btn btn-primary"><i class="bi bi-check-lg"></i> <?= e(__('Save settings')) ?></button></div>
+</div></form>
+
+<?php elseif ($tab === 'credit'): $cr = PlatformCredit::config(); $crLine = PlatformCredit::line(['enabled' => true] + $cr); ?>
+<form method="post" class="card" style="max-width:860px" id="creditForm"><div class="card-header"><i class="bi bi-megaphone"></i> <?= e(__('TV credit line')) ?></div><div class="card-body row g-3">
+  <?= Csrf::field() ?><input type="hidden" name="op" value="credit"><input type="hidden" name="tab" value="credit">
+  <div class="col-12 small text-muted"><?= e(__('Shown at the end of the ticker bar of every screen of every customer — also on screens without a ticker. Only you can change it here: customers, resellers and TVs cannot edit, hide or remove it. Use :brand for the platform name and :phone for the phone number.')) ?></div>
+  <div class="col-12"><div class="form-check form-switch"><input class="form-check-input" type="checkbox" role="switch" name="credit_enabled" value="1" id="cr_on"<?= $cr['enabled'] ? ' checked' : '' ?>>
+    <label class="form-check-label" for="cr_on"><strong><?= e(__('Show the credit line on every TV')) ?></strong></label></div></div>
+  <div class="col-12"><label class="form-label" for="cr_gu"><?= e(__('Text in Gujarati')) ?></label><textarea class="form-control" id="cr_gu" name="credit_gu" rows="2" maxlength="<?= PlatformCredit::MAX ?>"><?= e($cr['gu']) ?></textarea></div>
+  <div class="col-12"><label class="form-label" for="cr_en"><?= e(__('Text in English')) ?></label><textarea class="form-control" id="cr_en" name="credit_en" rows="2" maxlength="<?= PlatformCredit::MAX ?>"><?= e($cr['en']) ?></textarea></div>
+  <div class="col-sm-6"><label class="form-label" for="cr_ph"><?= e(__('Mobile number')) ?></label><input class="form-control" id="cr_ph" name="credit_phone" value="<?= e($cr['phone']) ?>" maxlength="40" placeholder="<?= e((string) Settings::platform('platform_support_phone', '') ?: '+91 98xxx xxxxx') ?>">
+    <div class="form-text"><?= e(__('Empty = the support phone of the Branding tab.')) ?></div></div>
+  <div class="col-12"><span class="form-label d-block"><?= e(__('Preview on the TV')) ?></span>
+    <div class="p-2 rounded text-nowrap overflow-auto" style="background:#000;color:#FFD700;font-size:1.05rem" id="creditPreview"><?= e($crLine) ?></div></div>
+  <div class="col-12"><button class="btn btn-primary"><i class="bi bi-check-lg"></i> <?= e(__('Save and update all TVs')) ?></button></div>
 </div></form>
 
 <?php elseif ($tab === 'billing'): ?>

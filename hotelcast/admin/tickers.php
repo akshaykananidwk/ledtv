@@ -382,6 +382,12 @@ require __DIR__ . '/partials/header.php';
   <a class="btn btn-primary" href="<?= e(admin_url('tickers.php', ['action' => 'new'])) ?>"><i class="bi bi-plus-lg"></i> <?= e(__('New ticker')) ?></a>
 </div>
 
+<?php $creditLine = PlatformCredit::line(); if ($creditLine !== ''): ?>
+  <div class="alert alert-secondary small" id="platformCredit"><i class="bi bi-lock"></i>
+    <?= e(__('Every TV also shows this line from the system provider at the end of the ticker (it cannot be changed here):')) ?>
+    <strong><?= e($creditLine) ?></strong>
+  </div>
+<?php endif; ?>
 <?php if ($legacy && !$restricted): ?>
   <div class="alert alert-info small"><i class="bi bi-info-circle"></i>
     <?= e(__('A ticker text from the settings or a chain template is also shown on all TVs (after the tickers below):')) ?>
