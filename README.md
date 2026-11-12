@@ -32,6 +32,12 @@ screen-wise schedule karo, emergency message moklo, TV reboot/update karo.*
 | Android TV app | [`android/`](android) | Kotlin, ExoPlayer 2.19, Retrofit, OkHttp, Glide, WorkManager — min SDK 21, target 34 |
 | Documentation | [`docs/`](docs) | Install guide, TV setup, admin guide, API, developer guide (tenancy + extension points), security, test report |
 
+## What's new in 2.9.3 — Live darshan for every customer
+
+| Change | Where |
+|---|---|
+| **Live darshan library**: the Super Admin sets the Shri Dwarkadhish live link (or any other live stream / YouTube live) once — typed or copied from a customer's existing "Live Darshan" item. With *Add to every customer automatically* every existing and every new customer gets it in the Content Library, ready to assign to screens; otherwise customers add it with one click from Templates → Live darshan. Changing the link updates every customer's copy and all their TVs on the next poll (renamed copies keep their name) | Super Admin → Live darshan · Templates → Live darshan · `docs/modules/live_channels.md` |
+
 ## What's new in 2.9.2 — download the TV app from the website
 
 | Change | Where |

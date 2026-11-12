@@ -200,6 +200,8 @@ final class Hotels
             if ($admin) {
                 self::createHotelUser($id, $admin, 'super_admin');
             }
+            // 2.9.3: live darshan channels the Super Admin offers to every customer (core/LiveChannels.php).
+            LiveChannels::onNewCustomer($id);
             Settings::flush();
             return $id;
         });

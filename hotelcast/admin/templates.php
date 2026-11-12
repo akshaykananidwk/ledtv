@@ -50,6 +50,18 @@ if (is_post()) {
         flash('success', __('":t" saved.', ['t' => $title ?: Templates::name($tpl, $lang)]) . ' ' . __('Find it in the Content Library to assign it to screens or playlists.'));
         redirect(admin_url('templates.php', ['action' => 'edit', 'id' => $newId]));
     }
+    if ($op === 'live_add') {
+        // 2.9.3 Live darshan library (core/LiveChannels.php): one click → a content item linked to the channel.
+        require_can('content.manage');
+        try {
+            $cid = LiveChannels::addToCurrent(req_str('channel', $_POST, 40), Auth::id());
+            flash('success', __('Live darshan added to your Content Library. Assign it to a screen or playlist to show it.'));
+            redirect(admin_url('content.php', ['action' => 'edit', 'id' => $cid]));
+        } catch (InvalidArgumentException $e) {
+            flash('danger', $e->getMessage());
+            redirect(admin_url('templates.php'));
+        }
+    }
     if ($op === 'guide') {
         $cid = req_int('local_guide_content_id', $_POST);
         if ($cid && !ContentManager::find($cid)) {
@@ -232,6 +244,8 @@ foreach (DB::all("SELECT id, title, settings, is_active, updated_at FROM content
     }
 }
 $guideId = Settings::int('local_guide_content_id', 0);
+$liveChannels = LiveChannels::ready();
+$liveMine = $liveChannels ? LiveChannels::holdersIn(Tenant::id()) : [];
 $activeCat = isset(Templates::CATEGORIES[$_GET['cat'] ?? '']) ? (string) $_GET['cat'] : '';
 require __DIR__ . '/partials/header.php';
 ?>
@@ -253,6 +267,29 @@ require __DIR__ . '/partials/header.php';
     <a class="btn btn-sm <?= $activeCat === $cat ? 'btn-primary' : 'btn-light border' ?>" href="<?= e(self_url(['cat' => $cat])) ?>"><?= e(__(Templates::CATEGORIES[$cat])) ?> (<?= count($list) ?>)</a>
   <?php endforeach; ?>
 </div>
+
+<?php if ($liveChannels && ($activeCat === '' || $activeCat === 'temple')): ?>
+  <h2 class="h5 mt-2 mb-2"><i class="bi bi-broadcast text-danger"></i> <?= e(__('Live darshan')) ?></h2>
+  <div class="tpl-grid mb-4" id="tplLive">
+    <?php foreach ($liveChannels as $lc): $have = $liveMine[$lc['id']] ?? null; ?>
+      <div class="card tpl-card" data-live="<?= e($lc['id']) ?>">
+        <div class="tpl-thumb d-flex align-items-center justify-content-center text-white" style="background:linear-gradient(135deg,#7f1d1d,#b45309)">
+          <div class="text-center px-3"><div class="fs-1">🛕</div><span class="badge text-bg-danger"><i class="bi bi-record-fill"></i> LIVE</span></div>
+        </div>
+        <div class="card-body p-2 d-flex align-items-center gap-2">
+          <div class="min-w-0 flex-grow-1"><div class="fw-semibold text-truncate"><?= e($lc['title']) ?></div>
+            <?php if ($lc['subtitle'] !== ''): ?><div class="small text-muted text-truncate"><?= e($lc['subtitle']) ?></div><?php endif; ?></div>
+          <?php if ($have): ?>
+            <a class="btn btn-sm btn-outline-success" href="<?= e(admin_url('content.php', ['action' => 'edit', 'id' => $have])) ?>"><i class="bi bi-check-lg"></i> <?= e(__('In your library')) ?></a>
+          <?php elseif (Auth::can('content.manage')): ?>
+            <form method="post"><?= Csrf::field() ?><input type="hidden" name="op" value="live_add"><input type="hidden" name="channel" value="<?= e($lc['id']) ?>">
+              <button class="btn btn-sm btn-primary"><i class="bi bi-plus-lg"></i> <?= e(__('Add')) ?></button></form>
+          <?php endif; ?>
+        </div>
+      </div>
+    <?php endforeach; ?>
+  </div>
+<?php endif; ?>
 
 <style>
 .tpl-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:1rem}

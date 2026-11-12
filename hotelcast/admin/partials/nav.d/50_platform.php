@@ -15,6 +15,8 @@ return [
     ['platform_settings', 'platform_settings.php', 'platform.manage', 'bi-sliders', __('System settings'), 'platform'],
     // 2.7 Super Admin → APK Manager (docs/modules/apk_manager.md): platform-wide TV app releases, forced update.
     ['platform_apk', 'platform_apk.php', 'platform.manage', 'bi-android2', __('APK Manager'), 'platform'],
+    // 2.9.3 Super Admin → Live darshan (docs/modules/live_channels.md): live streams for every customer.
+    ['platform_live', 'platform_live.php', 'platform.manage', 'bi-broadcast', __('Live darshan'), 'platform'],
     ['platform_content', 'platform_content.php', 'platform.manage', 'bi-collection-play', __('Content overview'), 'platform'],
     ['platform_reports', 'platform_reports.php', 'platform.manage', 'bi-graph-up', __('Reports'), 'platform'],
     ['platform_audit', 'platform_audit.php', 'platform.manage', 'bi-journal-check', __('Audit logs'), 'platform'],
