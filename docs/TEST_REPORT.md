@@ -1,3 +1,8 @@
+# 2.9.4 — platform credit line on every TV (2026-11-12)
+
+- Full PHP suite: **654 tests, 26,346 assertions, 0 failures** (new `PlatformCreditTest` 5: default Gujarati + English line with the support phone on a screen without a ticker, appended after the customer's ticker, kept when the ticker module is off for the customer, a customer-level setting cannot override it, not on off / emergency / wall screens, Super Admin only (403 for customers), validation, save updates the TV poll JSON, off removes it, empty phone drops the "📞").
+- The TV contract is unchanged (the credit is ordinary ticker text; Android fixtures differ only in dates / tokens). The suite runs with the credit off by default; `MigrationUpgradeTest` expects the credit after the legacy ticker.
+
 # 2.9.3 — Live darshan library for every customer (2026-11-12)
 
 - Full PHP suite: **649 tests, 26,304 assertions, 0 failures** (new `LiveChannelsTest` 5: Dwarkadhish channel seeded without a link, Super Admin only (403 for customers, CSRF), copy link from a customer item, one copy per customer incl. new customers, archived skipped, link change reaches the TV poll JSON with the customer's own title kept, on-request add from Templates without duplicates, validation, delete unlinks, gu/hi strings).
