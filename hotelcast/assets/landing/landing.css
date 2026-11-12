@@ -306,3 +306,18 @@ p{margin:0 0 1rem}
   .z-ticker span{padding-left:0}
 }
 @media print{.topbar,.totop,.blob,.hero-art{display:none}.hero,.sec-how,.final{color:#000;background:none}}
+
+/* 2.9.2 TV app download */
+.sec-app{background:var(--soft)}
+.app-card{display:flex;gap:28px;align-items:flex-start;background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:32px}
+.app-icon{flex:0 0 auto;width:84px;height:84px;border-radius:22px;display:grid;place-items:center;font-size:2.6rem;color:#fff;background:linear-gradient(135deg,#16a34a,#0d9488)}
+.app-body{min-width:0;flex:1}
+.app-body h2{font-size:clamp(1.5rem,3vw,2.1rem);margin:.2rem 0 .4rem}
+.app-meta{color:var(--muted);margin:0 0 18px}
+.app-tv{margin-top:24px;border-top:1px dashed var(--line);padding-top:18px}
+.app-tv h3{font-size:1.1rem;margin:0 0 .5rem}
+.app-tv ol{margin:0;padding-left:1.3rem;display:grid;gap:.4rem}
+.app-short{display:inline-block;font-size:1.15rem;font-weight:700;padding:.15rem .6rem;border-radius:8px;background:var(--cs,#f0fdf4);color:var(--ink);border:1px solid var(--line);word-break:break-all}
+.app-hint{color:var(--muted);font-size:.95rem;margin:.8rem 0 0}
+.dl-link{color:inherit;font-weight:600}
+@media (max-width:640px){.app-card{flex-direction:column;padding:22px}.app-icon{width:64px;height:64px;font-size:2rem;border-radius:18px}}

@@ -144,6 +144,69 @@ final class AppReleases
         return DB::one('SELECT * FROM apk_releases WHERE hotel_id IS NULL ORDER BY version_code DESC, id DESC LIMIT 1') ?: null;
     }
 
+    /**
+     * 2.9.2 public download (website "Download TV app", short link /app): the newest Super Admin release that
+     * is rolled out to all customers. A release for selected customers only is never offered publicly.
+     */
+    public static function publicLatest(): ?array
+    {
+        if (!self::available()) {
+            return null;
+        }
+        $row = DB::one("SELECT * FROM apk_releases WHERE hotel_id IS NULL AND rollout = 'all' ORDER BY version_code DESC, id DESC LIMIT 1");
+        if (!$row || str_contains((string) $row['file_path'], '..') || !is_file(HC_ROOT . '/storage/' . $row['file_path'])) {
+            return null;
+        }
+        return $row;
+    }
+
+    /** Download file name of a release, e.g. KrishnaCloud-TV-2.6.2.apk. */
+    public static function fileName(array $apk): string
+    {
+        return 'KrishnaCloud-TV-' . preg_replace('/[^A-Za-z0-9._-]/', '', (string) $apk['version_name']) . '.apk';
+    }
+
+    /**
+     * Sends a release file (device API and public download): APK content type, resume ("Range: bytes=N-"),
+     * download counter on a fresh download. Exits.
+     */
+    public static function send(array $apk): never
+    {
+        $file = HC_ROOT . '/storage/' . $apk['file_path'];
+        $size = (int) filesize($file);
+        $from = 0;
+        if (preg_match('/^bytes=(\d+)-$/', (string) ($_SERVER['HTTP_RANGE'] ?? ''), $m)) {
+            $from = (int) $m[1];
+            if ($from >= $size) {
+                http_response_code(416);
+                header('Content-Range: bytes */' . $size);
+                exit;
+            }
+        }
+        if ($from === 0) {
+            self::countDownload((int) $apk['id']);
+        }
+        while (ob_get_level()) {
+            ob_end_clean();
+        }
+        header('Content-Type: application/vnd.android.package-archive');
+        header('Accept-Ranges: bytes');
+        header('Content-Disposition: attachment; filename="' . self::fileName($apk) . '"');
+        header('X-Content-SHA256: ' . $apk['sha256']);
+        if ($from > 0) {
+            http_response_code(206);
+            header('Content-Range: bytes ' . $from . '-' . ($size - 1) . '/' . $size);
+        }
+        header('Content-Length: ' . ($size - $from));
+        $fh = fopen($file, 'rb');
+        if ($fh) {
+            fseek($fh, $from);
+            fpassthru($fh);
+            fclose($fh);
+        }
+        exit;
+    }
+
     /** versionCode => number of active Android TVs that report it. */
     public static function installedCounts(): array
     {

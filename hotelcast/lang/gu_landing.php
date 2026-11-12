@@ -242,4 +242,20 @@ return [
     // final CTA
     'Ready to bring your screens to life?' => 'તમારી સ્ક્રીનને જીવંત બનાવવા તૈયાર છો?',
     'Set up your first TV in 5 minutes. Change what it shows from anywhere, any time.' => 'પહેલું TV 5 મિનિટમાં સેટ કરો. ગમે ત્યાંથી, ગમે ત્યારે તેમાં શું દેખાય તે બદલો.',
+
+    // 2.9.2 TV app download
+    'TV app' => 'TV એપ',
+    'Download the TV app' => 'TV એપ ડાઉનલોડ કરો',
+    'Download the :product TV app' => ':product TV એપ ડાઉનલોડ કરો',
+    'Version :v' => 'વર્ઝન :v',
+    'Android box' => 'Android બોક્સ',
+    'Download APK' => 'APK ડાઉનલોડ કરો',
+    'Install directly on the TV' => 'સીધું TV માં ઇન્સ્ટોલ કરો',
+    'On the TV, install the free "Downloader" app from the Play Store / Amazon Appstore.' => 'TV માં Play Store / Amazon Appstore માંથી મફત "Downloader" એપ ઇન્સ્ટોલ કરો.',
+    'Open Downloader and type this address:' => 'Downloader ખોલીને આ સરનામું લખો:',
+    'Press Install, open the app and scan the QR code shown on the TV from your admin panel.' => 'Install દબાવો, એપ ખોલો અને TV પર દેખાતો QR કોડ તમારી એડમિન પેનલથી સ્કેન કરો.',
+    'If Android asks, allow "Install unknown apps" for Downloader. The app updates itself after that.' => 'Android પૂછે તો Downloader માટે "Install unknown apps" ની મંજૂરી આપો. પછી એપ જાતે અપડેટ થતી રહેશે.',
+    'Download TV app' => 'TV એપ ડાઉનલોડ',
+    'TV app download' => 'TV એપ ડાઉનલોડ',
+    'The TV app is not available for download right now. Please contact support.' => 'TV એપ હાલ ડાઉનલોડ માટે ઉપલબ્ધ નથી. કૃપા કરીને સપોર્ટનો સંપર્ક કરો.',
 ];

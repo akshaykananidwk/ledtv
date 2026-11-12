@@ -32,6 +32,12 @@ screen-wise schedule karo, emergency message moklo, TV reboot/update karo.*
 | Android TV app | [`android/`](android) | Kotlin, ExoPlayer 2.19, Retrofit, OkHttp, Glide, WorkManager — min SDK 21, target 34 |
 | Documentation | [`docs/`](docs) | Install guide, TV setup, admin guide, API, developer guide (tenancy + extension points), security, test report |
 
+## What's new in 2.9.2 — download the TV app from the website
+
+| Change | Where |
+|---|---|
+| **"Download the TV app" on the website**: a section on the front page (en / gu / hi) with the version, size and a *Download APK* button, plus step-by-step install on the TV with the short address `<your site>/app` to type in the TV's Downloader app. Always the newest Super Admin release rolled out to *all customers* (a release for selected customers is never public); hidden when there is none. Resume supported, downloads counted | Front page → TV app · `app/index.php` · Super Admin → APK Manager |
+
 ## TV app 2.6.2 — direct live links play on the TV (no more "thin line")
 
 TV app **2.6.2** (versionCode 16); the server stays 2.9.1. Upload the APK in Super Admin → APK Manager.

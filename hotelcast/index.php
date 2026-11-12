@@ -35,6 +35,10 @@ $loginUrl = admin_url('login.php');
 $signupUrl = base_url('signup.php' . ($lang !== 'en' ? '?lang=' . $lang : ''));
 $demoUrl = base_url('demo.php' . ($lang !== 'en' ? '?lang=' . $lang : ''));
 $accent = $brand['color'];
+// 2.9.2: TV app download (newest Super Admin release for all customers); hidden when there is none.
+$appRelease = AppReleases::publicLatest();
+$appUrl = base_url('app/');
+$appShort = preg_replace('#^https?://#', '', rtrim(base_url('app'), '/'));
 
 header('Content-Type: text/html; charset=utf-8');
 header('Cache-Control: private, no-cache');
@@ -80,6 +84,9 @@ $nav = [
     'plans' => __('Plans'),
     'faq' => __('FAQ'),
 ];
+if ($appRelease) {
+    $nav = array_slice($nav, 0, 3, true) + ['app' => __('TV app')] + array_slice($nav, 3, null, true);
+}
 $langUrl = static fn (string $code): string => '?lang=' . $code;
 ?><!DOCTYPE html>
 <html lang="<?= e($lang) ?>" class="lang-<?= e($lang) ?>">
@@ -155,6 +162,9 @@ $langUrl = static fn (string $code): string => '?lang=' . $code;
       <h1 id="hero-title"><?= e(__('Every TV screen of your business — controlled from one place')) ?></h1>
       <p class="lead"><?= e(__(':product shows live darshan, menus, offers, token numbers, timetables and notices on all your TVs. Change everything from your phone or computer — one screen, one floor, or every screen at once.', ['product' => $product])) ?></p>
       <div class="cta-row"><?php $cta(' btn-lg'); ?></div>
+      <?php if ($appRelease): ?>
+        <p class="note"><a class="dl-link" href="#app"><i class="bi bi-android2" aria-hidden="true"></i> <?= e(__('Download the TV app')) ?></a></p>
+      <?php endif; ?>
       <?php if ($signup && !$loggedIn): ?>
         <p class="note"><i class="bi bi-check-circle-fill" aria-hidden="true"></i> <?= e(__(':days-day free trial · no payment details needed', ['days' => $trialDays])) ?></p>
       <?php endif; ?>
@@ -343,6 +353,36 @@ $langUrl = static fn (string $code): string => '?lang=' . $code;
   </div>
 </section>
 
+<?php if ($appRelease): ?>
+<!-- ============================================================ TV app download (2.9.2) -->
+<section class="sec sec-app" id="app" aria-labelledby="app-title">
+  <div class="wrap narrow">
+    <div class="app-card reveal">
+      <div class="app-icon" aria-hidden="true"><i class="bi bi-android2"></i></div>
+      <div class="app-body">
+        <p class="kicker"><?= e(__('TV app')) ?></p>
+        <h2 id="app-title"><?= e(__('Download the :product TV app', ['product' => $product])) ?></h2>
+        <p class="app-meta">
+          <?= e(__('Version :v', ['v' => $appRelease['version_name']])) ?> ·
+          <?= e(number_format(((int) $appRelease['file_size']) / 1048576, 1)) ?> MB ·
+          Android TV · Fire TV · <?= e(__('Android box')) ?>
+        </p>
+        <a class="btn btn-primary btn-lg" href="<?= e($appUrl) ?>" download><i class="bi bi-download" aria-hidden="true"></i> <?= e(__('Download APK')) ?></a>
+        <div class="app-tv">
+          <h3><i class="bi bi-tv" aria-hidden="true"></i> <?= e(__('Install directly on the TV')) ?></h3>
+          <ol>
+            <li><?= e(__('On the TV, install the free "Downloader" app from the Play Store / Amazon Appstore.')) ?></li>
+            <li><?= e(__('Open Downloader and type this address:')) ?> <code class="app-short"><?= e($appShort) ?></code></li>
+            <li><?= e(__('Press Install, open the app and scan the QR code shown on the TV from your admin panel.')) ?></li>
+          </ol>
+          <p class="app-hint"><?= e(__('If Android asks, allow "Install unknown apps" for Downloader. The app updates itself after that.')) ?></p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<?php endif; ?>
+
 <!-- ============================================================ plans -->
 <section class="sec sec-plans" id="plans" aria-labelledby="plans-title">
   <div class="wrap">
@@ -479,6 +519,7 @@ $langUrl = static fn (string $code): string => '?lang=' . $code;
         <?php if ($demo): ?><li><a href="<?= e($demoUrl) ?>"><?= e(__('Live demo')) ?></a></li><?php endif; ?>
         <li><a href="#features"><?= e(__('Features')) ?></a></li>
         <li><a href="#plans"><?= e(__('Plans')) ?></a></li>
+        <?php if ($appRelease): ?><li><a href="<?= e($appUrl) ?>"><?= e(__('Download TV app')) ?></a></li><?php endif; ?>
       </ul>
     </nav>
     <div class="langs foot-langs">
