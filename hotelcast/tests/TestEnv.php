@@ -73,6 +73,9 @@ final class TestEnv
         }
         Installer::setupDatabase(false);
         Settings::set('registration_key', 'TESTKEY123456789');
+        // 2.9.4: the platform credit line (on by default in production) would add a ticker to every TV;
+        // off for the suite, PlatformCreditTest switches it on.
+        Settings::setPlatform('platform_credit_enabled', '0');
         Settings::flush();
         Cache::clear();
     }

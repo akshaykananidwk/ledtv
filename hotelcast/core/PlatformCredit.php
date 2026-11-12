@@ -97,7 +97,6 @@ final class PlatformCredit
         } else {
             $content['overlay']['ticker'] = Tickers::payload([], [$line]);
         }
-        $content['overlay']['ticker']['credit'] = $line;
     }
 
     /** Validate and save the Super Admin form. @return string[] errors */

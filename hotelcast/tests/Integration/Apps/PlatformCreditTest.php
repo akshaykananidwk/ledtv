@@ -25,6 +25,7 @@ final class PlatformCreditTest extends TestCase
         DB::insert('users', ['hotel_id' => null, 'username' => 'credroot', 'email' => 'credroot@platform.test', 'full_name' => 'Root', 'password_hash' => $pw, 'role' => 'platform_admin']);
         Settings::setPlatform('platform_name', 'AK Computer TV');
         Settings::setPlatform('platform_support_phone', '+91 90000 11111');
+        DB::query("DELETE FROM system_settings WHERE hotel_id = 0 AND setting_key = 'platform_credit_enabled'"); // production default: on
         self::$alpha = Hotels::create(['name' => 'Alpha Temple']);
         Hotels::createHotelUser(self::$alpha, ['username' => 'credboss', 'email' => 'boss@credit.test', 'password' => 'Passw0rd!'], 'super_admin');
         Tenant::run(self::$alpha, static function (): void {
@@ -72,7 +73,7 @@ final class PlatformCreditTest extends TestCase
         $this->assertStringContainsString('AK Computer TV દ્વારા બનાવવામાં આવી છે', $t['text']);
         $this->assertStringContainsString('Digital TV system by AK Computer TV', $t['text']);
         $this->assertStringContainsString('+91 90000 11111', $t['text']);
-        $this->assertSame($t['text'], $t['credit']);
+        $this->assertSame([PlatformCredit::line()], $t['messages']);
         $this->assertSame('bottom', $t['position']);
     }
 
@@ -85,8 +86,8 @@ final class PlatformCreditTest extends TestCase
         });
         $t = self::ticker();
         $this->assertStringStartsWith('Jai Dwarkadhish! Aarti at 7 pm', $t['text']);
-        $this->assertStringEndsWith($t['credit'], $t['text']);
-        $this->assertSame($t['credit'], end($t['messages']));
+        $this->assertStringEndsWith(PlatformCredit::line(), $t['text']);
+        $this->assertSame(PlatformCredit::line(), end($t['messages']));
         $this->assertCount(2, $t['messages']);
 
         // Ticker module switched off for this customer: the customer ticker goes, the credit stays.
@@ -102,7 +103,7 @@ final class PlatformCreditTest extends TestCase
         // A customer-level setting with the same key cannot override the platform text.
         DB::query("INSERT INTO system_settings (hotel_id, setting_key, setting_value) VALUES (:h, :k, '0')", ['h' => self::$alpha, 'k' => PlatformCredit::K_ENABLED]);
         Settings::flush();
-        $this->assertNotNull(self::ticker()['credit'] ?? null);
+        $this->assertStringContainsString('AK Computer TV', (string) (self::ticker()['text'] ?? ''));
     }
 
     public function test3NotOnScreenOffOrEmergency(): void
@@ -127,7 +128,7 @@ final class PlatformCreditTest extends TestCase
         $this->assertSame(403, $s);
         [$s] = self::as('credboss')->post('platform_settings.php', ['op' => 'credit', 'tab' => 'credit', 'credit_gu' => 'hacked', 'credit_en' => '', 'credit_phone' => '']);
         $this->assertSame(403, $s);
-        $this->assertStringContainsString('AK Computer TV', self::ticker()['credit']);
+        $this->assertStringContainsString('AK Computer TV', (string) (self::ticker()['text'] ?? ''));
         // The customer's Ticker page shows the line read-only.
         [$s, , $html] = self::as('credboss')->get('tickers.php');
         $this->assertSame(200, $s);
@@ -156,7 +157,6 @@ final class PlatformCreditTest extends TestCase
         // Off: gone from every TV.
         $root->post('platform_settings.php', ['op' => 'credit', 'tab' => 'credit', 'credit_gu' => 'x', 'credit_en' => 'y', 'credit_phone' => '']);
         $t = self::ticker();
-        $this->assertArrayNotHasKey('credit', $t ?? []);
         $this->assertStringNotContainsString('AK Computer', (string) ($t['text'] ?? ''));
     }
 
