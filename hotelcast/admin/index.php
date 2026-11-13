@@ -4,6 +4,11 @@ require __DIR__ . '/../core/bootstrap.php';
 require_once __DIR__ . '/partials/common.php';
 
 $user = Auth::require('dashboard.view');
+// 2.9.5: a Super Admin / reseller who has not opened a customer belongs on the console dashboard (all customers).
+// Their user row may still carry a home customer (e.g. the first install's business): its numbers are not theirs.
+if (in_array(Auth::role(), ['platform_admin', 'reseller'], true) && !Auth::inEnteredHotel()) {
+    redirect(admin_url(Auth::homePage()));
+}
 Csrf::check();
 Scheduler::tick();
 

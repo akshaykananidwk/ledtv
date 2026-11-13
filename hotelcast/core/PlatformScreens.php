@@ -225,6 +225,7 @@ final class PlatformScreens
     /** Rows of one page: ['rows' => [...], 'total' => int, 'pages' => int]. */
     public static function list(array $f, ?array $scope = null, bool $all = false): array
     {
+        self::refreshOnline();
         $scope = func_num_args() >= 2 ? $scope : self::scopeHotelIds();
         [$w, $p] = self::where($f, $scope);
         $total = (int) DB::value('SELECT COUNT(*)' . self::fromSql() . ' ' . $w, $p);
@@ -301,8 +302,28 @@ final class PlatformScreens
     }
 
     /** Header counters for the scope: total, online, offline, outdated, warnings, unassigned, revoked. */
+    /**
+     * 2.9.5: flip TVs that stopped polling to offline in every customer (DeviceManager::detectOffline, each in its
+     * own time zone) before the console counts them, at most every 20 s. Without it the console showed TVs as
+     * online until a customer request happened to run the Scheduler tick.
+     */
+    public static function refreshOnline(): void
+    {
+        static $done = false;
+        if ($done) {
+            return;
+        }
+        $done = true;
+        if (Cache::get('platform', 'online_sweep', 20) !== null) {
+            return;
+        }
+        Cache::set('platform', 'online_sweep', time());
+        Tenant::each(static fn () => DeviceManager::detectOffline());
+    }
+
     public static function counters(?array $scope = null): array
     {
+        self::refreshOnline();
         $scope = func_num_args() >= 1 ? $scope : self::scopeHotelIds();
         [$sc, $p] = self::scopeSql('d.hotel_id', $scope);
         $r = DB::one(
@@ -338,6 +359,7 @@ final class PlatformScreens
     /** Per customer: screens / online / offline (dashboard + customers list). hotel id => counts. */
     public static function perCustomer(?array $scope = null): array
     {
+        self::refreshOnline();
         $scope = func_num_args() >= 1 ? $scope : self::scopeHotelIds();
         [$sc, $p] = self::scopeSql('h.id', $scope);
         $out = [];

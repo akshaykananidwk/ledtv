@@ -32,6 +32,13 @@ screen-wise schedule karo, emergency message moklo, TV reboot/update karo.*
 | Android TV app | [`android/`](android) | Kotlin, ExoPlayer 2.19, Retrofit, OkHttp, Glide, WorkManager — min SDK 21, target 34 |
 | Documentation | [`docs/`](docs) | Install guide, TV setup, admin guide, API, developer guide (tenancy + extension points), security, test report |
 
+## What's new in 2.9.5 — correct numbers on the Super Admin dashboard
+
+| Fix | Detail |
+|---|---|
+| **Super Admin dashboard** | A Super Admin whose account still belongs to a home customer (e.g. "Office" from the first install) saw that one customer's dashboard (1 screen, 0 TVs) instead of the platform. `index.php` now sends Super Admins / resellers who have not opened a customer to the console dashboard with all customers' numbers |
+| **Online / offline on the console** | TVs that stopped polling are marked offline in every customer before the console counts them (at most every 20 s), instead of staying "online" until a customer page happened to run the scheduler |
+
 ## What's new in 2.9.4 — your credit line on every TV
 
 | Change | Where |
