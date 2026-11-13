@@ -1,3 +1,7 @@
+# 2.9.5 — correct numbers on the Super Admin dashboard (2026-11-13)
+
+- Full PHP suite: **655 tests, 0 failures** (new `ConsoleDashboardTest`: Super Admin with a home customer is sent from index.php to the console dashboard, stale TV counted offline without a scheduler tick, customer workspace still shows that customer's dashboard). Updated for the new rule: `AdminPanelTest` (index.php as Super Admin → console), `SignupDemoTest` (widget on the console dashboard), `MigrationUpgradeTest` (upgraded owner lands on the console).
+
 # 2.9.4 — platform credit line on every TV (2026-11-12)
 
 - Full PHP suite: **654 tests, 26,346 assertions, 0 failures** (new `PlatformCreditTest` 5: default Gujarati + English line with the support phone on a screen without a ticker, appended after the customer's ticker, kept when the ticker module is off for the customer, a customer-level setting cannot override it, not on off / emergency / wall screens, Super Admin only (403 for customers), validation, save updates the TV poll JSON, off removes it, empty phone drops the "📞").
