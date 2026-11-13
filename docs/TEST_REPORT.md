@@ -1,3 +1,8 @@
+# 2.9.8 — Google Drive slideshow: no admin hang, faster videos (2026-11-13)
+
+- Full PHP suite: **668 tests, 26,534 assertions, 0 failures** (`GoogleDriveTest` +2: no Google request while typing / previewing — form and preview use the cache, save reads the folder once; admin preview over HTTP answers in < 3 s for an unreachable folder).
+- Browser QA (headless Chromium, real WebM video made in the page): photo → video preloaded and played to its end → a video that never starts skipped after 25 s → next photo; no script errors.
+
 # 2.9.7 — Google Drive slideshow (2026-11-13)
 
 - Full PHP suite: **666 tests, 26,520 assertions, 0 failures** (new `GoogleDriveTest` 6 with Google mocked: folder id from every link form, public folder page parsing, Drive API v3 with a key, not found / private / empty, last good list while Google is down, TV page + data JSON over HTTP, photos / videos / both, validation, module, Super Admin API key field).
