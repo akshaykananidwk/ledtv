@@ -1,3 +1,9 @@
+# 2.10.0 — CCTV cameras on the TVs (2026-11-13)
+
+- Full PHP suite: **673 tests, 26,641 assertions, 0 failures** (new `CctvTest` 4: RTSP address per brand with encoded login and port, channel lists, validation, page creates cameras + "All cameras" grid (sub stream, `max_decoders`) that reach the TV poll JSON, recorder list without password, delete a recorder, reception gets 403, CSRF, another customer's recorder untouched, translations).
+- Android (TV app 2.6.3 source): **262 unit tests, 0 failures** (new `CctvGridTest` 3: `max_decoders` parsing and cap, effective decoder limit, RTSP login links redacted), lint 0 errors. **No release APK**: this build environment has no release signing key; an APK signed with another key cannot update the installed TVs.
+- Not tested with a real NVR / camera (none reachable from the build environment).
+
 # 2.9.9 — Google Drive links in Video / Image content (2026-11-13)
 
 - Full PHP suite: **669 tests, 26,546 assertions, 0 failures** (`GoogleDriveTest` +1: Drive file links in every form → media link on the TV, other links unchanged, folder / Docs links refused with a message, a file link saves).
