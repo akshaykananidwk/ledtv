@@ -164,6 +164,11 @@ object Prefs {
         get() = sp.getInt(K_MAX_DECODERS, DecoderPlanner.DEFAULT_MAX_DECODERS)
         set(v) = sp.edit().putInt(K_MAX_DECODERS, v).apply()
 
+    /** 2.6.3: most decoders that worked for layouts with a decoder hint (CCTV grids); starts at 6, only goes down. */
+    var hintDecoderCeiling: Int
+        get() = sp.getInt(K_HINT_DECODERS, LayoutSpec.MAX_ZONES)
+        set(v) = sp.edit().putInt(K_HINT_DECODERS, v).apply()
+
     /**
      * 2.6.0 forced update (UpdateGate): last update info from the server (JSON of [AppUpdateInfo], "" = none),
      * cached from every poll / start check so an offline start still knows about a required version.
@@ -221,6 +226,7 @@ object Prefs {
         "handled_commands" to handledCommands.split(',').size,
         "volume_stay_applied" to volumeStayApplied,
         "max_video_decoders" to maxVideoDecoders,
+        "hint_video_decoders" to hintDecoderCeiling,
         "app_update" to appUpdateJson,
         "update_failures" to "$updateFailCount (code $updateFailVersion)",
         "welcome_shown" to shownWelcomeIds.lines().filter { it.isNotBlank() },
@@ -242,6 +248,7 @@ object Prefs {
 
     private const val K_DEVICE_ID = "device_id"
     private const val K_MAX_DECODERS = "max_video_decoders"
+    private const val K_HINT_DECODERS = "hint_video_decoders"
     private const val K_SERVER_URL = "server_url"
     private const val K_API_BASE = "api_base"
     private const val K_TOKEN = "token"

@@ -144,7 +144,7 @@ final class Features
 
         // ------------------------------------------------------------------ content
         'content' => ['label' => 'Content library', 'group' => 'content', 'description' => 'Images, videos, streams, web pages, announcements, timetables and previews.',
-            'permissions' => ['content.view', 'content.manage', 'content.submit'], 'pages' => ['content.php', 'preview.php'], 'ajax' => ['preview_content']],
+            'permissions' => ['content.view', 'content.manage', 'content.submit'], 'pages' => ['content.php', 'preview.php', 'cctv.php'], 'ajax' => ['preview_content']],
         'playlists' => ['label' => 'Playlists', 'group' => 'content', 'description' => 'Drag-and-drop playlists with time windows (dayparting).',
             'permissions' => ['playlists.manage'], 'pages' => ['playlists.php'], 'depends' => ['content']],
         'designer' => ['label' => 'Slide designer', 'group' => 'content', 'description' => 'Drag-and-drop slide designer with ready-made templates.',

@@ -12,6 +12,8 @@ return [
     ['rooms', 'rooms.php', 'rooms.view', 'bi-tv', __('Screens & TVs'), 'hotel'],
     ['groups', 'groups.php', 'groups.manage', 'bi-collection', __('Locations & groups'), 'hotel'],
     ['content', 'content.php', 'content.view', 'bi-images', __('Content Library'), 'hotel'],
+    // 2.10 CCTV cameras (core/Cctv.php): recorder → one live item per camera + grid layouts.
+    ['cctv', 'cctv.php', 'content.manage', 'bi-camera-video', __('CCTV cameras'), 'hotel'],
     ['playlists', 'playlists.php', 'playlists.manage', 'bi-collection-play', __('Playlists'), 'hotel'],
     ['broadcast', 'broadcast.php', 'broadcast.send', 'bi-broadcast-pin', __('Broadcast'), 'hotel'],
     ['schedule', 'schedule.php', 'schedule.manage', 'bi-calendar-week', __('Schedule'), 'hotel'],

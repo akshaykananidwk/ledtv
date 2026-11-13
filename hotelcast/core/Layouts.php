@@ -193,7 +193,12 @@ final class Layouts
             $z['mute'] = $z['id'] !== $soundZone;
         }
         unset($z);
-        return ['bg_color' => clean_color(isset($settings['bg_color']) ? (string) $settings['bg_color'] : null, '#000000'), 'zones' => $zones];
+        $out = ['bg_color' => clean_color(isset($settings['bg_color']) ? (string) $settings['bg_color'] : null, '#000000'), 'zones' => $zones];
+        // 2.10 CCTV grids: how many zones may decode video at once (TV app 2.6.3+; older apps use their own limit).
+        if (!empty($settings['max_decoders'])) {
+            $out['max_decoders'] = max(1, min(self::MAX_ZONES, (int) $settings['max_decoders']));
+        }
+        return $out;
     }
 
     /** Items of one zone: own hotel only, active only, never a layout. */

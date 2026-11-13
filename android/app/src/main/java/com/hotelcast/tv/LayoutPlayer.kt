@@ -124,7 +124,13 @@ class LayoutPlayer(
         val newLimit = DecoderPlanner.lowerLimit(plan.videoZones.size)
         Log.w(TAG, "Decoder failure in zone ${spec.zones[i].id} with ${plan.videoZones.size} video zones; limit -> $newLimit")
         try {
-            if (Prefs.isInitialized && Prefs.maxVideoDecoders > newLimit) Prefs.maxVideoDecoders = newLimit
+            if (Prefs.isInitialized) {
+                if (spec.maxDecoders != null) {
+                    if (Prefs.hintDecoderCeiling > newLimit) Prefs.hintDecoderCeiling = newLimit
+                } else if (Prefs.maxVideoDecoders > newLimit) {
+                    Prefs.maxVideoDecoders = newLimit
+                }
+            }
         } catch (e: Exception) {
             Log.w(TAG, "cannot save decoder limit", e)
         }
@@ -160,7 +166,11 @@ class LayoutPlayer(
     }
 
     private fun currentLimit(): Int = try {
-        if (Prefs.isInitialized) Prefs.maxVideoDecoders else DecoderPlanner.DEFAULT_MAX_DECODERS
+        if (Prefs.isInitialized) {
+            DecoderPlanner.effectiveLimit(spec.maxDecoders, Prefs.maxVideoDecoders, Prefs.hintDecoderCeiling)
+        } else {
+            DecoderPlanner.effectiveLimit(spec.maxDecoders, DecoderPlanner.DEFAULT_MAX_DECODERS, LayoutSpec.MAX_ZONES)
+        }
     } catch (e: Exception) {
         DecoderPlanner.DEFAULT_MAX_DECODERS
     }

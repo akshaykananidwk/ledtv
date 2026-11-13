@@ -463,6 +463,8 @@ data class ContentItem(
 data class LayoutData(
     @SerializedName("bg_color") val bgColor: String? = null,
     @SerializedName("zones") val zones: List<LayoutZoneData?>? = null,
+    /** 2.6.3: CCTV grids — zones that may decode video at once (server core/Layouts.php); null = device limit. */
+    @SerializedName("max_decoders") val maxDecoders: Int? = null,
 )
 
 /** One zone; position and size in percent of the stage (0..100, floats). */

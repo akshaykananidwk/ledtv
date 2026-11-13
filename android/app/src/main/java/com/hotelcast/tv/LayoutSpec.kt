@@ -13,6 +13,8 @@ import kotlin.math.roundToInt
 data class LayoutSpec(
     val bgColor: String?,
     val zones: List<ZoneSpec>,
+    /** 2.6.3: decoder hint of the layout (CCTV grids), null = the device limit. */
+    val maxDecoders: Int? = null,
 ) {
     companion object {
         const val MAX_ZONES = 6
@@ -52,7 +54,7 @@ data class LayoutSpec(
                 )
             }
             if (zones.isEmpty()) return null
-            return LayoutSpec(data.bgColor?.trim()?.takeIf { it.isNotEmpty() }, zones)
+            return LayoutSpec(data.bgColor?.trim()?.takeIf { it.isNotEmpty() }, zones, data.maxDecoders?.takeIf { it > 0 }?.coerceAtMost(MAX_ZONES))
         }
 
         /** Zone scale: "fit" is the default here (aspect kept), unlike the ticker's FILL default. */
@@ -163,6 +165,15 @@ object DecoderPlanner {
      * init failed, query failed, decoding failed, format exceeds capabilities).
      */
     fun isDecoderError(errorCode: Int): Boolean = errorCode in 4001..4004
+
+    /**
+     * 2.6.3: decoders a layout may use. Without a hint: the device limit ([generic], default 2). With a hint (CCTV
+     * grid, several small streams): the hint, capped by what this TV proved it can do with hinted layouts
+     * ([hintCeiling], lowered after a decoder failure) — so a 2×2 camera grid plays 4 cameras where the TV can.
+     */
+    fun effectiveLimit(hint: Int?, generic: Int, hintCeiling: Int): Int =
+        if (hint == null || hint <= 0) generic.coerceIn(1, LayoutSpec.MAX_ZONES)
+        else minOf(hint, hintCeiling).coerceIn(1, LayoutSpec.MAX_ZONES)
 
     /** New device limit after a decoder failure while [activeVideoZones] were decoding (never below 1). */
     fun lowerLimit(activeVideoZones: Int): Int = (activeVideoZones - 1).coerceAtLeast(1)
