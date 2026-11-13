@@ -26,4 +26,6 @@ return [
     'Photos and videos' => 'ફોટા અને વિડિયો',
     'Photos only' => 'ફક્ત ફોટા',
     'Videos only' => 'ફક્ત વિડિયો',
+    'This is a Google Drive folder link. To show all photos and videos of a folder, use Apps → Google Drive slideshow. Here, paste the link of one file.' => 'આ Google Drive ફોલ્ડરની લિંક છે. ફોલ્ડરના બધા ફોટા અને વિડિયો બતાવવા Apps → Google Drive સ્લાઇડ શો વાપરો. અહીં એક જ ફાઇલની લિંક મૂકો.',
+    'This Google Drive link is not a photo or video file. In Google Drive open the file → Share → "Anyone with the link" → Copy link.' => 'આ Google Drive લિંક ફોટો કે વિડિયો ફાઇલની નથી. Google Drive માં ફાઇલ ખોલો → Share → "Anyone with the link" → Copy link.',
 ];

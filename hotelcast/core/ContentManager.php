@@ -93,10 +93,11 @@ final class ContentManager
         ];
         switch ($type) {
             case 'image':
-                $out['url'] = $item['file_path'] ? media_url($item['file_path']) : (string) $item['url'];
+                // 2.9.9: a Google Drive file link plays as the file itself (not Drive's HTML viewer page).
+                $out['url'] = $item['file_path'] ? media_url($item['file_path']) : GoogleDrive::playableUrl((string) $item['url'], 'image');
                 break;
             case 'video':
-                $out['url'] = $item['file_path'] ? media_url($item['file_path']) : (string) $item['url'];
+                $out['url'] = $item['file_path'] ? media_url($item['file_path']) : GoogleDrive::playableUrl((string) $item['url'], 'video');
                 $out['loop'] = (bool) ($s['loop'] ?? true);
                 $out['mute'] = (bool) ($s['mute'] ?? false);
                 break;
@@ -286,6 +287,11 @@ HTML;
                 }
                 if ($url !== '' && !self::validUrl($url, ['http', 'https'])) {
                     $errors[] = __('Invalid URL.');
+                } elseif ($url !== '' && GoogleDrive::isDriveLink($url) && GoogleDrive::fileId($url) === null) {
+                    // 2.9.9: a Drive folder (or a Docs / Sheets page) is not one photo / video.
+                    $errors[] = GoogleDrive::folderId($url) !== null
+                        ? __('This is a Google Drive folder link. To show all photos and videos of a folder, use Apps → Google Drive slideshow. Here, paste the link of one file.')
+                        : __('This Google Drive link is not a photo or video file. In Google Drive open the file → Share → "Anyone with the link" → Copy link.');
                 }
                 $data['url'] = $url ?: null;
                 if ($type === 'video') {

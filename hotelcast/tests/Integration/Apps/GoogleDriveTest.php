@@ -80,6 +80,33 @@ final class GoogleDriveTest extends TestCase
         $this->assertSame('0-abcDEF', GoogleDrive::resourceKey("https://drive.google.com/drive/folders/$id?resourcekey=0-abcDEF"));
     }
 
+    public function testDriveFileLinksInVideoAndImageContent(): void
+    {
+        $fid = '1fileVideo0000000000000000001';
+        foreach (["https://drive.google.com/file/d/$fid/view?usp=sharing", "https://drive.google.com/open?id=$fid", "https://drive.google.com/uc?id=$fid&export=download",
+            "https://drive.usercontent.google.com/download?id=$fid&export=download"] as $link) {
+            $this->assertSame($fid, GoogleDrive::fileId($link), $link);
+        }
+        $this->assertNull(GoogleDrive::fileId('https://drive.google.com/drive/folders/' . self::FOLDER));
+        $this->assertNull(GoogleDrive::fileId('https://example.com/file/d/' . $fid));
+
+        // TV item: the Drive viewer page becomes the media file.
+        $v = ContentManager::toTvItem(['id' => 1, 'type' => 'video', 'title' => 'v', 'duration' => 0, 'file_path' => null, 'url' => "https://drive.google.com/file/d/$fid/view?usp=sharing", 'settings' => '{}']);
+        $this->assertSame("https://drive.usercontent.google.com/download?id=$fid&export=download&confirm=t", $v['url']);
+        $i = ContentManager::toTvItem(['id' => 2, 'type' => 'image', 'title' => 'i', 'duration' => 10, 'file_path' => null, 'url' => "https://drive.google.com/file/d/$fid/view", 'settings' => '{}']);
+        $this->assertSame("https://lh3.googleusercontent.com/d/$fid=w1920-h1080", $i['url']);
+        $other = ContentManager::toTvItem(['id' => 3, 'type' => 'video', 'title' => 'o', 'duration' => 0, 'file_path' => null, 'url' => 'https://cdn.example.com/a.mp4', 'settings' => '{}']);
+        $this->assertSame('https://cdn.example.com/a.mp4', $other['url']);
+
+        // Saving a video with a folder / Docs link: clear message, nothing saved.
+        [, $errors] = ContentManager::validate(['title' => 'Folder', 'url' => 'https://drive.google.com/drive/folders/' . self::FOLDER], 'video', false);
+        $this->assertStringContainsString('Google Drive slideshow', implode(' ', $errors));
+        [, $errors] = ContentManager::validate(['title' => 'Doc', 'url' => 'https://docs.google.com/document/d/1docdocdocdocdoc/edit'], 'video', false);
+        $this->assertNotEmpty($errors);
+        [, $errors] = ContentManager::validate(['title' => 'File', 'url' => "https://drive.google.com/file/d/$fid/view"], 'video', false);
+        $this->assertSame([], $errors);
+    }
+
     public function testParsesThePublicFolderPage(): void
     {
         $files = GoogleDrive::parseEmbedded(self::embeddedHtml());

@@ -32,6 +32,13 @@ screen-wise schedule karo, emergency message moklo, TV reboot/update karo.*
 | Android TV app | [`android/`](android) | Kotlin, ExoPlayer 2.19, Retrofit, OkHttp, Glide, WorkManager — min SDK 21, target 34 |
 | Documentation | [`docs/`](docs) | Install guide, TV setup, admin guide, API, developer guide (tenancy + extension points), security, test report |
 
+## What's new in 2.9.9 — Google Drive links in Video / Image content
+
+| Fix | Detail |
+|---|---|
+| **Drive file links play** | A Google Drive file link (`…/file/d/ID/view`, `open?id=`, `uc?id=`) in a Video or Image item was sent to the TV and the preview as Drive's HTML viewer page, which cannot play — the player kept trying. It is now turned into the file itself (video: Google's streaming download host; photo: Google's image server) |
+| **Folder links explained** | Pasting a Drive *folder* (or Docs) link into a Video / Image item now shows a clear message pointing to Apps → Google Drive slideshow, instead of saving an item that can never play |
+
 ## What's new in 2.9.8 — Google Drive slideshow: no more hanging, faster videos
 
 | Fix | Detail |

@@ -52,6 +52,46 @@ final class GoogleDrive
         return preg_match('~^[A-Za-z0-9_-]{10,100}$~', $id) && ($path === '/open' || str_contains($path, 'folder')) ? $id : null;
     }
 
+    /**
+     * 2.9.9: file id of a Drive *file* link (…/file/d/ID/view, open?id=ID, uc?id=ID, drive.usercontent…?id=ID),
+     * null for anything else (folder links included).
+     */
+    public static function fileId(string $link): ?string
+    {
+        $p = parse_url(trim($link));
+        $host = strtolower((string) ($p['host'] ?? ''));
+        if (!in_array($host, ['drive.google.com', 'www.drive.google.com', 'docs.google.com', 'drive.usercontent.google.com'], true)) {
+            return null;
+        }
+        $path = (string) ($p['path'] ?? '');
+        if (preg_match('~/file/d/([A-Za-z0-9_-]{10,100})~', $path, $m)) {
+            return $m[1];
+        }
+        parse_str((string) ($p['query'] ?? ''), $q);
+        $id = is_string($q['id'] ?? null) ? $q['id'] : '';
+        if (!preg_match('~^[A-Za-z0-9_-]{10,100}$~', $id) || str_contains($path, 'folder')) {
+            return null;
+        }
+        return in_array($path, ['/open', '/uc', '/download', '/thumbnail'], true) ? $id : null;
+    }
+
+    /** Is the link a Google Drive / Docs link at all? */
+    public static function isDriveLink(string $link): bool
+    {
+        $host = strtolower((string) parse_url(trim($link), PHP_URL_HOST));
+        return in_array($host, ['drive.google.com', 'www.drive.google.com', 'docs.google.com', 'drive.usercontent.google.com'], true);
+    }
+
+    /**
+     * 2.9.9: a Drive file link as a link the TV can play / show (image or video), the link itself when it is not a
+     * Drive file link. A Drive "view" page is HTML, not media: the TV / preview could not play it and kept trying.
+     */
+    public static function playableUrl(string $link, string $kind): string
+    {
+        $id = self::fileId($link);
+        return $id === null ? $link : self::mediaUrl($id, $kind === 'image' ? 'image' : 'video', self::resourceKey($link));
+    }
+
     /** resourcekey of an older shared link (needed by Google for some folders), '' when none. */
     public static function resourceKey(string $link): string
     {
