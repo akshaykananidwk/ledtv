@@ -561,7 +561,7 @@ final class SignupDemoTest extends TestCase
         [$s, $j] = self::$root->ajax('signup_stats');
         $this->assertSame(200, $s);
         $this->assertArrayHasKey('conversion', $j['data']);
-        [, , $html] = self::$root->get('index.php');
+        [, , $html] = self::$root->get('platform_overview.php'); // 2.9.5: index.php → console dashboard
         $this->assertStringContainsString('Sign-ups &amp; trials', $html, 'dashboard widget + menu');
         foreach (['signup_mode' => 'otp', 'trial_days' => '14', 'trial_plan_id' => (string) self::$basicPlan, 'trial_max_tvs' => '5', 'signup_min_seconds' => '3', 'signup_blocked_domains' => ''] as $k => $v) {
             Settings::setPlatform($k, $v);

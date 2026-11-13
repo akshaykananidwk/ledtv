@@ -188,7 +188,11 @@ final class MigrationUpgradeTest extends TestCase
             $this->assertSame(self::$ids['room2'], $j['data']['room']['id']);
             // The old owner logs in with full access: hotel pages + platform + updater.
             $owner = new AdminSession($url, 'owner', 'Owner123!');
-            foreach (['index.php', 'rooms.php', 'content.php', 'users.php', 'settings.php', 'update.php', 'platform_hotels.php'] as $p) {
+            // 2.9.5: index.php sends the Super Admin to the console dashboard; the own business stays reachable.
+            [$s, , , $head] = $owner->get('index.php');
+            $this->assertSame(302, $s);
+            $this->assertStringContainsString('platform_overview.php', $head);
+            foreach (['platform_overview.php', 'rooms.php', 'content.php', 'users.php', 'settings.php', 'update.php', 'platform_hotels.php'] as $p) {
                 [$s, , $html] = $owner->get($p);
                 $this->assertSame(200, $s, $p);
                 $this->assertStringNotContainsString('Warning:', $html);

@@ -132,7 +132,13 @@ final class AdminPanelTest extends TestCase
         if (!isset(self::$jars[$user])) {
             self::login($user);
         }
-        [$s, , $html] = TestEnv::http('GET', self::$url . 'admin/' . $page, null, [], self::jar($user));
+        [$s, , $html, $head] = TestEnv::http('GET', self::$url . 'admin/' . $page, null, [], self::jar($user));
+        if ($page === 'index.php' && $user === 'root') {
+            // 2.9.5: the Super Admin's dashboard is the console dashboard (all customers).
+            $this->assertSame(302, $s, "$page as $user");
+            $this->assertStringContainsString('platform_overview.php', $head);
+            [$s, , $html] = TestEnv::http('GET', self::$url . 'admin/platform_overview.php', null, [], self::jar($user));
+        }
         $this->assertSame($allowed ? 200 : 403, $s, "$page as $user");
         if ($allowed) {
             $this->assertFalse(TestEnv::hasPhpError($html), "$page as $user shows a PHP error");
