@@ -32,6 +32,12 @@ screen-wise schedule karo, emergency message moklo, TV reboot/update karo.*
 | Android TV app | [`android/`](android) | Kotlin, ExoPlayer 2.19, Retrofit, OkHttp, Glide, WorkManager — min SDK 21, target 34 |
 | Documentation | [`docs/`](docs) | Install guide, TV setup, admin guide, API, developer guide (tenancy + extension points), security, test report |
 
+## What's new in 2.9.7 — Google Drive slideshow
+
+| Change | Where |
+|---|---|
+| **Google Drive slideshow**: paste a Google Drive folder link ("Anyone with the link") — every photo and video in it plays on the TV as a slideshow; files added to the folder appear by themselves. Photo interval, fit, slow zoom, file names, shuffle, videos on/off, max video length, mute. Optional Google API key for large folders / videos. No TV app update needed | Apps → Google Drive slideshow · Super Admin → Platform settings → Data feeds · `docs/modules/google_drive.md` |
+
 ## What's new in 2.9.6 — open registration + November offer
 
 | Change | Where |

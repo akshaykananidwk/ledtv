@@ -172,7 +172,7 @@ final class Features
             'pages' => ['offers.php', 'class_schedule.php', 'departures.php', 'kpi.php'],
             'apps' => ['offers', 'class_schedule', 'departures', 'kpi_dashboard', 'showcase', 'event_welcome'], 'depends' => ['apps']],
         'content_apps' => ['label' => 'Content apps', 'group' => 'display_apps', 'description' => 'Photo albums, Google Sheet table, social wall.',
-            'permissions' => ['albums.manage'], 'pages' => ['album_upload.php'], 'apps' => ['photo_album', 'sheet_table', 'social_wall'], 'depends' => ['apps']],
+            'permissions' => ['albums.manage'], 'pages' => ['album_upload.php'], 'apps' => ['photo_album', 'sheet_table', 'social_wall', 'gdrive_slideshow'], 'depends' => ['apps']],
         'data_feeds' => ['label' => 'Live data feeds', 'group' => 'display_apps', 'description' => 'Gold rates, market, cricket, currency, travel status and ticker placeholders.',
             'permissions' => ['rates.manage'], 'pages' => ['rates.php', 'data_feeds.php'],
             'apps' => ['gold_rates', 'market', 'cricket', 'currency', 'travel_status'], 'depends' => ['apps']],

@@ -215,6 +215,17 @@ if (is_post()) {
             $errors = DataFeeds::savePlatformSettings($_POST);
             break;
 
+        case 'google_key':
+            // 2.9.7 Google Drive slideshow (core/GoogleDrive.php): optional Google API key.
+            $gk = trim($P('google_api_key', 100));
+            if ($gk !== '' && !preg_match('~^[A-Za-z0-9_-]{20,80}$~', $gk)) {
+                $errors[] = __('This does not look like a Google API key.');
+            } else {
+                Settings::setPlatform('google_api_key', $gk);
+                Cache::clear('gdrive');
+            }
+            break;
+
         case 'toggle_admin':
             $uid = req_int('user_id', $_POST);
             $u = DB::one("SELECT * FROM users WHERE id = :id AND role = 'platform_admin'", ['id' => $uid]);
@@ -398,6 +409,12 @@ require __DIR__ . '/partials/header.php';
 
 <?php elseif ($tab === 'data_feeds'): ?>
 <?php require __DIR__ . '/partials/data_feeds_platform.php'; ?>
+<form method="post" class="card mt-3" style="max-width:860px" id="googleKeyForm"><div class="card-header"><i class="bi bi-google"></i> <?= e(__('Google Drive slideshow')) ?></div><div class="card-body row g-3">
+  <?= Csrf::field() ?><input type="hidden" name="op" value="google_key"><input type="hidden" name="tab" value="data_feeds">
+  <div class="col-12 small text-muted"><?= e(__('Optional. Without a key the folder is read from Google\'s public folder page (photos and small videos). With a Google API key (Google Cloud → APIs → Google Drive API → Credentials → API key) every folder and large videos work reliably.')) ?></div>
+  <div class="col-md-8"><label class="form-label" for="g_key"><?= e(__('Google API key')) ?></label><input class="form-control mono" id="g_key" name="google_api_key" value="<?= $val('google_api_key') ?>" maxlength="100" autocomplete="off"></div>
+  <div class="col-md-4 d-flex align-items-end"><button class="btn btn-primary"><i class="bi bi-check-lg"></i> <?= e(__('Save')) ?></button></div>
+</div></form>
 
 <?php elseif ($tab === 'admins'): $admins = DB::all("SELECT u.*, h.name AS hotel_name FROM users u LEFT JOIN hotels h ON h.id = u.hotel_id WHERE u.role = 'platform_admin' ORDER BY u.username"); ?>
 <div class="row g-3" style="max-width:1000px">
