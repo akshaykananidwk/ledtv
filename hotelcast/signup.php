@@ -211,12 +211,14 @@ if ($step === 'verify') {
 // ------------------------------------------------------------------ form
 $captcha = Signup::setting('signup_captcha') === '1' ? Signup::captchaQuestion() : null;
 $terms = Signup::setting('signup_terms');
-$days = Signup::trialDays();
+$days = Signup::freeDays();
+$promo = Signup::promoHeadline();
 $v = static fn (string $k) => e(is_scalar($old[$k] ?? null) ? (string) $old[$k] : '');
 $err = static fn (string $k) => isset($errors[$k]) ? '<div class="invalid-feedback d-block">' . e($errors[$k]) . '</div>' : '';
 $cls = static fn (string $k) => isset($errors[$k]) ? ' is-invalid' : '';
-signup_page(__('Start your :n-day free trial', ['n' => $days]), static function () use ($v, $err, $cls, $errors, $captcha, $terms, $old, $lang): void {
+signup_page(__('Start your :n-day free trial', ['n' => $days]), static function () use ($v, $err, $cls, $errors, $captcha, $terms, $old, $lang, $promo): void {
     ?>
+    <?php if ($promo !== ''): ?><div class="alert alert-warning text-center fw-semibold" id="promoBanner"><i class="bi bi-gift-fill"></i> <?= e($promo) ?></div><?php endif; ?>
     <p class="text-center text-muted small"><?= e(__('No payment details needed. Your account is ready in a minute, with sample screens and content.')) ?></p>
     <?php if (!empty($errors['_'])): ?><div class="alert alert-danger" role="alert"><?= e($errors['_']) ?></div><?php endif; ?>
     <?php if ($errors && empty($errors['_'])): ?><div class="alert alert-danger" role="alert"><?= e(__('Please correct the marked fields.')) ?></div><?php endif; ?>

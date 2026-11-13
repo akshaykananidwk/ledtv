@@ -21,6 +21,7 @@ $brand = Branding::get(0);
 $product = $brand['product'];
 $signup = Signup::enabled();
 $trialDays = $signup ? Signup::trialDays() : 0;
+$promo = $signup ? Signup::promoHeadline() : ''; // 2.9.6 registration offer
 $demo = Demo::publicEnabled();
 $plans = Landing::plans();
 $stats = Landing::stats();
@@ -68,7 +69,7 @@ $cta = static function (string $extra = '') use ($loggedIn, $signup, $trialDays,
     if ($loggedIn) {
         echo '<a class="btn btn-primary' . $extra . '" href="' . e($dashboardUrl) . '"><i class="bi bi-speedometer2" aria-hidden="true"></i> ' . e(__('Go to dashboard')) . '</a>';
     } elseif ($signup) {
-        echo '<a class="btn btn-primary' . $extra . '" href="' . e($signupUrl) . '"><i class="bi bi-rocket-takeoff" aria-hidden="true"></i> ' . e(__('Start free trial')) . '</a>';
+        echo '<a class="btn btn-primary' . $extra . '" href="' . e($signupUrl) . '"><i class="bi bi-person-plus" aria-hidden="true"></i> ' . e(__('Register now')) . '</a>';
     }
     if ($demo) {
         echo '<a class="btn btn-ghost' . $extra . '" href="' . e($demoUrl) . '"><i class="bi bi-play-circle" aria-hidden="true"></i> ' . e(__('Watch live demo')) . '</a>';
@@ -145,7 +146,7 @@ $langUrl = static fn (string $code): string => '?lang=' . $code;
           <a class="btn btn-primary btn-sm" href="<?= e($dashboardUrl) ?>"><?= e(__('Go to dashboard')) ?></a>
         <?php else: ?>
           <a class="btn btn-outline btn-sm" href="<?= e($loginUrl) ?>"><?= e(__('Login')) ?></a>
-          <?php if ($signup): ?><a class="btn btn-primary btn-sm" href="<?= e($signupUrl) ?>"><?= e(__('Start free trial')) ?></a><?php endif; ?>
+          <?php if ($signup): ?><a class="btn btn-primary btn-sm" href="<?= e($signupUrl) ?>" id="navRegister"><i class="bi bi-person-plus" aria-hidden="true"></i> <?= e(__('Register')) ?></a><?php endif; ?>
         <?php endif; ?>
       </div>
     </nav>
@@ -166,6 +167,7 @@ $langUrl = static fn (string $code): string => '?lang=' . $code;
         <p class="note"><a class="dl-link" href="#app"><i class="bi bi-android2" aria-hidden="true"></i> <?= e(__('Download the TV app')) ?></a></p>
       <?php endif; ?>
       <?php if ($signup && !$loggedIn): ?>
+        <?php if ($promo !== ''): ?><p class="promo" id="promoBanner"><i class="bi bi-gift-fill" aria-hidden="true"></i> <?= e($promo) ?></p><?php endif; ?>
         <p class="note"><i class="bi bi-check-circle-fill" aria-hidden="true"></i> <?= e(__(':days-day free trial · no payment details needed', ['days' => $trialDays])) ?></p>
       <?php endif; ?>
       <?php if ($hasContact): ?>

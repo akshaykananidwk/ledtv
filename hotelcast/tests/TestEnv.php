@@ -76,6 +76,9 @@ final class TestEnv
         // 2.9.4: the platform credit line (on by default in production) would add a ticker to every TV;
         // off for the suite, PlatformCreditTest switches it on.
         Settings::setPlatform('platform_credit_enabled', '0');
+        // 2.9.6: migration 037 starts the November 2026 registration offer; tests use the normal trial unless
+        // they set an offer themselves (SignupOfferTest).
+        Settings::setPlatform('signup_promo_until', '');
         Settings::flush();
         Cache::clear();
     }

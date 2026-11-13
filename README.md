@@ -32,6 +32,13 @@ screen-wise schedule karo, emergency message moklo, TV reboot/update karo.*
 | Android TV app | [`android/`](android) | Kotlin, ExoPlayer 2.19, Retrofit, OkHttp, Glide, WorkManager — min SDK 21, target 34 |
 | Documentation | [`docs/`](docs) | Install guide, TV setup, admin guide, API, developer guide (tenancy + extension points), security, test report |
 
+## What's new in 2.9.6 — open registration + November offer
+
+| Change | Where |
+|---|---|
+| **Anyone can register**: online sign-up is on (migration 037 switches it on for existing sites too), "Register" in the website menu and "Register now" buttons; 7-day free trial by default | Front page · `signup.php` · Super Admin → Sign-ups & trials |
+| **Registration offer**: everyone who registers until the end date (set to **30 Nov 2026**) gets **365 days free with every module**; the sign-up date counts, also when approved later. Banner on the website and the sign-up form (gu / hi / en). End date, days, "every module", own text — all editable; empty date = offer off | Super Admin → Sign-ups & trials → Settings → Registration offer |
+
 ## What's new in 2.9.5 — correct numbers on the Super Admin dashboard
 
 | Fix | Detail |

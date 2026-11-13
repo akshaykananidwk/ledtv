@@ -27,9 +27,14 @@ declare(strict_types=1);
 final class Signup
 {
     public const DEFAULTS = [
-        'signup_enabled' => '0',
+        'signup_enabled' => '1',           // 2.9.6: open registration by default
         'signup_mode' => 'otp',            // otp | auto | manual
-        'trial_days' => '14',
+        'trial_days' => '7',
+        // 2.9.6 registration offer: sign up until (and including) this date → promo days free with every module.
+        'signup_promo_until' => '',
+        'signup_promo_days' => '365',
+        'signup_promo_all_features' => '1',
+        'signup_promo_text' => '',
         'trial_plan_id' => '',
         'trial_max_tvs' => '5',
         'signup_terms' => "By starting a free trial you agree that:\n1. The trial is free for the trial period; no payment details are needed.\n2. After the trial the TV service pauses until you choose a paid plan.\n3. You are responsible for the content shown on your TVs.\n4. We store your contact details to provide the service and send you account messages.",
@@ -72,7 +77,46 @@ final class Signup
 
     public static function trialDays(): int
     {
-        return max(1, min(90, (int) self::setting('trial_days') ?: 14));
+        return max(1, min(90, (int) self::setting('trial_days') ?: 7));
+    }
+
+    /** 2.9.6: registration offer running today (sign-up date ≤ signup_promo_until)? */
+    public static function promoActive(?int $now = null): bool
+    {
+        $until = trim(self::setting('signup_promo_until'));
+        if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $until)) {
+            return false;
+        }
+        return date('Y-m-d', $now ?? time()) <= $until;
+    }
+
+    /** Free days of the offer (1 – 1095). */
+    public static function promoDays(): int
+    {
+        return max(1, min(1095, (int) self::setting('signup_promo_days') ?: 365));
+    }
+
+    /** Free days a sign-up made now gets: the offer when it runs, else the trial. */
+    public static function freeDays(?int $now = null): int
+    {
+        return self::promoActive($now) ? self::promoDays() : self::trialDays();
+    }
+
+    /** Headline of the offer for the landing / sign-up page ('' = no offer). */
+    public static function promoHeadline(?int $now = null): string
+    {
+        if (!self::promoActive($now)) {
+            return '';
+        }
+        $custom = trim(self::setting('signup_promo_text'));
+        if ($custom !== '') {
+            return $custom;
+        }
+        $until = (int) strtotime(self::setting('signup_promo_until'));
+        $days = self::promoDays();
+        return $days % 365 === 0
+            ? __('Offer: register by :date and use everything free for :n year(s)!', ['date' => date('d M Y', $until), 'n' => intdiv($days, 365)])
+            : __('Offer: register by :date and use everything free for :n days!', ['date' => date('d M Y', $until), 'n' => $days]);
     }
 
     // ------------------------------------------------------------------ anti-abuse
@@ -450,12 +494,16 @@ final class Signup
             $planId = 0;
         }
         $maxTvs = trim(self::setting('trial_max_tvs'));
-        $ends = date('Y-m-d H:i:s', time() + self::trialDays() * 86400);
+        // 2.9.6 registration offer: the sign-up date counts (also when approved / verified later).
+        $signedUpAt = (int) strtotime((string) ($s['created_at'] ?? 'now')) ?: time();
+        $promo = self::promoActive($signedUpAt);
+        $ends = date('Y-m-d H:i:s', time() + ($promo ? self::promoDays() : self::trialDays()) * 86400);
         $hid = Hotels::create([
             'name' => $s['hotel_name'], 'city' => $s['city'], 'plan_id' => $planId ?: null,
             'contact_name' => $s['owner_name'], 'contact_email' => $s['email'], 'contact_phone' => $s['mobile'],
             'max_tvs' => $maxTvs === '' ? null : max(1, (int) $maxTvs), 'expires_at' => $ends, 'is_trial' => 1,
-            'notes' => 'Free trial (online sign-up #' . $id . ')',
+            'feature_overrides' => $promo && self::setting('signup_promo_all_features') !== '0' ? Features::encodeOverrides(Features::optionalKeys(), []) : null,
+            'notes' => ($promo ? 'Registration offer: ' . self::promoDays() . ' days free' : 'Free trial') . ' (online sign-up #' . $id . ')',
         ]);
         try {
             $uid = DB::insert('users', [

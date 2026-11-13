@@ -49,6 +49,10 @@ if (is_post()) {
                     $plan = 0;
                 }
                 $max = trim(req_str('trial_max_tvs', $_POST, 6));
+                $promoUntil = trim(req_str('signup_promo_until', $_POST, 10));
+                if ($promoUntil !== '' && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $promoUntil)) {
+                    $errors[] = __('Offer end date must look like 2026-11-30.');
+                }
                 $domains = implode("\n", array_slice(array_values(array_unique(array_filter(array_map(
                     fn ($d) => strtolower(trim($d)),
                     preg_split('/[\s,;]+/', (string) ($_POST['signup_blocked_domains'] ?? '')) ?: []
@@ -60,7 +64,11 @@ if (is_post()) {
                 foreach ([
                     'signup_enabled' => !empty($_POST['signup_enabled']) ? '1' : '0',
                     'signup_mode' => in_array($mode, Signup::MODES, true) ? $mode : 'otp',
-                    'trial_days' => (string) max(1, min(90, req_int('trial_days', $_POST) ?: 14)),
+                    'trial_days' => (string) max(1, min(90, req_int('trial_days', $_POST) ?: 7)),
+                    'signup_promo_until' => $promoUntil,
+                    'signup_promo_days' => (string) max(1, min(1095, req_int('signup_promo_days', $_POST) ?: 365)),
+                    'signup_promo_all_features' => !empty($_POST['signup_promo_all_features']) ? '1' : '0',
+                    'signup_promo_text' => mb_substr(trim((string) ($_POST['signup_promo_text'] ?? '')), 0, 200),
                     'trial_plan_id' => $plan ? (string) $plan : '',
                     'trial_max_tvs' => $max === '' ? '' : (string) max(1, min(10000, (int) $max)),
                     'signup_terms' => mb_substr(trim((string) ($_POST['signup_terms'] ?? '')), 0, 10000),
@@ -207,6 +215,14 @@ require __DIR__ . '/partials/header.php';
     <?php foreach ($plans as $pl): ?><option value="<?= (int) $pl['id'] ?>"<?= $sv('trial_plan_id') === (string) $pl['id'] ? ' selected' : '' ?>><?= e($pl['name']) ?></option><?php endforeach; ?></select>
     <div class="form-text"><?= e(__('Modules available during the trial.')) ?></div></div>
   <div class="col-sm-4"><label class="form-label" for="s_mt"><?= e(__('Max TVs during the trial')) ?></label><input class="form-control" type="number" min="1" id="s_mt" name="trial_max_tvs" value="<?= e($sv('trial_max_tvs')) ?>" placeholder="<?= e(__('plan limit')) ?>"></div>
+  <div class="col-12"><h2 class="h6 mt-2"><i class="bi bi-gift"></i> <?= e(__('Registration offer')) ?></h2>
+    <p class="small text-muted mb-2"><?= e(__('Everyone who registers until the end date gets the offer instead of the normal trial. Leave the date empty to switch the offer off.')) ?>
+      <?php if (Signup::promoActive()): ?><span class="badge text-bg-success" id="promoRunning"><?= e(__('Running')) ?></span><?php endif; ?></p></div>
+  <div class="col-sm-4"><label class="form-label" for="s_pu"><?= e(__('Register until (incl.)')) ?></label><input class="form-control" type="date" id="s_pu" name="signup_promo_until" value="<?= e($sv('signup_promo_until')) ?>"></div>
+  <div class="col-sm-4"><label class="form-label" for="s_pd"><?= e(__('Free for')) ?></label><div class="input-group"><input class="form-control" type="number" min="1" max="1095" id="s_pd" name="signup_promo_days" value="<?= e($sv('signup_promo_days')) ?>"><span class="input-group-text"><?= e(__('days')) ?></span></div>
+    <div class="form-text"><?= e(__('365 = one year.')) ?></div></div>
+  <div class="col-sm-4 d-flex align-items-center"><div class="form-check form-switch"><input class="form-check-input" type="checkbox" role="switch" id="s_pa" name="signup_promo_all_features" value="1"<?= $sv('signup_promo_all_features') !== '0' ? ' checked' : '' ?>><label class="form-check-label" for="s_pa"><?= e(__('Every module included')) ?></label></div></div>
+  <div class="col-12"><label class="form-label" for="s_pt"><?= e(__('Offer text on the website (optional)')) ?></label><input class="form-control" id="s_pt" name="signup_promo_text" maxlength="200" value="<?= e($sv('signup_promo_text')) ?>" placeholder="<?= e(__('Offer: register by :date and use everything free for :n year(s)!', ['date' => '30 Nov 2026', 'n' => 1])) ?>"></div>
   <div class="col-12"><label class="form-label" for="s_terms"><?= e(__('Terms shown on the sign-up page')) ?></label><textarea class="form-control" id="s_terms" name="signup_terms" rows="6"><?= e($sv('signup_terms')) ?></textarea></div>
   <div class="col-12"><h2 class="h6 mt-2"><i class="bi bi-shield-check"></i> <?= e(__('Spam protection')) ?></h2>
     <p class="small text-muted mb-2"><?= e(__('Always on: hidden honeypot field, max 3 sign-ups per IP address per hour and per email / mobile per day, blocked throw-away email domains.')) ?></p></div>
