@@ -32,6 +32,13 @@ screen-wise schedule karo, emergency message moklo, TV reboot/update karo.*
 | Android TV app | [`android/`](android) | Kotlin, ExoPlayer 2.19, Retrofit, OkHttp, Glide, WorkManager — min SDK 21, target 34 |
 | Documentation | [`docs/`](docs) | Install guide, TV setup, admin guide, API, developer guide (tenancy + extension points), security, test report |
 
+## What's new in 2.10 — CCTV cameras on the TVs
+
+| Change | Where |
+|---|---|
+| **CCTV cameras**: add a Dahua / CP Plus / Hikvision / Prama / Uniview (or any RTSP) NVR / DVR with IP address or DDNS name, login and camera numbers — every camera becomes a live item and an "All cameras" grid (up to 6 per screen) is created; put them on any screen like other content. Grids use the recorder's small stream. Serial-number-only P2P login is a closed vendor service and is not supported | Content → CCTV cameras · `docs/modules/cctv.md` |
+| **TV app 2.6.3 (source)**: CCTV grids decode up to their number of cameras (learned limit per TV); TV app 2.6.2 shows 2 cameras live per grid | `android/` |
+
 ## What's new in 2.9.9 — Google Drive links in Video / Image content
 
 | Fix | Detail |
