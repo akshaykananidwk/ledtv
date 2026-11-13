@@ -1,3 +1,8 @@
+# 2.9.7 — Google Drive slideshow (2026-11-13)
+
+- Full PHP suite: **666 tests, 26,520 assertions, 0 failures** (new `GoogleDriveTest` 6 with Google mocked: folder id from every link form, public folder page parsing, Drive API v3 with a key, not found / private / empty, last good list while Google is down, TV page + data JSON over HTTP, photos / videos / both, validation, module, Super Admin API key field).
+- Browser QA (headless Chromium, local files): photos cross-fade, a video that cannot load is skipped and the show continues. Not tested against a real Google Drive folder or a real video file (no folder available in the build environment).
+
 # 2.9.6 — open registration + November registration offer (2026-11-13)
 
 - Full PHP suite: **660 tests, 0 failures** after the fix below (new `SignupOfferTest` 5: sign-up open with a 7-day trial and "Register" on the website, offer gives 365 days with every module incl. sign-ups approved after the end date, normal trial after the offer, end date inclusive, Super Admin form + validation, migration 037). `MigrationUpgradeTest` counts the 5 settings rows migration 037 adds. The test environment starts with the offer off (`TestEnv`).
