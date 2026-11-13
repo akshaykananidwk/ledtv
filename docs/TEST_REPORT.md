@@ -1,3 +1,7 @@
+# 2.9.6 — open registration + November registration offer (2026-11-13)
+
+- Full PHP suite: **660 tests, 0 failures** after the fix below (new `SignupOfferTest` 5: sign-up open with a 7-day trial and "Register" on the website, offer gives 365 days with every module incl. sign-ups approved after the end date, normal trial after the offer, end date inclusive, Super Admin form + validation, migration 037). `MigrationUpgradeTest` counts the 5 settings rows migration 037 adds. The test environment starts with the offer off (`TestEnv`).
+
 # 2.9.5 — correct numbers on the Super Admin dashboard (2026-11-13)
 
 - Full PHP suite: **655 tests, 0 failures** (new `ConsoleDashboardTest`: Super Admin with a home customer is sent from index.php to the console dashboard, stale TV counted offline without a scheduler tick, customer workspace still shows that customer's dashboard). Updated for the new rule: `AdminPanelTest` (index.php as Super Admin → console), `SignupDemoTest` (widget on the console dashboard), `MigrationUpgradeTest` (upgraded owner lands on the console).

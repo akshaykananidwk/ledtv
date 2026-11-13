@@ -105,7 +105,9 @@ final class MigrationUpgradeTest extends TestCase
         $ran = Migrator::migrate();
         $this->assertSame(['002_multitenancy.sql', '002_multitenancy_upgrade.php'], array_values(array_filter($ran, fn ($f) => str_starts_with($f, '002'))));
         foreach ($counts as $t => $n) {
-            $this->assertSame($n, (int) DB::value("SELECT COUNT(*) FROM `$t`"), "$t rows preserved");
+            // Migration 037 (2.9.6) adds the open-registration / offer platform settings (5 rows).
+            $added = $t === 'system_settings' ? (int) DB::value("SELECT COUNT(*) FROM system_settings WHERE hotel_id = 0 AND setting_key IN ('signup_enabled', 'trial_days', 'signup_promo_until', 'signup_promo_days', 'signup_promo_all_features')") : 0;
+            $this->assertSame($n, (int) DB::value("SELECT COUNT(*) FROM `$t`") - $added, "$t rows preserved");
         }
         // Hotel 1 created from the old settings.
         $h = DB::one('SELECT * FROM hotels WHERE id = 1');
