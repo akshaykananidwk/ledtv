@@ -36,6 +36,8 @@ final class GoogleDriveTest extends TestCase
         Tenant::set(1);
         DB::insert('users', ['hotel_id' => null, 'username' => 'gdroot', 'email' => 'gdroot@platform.test', 'full_name' => 'Root',
             'password_hash' => Auth::hash('Passw0rd!'), 'role' => 'platform_admin']);
+        DB::insert('users', ['hotel_id' => 1, 'username' => 'gdboss', 'email' => 'gdboss@hotel.test', 'full_name' => 'Boss',
+            'password_hash' => Auth::hash('Passw0rd!'), 'role' => 'super_admin']);
         foreach (['DeviceHealthTask', 'AnalyticsTask'] as $t) {
             Settings::setPlatform('task_last_' . $t, (string) (time() + 86400));
         }
@@ -89,7 +91,7 @@ final class GoogleDriveTest extends TestCase
         $this->assertSame('', $r['error']);
         $this->assertSame(['a-darshan & shringar.jpg', 'b-aarti.JPG', 'c-mangla.mp4'], array_column($r['items'], 'name'), 'sorted by name');
         $this->assertSame('https://lh3.googleusercontent.com/d/1photoA0000000000000000000001=w1920-h1080', $r['items'][0]['url']);
-        $this->assertSame('https://drive.google.com/uc?export=download&id=1video00000000000000000000001', $r['items'][2]['url']);
+        $this->assertSame('https://drive.usercontent.google.com/download?id=1video00000000000000000000001&export=download&confirm=t', $r['items'][2]['url']);
     }
 
     public function testApiKeyListingAndErrors(): void
@@ -164,6 +166,44 @@ final class GoogleDriveTest extends TestCase
         [, $json] = DisplayAppsTestKit::data(self::$url, $priv);
         $this->assertSame([], $json['data']['items']);
         $this->assertStringContainsString('Anyone with the link', $json['data']['empty']);
+    }
+
+    public function testDraftPreviewNeverCallsGoogle(): void
+    {
+        $calls = 0;
+        Http::$mock = function () use (&$calls) { $calls++; return ['status' => 200, 'body' => self::embeddedHtml(), 'headers' => []]; };
+        $app = DisplayApps::find('gdrive_slideshow');
+        GoogleDrive::$readOnly = true;
+        try {
+            [, $errors] = $app->validate(['link' => self::FOLDER]);
+            $this->assertSame([], $errors);
+            $this->assertSame([], $app->data($app->config(['link' => self::FOLDER]), ['preview' => false])['items']);
+        } finally {
+            GoogleDrive::$readOnly = false;
+        }
+        // The form and a preview context use the cache only.
+        $this->assertStringContainsString('Save to read the folder', $app->form($app->config(['link' => self::FOLDER])));
+        $this->assertSame([], $app->data($app->config(['link' => self::FOLDER]), ['preview' => true])['items']);
+        $this->assertSame(0, $calls, 'no request to Google while typing / previewing');
+        // Saving (validate) reads the folder once; then the form shows the counts from the cache.
+        $app->validate(['link' => self::FOLDER]);
+        $this->assertSame(1, $calls);
+        $this->assertStringContainsString('2 photo(s) and 1 video(s) found', $app->form($app->config(['link' => self::FOLDER])));
+        $this->assertCount(3, $app->data($app->config(['link' => self::FOLDER]), ['preview' => true])['items']);
+        $this->assertSame(1, $calls);
+    }
+
+    public function testAdminPreviewOverHttpIsFast(): void
+    {
+        // The preview op (sent while typing) must not reach Google: the mock file has no entry for this folder,
+        // so a real request would fail slowly; the preview answers at once.
+        $boss = new AdminSession(self::$url, 'gdboss');
+        $t = microtime(true);
+        [$s, , $html] = $boss->post('apps.php', ['op' => 'preview', 'app' => 'gdrive_slideshow', 'title' => 'Drive', 'duration' => 30,
+            'cfg[link]' => 'https://drive.google.com/drive/folders/1NotInTheMockFile000000000000', 'cfg[interval]' => 8]);
+        $this->assertLessThan(3.0, microtime(true) - $t);
+        $this->assertSame(200, $s);
+        $this->assertFalse(TestEnv::hasPhpError($html), $html);
     }
 
     public function testValidationModuleAndApiKeySetting(): void

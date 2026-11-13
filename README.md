@@ -32,6 +32,14 @@ screen-wise schedule karo, emergency message moklo, TV reboot/update karo.*
 | Android TV app | [`android/`](android) | Kotlin, ExoPlayer 2.19, Retrofit, OkHttp, Glide, WorkManager — min SDK 21, target 34 |
 | Documentation | [`docs/`](docs) | Install guide, TV setup, admin guide, API, developer guide (tenancy + extension points), security, test report |
 
+## What's new in 2.9.8 — Google Drive slideshow: no more hanging, faster videos
+
+| Fix | Detail |
+|---|---|
+| **Admin panel hung** | The app form sends a preview on every key press; each preview asked Google Drive (up to 15 s, holding the session lock), so the whole panel froze. Previews and the form now use the cached folder list only; the folder is read once on save (8 s timeout) and by the TVs |
+| **Videos slow to start** | The next video buffers in the background while a photo is shown; videos use Google's current download host (byte ranges, no "virus scan" page for large files) |
+| **Stuck videos** | A video that has not started within 25 s is skipped (it could block the slideshow for up to an hour); after it starts, the show moves on at its end (or the set maximum) |
+
 ## What's new in 2.9.7 — Google Drive slideshow
 
 | Change | Where |

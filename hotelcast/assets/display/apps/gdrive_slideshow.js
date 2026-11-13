@@ -4,6 +4,7 @@
 (function (w, d) {
   'use strict';
   var st = null;
+  var START_SEC = 25;
 
   function esc(s) { return w.HCSlides ? w.HCSlides.esc(s) : String(s || ''); }
   function shuffle(a) { for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)), t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
@@ -21,9 +22,25 @@
       this.layers.push(l);
     }
     var self = this;
+    this.preloaded = '';
     video.addEventListener('ended', function () { self.videoDone(); });
-    video.addEventListener('error', function () { self.videoDone(); });
+    video.addEventListener('error', function () { if (self.cur && self.cur.kind === 'video') { self.videoDone(); } else { self.preloaded = ''; } });
+    // 2.9.8: the video really started → from now on only the end (or video_max) moves on.
+    video.addEventListener('playing', function () { self.videoStarted(); });
   }
+
+  /** Index of the item after the current position (wraps). */
+  Show.prototype.peek = function () {
+    return this.list.length ? this.list[(this.pos + 1) % this.list.length] : null;
+  };
+
+  /** 2.9.8: while a photo shows, the next video already buffers (hidden), so it starts without a long wait. */
+  Show.prototype.preloadNext = function () {
+    var n = this.peek(), v = this.video;
+    if (!n || n.kind !== 'video' || this.preloaded === n.url || (this.cur && this.cur.kind === 'video')) { return; }
+    this.preloaded = n.url;
+    try { v.preload = 'auto'; v.muted = true; v.src = n.url; v.load(); } catch (e) { this.preloaded = ''; }
+  };
 
   Show.prototype.set = function (items) {
     items = items || [];
@@ -69,8 +86,9 @@
     function go(ok) {
       if (done) { return; }
       done = true;
-      if (ok) { self.hideVideo(); self.paint(item); }
+      if (ok) { self.hideVideo(true); self.paint(item); }
       self.schedule(ok ? self.o.sec : 3);
+      self.preloadNext();
     }
     img.onload = function () { go(true); };
     img.onerror = function () { go(false); };
@@ -101,32 +119,51 @@
     var v = this.video, self = this;
     if (this.timer) { clearTimeout(this.timer); this.timer = null; }
     this.cur = item;
+    this.started = false;
     v.muted = !!this.o.mute;
-    v.src = item.url;
+    if (this.preloaded !== item.url) { v.preload = 'auto'; v.src = item.url; }
+    this.preloaded = '';
     v.className = 'gd-video is-on';
-    var p = v.play();
-    if (p && p.catch) { p.catch(function () { v.muted = true; v.play().catch(function () { self.videoDone(); }); }); }
-    // Safety: a video that never starts / never ends must not stop the show.
-    var max = this.o.video_max > 0 ? this.o.video_max : 3600;
-    this.timer = setTimeout(function () { self.timer = null; self.videoDone(); }, (max + 30) * 1000);
-    if (this.o.video_max > 0) {
-      this.capTimer && clearTimeout(this.capTimer);
-      this.capTimer = setTimeout(function () { if (self.cur === item) { self.videoDone(); } }, this.o.video_max * 1000);
-    }
+    var p;
+    try { p = v.play(); } catch (e) { p = null; }
+    if (p && p['catch']) { p['catch'](function () { v.muted = true; var q = v.play(); if (q && q['catch']) { q['catch'](function () { self.videoDone(); }); } }); }
+    // 2.9.8: a video that has not started within START_SEC is skipped (it used to block the show up to an hour).
+    this.timer = setTimeout(function () { self.timer = null; if (!self.started) { self.videoDone(); } }, START_SEC * 1000);
   };
 
-  Show.prototype.hideVideo = function () {
+  Show.prototype.videoStarted = function () {
+    var self = this, item = this.cur, v = this.video;
+    if (!item || item.kind !== 'video' || this.started) { return; }
+    this.started = true;
+    if (this.timer) { clearTimeout(this.timer); this.timer = null; }
+    // End: video_max, else the video's own length (+ margin for stalls), never more than an hour.
+    var len = isFinite(v.duration) && v.duration > 0 ? v.duration : 3600;
+    var max = this.o.video_max > 0 ? Math.min(this.o.video_max, len + 30) : Math.min(len + 30, 3600);
+    this.timer = setTimeout(function () { self.timer = null; if (self.cur === item) { self.videoDone(); } }, max * 1000);
+  };
+
+  Show.prototype.hideVideo = function (keepPreload) {
     var v = this.video;
     if (v.className.indexOf('is-on') >= 0) {
       v.className = 'gd-video';
-      try { v.pause(); v.removeAttribute('src'); v.load(); } catch (e) { /* ignore */ }
+      try { v.pause(); } catch (e) { /* ignore */ }
+      if (!keepPreload || !this.preloaded) {
+        try { v.removeAttribute('src'); v.load(); } catch (e2) { /* ignore */ }
+        this.preloaded = '';
+      }
     }
   };
 
   Show.prototype.videoDone = function () {
     if (!this.cur || this.cur.kind !== 'video') { return; }
     if (this.timer) { clearTimeout(this.timer); this.timer = null; }
-    if (this.list.length === 1) { var v = this.video; try { v.currentTime = 0; v.play(); } catch (e) { /* ignore */ } this.schedule(this.o.video_max > 0 ? this.o.video_max : 3600); return; }
+    if (this.list.length === 1) {
+      // Only one video: loop it (or retry after a pause when it failed).
+      var v = this.video, self = this;
+      if (this.started) { this.started = false; try { v.currentTime = 0; v.play(); } catch (e) { /* ignore */ } }
+      this.timer = setTimeout(function () { self.timer = null; if (!self.started) { self.playVideo(self.cur); } }, START_SEC * 1000);
+      return;
+    }
     this.next();
   };
 

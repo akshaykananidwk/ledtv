@@ -57,6 +57,10 @@ final class GoogleDriveApp extends DisplayApp
         $link = self::str($in, 'link', 1000);
         if ($link === '' || GoogleDrive::folderId($link) === null) {
             $errors[] = __('Paste the link of a Google Drive folder (drive.google.com/drive/folders/…).');
+        } elseif (!GoogleDrive::$readOnly) {
+            // On save (not while typing): read the folder once, so the form shows what was found and the TVs start
+            // from the cache. Google problems never block the save (the TV retries).
+            GoogleDrive::folder($link);
         }
         return [[
             'link' => $link,
@@ -77,12 +81,14 @@ final class GoogleDriveApp extends DisplayApp
     {
         $status = '';
         if ($config['link'] !== '') {
-            $r = GoogleDrive::folder($config['link']);
+            $r = GoogleDrive::folder($config['link'], false); // 2.9.8: cached only — the form never waits for Google
             $photos = count(array_filter($r['items'], static fn ($i) => $i['kind'] === 'image'));
             $videos = count($r['items']) - $photos;
-            $status = $r['error'] !== '' && !$r['items']
+            $status = $r['error'] === '' && !$r['items']
+                ? '<div class="col-12"><div class="alert alert-info small mb-0" id="gdStatus">' . e(__('Save to read the folder.')) . '</div></div>'
+                : ($r['error'] !== '' && !$r['items']
                 ? '<div class="col-12"><div class="alert alert-warning small mb-0" id="gdStatus">' . e(GoogleDrive::errorText($r['error'])) . '</div></div>'
-                : '<div class="col-12"><div class="alert alert-success small mb-0" id="gdStatus"><i class="bi bi-check-circle"></i> ' . e(__(':p photo(s) and :v video(s) found in the folder.', ['p' => $photos, 'v' => $videos])) . '</div></div>';
+                : '<div class="col-12"><div class="alert alert-success small mb-0" id="gdStatus"><i class="bi bi-check-circle"></i> ' . e(__(':p photo(s) and :v video(s) found in the folder.', ['p' => $photos, 'v' => $videos])) . '</div></div>');
         }
         return self::input('link', __('Google Drive folder link'), $config['link'], 'url', ['maxlength' => 1000, 'placeholder' => 'https://drive.google.com/drive/folders/…'],
                 __('In Google Drive: right-click the folder → Share → General access "Anyone with the link" → Copy link.'), 'col-12')
@@ -100,7 +106,8 @@ final class GoogleDriveApp extends DisplayApp
 
     public function data(array $config, array $ctx): ?array
     {
-        $r = GoogleDrive::folder((string) $config['link']);
+        // Draft previews (typing in the form) never call Google; the TV page and its data refresh do.
+        $r = GoogleDrive::folder((string) $config['link'], empty($ctx['preview']));
         $items = [];
         foreach ($r['items'] as $i) {
             // 'show' (2.9.7): both / photos / videos; older items saved with videos = off show photos only.

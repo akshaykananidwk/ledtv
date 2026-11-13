@@ -19,7 +19,14 @@ final class GoogleDrive
 {
     public const CACHE_MIN = 3;
     public const MAX_FILES = 500;
-    public const TIMEOUT = 15;
+    /** 2.9.8: short — an admin / TV request never waits long for Google. */
+    public const TIMEOUT = 8;
+
+    /**
+     * 2.9.8: no request to Google (admin draft preview, sent while typing): cached lists only. Without it every
+     * key press waited for Google while holding the session lock, and the whole admin panel hung.
+     */
+    public static bool $readOnly = false;
     private const IMAGE_EXT = ['jpg', 'jpeg', 'png', 'webp', 'gif', 'bmp', 'heic', 'heif'];
     private const VIDEO_EXT = ['mp4', 'm4v', 'mov', 'webm', 'mkv', '3gp', 'avi'];
 
@@ -86,7 +93,10 @@ final class GoogleDrive
         if ($key !== '') {
             return 'https://www.googleapis.com/drive/v3/files/' . rawurlencode($fileId) . '?alt=media&supportsAllDrives=true&key=' . rawurlencode($key);
         }
-        return 'https://drive.google.com/uc?export=download&id=' . rawurlencode($fileId) . ($resourceKey !== '' ? '&resourcekey=' . rawurlencode($resourceKey) : '');
+        // 2.9.8: Google's current download host — streams with byte ranges (the video starts at once) and skips the
+        // "cannot scan for viruses" page of large files (confirm=t); the old uc?export=download link did neither.
+        return 'https://drive.usercontent.google.com/download?id=' . rawurlencode($fileId) . '&export=download&confirm=t'
+            . ($resourceKey !== '' ? '&resourcekey=' . rawurlencode($resourceKey) : '');
     }
 
     /**
@@ -105,8 +115,9 @@ final class GoogleDrive
         if (is_array($cached)) {
             return $cached;
         }
-        if (!$fetch) {
-            return ['items' => [], 'error' => ''];
+        if (!$fetch || self::$readOnly) {
+            $stale = Cache::get('gdrive', $cacheKey . ':last', 86400 * 7);
+            return is_array($stale) ? $stale : ['items' => [], 'error' => ''];
         }
         $res = self::apiKey() !== '' ? self::listApi($id, $rk) : self::listEmbedded($id, $rk);
         if ($res['error'] === '' && !$res['items']) {
@@ -141,7 +152,7 @@ final class GoogleDrive
     {
         $files = [];
         $token = '';
-        for ($page = 0; $page < 5; $page++) {
+        for ($page = 0; $page < 3; $page++) {
             $url = 'https://www.googleapis.com/drive/v3/files?' . http_build_query([
                 'q' => "'" . $id . "' in parents and trashed = false",
                 'fields' => 'nextPageToken,files(id,name,mimeType)',
