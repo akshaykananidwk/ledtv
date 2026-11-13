@@ -1,3 +1,7 @@
+# 2.9.9 — Google Drive links in Video / Image content (2026-11-13)
+
+- Full PHP suite: **669 tests, 26,546 assertions, 0 failures** (`GoogleDriveTest` +1: Drive file links in every form → media link on the TV, other links unchanged, folder / Docs links refused with a message, a file link saves).
+
 # 2.9.8 — Google Drive slideshow: no admin hang, faster videos (2026-11-13)
 
 - Full PHP suite: **668 tests, 26,534 assertions, 0 failures** (`GoogleDriveTest` +2: no Google request while typing / previewing — form and preview use the cache, save reads the folder once; admin preview over HTTP answers in < 3 s for an unreachable folder).
