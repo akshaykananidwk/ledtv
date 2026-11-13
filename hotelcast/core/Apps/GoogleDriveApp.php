@@ -42,6 +42,7 @@ final class GoogleDriveApp extends DisplayApp
             'interval' => 8,
             'fit' => 'contain',
             'videos' => true,
+            'show' => 'both',
             'video_max' => 0,
             'mute' => false,
             'shuffle' => false,
@@ -63,6 +64,7 @@ final class GoogleDriveApp extends DisplayApp
             'interval' => self::int($in, 'interval', 3, 120, 8),
             'fit' => self::choice($in, 'fit', ['contain', 'cover'], 'contain'),
             'videos' => self::bool($in, 'videos'),
+            'show' => self::choice($in, 'show', ['both', 'photos', 'videos'], 'both'),
             'video_max' => self::int($in, 'video_max', 0, 3600, 0),
             'mute' => self::bool($in, 'mute'),
             'shuffle' => self::bool($in, 'shuffle'),
@@ -89,7 +91,7 @@ final class GoogleDriveApp extends DisplayApp
             . self::input('interval', __('Photo changes every (seconds)'), $config['interval'], 'number', ['min' => 3, 'max' => 120], '', 'col-md-4')
             . self::select('fit', __('Photo size'), ['contain' => __('Whole photo (blurred edges)'), 'cover' => __('Fill the screen (may crop)')], $config['fit'], '', 'col-md-4')
             . self::input('video_max', __('Play videos for at most (seconds, 0 = whole video)'), $config['video_max'], 'number', ['min' => 0, 'max' => 3600], '', 'col-md-4')
-            . self::checkbox('videos', __('Play videos from the folder'), (bool) $config['videos'], 'col-md-4')
+            . self::select('show', __('Show from the folder'), ['both' => __('Photos and videos'), 'photos' => __('Photos only'), 'videos' => __('Videos only')], (string) $config['show'], '', 'col-md-4')
             . self::checkbox('mute', __('Videos without sound'), (bool) $config['mute'], 'col-md-4')
             . self::checkbox('shuffle', __('Shuffle'), (bool) $config['shuffle'], 'col-md-4')
             . self::checkbox('names', __('Show the file name'), (bool) $config['names'], 'col-md-4')
@@ -101,7 +103,9 @@ final class GoogleDriveApp extends DisplayApp
         $r = GoogleDrive::folder((string) $config['link']);
         $items = [];
         foreach ($r['items'] as $i) {
-            if ($i['kind'] === 'video' && !$config['videos']) {
+            // 'show' (2.9.7): both / photos / videos; older items saved with videos = off show photos only.
+            $show = !$config['videos'] && $config['show'] === 'both' ? 'photos' : (string) $config['show'];
+            if (($show === 'photos' && $i['kind'] === 'video') || ($show === 'videos' && $i['kind'] === 'image')) {
                 continue;
             }
             $items[] = ['id' => $i['id'], 'url' => $i['url'], 'kind' => $i['kind'], 'caption' => $config['names'] ? pathinfo($i['name'], PATHINFO_FILENAME) : ''];

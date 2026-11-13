@@ -22,4 +22,8 @@ return [
     'This Google Drive folder was not found. Copy the folder link again from Google Drive.' => 'આ Google Drive ફોલ્ડર મળ્યું નહીં. Google Drive માંથી ફોલ્ડરની લિંક ફરીથી કોપી કરો.',
     'This does not look like a Google API key.' => 'આ Google API key જેવી લાગતી નથી.',
     'Videos without sound' => 'વિડિયો અવાજ વગર',
+    'Show from the folder' => 'ફોલ્ડરમાંથી શું બતાવવું',
+    'Photos and videos' => 'ફોટા અને વિડિયો',
+    'Photos only' => 'ફક્ત ફોટા',
+    'Videos only' => 'ફક્ત વિડિયો',
 ];

@@ -154,6 +154,12 @@ final class GoogleDriveTest extends TestCase
         $noVid = DisplayAppsTestKit::createItem('gdrive_slideshow', ['link' => self::FOLDER, 'videos' => false]);
         [, $json] = DisplayAppsTestKit::data(self::$url, $noVid);
         $this->assertSame(['image', 'image'], array_column($json['data']['items'], 'kind'));
+        $onlyVid = DisplayAppsTestKit::createItem('gdrive_slideshow', ['link' => self::FOLDER, 'show' => 'videos']);
+        [, $json] = DisplayAppsTestKit::data(self::$url, $onlyVid);
+        $this->assertSame(['video'], array_column($json['data']['items'], 'kind'));
+        $onlyPhotos = DisplayAppsTestKit::createItem('gdrive_slideshow', ['link' => self::FOLDER, 'show' => 'photos']);
+        [, $json] = DisplayAppsTestKit::data(self::$url, $onlyPhotos);
+        $this->assertSame(['image', 'image'], array_column($json['data']['items'], 'kind'));
         $priv = DisplayAppsTestKit::createItem('gdrive_slideshow', ['link' => self::FOLDER_PRIVATE]);
         [, $json] = DisplayAppsTestKit::data(self::$url, $priv);
         $this->assertSame([], $json['data']['items']);
