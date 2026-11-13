@@ -141,7 +141,7 @@ body.embed .bar{display:none}body.embed .wrap{top:0}
       case 'video': el.appendChild(videoEl(item.url, item, single)); break;
       case 'stream':
         if (/^(rtsp|rtmp):/i.test(item.url)) {
-          el.innerHTML = '<div class="ph"><i class="bi bi-camera-video"></i><div class="h">' + esc(item.title) + '</div><div>' + esc(T.rtsp) + '</div><div class="u">' + esc(item.url) + '</div></div>';
+          el.innerHTML = '<div class="ph"><i class="bi bi-camera-video"></i><div class="h">' + esc(item.title) + '</div><div>' + esc(T.rtsp) + '</div><div class="u">' + esc(String(item.url).replace(/^([a-z]+:\/\/[^:@\/]+):[^@\/]*@/i, '$1:•••@')) + '</div></div>';
         } else { el.appendChild(videoEl(item.url, Object.assign({ loop: true }, item), true)); }
         break;
       case 'url':
