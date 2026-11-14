@@ -30,8 +30,8 @@ android {
         applicationId = "com.hotelcast.tv"
         minSdk = 21
         targetSdk = 34
-        versionCode = 17
-        versionName = "2.6.3"
+        versionCode = 18
+        versionName = "2.6.4"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
         buildConfigField(
@@ -90,8 +90,13 @@ dependencies {
     implementation("com.google.android.exoplayer:exoplayer-core:$exoVersion")
     implementation("com.google.android.exoplayer:exoplayer-ui:$exoVersion")
     implementation("com.google.android.exoplayer:exoplayer-hls:$exoVersion")
-    implementation("com.google.android.exoplayer:exoplayer-rtsp:$exoVersion")
+    // 2.6.4: the RTSP module is part of the app (app/src/main/java/com/google/android/exoplayer2/source/rtsp,
+    // ExoPlayer 2.19.1 sources, Apache-2.0) with a fix for Dahua / CP Plus camera URLs (RtspMediaTrack).
     implementation("com.google.android.exoplayer:exoplayer-dash:$exoVersion")
+    // Annotations used by the bundled RTSP sources (compile only, nothing added to the APK).
+    compileOnly("org.checkerframework:checker-qual:3.13.0")
+    compileOnly("org.checkerframework:checker-compat-qual:2.5.5")
+    compileOnly("com.google.errorprone:error_prone_annotations:2.18.0")
     // 2.6.2: rtmp:// live links (temple encoders / OBS); loaded by DefaultDataSource when present.
     implementation("com.google.android.exoplayer:extension-rtmp:$exoVersion")
 
