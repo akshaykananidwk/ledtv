@@ -1,3 +1,9 @@
+# 2.10.1 — TV app 2.6.3 with a new signing key (2026-11-14)
+
+- Full PHP suite: **675 tests, 26,657 assertions, 0 failures** (new `AppSignerTest` 2: old app never offered / served / pushed the new-key release, new app gets it, heartbeat stores app_signer, uploads accept both keys, old default setting follows the new key).
+- Android TV app 2.6.3 (versionCode 17): **262 unit tests, 0 failures**, lint 0 errors; signed v1 + v2 with the new release key (certificate SHA-256 2d12d492…28de52), verified with apksigner.
+- Not tested on a real TV in this environment.
+
 # 2.10.0 — CCTV cameras on the TVs (2026-11-13)
 
 - Full PHP suite: **673 tests, 26,641 assertions, 0 failures** (new `CctvTest` 4: RTSP address per brand with encoded login and port, channel lists, validation, page creates cameras + "All cameras" grid (sub stream, `max_decoders`) that reach the TV poll JSON, recorder list without password, delete a recorder, reception gets 403, CSRF, another customer's recorder untouched, translations).
