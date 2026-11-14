@@ -19,6 +19,27 @@ object DeviceInfo {
 
     val appVersion: String get() = BuildConfig.VERSION_NAME
     val appVersionCode: Int get() = BuildConfig.VERSION_CODE
+
+    @Volatile private var signer: String? = null
+
+    /**
+     * 2.6.3: SHA-256 (lower-case hex) of this app's signing certificate, sent as `app_signer` so the server only
+     * offers updates signed with the same key (an APK with another key cannot update this installation).
+     * Null when it cannot be read. Cached.
+     */
+    @Suppress("DEPRECATION")
+    fun appSigner(context: Context): String? = signer ?: try {
+        val pm = context.packageManager
+        val certs: Array<android.content.pm.Signature>? = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            val info = pm.getPackageInfo(context.packageName, android.content.pm.PackageManager.GET_SIGNING_CERTIFICATES)
+            info.signingInfo?.let { si -> if (si.hasMultipleSigners()) si.apkContentsSigners else si.signingCertificateHistory }
+        } else {
+            pm.getPackageInfo(context.packageName, android.content.pm.PackageManager.GET_SIGNATURES).signatures
+        }
+        certs?.lastOrNull()?.toByteArray()?.let { Utils.sha256Hex(it) }?.also { signer = it }
+    } catch (e: Exception) {
+        null
+    }
     val androidVersion: String get() = Build.VERSION.RELEASE ?: Build.VERSION.SDK_INT.toString()
     val model: String
         get() = listOfNotNull(Build.MANUFACTURER?.takeIf { it.isNotBlank() }, Build.MODEL)

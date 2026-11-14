@@ -126,6 +126,7 @@ object Registrar {
                 registrationKey = key,
                 appVersion = DeviceInfo.appVersion,
                 appVersionCode = DeviceInfo.appVersionCode,
+                appSigner = DeviceInfo.appSigner(context),
                 androidVersion = DeviceInfo.androidVersion,
                 model = DeviceInfo.model,
                 ipAddress = withContext(Dispatchers.IO) { DeviceInfo.ipAddress() },

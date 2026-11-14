@@ -301,6 +301,7 @@ object SyncManager : CommandActions {
         val body = HeartbeatRequest(
             appVersion = DeviceInfo.appVersion,
             appVersionCode = DeviceInfo.appVersionCode,
+            appSigner = DeviceInfo.appSigner(app),
             androidVersion = DeviceInfo.androidVersion,
             model = DeviceInfo.model,
             ipAddress = DeviceInfo.ipAddress(),

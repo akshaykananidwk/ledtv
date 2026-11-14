@@ -148,7 +148,7 @@ final class PlatformApkTest extends TestCase
             $r = ApkInfo::read($files[0]);
             $this->assertSame('com.hotelcast.tv', $r['package']);
             $this->assertGreaterThanOrEqual(13, $r['version_code']);
-            $this->assertSame(AppReleases::DEFAULT_SIGNER, $r['signer_sha256']);
+            $this->assertContains($r['signer_sha256'], [AppReleases::DEFAULT_SIGNER, AppReleases::LEGACY_SIGNER]);
         }
         $txt = tempnam(sys_get_temp_dir(), 'na');
         file_put_contents($txt, 'not a zip');

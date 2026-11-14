@@ -87,6 +87,7 @@ final class DeviceManager
             'last_ping' => now(),
         ];
         $fields += self::platformFields($in); // 2.4: android | web (web player), migration 026
+        $fields += self::signerField($in);    // 2.10.1: signing key of the TV app, migration 038
         if ($existing) {
             DB::update('devices', $fields + ['registered_at' => now()], 'id = :id', ['id' => $existing['id']]);
             $deviceId = (int) $existing['id'];
@@ -201,8 +202,20 @@ final class DeviceManager
         return ['command_id' => $cid, 'status' => $status];
     }
 
+    /** 2.10.1: ['app_signer' => sha256] when the TV app reports its signing key and migration 038 ran. */
+    public static function signerField(array $in): array
+    {
+        static $has = null;
+        $has ??= Migrator::hasColumn(DB::pdo(), 'devices', 'app_signer');
+        $s = strtolower(trim((string) ($in['app_signer'] ?? '')));
+        return $has && preg_match('/^[0-9a-f]{64}$/', $s) ? ['app_signer' => $s] : [];
+    }
+
     public static function heartbeat(array $device, array $in): array
     {
+        if ($sf = self::signerField($in)) {
+            DB::update('devices', $sf, 'id = :id', ['id' => $device['id']]);
+        }
         DB::update('devices', [
             'app_version' => self::str($in['app_version'] ?? $device['app_version'], 20),
             'app_version_code' => isset($in['app_version_code']) ? (int) $in['app_version_code'] : $device['app_version_code'],

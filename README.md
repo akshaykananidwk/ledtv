@@ -32,6 +32,15 @@ screen-wise schedule karo, emergency message moklo, TV reboot/update karo.*
 | Android TV app | [`android/`](android) | Kotlin, ExoPlayer 2.19, Retrofit, OkHttp, Glide, WorkManager — min SDK 21, target 34 |
 | Documentation | [`docs/`](docs) | Install guide, TV setup, admin guide, API, developer guide (tenancy + extension points), security, test report |
 
+## What's new in 2.10.1 — TV app 2.6.3 with a new signing key
+
+TV app **2.6.3** (versionCode 17): CCTV grids decode up to their number of cameras; the app reports its signing key.
+
+| Change | Detail |
+|---|---|
+| **New release key** | The original signing key was lost (it lived only in an old build machine). 2.6.3 is signed with a new key (SHA-256 `2d12d492…28de52`). An APK with another key cannot update an installed app: **TVs on 2.6.2 or older must uninstall the old app and install 2.6.3 once** (then set up with the QR code again). Later versions update normally |
+| **Safe updates per key** | Migration 038 `devices.app_signer`; TV app 2.6.3 sends `app_signer`. The server offers / pushes / serves a release only when it can be installed over the TV's app: old apps never get a new-key release (they would be stuck on "Update required"), new apps only get new-key releases. APK Manager accepts uploads signed with either key |
+
 ## What's new in 2.10 — CCTV cameras on the TVs
 
 | Change | Where |

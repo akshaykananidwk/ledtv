@@ -31,6 +31,8 @@ data class RegisterRequest(
     @SerializedName("registration_key") val registrationKey: String,
     @SerializedName("app_version") val appVersion: String? = null,
     @SerializedName("app_version_code") val appVersionCode: Int? = null,
+    /** 2.6.3: SHA-256 of the signing certificate (DeviceInfo.appSigner). */
+    @SerializedName("app_signer") val appSigner: String? = null,
     @SerializedName("android_version") val androidVersion: String? = null,
     @SerializedName("model") val model: String? = null,
     @SerializedName("ip_address") val ipAddress: String? = null,
@@ -117,6 +119,8 @@ data class HeartbeatRequest(
     @SerializedName("uptime_sec") val uptimeSec: Long,
     /** 2.4 TV health (DeviceHealth.collect): storage, RAM, temperature, Wi-Fi, resolution… */
     @SerializedName("health") val health: Map<String, Any?>? = null,
+    /** 2.6.3: SHA-256 of the signing certificate (DeviceInfo.appSigner). */
+    @SerializedName("app_signer") val appSigner: String? = null,
 )
 
 data class HeartbeatResponse(

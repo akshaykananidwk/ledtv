@@ -17,7 +17,10 @@ final class AppReleases
 {
     public const PACKAGE = 'com.hotelcast.tv';
     /** SHA-256 of the release signing certificate (android/keystore). Platform setting platform_apk_signer overrides it; '-' disables the check. */
-    public const DEFAULT_SIGNER = 'b0f2c89990dcc8376790e2d6add7f9830f3990f1e8e44abb29ef7eb1dc1a156c';
+    /** 2.10.1: release key of TV app 2.6.3+ (the original key was lost; see LEGACY_SIGNER). */
+    public const DEFAULT_SIGNER = '2d12d492e7da2dfb219b1210d7f378fdf1283cf7d1b9390a2b340863d128de52';
+    /** Key of TV apps up to 2.6.2 (and of every TV that does not report app_signer). */
+    public const LEGACY_SIGNER = 'b0f2c89990dcc8376790e2d6add7f9830f3990f1e8e44abb29ef7eb1dc1a156c';
     public const MAX_MB = 300;
 
     private static ?bool $available = null;
@@ -37,7 +40,38 @@ final class AppReleases
     public static function expectedSigner(): string
     {
         $v = strtolower(trim((string) Settings::platform('platform_apk_signer', self::DEFAULT_SIGNER)));
+        if ($v === self::LEGACY_SIGNER) {
+            $v = self::DEFAULT_SIGNER; // a setting saved with the old default follows the new release key
+        }
         return $v === '-' || $v === 'off' ? '' : $v;
+    }
+
+    /** 2.10.1: signers an upload may have — the expected one and the old key (old builds stay uploadable). */
+    public static function acceptedSigners(): array
+    {
+        $e = self::expectedSigner();
+        return $e === '' ? [] : array_values(array_unique([$e, self::DEFAULT_SIGNER, self::LEGACY_SIGNER]));
+    }
+
+    /**
+     * 2.10.1: signing key of the app installed on a TV (reported app_signer), '' when the TV did not report one —
+     * an app up to 2.6.2, which all carry the old key (LEGACY_SIGNER).
+     */
+    public static function deviceSigner(array $device): string
+    {
+        $s = strtolower((string) ($device['app_signer'] ?? ''));
+        return preg_match('/^[0-9a-f]{64}$/', $s) ? $s : '';
+    }
+
+    /**
+     * SQL: release a can be installed over an app signed with :{$p}s. Known key → same key (or release key
+     * unknown); unknown key ('' = old app) → any release not signed with the new release key.
+     */
+    private static function signerSql(string $p, string $signer): string
+    {
+        return $signer !== ''
+            ? "(a.signer_sha256 IS NULL OR a.signer_sha256 = '' OR a.signer_sha256 = :{$p}s)"
+            : "(a.signer_sha256 IS NULL OR a.signer_sha256 <> :{$p}s)";
     }
 
     // ------------------------------------------------------------------ queries
@@ -47,29 +81,31 @@ final class AppReleases
      * 2.9.1: only Super Admin (platform) releases count — customers can no longer upload APKs, and old
      * customer uploads are ignored.
      */
-    private static function eligibleSql(string $p = 'eh'): string
+    private static function eligibleSql(string $p = 'eh', ?string $signer = null): string
     {
         if (!self::available()) {
             return '(a.hotel_id IS NULL)';
         }
-        return "(a.hotel_id IS NULL AND (a.rollout = 'all' OR EXISTS (SELECT 1 FROM apk_release_hotels x WHERE x.release_id = a.id AND x.hotel_id = :{$p}2)))";
+        return "(a.hotel_id IS NULL AND (a.rollout = 'all' OR EXISTS (SELECT 1 FROM apk_release_hotels x WHERE x.release_id = a.id AND x.hotel_id = :{$p}2)))"
+            . ($signer !== null ? ' AND ' . self::signerSql($p, $signer) : '');
     }
 
-    private static function eligibleParams(int $hotelId, string $p = 'eh'): array
+    private static function eligibleParams(int $hotelId, string $p = 'eh', ?string $signer = null): array
     {
-        return self::available() ? [$p . '2' => $hotelId] : [];
+        return self::available() ? [$p . '2' => $hotelId] + ($signer !== null ? [$p . 's' => $signer !== '' ? $signer : self::DEFAULT_SIGNER] : []) : [];
     }
 
     /**
      * Release state for a customer: ['latest' => row|null (highest versionCode offered), 'required_code' => int
      * (highest required versionCode, 0 = none)].
      */
-    public static function forHotel(int $hotelId): array
+    public static function forHotel(int $hotelId, ?string $signer = null): array
     {
+        // $signer (2.10.1): only releases signed with that key (a TV can install only those); null = any key.
         $order = self::available() ? 'a.version_code DESC, (a.hotel_id IS NULL) DESC, a.id DESC' : 'a.version_code DESC, a.id DESC';
-        $latest = DB::one('SELECT a.* FROM apk_releases a WHERE ' . self::eligibleSql() . ' ORDER BY ' . $order . ' LIMIT 1', self::eligibleParams($hotelId));
+        $latest = DB::one('SELECT a.* FROM apk_releases a WHERE ' . self::eligibleSql('eh', $signer) . ' ORDER BY ' . $order . ' LIMIT 1', self::eligibleParams($hotelId, 'eh', $signer));
         $required = self::available()
-            ? (int) (DB::value('SELECT MAX(a.version_code) FROM apk_releases a WHERE a.is_required = 1 AND ' . self::eligibleSql(), self::eligibleParams($hotelId)) ?? 0)
+            ? (int) (DB::value('SELECT MAX(a.version_code) FROM apk_releases a WHERE a.is_required = 1 AND ' . self::eligibleSql('eh', $signer), self::eligibleParams($hotelId, 'eh', $signer)) ?? 0)
             : 0;
         return ['latest' => $latest ?: null, 'required_code' => $required];
     }
@@ -77,13 +113,13 @@ final class AppReleases
     /** Release row a TV may download (own customer's or a platform release rolled out to it), else null. */
     public static function findForDevice(int $releaseId, array $device): ?array
     {
-        return self::findForHotel($releaseId, (int) $device['hotel_id']);
+        return self::findForHotel($releaseId, (int) $device['hotel_id'], self::deviceSigner($device));
     }
 
     /** Release offered to a customer (its own, or a platform release rolled out to it), else null. */
-    public static function findForHotel(int $releaseId, int $hotelId): ?array
+    public static function findForHotel(int $releaseId, int $hotelId, ?string $signer = null): ?array
     {
-        $row = DB::one('SELECT a.* FROM apk_releases a WHERE a.id = :id AND ' . self::eligibleSql(), ['id' => $releaseId] + self::eligibleParams($hotelId));
+        $row = DB::one('SELECT a.* FROM apk_releases a WHERE a.id = :id AND ' . self::eligibleSql('eh', $signer), ['id' => $releaseId] + self::eligibleParams($hotelId, 'eh', $signer));
         return $row ?: null;
     }
 
@@ -96,7 +132,7 @@ final class AppReleases
         if (DeviceManager::isWeb($device)) {
             return null;
         }
-        $st = self::forHotel((int) $device['hotel_id']);
+        $st = self::forHotel((int) $device['hotel_id'], self::deviceSigner($device));
         $r = $st['latest'];
         if (!$r) {
             return null;
@@ -265,7 +301,7 @@ final class AppReleases
             if ($info['signer_sha256'] === null) {
                 throw new RuntimeException(__('The APK is not signed with APK Signature Scheme v2/v3. Build it with ./gradlew assembleRelease.'));
             }
-            if (!hash_equals($signer, $info['signer_sha256'])) {
+            if (!in_array(strtolower((string) $info['signer_sha256']), self::acceptedSigners(), true)) {
                 throw new RuntimeException(__('The APK is signed with a different key (:s…). TVs would refuse it; sign it with the release key.', ['s' => substr($info['signer_sha256'], 0, 12)]));
             }
         }
@@ -350,14 +386,17 @@ final class AppReleases
     public static function pushToAll(?int $userId = null): array
     {
         $out = ['tvs' => 0, 'customers' => 0, 'up_to_date' => 0, 'no_release' => 0];
-        $rows = DB::all("SELECT d.id, d.hotel_id, d.room_id, d.app_version_code FROM devices d JOIN hotels h ON h.id = d.hotel_id
+        $rows = DB::all("SELECT d.*, d.id, d.hotel_id, d.room_id, d.app_version_code FROM devices d JOIN hotels h ON h.id = d.hotel_id
                           WHERE d.is_revoked = 0 AND d.status = 'online' AND d.room_id IS NOT NULL" . DeviceManager::notWebSql('d.platform') . ' ORDER BY d.hotel_id, d.id');
         $byHotel = [];
         foreach ($rows as $r) {
-            $byHotel[(int) $r['hotel_id']][] = $r;
+            // 2.10.1: per customer and signing key — a TV only gets an APK signed with its own key.
+            $byHotel[(int) $r['hotel_id'] . '|' . self::deviceSigner($r)][] = $r;
         }
-        foreach ($byHotel as $hid => $devs) {
-            $rel = self::forHotel($hid)['latest'];
+        foreach ($byHotel as $hk => $devs) {
+            [$hid, $sig] = explode('|', (string) $hk);
+            $hid = (int) $hid;
+            $rel = self::forHotel($hid, $sig)['latest'];
             if (!$rel) {
                 $out['no_release'] += count($devs);
                 continue;
