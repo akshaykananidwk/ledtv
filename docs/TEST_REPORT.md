@@ -1,3 +1,8 @@
+# TV app 2.6.4 / 2.6.5 — CCTV RTSP fixes (2026-11-14)
+
+- Root cause from the customer TV log bundle: `UnknownHostException` for a host made of part of the camera password (password with `@`).
+- Android: **264 unit tests, 0 failures** (new `RtspDahuaTest` 2: track control after the query, authority without user info for passwords with `@`), lint 0 errors; signed v1 + v2 with the 2.6.3 key (2d12d492…28de52). Server unchanged (2.10.1).
+
 # 2.10.1 — TV app 2.6.3 with a new signing key (2026-11-14)
 
 - Full PHP suite: **675 tests, 26,657 assertions, 0 failures** (new `AppSignerTest` 2: old app never offered / served / pushed the new-key release, new app gets it, heartbeat stores app_signer, uploads accept both keys, old default setting follows the new key).

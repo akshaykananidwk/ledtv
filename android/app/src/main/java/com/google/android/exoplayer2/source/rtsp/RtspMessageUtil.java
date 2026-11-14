@@ -12,6 +12,8 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
+ * Modified by Krishna Cloud TV (2.6.4): removeUserInfo() keeps passwords with "@" out of the host.
  */
 package com.google.android.exoplayer2.source.rtsp;
 
@@ -197,11 +199,18 @@ import java.util.regex.Pattern;
       return uri;
     }
 
-    // The Uri must include a "@" if the user info is non-null.
-    String authorityWithUserInfo = checkNotNull(uri.getAuthority());
+    // Krishna Cloud TV patch (2.6.4): the *encoded* authority, split at the last "@". The decoded
+    // authority split at the first "@" broke on passwords containing "@" ("admin:H0me%40%232oz4@
+    // 192.168.10.2" became host "#2oz4": "Unable to resolve host", the camera stayed black).
+    String authorityWithUserInfo = checkNotNull(uri.getEncodedAuthority());
     checkArgument(authorityWithUserInfo.contains("@"));
-    String authority = Util.split(authorityWithUserInfo, "@")[1];
-    return uri.buildUpon().encodedAuthority(authority).build();
+    return uri.buildUpon().encodedAuthority(authorityWithoutUserInfo(authorityWithUserInfo)).build();
+  }
+
+  /** "user:p%40ss@host:554" → "host:554" (everything after the last "@"; pure, unit tested). */
+  public static String authorityWithoutUserInfo(String encodedAuthority) {
+    int at = encodedAuthority.lastIndexOf('@');
+    return at < 0 ? encodedAuthority : encodedAuthority.substring(at + 1);
   }
 
   /**

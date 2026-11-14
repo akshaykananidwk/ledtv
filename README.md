@@ -32,6 +32,17 @@ screen-wise schedule karo, emergency message moklo, TV reboot/update karo.*
 | Android TV app | [`android/`](android) | Kotlin, ExoPlayer 2.19, Retrofit, OkHttp, Glide, WorkManager — min SDK 21, target 34 |
 | Documentation | [`docs/`](docs) | Install guide, TV setup, admin guide, API, developer guide (tenancy + extension points), security, test report |
 
+## TV app 2.6.4 / 2.6.5 — CCTV cameras (Dahua / CP Plus) play
+
+The RTSP module of ExoPlayer 2.19.1 (Apache-2.0) is now part of the app (`android/app/src/main/java/com/google/android/exoplayer2/source/rtsp`) with two fixes:
+
+| Version | Fix |
+|---|---|
+| **2.6.5** (versionCode 19) | The TV log showed `Unable to resolve host "#2oz4"`: `RtspMessageUtil.removeUserInfo()` split the *decoded* authority at the first `@`, so a camera password containing `@` became the host. Now the encoded authority is split at the last `@` (`authorityWithoutUserInfo`) — the reason VLC played the link and the TV did not |
+| **2.6.4** (versionCode 18) | `RtspMediaTrack.resolveControl()`: for a session URL with a query (`/cam/realmonitor?channel=1&subtype=0`) the track control is appended after the query, as live555 / VLC do |
+
+Browsers (admin preview, web player) cannot play RTSP at all.
+
 ## What's new in 2.10.1 — TV app 2.6.3 with a new signing key
 
 TV app **2.6.3** (versionCode 17): CCTV grids decode up to their number of cameras; the app reports its signing key.
