@@ -1,3 +1,7 @@
+# 2.10.3 — mandatory TV app updates (2026-11-20)
+
+- Full PHP suite: **677 tests, 26,682 assertions, 0 failures** (`AppSignerTest` +1: old-key TV below a required release gets only "New TV app required", new-key TV "TV app update" until it runs the required version, then content; non-required releases never block. `PlatformApkTest`: a required upload pushes UPDATE_APP at once).
+
 # TV app 2.6.6 — video in Live view (2026-11-20)
 
 - Android: **264 unit tests, 0 failures**, lint 0 errors; signed with the 2.6.3 key (2d12d492…28de52). The surface copy runs on the TV only (no device here): not tested on a real TV.
