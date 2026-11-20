@@ -160,6 +160,28 @@ final class PlatformCreditTest extends TestCase
         $this->assertStringNotContainsString('AK Computer', (string) ($t['text'] ?? ''));
     }
 
+    public function test6FixedReadableStyle(): void
+    {
+        Settings::setPlatform(PlatformCredit::K_ENABLED, '1'); // test4 switched it off
+        Settings::flush();
+        // A customer ticker in white on white, tiny, at the top: with the credit the bar is always black / gold / bottom.
+        $c = ['mode' => 'assigned', 'overlay' => ['ticker' => Tickers::payload(['bg_color' => '#FFFFFF', 'text_color' => '#FFFFFF', 'font_size' => 14, 'height' => 32, 'position' => 'top', 'reserve_space' => 0], ['Sale today'])]];
+        PlatformCredit::apply($c, ['id' => 1]);
+        $t = $c['overlay']['ticker'];
+        $this->assertSame('#000000', $t['bg_color']);
+        $this->assertSame('#FFD700', $t['text_color']);
+        $this->assertSame('bottom', $t['position']);
+        $this->assertTrue($t['reserve_space']);
+        $this->assertSame(28, $t['font_size']);
+        $this->assertSame(60, $t['height']);
+        $this->assertStringStartsWith('Sale today', $t['text']);
+        // A bigger customer font / bar is kept.
+        $c = ['mode' => 'assigned', 'overlay' => ['ticker' => Tickers::payload(['font_size' => 40, 'height' => 90], ['Big'])]];
+        PlatformCredit::apply($c, ['id' => 1]);
+        $this->assertSame(40, $c['overlay']['ticker']['font_size']);
+        $this->assertSame(90, $c['overlay']['ticker']['height']);
+    }
+
     public function test5EmptyPhoneDropsDanglingIcon(): void
     {
         $line = PlatformCredit::line(['enabled' => true, 'gu' => 'કોલ કરો 📞 :phone', 'en' => 'Call 📞 :phone', 'phone' => '']);

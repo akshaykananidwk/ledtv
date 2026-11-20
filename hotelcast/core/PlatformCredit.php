@@ -20,6 +20,9 @@ final class PlatformCredit
     public const K_PHONE = 'platform_credit_phone';
     public const MAX = 300;
     private const NO_CREDIT_MODES = ['suspended', 'off', 'emergency'];
+    /** 2.10.2: fixed ticker style while the credit line is shown (black bar, gold text, bottom, video above it). */
+    public const STYLE = ['bg_color' => '#000000', 'text_color' => '#FFD700', 'font_size' => 28, 'height' => 60,
+        'position' => 'bottom', 'reserve_space' => true];
 
     public const DEFAULT_GU = '🖥️ આ ડિજિટલ TV સિસ્ટમ :brand દ્વારા બનાવવામાં આવી છે — તમારા મંદિર, હોટલ, દુકાન કે ઓફિસ માટે આવી સિસ્ટમ જોઈએ તો કોલ કરો 📞 :phone';
     public const DEFAULT_EN = 'Digital TV system by :brand — want one for your business? Call 📞 :phone';
@@ -97,6 +100,12 @@ final class PlatformCredit
         } else {
             $content['overlay']['ticker'] = Tickers::payload([], [$line]);
         }
+        // 2.10.2: fixed, readable style whenever the credit is on the bar — a customer ticker style (e.g. white text
+        // on white, a tiny bar) made the credit unreadable. Customers cannot change these while the credit is on.
+        $content['overlay']['ticker'] = array_merge($content['overlay']['ticker'], self::STYLE, [
+            'font_size' => max(self::STYLE['font_size'], (int) ($content['overlay']['ticker']['font_size'] ?? 0)),
+            'height' => max(self::STYLE['height'], (int) ($content['overlay']['ticker']['height'] ?? 0)),
+        ]);
     }
 
     /** Validate and save the Super Admin form. @return string[] errors */

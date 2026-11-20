@@ -32,6 +32,12 @@ screen-wise schedule karo, emergency message moklo, TV reboot/update karo.*
 | Android TV app | [`android/`](android) | Kotlin, ExoPlayer 2.19, Retrofit, OkHttp, Glide, WorkManager — min SDK 21, target 34 |
 | Documentation | [`docs/`](docs) | Install guide, TV setup, admin guide, API, developer guide (tenancy + extension points), security, test report |
 
+## What's new in 2.10.2 — the credit line is always readable
+
+The ticker took the customer's own style (one customer had white text on a white bar), so the platform credit could not
+be read. While the credit line is on, the bar now always uses a fixed style: black bar, gold text, at the bottom, video
+above it, at least 28 px text / 60 px bar (`PlatformCredit::STYLE`). Customers cannot change it.
+
 ## TV app 2.6.4 / 2.6.5 — CCTV cameras (Dahua / CP Plus) play
 
 The RTSP module of ExoPlayer 2.19.1 (Apache-2.0) is now part of the app (`android/app/src/main/java/com/google/android/exoplayer2/source/rtsp`) with two fixes:
