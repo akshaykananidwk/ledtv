@@ -1,3 +1,7 @@
+# 2.10.2 — credit line always readable (2026-11-20)
+
+- Full PHP suite: **676 tests, 26,666 assertions, 0 failures** (`PlatformCreditTest` +1: white-on-white / tiny / top customer ticker → black bar, gold text, bottom, video above, min 28 px / 60 px; larger customer sizes kept).
+
 # TV app 2.6.4 / 2.6.5 — CCTV RTSP fixes (2026-11-14)
 
 - Root cause from the customer TV log bundle: `UnknownHostException` for a host made of part of the camera password (password with `@`).
