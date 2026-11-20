@@ -150,6 +150,36 @@ final class AppReleases
         ];
     }
 
+    /**
+     * 2.10.3 mandatory updates: the "update required" screen for a TV whose installed app is older than the highest
+     * required release offered to its customer (any key), null when it may play. installable = true when a required
+     * release signed with the TV's key exists (the TV is updating itself: UPDATE_APP / start gate), false when it
+     * cannot update by itself (old signing key: the old app must be uninstalled and the new one installed).
+     * @return array{title: string, message: string, installable: bool}|null
+     */
+    public static function updateBlock(array $device): ?array
+    {
+        if (!self::available() || DeviceManager::isWeb($device) || $device['app_version_code'] === null) {
+            return null;
+        }
+        $installed = (int) $device['app_version_code'];
+        $hid = (int) $device['hotel_id'];
+        $required = (int) (DB::value('SELECT MAX(a.version_code) FROM apk_releases a WHERE a.is_required = 1 AND ' . self::eligibleSql(), self::eligibleParams($hid)) ?? 0);
+        if ($required <= $installed) {
+            return null;
+        }
+        $installable = self::forHotel($hid, self::deviceSigner($device))['required_code'] > $installed;
+        $lang = (string) Settings::get('default_language', 'en');
+        $short = preg_replace('#^https?://#', '', rtrim(base_url('app'), '/'));
+        return $installable
+            ? ['title' => I18n::translate('TV app update', $lang),
+                'message' => I18n::translate('A new version of the TV app is being installed. Content comes back by itself when the update is done.', $lang),
+                'installable' => true]
+            : ['title' => I18n::translate('New TV app required', $lang),
+                'message' => I18n::translate('This TV needs the new TV app. Uninstall the old app, then install the new one from :url (Downloader app) and scan the QR code again.', $lang, ['url' => $short]),
+                'installable' => false];
+    }
+
     /** Platform releases, newest first, with uploader name, installed count and selected customers. */
     public static function platformReleases(): array
     {

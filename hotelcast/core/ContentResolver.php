@@ -36,6 +36,15 @@ final class ContentResolver
     public static function forDevice(array $room, array $device): array
     {
         $content = self::forRoom($room);
+        // 2.10.3 mandatory updates: a TV older than the required app shows only the update screen (no content).
+        if (($block = AppReleases::updateBlock($device)) !== null) {
+            $off = ['mode' => 'suspended', 'suspended' => ['title' => $block['title'], 'message' => $block['message']], 'items' => [],
+                'overlay' => ['ticker' => null] + (array) ($content['overlay'] ?? []), 'branding' => $content['branding'] ?? null, 'hotel' => $content['hotel'] ?? null];
+            $off['overlay']['ticker'] = null;
+            $off['hash'] = sha1('update-block|' . json_out($off));
+            $off['generated_at'] = date('c');
+            return $off;
+        }
         return Layouts::legacyDevice($device) ? Layouts::downgradeContent($content) : $content;
     }
 

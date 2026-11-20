@@ -59,4 +59,9 @@ return [
     'required' => 'ફરજિયાત',
     'required update' => 'ફરજિયાત અપડેટ',
     'Only the Super Admin can update the TV app.' => 'TV એપ ફક્ત સુપર એડમીન જ અપડેટ કરી શકે છે.',
+    'TV app update' => 'TV એપ અપડેટ',
+    'A new version of the TV app is being installed. Content comes back by itself when the update is done.' => 'TV એપનું નવું વર્ઝન ઇન્સ્ટોલ થાય છે. અપડેટ પૂરું થાય એટલે કન્ટેન્ટ જાતે પાછું આવી જશે.',
+    'New TV app required' => 'નવી TV એપ જરૂરી છે',
+    'This TV needs the new TV app. Uninstall the old app, then install the new one from :url (Downloader app) and scan the QR code again.' => 'આ TV માં નવી TV એપ જોઈએ. જૂની એપ અનઇન્સ્ટોલ કરો, પછી :url (Downloader એપ) પરથી નવી ઇન્સ્ટોલ કરો અને QR કોડ ફરી સ્કેન કરો.',
+    'App v:v uploaded as a required update and sent to :n TV(s) now. TVs that are off install it when they start; until then they show only the update screen.' => 'એપ v:v ફરજિયાત અપડેટ તરીકે અપલોડ થઈ અને હમણાં :n TV ને મોકલાઈ. બંધ TV ચાલુ થાય ત્યારે ઇન્સ્ટોલ કરશે; ત્યાં સુધી તેમાં ફક્ત અપડેટ સ્ક્રીન દેખાશે.',
 ];

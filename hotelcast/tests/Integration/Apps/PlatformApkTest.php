@@ -348,6 +348,9 @@ final class PlatformApkTest extends TestCase
         // "Update all TVs now": online Android TVs with an older app; never the web player; tv102 is current.
         DB::query("UPDATE devices SET status = 'offline' WHERE id = :id", ['id' => self::$tv['tvA2']['id']]);
         DB::query("UPDATE devices SET status = 'online', last_ping = NOW() WHERE id IN (:a, :b, :c, :d)", ['a' => self::$tv['tv101']['id'], 'b' => self::$tv['tvA1']['id'], 'c' => self::$tv['tvB1']['id'], 'd' => self::$tv['tvW']['id']]);
+        // 2.10.3: required uploads already pushed UPDATE_APP when they were uploaded; start from a clean queue.
+        $this->assertGreaterThan(0, (int) DB::value("SELECT COUNT(*) FROM device_commands WHERE command = 'UPDATE_APP'"), 'required upload pushed at once');
+        DB::query("DELETE FROM device_commands WHERE command = 'UPDATE_APP'");
         [$s] = self::as($root)->post('platform_apk.php', ['op' => 'push_all']);
         $this->assertSame(302, $s);
         $cmds = DB::all("SELECT device_id, payload FROM device_commands WHERE command = 'UPDATE_APP' AND status = 'pending' ORDER BY device_id");

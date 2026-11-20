@@ -55,6 +55,11 @@ if (is_post()) {
                 }
                 $id = AppReleases::upload($_FILES['apk'], papk_options(), Auth::id());
                 $r = DB::one('SELECT version_name, version_code, is_required FROM apk_releases WHERE id = :id', ['id' => $id]);
+                if ((int) $r['is_required']) {
+                    // 2.10.3: a required update goes to every online TV right away (no restart needed).
+                    $pushed = AppReleases::pushToAll(Auth::id());
+                    papk_done(true, __('App v:v uploaded as a required update and sent to :n TV(s) now. TVs that are off install it when they start; until then they show only the update screen.', ['v' => $r['version_name'], 'n' => $pushed['tvs']]));
+                }
                 papk_done(true, (int) $r['is_required']
                     ? __('App v:v uploaded as a required update. Every TV installs it the next time the app starts; use "Update all TVs now" to update running TVs immediately.', ['v' => $r['version_name']])
                     : __('App v:v uploaded. TVs can install it with "Update all TVs now".', ['v' => $r['version_name']]));

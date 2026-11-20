@@ -32,6 +32,13 @@ screen-wise schedule karo, emergency message moklo, TV reboot/update karo.*
 | Android TV app | [`android/`](android) | Kotlin, ExoPlayer 2.19, Retrofit, OkHttp, Glide, WorkManager — min SDK 21, target 34 |
 | Documentation | [`docs/`](docs) | Install guide, TV setup, admin guide, API, developer guide (tenancy + extension points), security, test report |
 
+## What's new in 2.10.3 — mandatory TV app updates
+
+| Change | Detail |
+|---|---|
+| **Required update = sent at once** | Uploading an APK as *Required update* in Super Admin → APK Manager pushes UPDATE_APP to every online TV immediately (TVs that are off install it when they start) |
+| **Old app shows nothing else** | A TV whose app is older than the highest required release gets only an update screen instead of its content (`AppReleases::updateBlock`, ContentResolver::forDevice): "TV app update — being installed" when it can update itself, "New TV app required — uninstall the old app, install from `<site>/app`" when it carries the old signing key and cannot. Content comes back as soon as the TV runs the required version. Web players are never blocked |
+
 ## TV app 2.6.6 — Live view shows the video
 
 TV app **2.6.6** (versionCode 20). Live view / screenshots copied the window only; videos play on a separate surface

@@ -98,4 +98,39 @@ final class AppSignerTest extends TestCase
         Settings::flush();
         $this->assertSame(AppReleases::DEFAULT_SIGNER, AppReleases::expectedSigner());
     }
+
+    public function testOutdatedTvsShowOnlyTheUpdateScreen(): void
+    {
+        $poll = static function (string $k): array {
+            $t = self::$tv[$k];
+            Cache::clear();
+            [$s, $j] = TestEnv::http('GET', self::$url . 'api/device/command/' . $t['uid'] . '?hash=x', null, ['Authorization: Bearer ' . $t['token'], 'X-Device-Id: ' . $t['uid']]);
+            self::assertSame(200, $s);
+            return $j['data']['content'];
+        };
+        DB::query('DELETE FROM apk_releases');
+        DB::query("UPDATE devices SET app_signer = NULL, app_version_code = 16 WHERE device_uid = 'tv-signer-old-0001'");
+        DB::query("UPDATE devices SET app_signer = :s, app_version_code = 17 WHERE device_uid = 'tv-signer-new-0001'", ['s' => AppReleases::DEFAULT_SIGNER]);
+        // No required release above their versions: normal content.
+        $this->assertNotSame('suspended', $poll('old')['mode'] ?? '');
+        // Required 2.6.6 (code 20, new key): the old-key TV cannot install it → "new TV app required", no content.
+        self::release(20, AppReleases::DEFAULT_SIGNER, true);
+        $c = $poll('old');
+        $this->assertSame('suspended', $c['mode']);
+        $this->assertSame('New TV app required', $c['suspended']['title']);
+        $this->assertStringContainsString('/app', $c['suspended']['message']);
+        $this->assertSame([], $c['items']);
+        $this->assertNull($c['overlay']['ticker']);
+        // The new-key TV (17 < 20) is updating itself: update screen meanwhile.
+        $c = $poll('new');
+        $this->assertSame('suspended', $c['mode']);
+        $this->assertSame('TV app update', $c['suspended']['title']);
+        // Updated → content again.
+        DB::query("UPDATE devices SET app_version_code = 20 WHERE device_uid = 'tv-signer-new-0001'");
+        $this->assertNotSame('suspended', $poll('new')['mode'] ?? '');
+        // A non-required newer release never blocks.
+        DB::query('UPDATE apk_releases SET is_required = 0');
+        $this->assertNotSame('suspended', $poll('old')['mode'] ?? '');
+        DB::query('DELETE FROM apk_releases');
+    }
 }
