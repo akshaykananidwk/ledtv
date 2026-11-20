@@ -1,3 +1,7 @@
+# TV app 2.6.6 — video in Live view (2026-11-20)
+
+- Android: **264 unit tests, 0 failures**, lint 0 errors; signed with the 2.6.3 key (2d12d492…28de52). The surface copy runs on the TV only (no device here): not tested on a real TV.
+
 # 2.10.2 — credit line always readable (2026-11-20)
 
 - Full PHP suite: **676 tests, 26,666 assertions, 0 failures** (`PlatformCreditTest` +1: white-on-white / tiny / top customer ticker → black bar, gold text, bottom, video above, min 28 px / 60 px; larger customer sizes kept).

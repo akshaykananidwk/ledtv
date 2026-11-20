@@ -32,6 +32,13 @@ screen-wise schedule karo, emergency message moklo, TV reboot/update karo.*
 | Android TV app | [`android/`](android) | Kotlin, ExoPlayer 2.19, Retrofit, OkHttp, Glide, WorkManager — min SDK 21, target 34 |
 | Documentation | [`docs/`](docs) | Install guide, TV setup, admin guide, API, developer guide (tenancy + extension points), security, test report |
 
+## TV app 2.6.6 — Live view shows the video
+
+TV app **2.6.6** (versionCode 20). Live view / screenshots copied the window only; videos play on a separate surface
+(SurfaceView), so the picture was black with just the ticker. Each visible video surface is now copied too (PixelCopy per
+SurfaceView) and put into the picture at its place, under the window so the ticker / logo stay on top. DRM or very old
+drivers may still give black.
+
 ## What's new in 2.10.2 — the credit line is always readable
 
 The ticker took the customer's own style (one customer had white text on a white bar), so the platform credit could not

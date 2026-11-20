@@ -3,6 +3,7 @@ package com.hotelcast.tv
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.Canvas
+import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
@@ -16,6 +17,7 @@ import android.view.KeyEvent
 import android.view.MotionEvent
 import android.view.PixelCopy
 import android.view.View
+import android.view.ViewGroup
 import android.view.WindowManager
 import android.widget.FrameLayout
 import android.widget.ImageView
@@ -927,7 +929,9 @@ class MainActivity : AppCompatActivity(), ContentPlayer.Listener, PlayerUi, Gues
                 val bmp = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
                 PixelCopy.request(window, bmp, { result ->
                     if (result == PixelCopy.SUCCESS) {
-                        callback(bmp)
+                        // 2.6.6: the window copy has a hole where videos play (SurfaceView): copy each video surface
+                        // too and put it in, so Live view / screenshots show the playing video, not black.
+                        addVideoSurfaces(bmp, surfaceViews(decor), callback)
                     } else {
                         Log.w(TAG, "PixelCopy failed ($result), falling back to View.draw")
                         bmp.recycle()
@@ -940,6 +944,76 @@ class MainActivity : AppCompatActivity(), ContentPlayer.Listener, PlayerUi, Gues
             }
         }
         callback(drawDecor(decor, w, h))
+    }
+
+    /** Visible SurfaceViews (video layers) under [root]. */
+    private fun surfaceViews(root: View): List<android.view.SurfaceView> {
+        val out = ArrayList<android.view.SurfaceView>()
+        fun walk(v: View) {
+            if (!v.isShown) return
+            if (v is android.view.SurfaceView && v.width > 0 && v.height > 0) out.add(v)
+            if (v is ViewGroup) for (i in 0 until v.childCount) walk(v.getChildAt(i))
+        }
+        walk(root)
+        return out
+    }
+
+    /**
+     * 2.6.6: copies every video surface (PixelCopy per SurfaceView, API 24+) into the window screenshot at its
+     * position. Drawn under the window picture when the hole there is transparent (ticker / logo stay on top),
+     * else on top. A surface that cannot be copied (DRM, old driver) stays as it was. Always calls [callback].
+     */
+    private fun addVideoSurfaces(windowBmp: Bitmap, views: List<android.view.SurfaceView>, callback: (Bitmap?) -> Unit) {
+        if (views.isEmpty() || Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
+            callback(windowBmp)
+            return
+        }
+        val out = Bitmap.createBitmap(windowBmp.width, windowBmp.height, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(out)
+        canvas.drawColor(Color.BLACK)
+        val onTop = ArrayList<Pair<Bitmap, IntArray>>()
+        var pending = views.size
+        fun finishOne() {
+            pending--
+            if (pending > 0) return
+            canvas.drawBitmap(windowBmp, 0f, 0f, null)
+            for ((b, xy) in onTop) {
+                canvas.drawBitmap(b, xy[0].toFloat(), xy[1].toFloat(), null)
+                b.recycle()
+            }
+            windowBmp.recycle()
+            callback(out)
+        }
+        for (sv in views) {
+            val loc = IntArray(2)
+            try {
+                sv.getLocationInWindow(loc)
+                val holder = sv.holder
+                if (holder?.surface?.isValid != true) {
+                    finishOne()
+                    continue
+                }
+                val vb = Bitmap.createBitmap(sv.width, sv.height, Bitmap.Config.ARGB_8888)
+                PixelCopy.request(sv, vb, { r ->
+                    if (r == PixelCopy.SUCCESS) {
+                        val cx = (loc[0] + sv.width / 2).coerceIn(0, windowBmp.width - 1)
+                        val cy = (loc[1] + sv.height / 2).coerceIn(0, windowBmp.height - 1)
+                        if (Color.alpha(windowBmp.getPixel(cx, cy)) < 255) {
+                            canvas.drawBitmap(vb, loc[0].toFloat(), loc[1].toFloat(), null) // under the window picture
+                            vb.recycle()
+                        } else {
+                            onTop.add(vb to loc)
+                        }
+                    } else {
+                        vb.recycle()
+                    }
+                    finishOne()
+                }, handler)
+            } catch (e: Throwable) {
+                Log.w(TAG, "video surface copy failed: ${e.message}")
+                finishOne()
+            }
+        }
     }
 
     /** API < 26 fallback. Video surfaces (SurfaceView) come out black. */
