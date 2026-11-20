@@ -32,7 +32,7 @@ final class Panel
         'platform' => ['platform_overview', 'platform_hotels', 'platform_resellers', 'platform_chains',
             'platform_plans', 'platform_invoices', 'platform_licenses', 'platform_signups', 'platform_demo', 'platform_marketplace',
             'platform_screens', 'platform_apk', 'platform_live', 'platform_content', 'qr_setup',
-            'platform_reports', 'push', 'platform_audit', 'platform_support',
+            'platform_reports', 'push', 'platform_whatsapp', 'platform_audit', 'platform_support',
             'platform_settings', 'update'],
         'reseller' => ['reseller_overview', 'reseller', 'platform_screens', 'reseller_plans', 'reseller_invoices', 'reseller_support',
             'platform_demo', 'platform_chains', 'qr_setup', 'push'],
@@ -46,7 +46,7 @@ final class Panel
             'Manage' => ['platform_overview', 'platform_hotels', 'platform_resellers', 'platform_chains'],
             'Plans & subscriptions' => ['platform_plans', 'platform_invoices', 'platform_licenses', 'platform_signups', 'platform_demo', 'platform_marketplace'],
             'Devices & content' => ['platform_screens', 'platform_apk', 'platform_live', 'platform_content', 'qr_setup'],
-            'Insight' => ['platform_reports', 'push', 'platform_audit', 'platform_support'],
+            'Insight' => ['platform_reports', 'push', 'platform_whatsapp', 'platform_audit', 'platform_support'],
             'System' => ['platform_settings', 'update'],
         ],
         'reseller' => [

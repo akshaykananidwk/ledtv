@@ -18,6 +18,8 @@ return [
     // 2.9.3 Super Admin → Live darshan (docs/modules/live_channels.md): live streams for every customer.
     ['platform_live', 'platform_live.php', 'platform.manage', 'bi-broadcast', __('Live darshan'), 'platform'],
     ['platform_content', 'platform_content.php', 'platform.manage', 'bi-collection-play', __('Content overview'), 'platform'],
+    // 2.10.4 Super Admin → WhatsApp messages (core/WhatsApp.php): custom message to every customer's mobile.
+    ['platform_whatsapp', 'platform_whatsapp.php', 'platform.manage', 'bi-whatsapp', __('WhatsApp messages'), 'platform'],
     ['platform_reports', 'platform_reports.php', 'platform.manage', 'bi-graph-up', __('Reports'), 'platform'],
     ['platform_audit', 'platform_audit.php', 'platform.manage', 'bi-journal-check', __('Audit logs'), 'platform'],
     ['update', 'update.php', 'update.manage', 'bi-cloud-arrow-down', __('Auto-Update'), 'platform'],

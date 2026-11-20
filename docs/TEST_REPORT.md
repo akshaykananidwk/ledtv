@@ -1,3 +1,7 @@
+# 2.10.4 — WhatsApp messages to customers (2026-11-20)
+
+- Full PHP suite: **681 tests, 26,783 assertions, 0 failures** (new `WhatsAppTest`: number normalisation, API body / provider errors, recipients filter and dedupe, personalisation, page saves settings without printing the key, CSRF, customers 403, send + history). Not sent through the real bulk.akdwk.in API from here (mocked).
+
 # 2.10.3 — mandatory TV app updates (2026-11-20)
 
 - Full PHP suite: **677 tests, 26,682 assertions, 0 failures** (`AppSignerTest` +1: old-key TV below a required release gets only "New TV app required", new-key TV "TV app update" until it runs the required version, then content; non-required releases never block. `PlatformApkTest`: a required upload pushes UPDATE_APP at once).

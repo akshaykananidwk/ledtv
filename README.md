@@ -32,6 +32,13 @@ screen-wise schedule karo, emergency message moklo, TV reboot/update karo.*
 | Android TV app | [`android/`](android) | Kotlin, ExoPlayer 2.19, Retrofit, OkHttp, Glide, WorkManager — min SDK 21, target 34 |
 | Documentation | [`docs/`](docs) | Install guide, TV setup, admin guide, API, developer guide (tenancy + extension points), security, test report |
 
+## What's new in 2.10.4 — WhatsApp messages to all customers
+
+| Change | Detail |
+|---|---|
+| **WhatsApp API settings** | Super Admin → WhatsApp messages: API URL (default bulk.akdwk.in), API key (never shown again) and session ID |
+| **Custom message to every customer** | Write any message (with `:name` / `:business`), optional photo / video / PDF link, send to active / trial / all / selected customers' contact mobiles; test number first, sent / failed report, history. See `docs/modules/whatsapp.md` |
+
 ## What's new in 2.10.3 — mandatory TV app updates
 
 | Change | Detail |
